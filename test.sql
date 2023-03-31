@@ -1,0 +1,1 @@
+select count(school_category_id) as kaunti, category from applications, establishing_schools, school_categories where school_categories.id = establishing_schools.school_category_id AND establishing_schools.tracking_number = applications.tracking_number AND is_approved = 2 and application_category_id = 1 group by school_category_id;

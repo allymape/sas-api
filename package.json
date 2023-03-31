@@ -1,0 +1,27 @@
+{
+  "name": "apiwajw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "irs.js",
+  "scripts": {
+    "start": "nodemon irs.js"
+  },
+  "author": "mac mwocha",
+  "license": "ISC",
+  "dependencies": {
+    "@supercharge/strings": "^2.0.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "date-and-time": "^2.4.1",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-session": "^1.17.3",
+    "express-validator": "^6.14.2",
+    "jsonwebtoken": "^8.5.1",
+    "mysql": "^2.18.1",
+    "nodemailer": "^6.7.8",
+    "request": "^2.88.2",
+    "request-ip": "^3.3.0"
+  }
+}
