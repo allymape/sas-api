@@ -2848,6 +2848,61 @@ router.post('/addRole', shirikishoValidation, (req, res, next) => {
 })
 });
 
+router.post('/editRole', shirikishoValidation, (req, res, next) => {
+    console.log(req.body)
+    if(
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith('Bearer') ||
+    !req.headers.authorization.split(' ')[1]
+    ){
+    return res.status(200).json({
+    error: true, 
+    statusCode: 422,
+    message: "No access to end point",
+    });
+    }
+    const theToken = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
+    // db.query(`SELECT role_name FROM role_management where id = ${db.escape(req.body.role_id)}`, 
+    // function (error, results, fields) {
+    //     if (error) {console.log(error)}
+    //     var roleName = results[0].role_name
+        // if(results[0].kaunti <= 0){
+    // db.query(`INSERT INTO role_management (role_name, status_id) VALUES 
+    // (${db.escape(req.body.roleName)}, 1)` , 
+    // function (error, results, fields) {
+    // if (error) res.send({error: true, message: "Zoni haijasajiliwa"});
+    db.query(`SELECT id FROM role_management where role_name = ${db.escape(req.body.roleName)}`, 
+    function (error, results, fields) {
+        if (error) {console.log(error)}
+        var rollId = results[0].id;
+        for(var i = 0; i < req.body.permissions.length; i++){
+            db.query(`INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
+            (${db.escape(req.body.permissions[i])}, ${db.escape(rollId)}, 1)` , 
+            function (error1, results1, fields1) {
+                if (error1) {console.log(error1)}
+            }) 
+        }
+        db.query(
+            `SELECT * FROM role_management WHERE role_name = ${db.escape(
+            req.body.role_name
+            )};`,
+            (err, resultdata) => {
+                if(err){console.log(err)}
+    UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+    req.body.zoneid, 'Role imesasishwa!', req.body.ip_address, resultdata[0], 'role_management')
+        })
+    });
+    return res.send({ error: false, statusCode: 300, data: {"status": "sucess"}, 
+    message: 'Role imesasishwa.' });
+    // });
+// }else{
+//     return res.send({ error: false, statusCode: 306, data: {"status": "sucess"}, 
+//     message: 'Imeshindwa kusajili, Role ilishasajiliwa.' });
+// }
+// })
+});
+
 router.post('/editZoni', shirikishoValidation, (req, res, next) => {
     if(
     !req.headers.authorization ||
@@ -5313,6 +5368,56 @@ router.get('/roles', signupValidation, (req, res, next) => {
     }
     return res.send({ error: false, statusCode: 300, data: obj, message: 'Fetch Successfully.' });
     });
+});
+
+router.post('/editRoles', signupValidation, (req, res, next) => {
+    console.log(req.body)
+    var obj = [];
+    var obj1 = [];
+    if(
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith('Bearer') ||
+    !req.headers.authorization.split(' ')[1]
+    ){
+    return res.status(422).json({
+    error: true, 
+    statusCode: 422,
+    message: "No access to end point",
+    });
+    }
+    const theToken = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
+    db.query('SELECT * FROM role_management WHERE status_id = ?', [1], 
+    function (error1, results1, fields1) {
+    if (error1) {console.log(error1)}
+    // for(var i = 0; i < results1.length; i++){
+    var role_name = results1[0].role_name;
+    // var RoleMId = results1[i].id;
+    // objRM.push({"RoleMId": RoleMId, "role_name": role_name})
+    // }
+    db.query('SELECT * FROM permissions WHERE status_id = ?', [1],
+        function (error, results, fields) {
+        if (error) {console.log(error)}
+        for(var i = 0; i < results.length; i++){
+        var perm_id = results[i].id;
+        var permission_name = results[i].permission_name;
+        obj.push({"perm_id": perm_id, "permission_name": permission_name})
+        }
+        db.query('SELECT * FROM permissions, permission_role WHERE permissions.status_id = ? ' + 
+        ' AND permissions.id = permission_role.permission_id AND permission_role.role_id = ? ' + 
+        ' AND permission_role.status_id = ?', [1, req.body.role_id, 1],
+        function (error1, results1, fields1) {
+        if (error1) {console.log(error1)}
+        for(var i = 0; i < results1.length; i++){
+        var perm_id = results1[i].id;
+        var permission_name = results1[i].permission_name;
+        obj1.push({"perm_id": perm_id, "permission_name": permission_name})
+        }
+        return res.send({ error: false, statusCode: 300, data: obj, allData: obj1, 
+            role_name:role_name, message: 'Fetch Successfully.' });
+        });
+    });
+})
 });
 
 router.get('/auditTrail', signupValidation, (req, res, next) => {
