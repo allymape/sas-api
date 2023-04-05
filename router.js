@@ -38164,7 +38164,6 @@ router.post('/view-bila-majengo-details', makundiValidation, (req, res, next) =>
     [1, 2, trackingNumber], 
     function (error, results, fields) {
         if (error) {console.log(error)}
-        con
             if(results.length > 0){
                 var tracking_number = results[0].tracking_number;
                 var registry_type_id = results[0].registry_type_id;
