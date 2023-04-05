@@ -2850,6 +2850,7 @@ router.post('/addRole', shirikishoValidation, (req, res, next) => {
 
 router.post('/editRole', shirikishoValidation, (req, res, next) => {
     console.log(req.body)
+    var permission_list = req.body.permissions
     if(
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer') ||
@@ -2876,25 +2877,34 @@ router.post('/editRole', shirikishoValidation, (req, res, next) => {
     function (error, results, fields) {
         if (error) {console.log(error)}
         var rollId = results[0].id;
-        for(var i = 0; i < req.body.permissions.length; i++){
-            db.query(`INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
-            (${db.escape(req.body.permissions[i])}, ${db.escape(rollId)}, 1)` , 
-            function (error1, results1, fields1) {
-                if (error1) {console.log(error1)}
-            }) 
-        }
-        db.query(
-            `SELECT * FROM role_management WHERE role_name = ${db.escape(
-            req.body.role_name
-            )};`,
-            (err, resultdata) => {
-                if(err){console.log(err)}
-    UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
-    req.body.zoneid, 'Role imesasishwa!', req.body.ip_address, resultdata[0], 'role_management')
+        db.query(`DELETE FROM permission_role WHERE role_id = ${db.escape(rollId)}`, 
+        function (error11, results11, fields11) {
+            if (error11) {console.log(error11)}
+            var splitted_perm = permission_list.toString().split(',');
+            for(var i = 0; i < splitted_perm.length; i++){
+                splitted_perm[i] = splitted_perm[i].replace(/^\s*/, "").replace(/\s*$/, "");
+                // Add additional code here, such as:
+                console.log(splitted_perm[i]);
+                db.query(`INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
+                (${db.escape(req.body.permissions[i])}, ${db.escape(rollId)}, 1)` , 
+                function (error1, results1, fields1) {
+                    if (error1) {console.log(error1)}
+                }) 
+            }
+            db.query(
+                `SELECT * FROM role_management WHERE role_name = ${db.escape(
+                req.body.role_name
+                )};`,
+                (err, resultdata) => {
+                    if(err){console.log(err)}
+        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+        req.body.zoneid, 'Role imesasishwa!', req.body.ip_address, resultdata[0], 'role_management')
+            })
+            return res.send({ error: false, statusCode: 300, data: {"status": "sucess"}, 
+            message: 'Role imesasishwa.' });
+        });
         })
-    });
-    return res.send({ error: false, statusCode: 300, data: {"status": "sucess"}, 
-    message: 'Role imesasishwa.' });
+
     // });
 // }else{
 //     return res.send({ error: false, statusCode: 306, data: {"status": "sucess"}, 
