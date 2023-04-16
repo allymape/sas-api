@@ -15,6 +15,15 @@ const { send } = require('process');
 const requestIp = require('request-ip')
 var session = require('express-session');
 
+var rateLimit = require('express-rate-limit')
+
+const loginlimiter = rateLimit({
+	windowMs: 20 * 60 * 1000, // 10 minutes
+	max: 20, // Limit each IP to 5 requests per `window` (here, per 10 minutes)
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+})
+
 router.use(session({
 	secret: 'secret',
 	resave: true,
@@ -77,7 +86,7 @@ function UpdateAuditTrail(user_id, event_type, new_body, api_router, browser_use
 }
 
 //login api
-router.post('/login', loginValidation, (req, res, next) => {
+router.post('/login', loginlimiter, (req, res, next) => {
     // console.log(req.body.browser_used)
     var obj = [];
     var objRM = [];
@@ -85,7 +94,7 @@ router.post('/login', loginValidation, (req, res, next) => {
     `SELECT staffs.id as id, password, staffs.name as name, 
     staffs.username as username, staffs.phone_no as phone_no, 
     staffs.user_status as user_status, staffs.last_login as last_login, 
-    staffs.role_id as role_id, staffs.email as email,
+    staffs.role_id as role_id, staffs.new_role_id as new_role_id, staffs.email as email,
     staffs.station_level as station_level, user_level, staffs.office as office, 
     vyeo.rank_name as rank_name, 
     vyeo.status_id as status_id, vyeo.rank_level as rank_level, twofa
@@ -103,6 +112,7 @@ router.post('/login', loginValidation, (req, res, next) => {
     });
     }
     if (!result.length) {
+        // if()
     return res.status(200).send({
     error: true,
     statusCode: 302,
@@ -124,7 +134,7 @@ router.post('/login', loginValidation, (req, res, next) => {
     });
     }
     if (bResult) {
-    const token = jwt.sign({id:result[0].id},'the-super-strong-secrect',{ expiresIn: '1h' });
+    const token = jwt.sign({id:result[0].id},'the-super-strong-secrect',{ expiresIn: '5m' });
     if(result[0].twofa == 0){
         db.query(
             `UPDATE staffs SET last_login = now(), token_id = '${token}' WHERE id = '${result[0].id}'`
@@ -167,7 +177,8 @@ router.post('/login', loginValidation, (req, res, next) => {
     }
 
     globalIpAddress = req.body.ip_address
-    console.log("ip address" + globalIpAddress)
+    console.log("ip address" + result[0].new_role_id)
+
 
     obj.push({
                 "id": result[0].id, "name": result[0].name, "username": result[0].username, 
@@ -180,7 +191,8 @@ router.post('/login', loginValidation, (req, res, next) => {
                 "rank_level": result[0].rank_level, "twofa": result[0].twofa, "email": result[0].email
             })
             db.query(`SELECT permission_id FROM permissions, permission_role 
-            WHERE permission_role.permission_id = permissions.id`, 
+            WHERE permission_role.permission_id = permissions.id 
+            AND permission_role.role_id = ${result[0]['new_role_id']}`, 
             function (error11, results11, fields11) {
                 if (error11) {console.log(error11)}
                 else{
@@ -191,6 +203,7 @@ router.post('/login', loginValidation, (req, res, next) => {
                 }
                 
             // })
+            console.log("objRM")
             console.log(objRM)
     return res.status(200).send({
     error: false,
@@ -292,11 +305,11 @@ router.post('/register', signupValidation, (req, res, next) => {
     req.body.email
     )});`,
     (err, result) => {
-    if (result.length) {
+    if (result.length > 0) {
     return res.status(200).send({
     error: true,
     statusCode: 306,
-    message: 'This user is already in use!'
+    message: 'Fail to register, user already exist!'
     });
     } else {
     // username is available
@@ -362,7 +375,10 @@ router.post('/register', signupValidation, (req, res, next) => {
         function (error, results, fields) {
             if (error) {console.log(error)}
             var rollId = results[0].id;
-        InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+            var req_body = {"username": req.body.username, "email": req.body.email, 
+            "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+            "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+        InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
         rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
         });
     return res.status(200).send({
@@ -423,7 +439,10 @@ router.post('/register', signupValidation, (req, res, next) => {
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
             rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
             });
         return res.status(200).send({
@@ -484,6 +503,9 @@ router.post('/register', signupValidation, (req, res, next) => {
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}  
             InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
             rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
             });
@@ -545,6 +567,9 @@ router.post('/register', signupValidation, (req, res, next) => {
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
             InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
             rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
             });
@@ -606,6 +631,9 @@ router.post('/register', signupValidation, (req, res, next) => {
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
             InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
             rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
             });
@@ -667,6 +695,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -728,6 +759,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -789,6 +823,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -850,6 +887,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -911,6 +951,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -972,6 +1015,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -1033,6 +1079,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -1094,6 +1143,9 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req_body.lgas, "role": req.body.roleRMe}
                 InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
@@ -1155,7 +1207,10 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
             return res.status(200).send({
@@ -1216,7 +1271,10 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
             return res.status(200).send({
@@ -1277,7 +1335,10 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
             return res.status(200).send({
@@ -1338,7 +1399,10 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
             return res.status(200).send({
@@ -1399,7 +1463,10 @@ router.post('/register', signupValidation, (req, res, next) => {
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                InsertAuditTrail(decoded.id, "created", req.body, req.url, req.body.browser_used,
+                    var req_body = {"username": req.body.username, "email": req.body.email, 
+                    "password": hash, "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                InsertAuditTrail(decoded.id, "created", req_body, req.url, req.body.browser_used,
                 rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
                 });
             return res.status(200).send({
@@ -1434,8 +1501,8 @@ if(
     const theToken = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
     db.query(
-    `SELECT * FROM staffs WHERE LOWER(email) = LOWER(${db.escape(
-    req.body.email
+    `SELECT * FROM staffs WHERE id = LOWER(${db.escape(
+    req.body.userId
     )});`,
     (err, resultdata) => {
         console.log(resultdata)
@@ -1454,8 +1521,8 @@ if(
             `UPDATE staffs SET username = ${db.escape(req.body.username)}, 
             email = ${db.escape(req.body.email)}, user_level = ${db.escape(req.body.roleId)}, 
             name = ${db.escape(req.body.name)}, phone_no = ${db.escape(req.body.phoneNumber)}, 
-            office = ${db.escape(req.body.lgas)}, signature = ${db.escape(req.body.sign)} 
-            ,new_role_id = ${db.escape(req.body.roleRMe)} WHERE id = ${db.escape(req.body.userId)}`,
+            office = ${db.escape(req.body.lgas)}, signature = ${db.escape(req.body.sign)}, 
+            new_role_id = ${db.escape(req.body.roleRMe)} WHERE id = ${db.escape(req.body.userId)}`,
             (err, result) => {
             if (err) {
             console.log(err)
@@ -1465,13 +1532,16 @@ if(
             message: err
             });
             }
-            db.query(`SELECT id FROM staffs where email = ${db.escape(req.body.email)}`, 
-            function (error, results, fields) {
-                if (error) {console.log(error)}
-                var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+            // db.query(`SELECT id FROM staffs where email = ${db.escape(req.body.email)}`, 
+            // function (error, results, fields) {
+            //     if (error) {console.log(error)}
+                var rollId = req.body.userId;
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", req_body, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
-            });
+            // });
             return res.status(200).send({
             error:false,
             statusCode: 300,
@@ -1499,7 +1569,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", req_body, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -1528,7 +1601,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var req_body = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", req_body, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -1556,7 +1632,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -1585,7 +1664,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -1614,7 +1696,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1643,7 +1728,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1672,7 +1760,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1701,7 +1792,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1730,7 +1824,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1759,7 +1856,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1788,7 +1888,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1817,7 +1920,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1846,7 +1952,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1875,7 +1984,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1904,7 +2016,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1933,7 +2048,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -1962,7 +2080,10 @@ if(
                 function (error, results, fields) {
                     if (error) {console.log(error)}
                     var rollId = results[0].id;
-                UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                    var reqbody = {"username": req.body.username, "email": req.body.email, 
+                    "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                    "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+                UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
                 rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
                 });
                 return res.status(200).send({
@@ -2002,7 +2123,10 @@ if(
     function (error, results, fields) {
         if (error) {console.log(error)}
         var rollId = results[0].id;
-    UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+        var reqbody = {"username": req.body.username, "email": req.body.email, 
+        "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+        "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+    UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
     rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
     });
     return res.status(200).send({
@@ -2031,7 +2155,10 @@ if(
         function (error, results, fields) {
             if (error) {console.log(error)}
             var rollId = results[0].id;
-        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+            var reqbody = {"username": req.body.username, "email": req.body.email, 
+            "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+            "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+        UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
         rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
         });
         return res.status(200).send({
@@ -2060,7 +2187,10 @@ if(
         function (error, results, fields) {
             if (error) {console.log(error)}
             var rollId = results[0].id;
-        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+            var reqbody = {"username": req.body.username, "email": req.body.email, 
+            "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+            "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+        UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
         rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
         });
         return res.status(200).send({
@@ -2089,7 +2219,10 @@ if(
         function (error, results, fields) {
             if (error) {console.log(error)}
             var rollId = results[0].id;
-        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+            var reqbody = {"username": req.body.username, "email": req.body.email, 
+            "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+            "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+        UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
         rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
         });
         return res.status(200).send({
@@ -2118,7 +2251,10 @@ if(
         function (error, results, fields) {
             if (error) {console.log(error)}
             var rollId = results[0].id;
-        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+            var reqbody = {"username": req.body.username, "email": req.body.email, 
+            "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+            "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+        UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
         rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
         });
         return res.status(200).send({
@@ -2147,7 +2283,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2176,7 +2315,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2205,7 +2347,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2234,7 +2379,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2263,7 +2411,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2292,7 +2443,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2321,7 +2475,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2350,7 +2507,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2379,7 +2539,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2408,7 +2571,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2437,7 +2603,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2466,7 +2635,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2495,7 +2667,10 @@ if(
             function (error, results, fields) {
                 if (error) {console.log(error)}
                 var rollId = results[0].id;
-            UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
+                var reqbody = {"username": req.body.username, "email": req.body.email, 
+                "password": "********", "cheo": req.body.roleId, "name": req.body.name, 
+                "phoneNumber": req.body.phoneNumber, "lga": req.body.lgas, "role": req.body.roleRMe}
+            UpdateAuditTrail(decoded.id, "updated", reqbody, req.url, req.body.browser_used,
             rollId, 'The user has been updated with us!', req.body.ip_address, resultdata[0], 'staffs')
             });
             return res.status(200).send({
@@ -2803,6 +2978,7 @@ router.post('/addZoni', shirikishoValidation, (req, res, next) => {
 });
 
 router.post('/addRole', shirikishoValidation, (req, res, next) => {
+    var permission_list = req.body.permissions
     if(
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer') ||
@@ -2816,7 +2992,8 @@ router.post('/addRole', shirikishoValidation, (req, res, next) => {
     }
     const theToken = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
-    db.query(`SELECT count(*) as kaunti FROM role_management where role_name = ${db.escape(req.body.roleName)}`, 
+    db.query(`SELECT count(*) as kaunti FROM role_management where 
+    role_name = ${db.escape(req.body.roleName)} and status_id = 1`, 
     function (error, results, fields) {
         if (error) {console.log(error)}
         if(results[0].kaunti <= 0){
@@ -2828,7 +3005,11 @@ router.post('/addRole', shirikishoValidation, (req, res, next) => {
     function (error, results, fields) {
         if (error) {console.log(error)}
         var rollId = results[0].id;
-        for(var i = 0; i < req.body.permissions.length; i++){
+        var splitted_perm = permission_list.toString().split(',');
+        for(var i = 0; i < splitted_perm.length; i++){
+            splitted_perm[i] = splitted_perm[i].replace(/^\s*/, "").replace(/\s*$/, "");
+            // Add additional code here, such as:
+            console.log(splitted_perm[i]);
             db.query(`INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
             (${db.escape(req.body.permissions[i])}, ${db.escape(rollId)}, 1)` , 
             function (error1, results1, fields1) {
@@ -5147,8 +5328,18 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         var zoneCode = results1[i].zone_code;
         obj13.push({"zoneCode": zoneCode, "zoneName": zoneName})
         }
-        return res.send({ error: false, statusCode: 300, data: obj, vyeo: obj1, lgas: obj12, zones: obj13, message: 'Fetch Successfully.' });
+        db.query('SELECT * FROM role_management WHERE status_id = ?', [1], 
+        function (error1, results1, fields1) {
+        if (error1) {console.log(error1)}
+        for(var i = 0; i < results1.length; i++){
+        var role_name = results1[i].role_name;
+        var RoleMId = results1[i].id;
+        objRM.push({"RoleMId": RoleMId, "role_name": role_name})
+        }
+        return res.send({ error: false, statusCode: 300, data: obj, 
+            vyeo: obj1, RoleManagement: objRM, lgas: obj12, zones: obj13, message: 'Fetch Successfully.' });
         });
+    });
         });
         });
         });
@@ -5202,8 +5393,18 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         }
         console.log("obj13")
         console.log(obj13)
-        return res.send({ error: false, statusCode: 300, data: obj, vyeo: obj1, lgas: obj12, zones: obj13, message: 'Fetch Successfully.' });
+        db.query('SELECT * FROM role_management WHERE status_id = ?', [1], 
+        function (error1, results1, fields1) {
+        if (error1) {console.log(error1)}
+        for(var i = 0; i < results1.length; i++){
+        var role_name = results1[i].role_name;
+        var RoleMId = results1[i].id;
+        objRM.push({"RoleMId": RoleMId, "role_name": role_name})
+        }
+        return res.send({ error: false, statusCode: 300, data: obj, 
+            vyeo: obj1, RoleManagement: objRM, lgas: obj12, zones: obj13, message: 'Fetch Successfully.' });
         });
+    })
         });
         });
         });
@@ -5397,7 +5598,7 @@ router.post('/editRoles', signupValidation, (req, res, next) => {
     }
     const theToken = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
-    db.query('SELECT * FROM role_management WHERE status_id = ?', [1], 
+    db.query('SELECT * FROM role_management WHERE id = ?', [req.body.role_id], 
     function (error1, results1, fields1) {
     if (error1) {console.log(error1)}
     // for(var i = 0; i < results1.length; i++){
@@ -5902,6 +6103,120 @@ router.post('/thibitishapassword', shirikishoValidation, (req, res, next) => {
     }
 
 });
+});
+
+//login api
+router.post('/changepass', (req, res, next) => {
+    // console.log(req.body.browser_used)
+    if(
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+        ){
+        return res.status(200).json({
+        error: true, 
+        statusCode: 422,
+        message: "No access to end point",
+        });
+        }
+        const theToken = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
+    var obj = [];
+    var objRM = [];
+    db.query(
+    `SELECT staffs.id as id, password, staffs.name as name, 
+    staffs.username as username, staffs.phone_no as phone_no, 
+    staffs.user_status as user_status, staffs.last_login as last_login, 
+    staffs.role_id as role_id, staffs.email as email,
+    staffs.station_level as station_level, user_level, staffs.office as office, 
+    vyeo.rank_name as rank_name, 
+    vyeo.status_id as status_id, vyeo.rank_level as rank_level, twofa
+    FROM staffs, vyeo WHERE staffs.user_level = vyeo.id AND 
+    staffs.id = ${db.escape(req.body.userid)} AND 
+    user_status = 1;`,
+    (err, result) => {
+    // user does not exists
+    if (err) {
+    console.log(err)
+    return res.status(400).send({
+    error: true,
+    statusCode: 400,
+    message: err
+    });
+    }
+    if (!result.length) {
+        // if()
+    return res.status(200).send({
+    error: true,
+    statusCode: 302,
+    message: 'Username or password is incorrect!'
+    });
+    }
+    // check password
+    bcrypt.compare(
+    req.body.oldpassword,
+    result[0]['password'],
+    (bErr, bResult) => {
+    // wrong password
+    if (bErr) {
+        console.log(bErr)
+    return res.status(200).send({
+    error: true,
+    statusCode: 302,
+    message: 'old password not valid, please try again!'
+    });
+    }
+    if (bResult) {
+        bcrypt.hash(req.body.password, 10, (err, hash) => {
+            if (err) {
+            return res.status(500).send({
+            error: true,
+            statusCode: 500,
+            message: err
+            });
+            } else {
+            const random_WithFiftySymbols = crypto.randomBytes(50).toString('hex');
+            var secr_tokn = random_WithFiftySymbols; 
+        
+            // has hashed pw => add to database 
+            db.query(
+            `UPDATE staffs SET password =  ${db.escape(hash)} WHERE id = ${db.escape(req.body.userid)}`,
+            (err, result) => {
+            if (err) {
+            console.log(err)
+            return res.status(400).send({
+            error: true,
+            statusCode: 400,
+            message: err
+            });
+            }
+                // db.query(`SELECT id FROM staffs where id = ${db.escape(req.body.userId)}`, 
+                // function (error, results, fields) {
+                //     if (error) {console.log(error)}
+                    var rollId = req.body.userId;
+                    var req_body = {"userid": req.body.userId, "oldpassword": "********", 
+                    "newpassword": "********"}
+                InsertAuditTrail(decoded.id, "updated", req_body, req.url, req.body.browser_used,
+                rollId, 'The user has been registerd with us!', req.body.ip_address, 'staffs')
+                // });
+            return res.status(200).send({
+            error:false,
+            statusCode: 300,
+            message: 'Password changed succesfully!'
+            });
+            }
+            );
+            }
+            });
+    }else{
+    return res.status(200).send({
+    error: true,
+    statusCode: 302,
+    message: 'Data is incorrect!'
+    });
+    }
+    });
+    });
 });
 
 //logout api
