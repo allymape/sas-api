@@ -3032,6 +3032,8 @@ router.post('/addRole', shirikishoValidation, (req, res, next) => {
 router.post('/editRole', shirikishoValidation, (req, res, next) => {
     console.log(req.body)
     var permission_list = req.body.permissions
+    var roleId = req.body.roleId
+    var roleName = req.body.roleName
     if(
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer') ||
@@ -3054,37 +3056,83 @@ router.post('/editRole', shirikishoValidation, (req, res, next) => {
     // (${db.escape(req.body.roleName)}, 1)` , 
     // function (error, results, fields) {
     // if (error) res.send({error: true, message: "Zoni haijasajiliwa"});
-    db.query(`SELECT id FROM role_management where role_name = ${db.escape(req.body.roleName)}`, 
-    function (error, results, fields) {
-        if (error) {console.log(error)}
-        var rollId = results[0].id;
-        db.query(`DELETE FROM permission_role WHERE role_id = ${db.escape(rollId)}`, 
-        function (error11, results11, fields11) {
-            if (error11) {console.log(error11)}
-            var splitted_perm = permission_list.toString().split(',');
-            for(var i = 0; i < splitted_perm.length; i++){
-                splitted_perm[i] = splitted_perm[i].replace(/^\s*/, "").replace(/\s*$/, "");
+    db.query(
+      `SELECT id FROM permission_role where role_id = ${db.escape(roleId)}`,
+      function (error, results, fields) {
+        if (error) {
+          console.log(error);
+        }
+        // var rollId = results[0].id;
+        // Delete old assigned permissions if found
+        if(results){
+            db.query(
+              `DELETE FROM permission_role WHERE role_id = ${db.escape(
+                roleId
+              )}`,
+              function (error11, results11, fields11) {
+                if (error11) {
+                  console.log(error11);
+                }
+              }
+            );
+        }
+        // update role and insert new permissions
+         db.query('UPDATE role_management SET role_name = ? WHERE id = ?' , [roleName , roleId] , function(error22 , results22 , field22){
+            if(error22) console.log(error22)
+            if(results22){
+              var splitted_perm = permission_list.toString().split(",");
+              for (var i = 0; i < splitted_perm.length; i++) {
+                splitted_perm[i] = splitted_perm[i]
+                  .replace(/^\s*/, "")
+                  .replace(/\s*$/, "");
                 // Add additional code here, such as:
                 console.log(splitted_perm[i]);
-                db.query(`INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
-                (${db.escape(req.body.permissions[i])}, ${db.escape(rollId)}, 1)` , 
-                function (error1, results1, fields1) {
-                    if (error1) {console.log(error1)}
-                }) 
-            }
-            db.query(
-                `SELECT * FROM role_management WHERE role_name = ${db.escape(
-                req.body.role_name
+                db.query(
+                  `INSERT INTO permission_role (permission_id, role_id, status_id) VALUES 
+                (${db.escape(req.body.permissions[i])}, ${db.escape(
+                    roleId
+                  )}, 1)`,
+                  function (error1, results1, fields1) {
+                    if (error1) {
+                      console.log(error1);
+                    }
+                  }
+                );
+              }
+              // Audit Trail
+              db.query(
+                `SELECT * FROM role_management WHERE id = ${db.escape(
+                  roleId
                 )};`,
                 (err, resultdata) => {
-                    if(err){console.log(err)}
-        UpdateAuditTrail(decoded.id, "updated", req.body, req.url, req.body.browser_used,
-        req.body.zoneid, 'Role imesasishwa!', req.body.ip_address, resultdata[0], 'role_management')
-            })
-            return res.send({ error: false, statusCode: 300, data: {"status": "sucess"}, 
-            message: 'Role imesasishwa.' });
-        });
-        })
+                  if (err) {
+                    console.log(err);
+                  }
+                  UpdateAuditTrail(
+                    decoded.id,
+                    "updated",
+                    req.body,
+                    req.url,
+                    req.body.browser_used,
+                    req.body.zoneid,
+                    "Role imesasishwa!",
+                    req.body.ip_address,
+                    resultdata[0],
+                    "role_management"
+                  );
+                }
+              );
+              console.log("Role has been updated successfully");
+               return res.send({
+                 error: false,
+                 statusCode: 300,
+                 data: { status: "sucess" },
+                 message: "Role imesasishwa.",
+               });
+            }
+         });
+      }
+    );
 
     // });
 // }else{
@@ -5583,8 +5631,8 @@ router.get('/roles', signupValidation, (req, res, next) => {
 
 router.post('/editRoles', signupValidation, (req, res, next) => {
     console.log(req.body)
-    var obj = [];
-    var obj1 = [];
+    var permissions = [];
+    var assigned_permissions = [];
     if(
     !req.headers.authorization ||
     !req.headers.authorization.startsWith('Bearer') ||
@@ -5612,21 +5660,33 @@ router.post('/editRoles', signupValidation, (req, res, next) => {
         for(var i = 0; i < results.length; i++){
         var perm_id = results[i].id;
         var permission_name = results[i].permission_name;
-        obj.push({"perm_id": perm_id, "permission_name": permission_name})
+        permissions.push({"perm_id": perm_id, "permission_name": permission_name})
         }
-        db.query('SELECT * FROM permissions, permission_role WHERE permissions.status_id = ? ' + 
-        ' AND permissions.id = permission_role.permission_id AND permission_role.role_id = ? ' + 
-        ' AND permission_role.status_id = ?', [1, req.body.role_id, 1],
-        function (error1, results1, fields1) {
-        if (error1) {console.log(error1)}
-        for(var i = 0; i < results1.length; i++){
-        var perm_id = results1[i].id;
-        var permission_name = results1[i].permission_name;
-        obj1.push({"perm_id": perm_id, "permission_name": permission_name})
-        }
-        return res.send({ error: false, statusCode: 300, data: obj, allData: obj1, 
-            role_name:role_name, message: 'Fetch Successfully.' });
-        });
+        db.query(
+          "SELECT permission_id FROM permissions, permission_role WHERE permissions.status_id = ? " +
+            " AND permissions.id = permission_role.permission_id AND permission_role.role_id = ? " +
+            " AND permission_role.status_id = ?",
+          [1, req.body.role_id, 1],
+          function (error1, results1, fields1) {
+            if (error1) {
+              console.log(error1);
+            }
+            for (var i = 0; i < results1.length; i++) {
+              var perm_id = results1[i].permission_id;
+              // var permission_name = results1[i].permission_name;
+              // obj1.push({"perm_id": perm_id, "permission_name": permission_name})
+              assigned_permissions.push(perm_id);
+            }
+            return res.send({
+              error: false,
+              statusCode: 300,
+              permissions: permissions,
+              assigned_permissions: assigned_permissions,
+              role_name: role_name,
+              message: "Fetch Successfully.",
+            });
+          }
+        );
     });
 })
 });
