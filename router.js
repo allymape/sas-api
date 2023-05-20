@@ -5654,6 +5654,7 @@ router.post('/editRoles', signupValidation, (req, res, next) => {
     // var RoleMId = results1[i].id;
     // objRM.push({"RoleMId": RoleMId, "role_name": role_name})
     // }
+    
     db.query('SELECT * FROM permissions WHERE status_id = ?', [1],
         function (error, results, fields) {
         if (error) {console.log(error)}
