@@ -2924,7 +2924,7 @@ router.post('/verify', signupValidation, (req, res, next) => {
     } else {
     // username is available
     db.query(
-    `update staffs SET user_status = '1' AND secure_token = 0 WHERE secure_token = ${db.escape(req.body.TrackingNumber)}`,
+    `update staffs SET user_status = '1', secure_token = 0 WHERE secure_token = ${db.escape(req.body.TrackingNumber)}`,
     (err, result) => {
     if (err) {
     console.log(err)
