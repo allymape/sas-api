@@ -252,8 +252,8 @@ router.post('/send',function(req,res){
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Kuweka Upya Nenosiri", // Subject line
-                text: "Jinsi ya Kubadili nenosiri lako, ingia http://41.59.227.219:8087/PasswordReset kuendelea.", // plain text body
-                html: 'Jinsi ya Kubadili nenosiri lako, ingia http://41.59.227.219:8087/PasswordReset kuendelea.' // html body
+                text: "Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.", // plain text body
+                html: 'Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.' // html body
             };
       
             transporter.sendMail(mailOptions, (error, info) => {
@@ -355,8 +355,8 @@ router.post('/register', signupValidation, (req, res, next) => {
         from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
         to: req.body.email, // list of receivers
         subject: "Thibitisha Usajili", // Subject line
-        text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-        html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+        text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+        html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -419,8 +419,8 @@ router.post('/register', signupValidation, (req, res, next) => {
             from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
             to: req.body.email, // list of receivers
             subject: "Thibitisha Usajili", // Subject line
-            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
         };
     
         transporter.sendMail(mailOptions, (error, info) => {
@@ -483,8 +483,8 @@ router.post('/register', signupValidation, (req, res, next) => {
             from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
             to: req.body.email, // list of receivers
             subject: "Thibitisha Usajili", // Subject line
-            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
         };
     
         transporter.sendMail(mailOptions, (error, info) => {
@@ -547,8 +547,8 @@ router.post('/register', signupValidation, (req, res, next) => {
             from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
             to: req.body.email, // list of receivers
             subject: "Thibitisha Usajili", // Subject line
-            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
         };
     
         transporter.sendMail(mailOptions, (error, info) => {
@@ -611,8 +611,8 @@ router.post('/register', signupValidation, (req, res, next) => {
             from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
             to: req.body.email, // list of receivers
             subject: "Thibitisha Usajili", // Subject line
-            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+            text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+            html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
         };
     
         transporter.sendMail(mailOptions, (error, info) => {
@@ -675,8 +675,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -739,8 +739,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -803,8 +803,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -867,8 +867,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -931,8 +931,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -995,8 +995,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1059,8 +1059,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1123,8 +1123,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1187,8 +1187,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1251,8 +1251,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1315,8 +1315,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1379,8 +1379,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
@@ -1443,8 +1443,8 @@ router.post('/register', signupValidation, (req, res, next) => {
                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
                 to: req.body.email, // list of receivers
                 subject: "Thibitisha Usajili", // Subject line
-                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
-                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa http://41.59.227.219:8087/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
+                text: "Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/"+secr_tokn+" ili kuthibitisha usajili wako na kuendelea.", // plain text body
+                html: 'Habari, Karibu katika mfumo wa usajili wa shule, bonyeza hapa https://accredit.moe.go.tz/verify/'+secr_tokn+' ili kuthibitisha usajili wako na kuendelea.' // html body
             };
         
             transporter.sendMail(mailOptions, (error, info) => {
