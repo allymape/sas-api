@@ -5266,7 +5266,7 @@ message: "No access to end point",
 const theToken = req.headers.authorization.split(' ')[1];
 const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
     if(useLevel == 11){
-        db.query('SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, ' + 
+        db.query('SELECT vyeo.id as vyeoId, username, staffs.id as userId, email, user_level, last_login, ' + 
         ' staffs.name as name, phone_no, vyeo.rank_name as role_name, rank_level FROM staffs, ' + 
         ' vyeo where user_status = ? AND vyeo.id = staffs.user_level', [1], 
         function (error, results, fields) {
@@ -5278,12 +5278,13 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         var user_level = results[i].user_level;
         var last_login = results[i].last_login;
         var name = results[i].name;
+        var username = results[i].username;
         var phone_no = results[i].phone_no;
         var role_name = results[i].role_name;
         var rank_level = results[i].rank_level;
         var roles_name = "";
         var vyeoId = results[i].vyeoId;
-        obj.push({"userId": userId, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
+        obj.push({"userId": userId, "username": username, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
         "roleId": user_level, "role": role_name, "last_login": last_login, "vyeoId": vyeoId, "roles_name": roles_name})
         }
         db.query('SELECT vyeo.id as vyeoId, ' + 
@@ -5329,7 +5330,7 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         });
         });  
     }else if(useLevel == 1){
-        db.query('SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, ' + 
+        db.query('SELECT vyeo.id as vyeoId, username, staffs.id as userId, email, user_level, last_login, ' + 
         ' staffs.name as name, phone_no, vyeo.rank_name as role_name, rank_level FROM staffs, ' + 
         ' vyeo where user_status = ? AND vyeo.id = staffs.user_level AND user_level = ? AND office = ?', [1, 3, office], 
         function (error, results, fields) {
@@ -5341,12 +5342,13 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         var user_level = results[i].user_level;
         var last_login = results[i].last_login;
         var name = results[i].name;
+        var username = results[i].username;
         var phone_no = results[i].phone_no;
         var role_name = results[i].role_name;
         var rank_level = results[i].rank_level;
         var roles_name = "";
         var vyeoId = results[i].vyeoId;
-        obj.push({"userId": userId, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
+        obj.push({"userId": userId, "username": username, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
         "roleId": user_level, "role": role_name, "last_login": last_login, "vyeoId": vyeoId, "roles_name": roles_name})
         }
         db.query('SELECT vyeo.id as vyeoId, ' + 
@@ -5392,7 +5394,7 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         });
         });
     }else if(useLevel == 2){
-        db.query('SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, ' + 
+        db.query('SELECT vyeo.id as vyeoId, username, staffs.id as userId, email, user_level, last_login, ' + 
         ' staffs.name as name, phone_no, vyeo.rank_name as role_name, rank_level FROM staffs, ' + 
         ' vyeo where user_status = ? AND vyeo.id = staffs.user_level AND user_level = ? AND office = ?', [1, 4, office], 
         function (error, results, fields) {
@@ -5404,12 +5406,13 @@ const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
         var user_level = results[i].user_level;
         var last_login = results[i].last_login;
         var name = results[i].name;
+        var username = results[i].username;
         var phone_no = results[i].phone_no;
         var role_name = results[i].role_name;
         var rank_level = results[i].rank_level;
         var roles_name = "";
         var vyeoId = results[i].vyeoId;
-        obj.push({"userId": userId, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
+        obj.push({"userId": userId, "username": username, "name": name, "email": email, "phoneNumber": phone_no, "rank_level": rank_level,
         "roleId": user_level, "role": role_name, "last_login": last_login, "vyeoId": vyeoId, "roles_name": roles_name})
         }
         db.query('SELECT vyeo.id as vyeoId, ' + 
@@ -37901,7 +37904,7 @@ router.post('/view-ombi-kusajili-details', makundiValidation, (req, res, next) =
     const theToken = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(theToken, 'the-super-strong-secrect');
     
-    db.query('SELECT staffs.name as staffname, staffs.signature as signature, establishing_schools.id as schoolId, ' + 
+    db.query('SELECT establishing_schools.id as schoolId, ' + 
     ' school_registrations.registration_number as reg_no, ' + 
     ' school_registrations.updated_at as approved_at, number_of_teachers, gender_type, teacher_student_ratio_recommendation, ' + 
     ' registration_structures.structure as structure, school_opening_date, number_of_students, ' + 
@@ -37914,9 +37917,9 @@ router.post('/view-ombi-kusajili-details', makundiValidation, (req, res, next) =
     ' applications.registry_type_id as registry_type_id, applications.user_id as user_id, stream, ' + 
     ' applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, ' + 
     ' wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName ' + 
-    ' FROM staffs, school_gender_types, school_registrations, school_sub_categories, establishing_schools, applications, ' + 
+    ' FROM school_gender_types, school_registrations, school_sub_categories, establishing_schools, applications, ' + 
     ' registration_structures, wards, districts, school_categories, languages, regions ' + 
-    ' WHERE staffs.id = applications.user_id AND school_gender_types.id = establishing_schools.school_gender_type_id ' + 
+    ' WHERE school_gender_types.id = establishing_schools.school_gender_type_id ' + 
     ' AND school_registrations.establishing_school_id = establishing_schools.id AND ' + 
     ' school_sub_categories.id = establishing_schools.school_sub_category_id AND ' + 
     ' languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id ' + 
@@ -37932,7 +37935,7 @@ router.post('/view-ombi-kusajili-details', makundiValidation, (req, res, next) =
                 var registry_type_id = results[0].registry_type_id;
                 var user_id = results[0].user_id;
                 var schoolId = results[0].schoolId;
-                var staffname = results[0].staffname;
+                var staffname = "";
                 var TeacherRatioStudent = results[0].teacher_student_ratio_recommendation;
                 var foreign_token = results[0].foreign_token;
                 var website = results[0].website;
@@ -37972,8 +37975,11 @@ router.post('/view-ombi-kusajili-details', makundiValidation, (req, res, next) =
                 var subcategory = results[0].subcategory; 
                 var lessons_and_courses = results[0].lessons_and_courses; 
                 var isSeminary = results[0].is_seminary; 
-                var signature = results[0].signature; 
+                var signature = ""; 
                 if(signature == undefined){
+                    signature = '-'
+                }
+                if(signature == ""){
                     signature = '-'
                 }
                 if(isSeminary == 1){    
