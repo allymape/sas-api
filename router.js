@@ -3780,39 +3780,42 @@ router.post('/tuma-mmiliki-majibu', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-            // let transporter = nodeMailer.createTransport({
-            //     host: process.env.MAIL_HOST,
-            //     port: 465,
-            //     secure: true,
-            //     auth: {
-            //         user: process.env.MAIL_USER,
-            //         pass: process.env.MAIL_PASS
-            //     }
-            // });
-            // let mailOptions = {
-            //     from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-            //     to: email, // list of receivers
-            //     subject: "Taarifa ya Ombi", // Subject line
-            //     html: "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-            //     text: '<b>EA.20220920-220</b>' // html body
-            // };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                html: "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                text: '<b>EA.20220920-220</b>' // html body
+            };
       
-            // transporter.sendMail(mailOptions, (error, info) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     console.log('Message %s sent: %s', info.messageId, info.response);
-            //         // res.render('index');
-            //         return res.status(200).send({
-            //             error: true,
-            //             statusCode: 300,
-            //             msg: 'Mail imetumwa!!!'
-            //             });
-            //     });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                    })
+                });
+        }
         if(req.body.haliombi == 2){
             db.query('UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?', 
             [today, req.body.establishId] , 
@@ -3876,39 +3879,42 @@ router.post('/tuma-meneja-majibu', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-            // let transporter = nodeMailer.createTransport({
-            //     host: process.env.MAIL_HOST,
-            //     port: 465,
-            //     secure: true,
-            //     auth: {
-            //         user: process.env.MAIL_USER,
-            //         pass: process.env.MAIL_PASS
-            //     }
-            // });
-            // let mailOptions = {
-            //     from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-            //     to: email, // list of receivers
-            //     subject: "Taarifa ya Ombi", // Subject line
-            //     html: "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-            //     text: '<b>EA.20220920-220</b>' // html body
-            // };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                html: "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                text: '<b>EA.20220920-220</b>' // html body
+            };
       
-            // transporter.sendMail(mailOptions, (error, info) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     console.log('Message %s sent: %s', info.messageId, info.response);
-            //         // res.render('index');
-            //         return res.status(200).send({
-            //             error: true,
-            //             statusCode: 300,
-            //             msg: 'Mail imetumwa!!!'
-            //             });
-            //     });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            });
+        }
         if(req.body.haliombi == 2){
             db.query('UPDATE managers SET updated_at = ? WHERE establishing_school_id = ?', 
             [today, req.body.establishId] , 
@@ -3972,39 +3978,42 @@ router.post('/tuma-mmiliki-badili-majibu', shirikishoValidation, (req, res, next
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-        //     let transporter = nodeMailer.createTransport({
-        //         host: process.env.MAIL_HOST,
-        //         port: 465,
-        //         secure: true,
-        //         auth: {
-        //             user: process.env.MAIL_USER,
-        //             pass: process.env.MAIL_PASS
-        //         }
-        //     });
-        //     let mailOptions = {
-        //         from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-        //         to: email, // list of receivers
-        //         subject: "Taarifa ya Ombi", // Subject line
-        //         html: "Ombi la Kubadili Umiliki lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-        //         text: '<b>EA.20220920-220</b>' // html body
-        //     };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                html: "Ombi la Kubadili Umiliki lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                text: '<b>EA.20220920-220</b>' // html body
+            };
       
-        //     transporter.sendMail(mailOptions, (error, info) => {
-        //         if (error) {
-        //             return console.log(error);
-        //         }
-        //         console.log('Message %s sent: %s', info.messageId, info.response);
-        //             // res.render('index');
-        //             return res.status(200).send({
-        //                 error: true,
-        //                 statusCode: 300,
-        //                 msg: 'Mail imetumwa!!!'
-        //                 });
-        //         });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            })
+        }
         if(req.body.haliombi == 2){
             db.query('UPDATE owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?', 
             [owner_name_old, authorized_person_old, req.body.establishId] , 
@@ -4064,39 +4073,42 @@ router.post('/tuma-badili-majibu', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-            // let transporter = nodeMailer.createTransport({
-            //     host: process.env.MAIL_HOST,
-            //     port: 465,
-            //     secure: true,
-            //     auth: {
-            //         user: process.env.MAIL_USER,
-            //         pass: process.env.MAIL_PASS
-            //     }
-            // });
-            // let mailOptions = {
-            //     from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-            //     to: email, // list of receivers
-            //     subject: "Taarifa ya Ombi", // Subject line
-            //     text: "Ombi la Kubadili Mkondo shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-            //     html: '<b>EA.20220920-220</b>' // html body
-            // };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                text: "Ombi la Kubadili Mkondo shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                html: '<b>EA.20220920-220</b>' // html body
+            };
       
-            // transporter.sendMail(mailOptions, (error, info) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     console.log('Message %s sent: %s', info.messageId, info.response);
-            //         // res.render('index');
-            //         return res.status(200).send({
-            //             error: true,
-            //             statusCode: 300,
-            //             msg: 'Mail imetumwa!!!'
-            //             });
-            //     });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            })
+        }
         if(req.body.haliombi == 2){
             db.query('UPDATE establishing_schools SET stream = ? WHERE id = ?', 
             [req.body.newstream, req.body.establishId] , 
@@ -4156,39 +4168,42 @@ router.post('/tuma-ongeza-majibu', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-            // let transporter = nodeMailer.createTransport({
-            //     host: process.env.MAIL_HOST,
-            //     port: 465,
-            //     secure: true,
-            //     auth: {
-            //         user: process.env.MAIL_USER,
-            //         pass: process.env.MAIL_PASS
-            //     }
-            // });
-            // let mailOptions = {
-            //     from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-            //     to: email, // list of receivers
-            //     subject: "Taarifa ya Ombi", // Subject line
-            //     text: "Ombi la Kubadili Mkondo shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-            //     html: '<b>EA.20220920-220</b>' // html body
-            // };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                text: "Ombi la Kubadili Mkondo shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                html: '<b>EA.20220920-220</b>' // html body
+            };
       
-            // transporter.sendMail(mailOptions, (error, info) => {
-            //     if (error) {
-            //         return console.log(error);
-            //     }
-            //     console.log('Message %s sent: %s', info.messageId, info.response);
-            //         // res.render('index');
-            //         return res.status(200).send({
-            //             error: true,
-            //             statusCode: 300,
-            //             msg: 'Mail imetumwa!!!'
-            //             });
-            //     });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            })
+        }
         if(req.body.haliombi == 2){
             db.query('INSERT INTO school_combinations (school_registration_id, combination_id) VALUES (? , ?)', 
             [req.body.establishId, req.body.newstream] , 
@@ -4248,39 +4263,42 @@ router.post('/tuma-badili-bweni', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-        //     let transporter = nodeMailer.createTransport({
-        //         host: process.env.MAIL_HOST,
-        //         port: 465,
-        //         secure: true,
-        //         auth: {
-        //             user: process.env.MAIL_USER,
-        //             pass: process.env.MAIL_PASS
-        //         }
-        //     });
-        //     let mailOptions = {
-        //         from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-        //         to: email, // list of receivers
-        //         subject: "Taarifa ya Ombi", // Subject line
-        //         html: "Ombi la Kuongeza Bweni lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-        //         text: '<b>EA.20220920-220</b>' // html body
-        //     };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                html: "Ombi la Kuongeza Bweni lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                text: '<b>EA.20220920-220</b>' // html body
+            };
       
-        //     transporter.sendMail(mailOptions, (error, info) => {
-        //         if (error) {
-        //             return console.log(error);
-        //         }
-        //         console.log('Message %s sent: %s', info.messageId, info.response);
-        //             // res.render('index');
-        //             return res.status(200).send({
-        //                 error: true,
-        //                 statusCode: 300,
-        //                 msg: 'Mail imetumwa!!!'
-        //                 });
-        //         });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            })
+        }
         if(req.body.haliombi == 2){
             db.query('UPDATE establishing_schools SET school_sub_category_id = ? WHERE id = ?', 
             [req.body.newstream, req.body.establishId] , 
@@ -4574,39 +4592,42 @@ router.post('/tuma-sajili-majibu', shirikishoValidation, (req, res, next) => {
         [req.body.staffs, req.body.department, req.body.haliombi, today, req.body.trackerId] , 
         function (error, results, fields) {
         if (error) {console.log(error)}
-        // db.query('select email from staffs where id = ?', [req.body.staffs], 
-        // function (error, results, fields) {
-        //     if (error) {console.log(error)}
-        //     var email = results[0].email;
-        //     let transporter = nodeMailer.createTransport({
-        //         host: process.env.MAIL_HOST,
-        //         port: 465,
-        //         secure: true,
-        //         auth: {
-        //             user: process.env.MAIL_USER,
-        //             pass: process.env.MAIL_PASS
-        //         }
-        //     });
-        //     let mailOptions = {
-        //         from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-        //         to: email, // list of receivers
-        //         subject: "Taarifa ya Ombi", // Subject line
-        //         html: "Ombi la Kuanzisha shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
-        //         text: '<b>EA.20220920-220</b>' // html body
-        //     };
+        if(req.body.haliombi == 1){
+        db.query('select email from staffs where id = ?', [req.body.staffs], 
+        function (error, results, fields) {
+            if (error) {console.log(error)}
+            var email = results[0].email;
+            let transporter = nodeMailer.createTransport({
+                host: process.env.MAIL_HOST,
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.MAIL_USER,
+                    pass: process.env.MAIL_PASS
+                }
+            });
+            let mailOptions = {
+                from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+                to: email, // list of receivers
+                subject: "Taarifa ya Ombi", // Subject line
+                html: "Ombi la Kuanzisha shule lenye namba " + req.body.trackerId + " limetumwa kwako. Asante", // plain text body
+                text: '<b>EA.20220920-220</b>' // html body
+            };
       
-        //     transporter.sendMail(mailOptions, (error, info) => {
-        //         if (error) {
-        //             return console.log(error);
-        //         }
-        //         console.log('Message %s sent: %s', info.messageId, info.response);
-        //             // res.render('index');
-        //             return res.status(200).send({
-        //                 error: true,
-        //                 statusCode: 300,
-        //                 msg: 'Mail imetumwa!!!'
-        //                 });
-        //         });
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                    // res.render('index');
+                    return res.status(200).send({
+                        error: true,
+                        statusCode: 300,
+                        msg: 'Mail imetumwa!!!'
+                        });
+                });
+            })
+        }
         if(req.body.haliombi == 2){
         console.log("yes we can do it")
         db.query('select last_number from algorthm where id = ?', [schoolCatId], 
