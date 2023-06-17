@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db  = require('./dbConnection');
 const db2  = require('./dbConnection_two');
-const { signupValidation, loginValidation, makundiValidation, shirikishoValidation, memberValidation } = require('./validation');
+const { signupValidation, loginValidation, makundiValidation, 
+    shirikishoValidation, memberValidation } = require('./validation');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -43050,7 +43051,8 @@ router.get('/ainaMaombi', (req, res, next) => {
             db.query('SELECT attachment_types.id as id, app_name, file_size, file_format, attachment_name, registry ' + 
             ' FROM attachment_types, application_categories, ' + 
             ' registry_types WHERE application_categories.id = attachment_types.application_category_id ' + 
-            ' AND attachment_types.registry_type_id = registry_types.id AND attachment_types.status_id = ?', [1], function (error, results, fields) {
+            ' AND attachment_types.registry_type_id = registry_types.id AND attachment_types.status_id = ?', 
+            [1], function (error, results, fields) {
                 if (error) {console.log(error)}
                 for(var i = 0; i < results.length; i++){
                     var file_format = results[i].file_format;
