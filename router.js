@@ -7906,7 +7906,7 @@ router.get("/usajiliKata", (req, res, next) => {
         var total_elements = jsonData.pagination.total;
         var per_page = 1000;
         var num_of_pages = Math.ceil(total_elements / per_page);
-       
+        var success = false;
         for (var index = 1; index <= num_of_pages; index++) {
           request(
             {
@@ -7958,14 +7958,112 @@ router.get("/usajiliKata", (req, res, next) => {
                       }
                     }
                   );
-                 return res.send({
-                   statusCode: 300,
-                   message: success ? "Imefanikiwa kupakia Halmashauri mipya" : 'Haijafanikiwa kuingiza taarifa za Halmashauri.',
-                 }); 
+                 
               }
             }
           );
         }
+        return res.send({
+          statusCode: 300,
+          message: success
+            ? "Imefanikiwa kupakia Halmashauri mipya"
+            : "Haijafanikiwa kuingiza taarifa za Halmashauri.",
+        }); 
+      }
+    }
+  );
+});
+router.get("/usajiliMitaa", (req, res, next) => {
+
+  request(
+    {
+      //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
+      url: admin_area_url + "streets",
+      method: "GET",
+      headers: {
+        //   'Authorization': 'Bearer' + " " + req.session.Token,
+        "Content-Type": "application/json",
+      },
+      //json: {trackingNo: trackingNo}
+    },
+    function (error, response, body) {
+      if (error) {
+        console.log(new Date() + ": fail to UsajiliGraph " + error);
+        res.send("failed");
+      }
+      if (body !== undefined) {
+        var jsonData = JSON.parse(body);
+        var total_elements = jsonData.pagination.total;
+        var per_page = 1000;
+        var num_of_pages = Math.ceil(total_elements / per_page);
+        var success = false;
+        for (var index = 1; index <= num_of_pages; index++) {
+          
+          request(
+            {
+              url:
+                admin_area_url +
+                "streets?per_page=" +
+                per_page +
+                "&page=" +
+                index,
+              method: "GET",
+              headers: {
+                //   'Authorization': 'Bearer' + " " + req.session.Token,
+                "Content-Type": "application/json",
+              },
+              //json: {trackingNo: trackingNo}
+            },
+            function (error, response, body) {
+              if (error) {
+                console.log(new Date() + ": fail to UsajiliGraph " + error);
+                res.send("failed");
+              }
+              
+              if (body !== undefined) {
+                var jsonData = JSON.parse(body);
+                var street_content = jsonData.data;
+                var values = [];
+                var success = false;
+                //   console.log(jsonData.response.content)
+                for (var i = 0; i < street_content.length; i++) {
+                  var street_id = street_content[i].id;
+                  var street_name = street_content[i].name;
+                  var street_code = street_content[i].village_uid;
+                  var ward_code = street_content[i].ward_uid;
+                  var created_at = formatDate(new Date());
+                  values.push([
+                    street_id,
+                    street_code,
+                    street_name,
+                    ward_code,
+                    created_at,
+                  ]);
+                }
+                db.query(
+                  `INSERT INTO streets (id, StreetCode, StreetName, WardCode , created_at) VALUES ?`,
+                  [values],
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    if (result) {
+                      // console.log(`Wards created successfully batch ${index}`);
+                      success = true;
+                    }
+                  }
+                );
+                
+              }
+            }
+          );
+        }
+        return res.send({
+          statusCode: 300,
+          message: success
+            ? "Imefanikiwa kupakia Mitaa mipya"
+            : "Haijafanikiwa kuingiza taarifa za Mitaa.",
+        });
       }
     }
   );
@@ -64530,7 +64628,7 @@ router.get("/regions", (req, res, next) => {
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
-    "SELECT id, RegionCode, RegionName, zone_code FROM regions ORDER BY RegionName ASC LIMIT ? , ?",
+    "SELECT regions.id AS id, RegionCode, RegionName, zone_name AS ZoneName FROM regions LEFT JOIN zones ON zones.zone_code=regions.zone_code ORDER BY RegionName ASC LIMIT ? , ?",
     [offset , per_page],
     function (error, results, fields) {
       if (error) {
@@ -64540,12 +64638,12 @@ router.get("/regions", (req, res, next) => {
         var regionId = results[i].id;
         var regionCode = results[i].RegionCode;
         var regionName = results[i].RegionName;
-        var zoneCode = results[i].zone_code;
+        var zoneName = results[i].ZoneName;
         obj.push({
-          regionId:   regionId,
+          regionId: regionId,
           regionCode: regionCode,
           regionName: regionName,
-          zoneCode:   zoneCode,
+          zoneName: zoneName ? zoneName : '',
         });
       }
       db.query("SELECT COUNT(*) AS num_rows FROM regions" , function(error , result2, fields2){
@@ -64755,7 +64853,7 @@ router.get("/allWards", (req, res, next) => {
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
     "SELECT WardCode, WardName, LgaName, RegionName FROM wards, " +
-      " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC LIMIT ?, ?",
+      " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC, LgaName  ASC LIMIT ?, ?",
       [offset, per_page],
     function (error, results, fields) {
       if (error) {
@@ -64776,6 +64874,67 @@ router.get("/allWards", (req, res, next) => {
         }
         db.query(
           "SELECT COUNT(*) AS num_rows FROM wards",
+          function (error2, result2, fields2) {
+            return res.send({
+              error: false,
+              statusCode: 300,
+              data: obj,
+              numRows: result2[0].num_rows,
+              message: "List of wards.",
+            });
+          }
+        );
+      }
+    }
+  );
+});
+
+//list of all streets
+router.get("/allStreets", (req, res, next) => {
+  var obj = [];
+  var per_page = parseInt(req.query.per_page);
+  var page = parseInt(req.query.page);
+  var offset = (page - 1) * per_page;
+  // var districtId = req.body.districtCode;
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(200).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  
+  db.query(
+    "SELECT StreetCode, StreetName, WardName, LgaName, RegionName FROM streets, " +
+      " wards,districts,regions WHERE wards.WardCode = streets.WardCode AND wards.LgaCode = districts.LgaCode AND districts.RegionCode = regions.RegionCode ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC LIMIT ?,?",
+    [offset, per_page],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("matokeo", results);
+        for (var i = 0; i < results.length; i++) {
+          var StreetCode = results[i].StreetCode;
+          var WardName = results[i].WardName;
+          var StreetName = results[i].StreetName;
+          var LgaName = results[i].LgaName;
+          var RegionName = results[i].RegionName;
+          obj.push({
+            StreetCode: StreetCode,
+            WardName: WardName,
+            StreetName: StreetName,
+            LgaName: LgaName,
+            RegionName: RegionName,
+          });
+        }
+        db.query(
+          "SELECT COUNT(*) AS num_rows FROM streets",
           function (error2, result2, fields2) {
             return res.send({
               error: false,
