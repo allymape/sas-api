@@ -7771,6 +7771,7 @@ router.get("/usajiliMikoa", (req, res, next) => {
         console.log(jsonData);
         var regi_content = jsonData.data;
         var totalElements = jsonData.pagination.total;
+        var  success = false;
         console.log("totalElements " + totalElements);
         db.query(
           `SELECT count(id) as kaunti_reg FROM regions`,
@@ -7792,26 +7793,30 @@ router.get("/usajiliMikoa", (req, res, next) => {
                     var reg_name = regi_content[i].name;
                     var reg_code = regi_content[i].region_uid;
                     var created_at = formatDate(new Date());
-                    values.push([reg_id, reg_code, reg_name, created_at]);
+                    var updated_at = formatDate(new Date());
+                    values.push([reg_id, reg_code, reg_name, created_at, updated_at]);
                 }
                 // console.log(values)
                  db.query(
-                   `INSERT INTO regions (id, RegionCode, RegionName , created_at) VALUES ?`,
+                   `INSERT INTO regions (id, RegionCode, RegionName , created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE RegionCode = VALUES(RegionCode), RegionName = VALUES(RegionName), updated_at = VALUES(updated_at)`,
                    [values],
                    (err, result) => {
                      if (err) {
                        console.log(err);
                      }
-                     if(result){
-                      console.log('Regions data created successfully')
+                     if (result) {
+                      //  console.log("Regions data created successfully");
+                      success = true;
                      }
+                     return res.send({
+                       statusCode: 300 ,
+                       message: success
+                         ? "Imefanikiwa kupakia mikoa mipya"
+                         : "Haijafanikiwa kupakia mikoa mipya",
+                     });
                    }
                  );
-                return res.send({
-                  statusCode: 300,
-                  message: "Imefanikiwa kupakia mikoa mipya",
-                });
-              
+                 
             }
           }
         );
@@ -7841,6 +7846,7 @@ router.get("/usajiliWilaya", (req, res, next) => {
         var jsonData = JSON.parse(body);
         var council_content = jsonData.data;
         var totalElements = jsonData.pagination.total;
+        var success = false;
         console.log("totalElements " + totalElements);
         db.query(
           `SELECT count(id) as kaunti_lga FROM districts`,
@@ -7855,27 +7861,33 @@ router.get("/usajiliWilaya", (req, res, next) => {
                   var council_code = council_content[i].district_uid;
                   var region_code = council_content[i].region_uid;
                   var created_at = formatDate(new Date());
+                  var updated_at = formatDate(new Date());
                 //   console.log(region_code + " - " + council_name);
-                  values.push([council_id , council_code , council_name , region_code , created_at])
+                  values.push([council_id , council_code , council_name , region_code , created_at , updated_at])
                 }
                 db.query(
-                    `INSERT INTO districts (id,LgaCode, LgaName, RegionCode , created_at) VALUES ?`,
-                    [values],
-                    (err, result) => {
-                      if (err) {
-                        console.log(err);
-                      } 
-                      if(result){
-                        console.log("Councils created successfully.")
-                      }
+                  `INSERT INTO districts (id,LgaCode, LgaName, RegionCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE LgaCode = VALUES(LgaCode), LgaName = VALUES(LgaName), RegionCode = VALUES(RegionCode), updated_at = VALUES(updated_at)`,
+                  [values],
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
                     }
-                  );
-                return res.send({
-                  statusCode: 300,
-                  message: "Imefanikiwa kupakia Halmashauri mipya",
-                });
+                    if (result) {
+                      console.log("Councils created successfully.");
+                      success = true;
+                    }
+                     return res.send({
+                       statusCode: 300,
+                       message: success
+                         ? "Imefanikiwa kupakia Halmashauri mpya"
+                         : "Haijafanikiwa kupakia Halmashauri mpya",
+                     });
+                  }
+                );
+                
             
           }
+         
          }
         );
       }
@@ -7935,16 +7947,18 @@ router.get("/usajiliKata", (req, res, next) => {
                    var ward_code = ward_content[i].ward_uid;
                    var council_code = ward_content[i].district_uid;
                    var created_at = formatDate(new Date());
+                   var updated_at = formatDate(new Date());
                    values.push([
                      ward_id,
                      ward_code,
                      ward_name,
                      council_code,
                      created_at,
+                     updated_at
                    ]);
                 }
                   db.query(
-                    `INSERT INTO wards (id, WardCode, WardName, LgaCode , created_at) VALUES ?`,
+                    `INSERT INTO wards (id, WardCode, WardName, LgaCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE WardCode = VALUES(WardCode), WardName = VALUES(WardName), LgaCode = VALUES(LgaCode), updated_at = VALUES(updated_at)`,
                     [values],
                     (err, result) => {
                       if (err) {
@@ -7956,6 +7970,12 @@ router.get("/usajiliKata", (req, res, next) => {
                         );
                         success = true;
                       }
+                      return res.send({
+                        statusCode: 300,
+                        message: success
+                          ? "Imefanikiwa kupakia Kat mpya"
+                          : "Haijafanikiwa kuingiza taarifa za Kata.",
+                      }); 
                     }
                   );
                  
@@ -7963,17 +7983,12 @@ router.get("/usajiliKata", (req, res, next) => {
             }
           );
         }
-        return res.send({
-          statusCode: 300,
-          message: success
-            ? "Imefanikiwa kupakia Halmashauri mipya"
-            : "Haijafanikiwa kuingiza taarifa za Halmashauri.",
-        }); 
+        
       }
     }
   );
 });
-router.get("/usajiliMitaa", (req, res, next) => {
+router.get("/usajiliMitaa", (req, res, next)=>  {
 
   request(
     {
@@ -7994,7 +8009,7 @@ router.get("/usajiliMitaa", (req, res, next) => {
       if (body !== undefined) {
         var jsonData = JSON.parse(body);
         var total_elements = jsonData.pagination.total;
-        var per_page = 1000;
+        var per_page = 2000;
         var num_of_pages = Math.ceil(total_elements / per_page);
         var success = false;
         for (var index = 1; index <= num_of_pages; index++) {
@@ -8032,25 +8047,28 @@ router.get("/usajiliMitaa", (req, res, next) => {
                   var street_code = street_content[i].village_uid;
                   var ward_code = street_content[i].ward_uid;
                   var created_at = formatDate(new Date());
+                  var updated_at = formatDate(new Date());
                   values.push([
                     street_id,
                     street_code,
                     street_name,
                     ward_code,
                     created_at,
+                    updated_at
                   ]);
                 }
                 db.query(
-                  `INSERT INTO streets (id, StreetCode, StreetName, WardCode , created_at) VALUES ?`,
+                  `INSERT INTO streets (id, StreetCode, StreetName, WardCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE StreetCode = VALUES(StreetCode), StreetName = VALUES(StreetName), WardCode = VALUES(WardCode), updated_at = VALUES(updated_at)`,
                   [values],
                   (err, result) => {
                     if (err) {
                       console.log(err);
                     }
                     if (result) {
-                      // console.log(`Wards created successfully batch ${index}`);
+                      console.log(`Mitaa created successfully`);
                       success = true;
                     }
+                     
                   }
                 );
                 
@@ -8058,12 +8076,12 @@ router.get("/usajiliMitaa", (req, res, next) => {
             }
           );
         }
-        return res.send({
-          statusCode: 300,
-          message: success
-            ? "Imefanikiwa kupakia Mitaa mipya"
-            : "Haijafanikiwa kuingiza taarifa za Mitaa.",
-        });
+       return res.send({
+         statusCode: 300 ,
+         message: success
+           ? "Imefanikiwa kupakia Mitaa mipya"
+           : "Haijafanikiwa kuingiza taarifa za Mitaa.",
+       });
       }
     }
   );
@@ -64613,7 +64631,6 @@ router.get("/regions", (req, res, next) => {
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   
-
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer") ||
@@ -64628,7 +64645,7 @@ router.get("/regions", (req, res, next) => {
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
-    "SELECT regions.id AS id, RegionCode, RegionName, zone_name AS ZoneName FROM regions LEFT JOIN zones ON zones.zone_code=regions.zone_code ORDER BY RegionName ASC LIMIT ? , ?",
+    "SELECT regions.id AS id, RegionCode, RegionName, zone_name AS ZoneName, regions.created_at AS CreatedAt , regions.updated_at AS UpdatedAt FROM regions LEFT JOIN zones ON zones.zone_code=regions.zone_code ORDER BY RegionName ASC LIMIT ? , ?",
     [offset , per_page],
     function (error, results, fields) {
       if (error) {
@@ -64639,11 +64656,15 @@ router.get("/regions", (req, res, next) => {
         var regionCode = results[i].RegionCode;
         var regionName = results[i].RegionName;
         var zoneName = results[i].ZoneName;
+        var createdAt = results[i].CreatedAt;
+        var updatedAt = results[i].UpdatedAt;
         obj.push({
           regionId: regionId,
           regionCode: regionCode,
           regionName: regionName,
           zoneName: zoneName ? zoneName : '',
+          createdAt: createdAt,
+          updatedAt: updatedAt
         });
       }
       db.query("SELECT COUNT(*) AS num_rows FROM regions" , function(error , result2, fields2){
@@ -64756,7 +64777,7 @@ router.get("/allDistricts", (req, res, next) => {
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
     "SELECT regions.id as reg_id, regions.RegionName as RegionName, " +
-      " districts.LgaName as LgaName, districts.LgaCode as LgaCode FROM districts, " +
+      " districts.LgaName as LgaName, districts.LgaCode as LgaCode , districts.created_at AS CreatedAt , districts.updated_at AS UpdatedAt FROM districts, " +
       " regions WHERE districts.RegionCode = regions.RegionCode " +
       " ORDER BY RegionName ASC LIMIT ? , ?",
     [offset, per_page],
@@ -64769,10 +64790,14 @@ router.get("/allDistricts", (req, res, next) => {
           var districtId = results[i].LgaCode;
           var districtName = results[i].LgaName;
           var RegionName = results[i].RegionName;
+          var createdAt = results[i].UpdatedAt;
+          var updatedAt = results[i].UpdatedAt;
           obj.push({
             LgaCode: districtId,
             LgaName: districtName,
             regionName: RegionName,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
           });
         }
         db.query(
@@ -64852,9 +64877,9 @@ router.get("/allWards", (req, res, next) => {
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
-    "SELECT WardCode, WardName, LgaName, RegionName FROM wards, " +
+    "SELECT WardCode, WardName, LgaName, RegionName , wards.created_at AS CreatedAt , wards.updated_at AS UpdatedAt FROM wards, " +
       " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC, LgaName  ASC LIMIT ?, ?",
-      [offset, per_page],
+    [offset, per_page],
     function (error, results, fields) {
       if (error) {
         console.log(error);
@@ -64865,11 +64890,15 @@ router.get("/allWards", (req, res, next) => {
           var wardName = results[i].WardName;
           var LgaName = results[i].LgaName;
           var RegionName = results[i].RegionName;
+          var CreatedAt = results[i].CreatedAt;
+          var UpdatedAt = results[i].UpdatedAt;
           obj.push({
             WardCode: WardCode,
             wardName: wardName,
             LgaName: LgaName,
             RegionName: RegionName,
+            CreatedAt: CreatedAt,
+            UpdatedAt: UpdatedAt,
           });
         }
         db.query(
@@ -64911,7 +64940,7 @@ router.get("/allStreets", (req, res, next) => {
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   
   db.query(
-    "SELECT StreetCode, StreetName, WardName, LgaName, RegionName FROM streets, " +
+    "SELECT StreetCode, StreetName, WardName, LgaName, RegionName, streets.created_at AS CreatedAt , streets.updated_at AS UpdatedAt FROM streets, " +
       " wards,districts,regions WHERE wards.WardCode = streets.WardCode AND wards.LgaCode = districts.LgaCode AND districts.RegionCode = regions.RegionCode ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC LIMIT ?,?",
     [offset, per_page],
     function (error, results, fields) {
@@ -64925,12 +64954,16 @@ router.get("/allStreets", (req, res, next) => {
           var StreetName = results[i].StreetName;
           var LgaName = results[i].LgaName;
           var RegionName = results[i].RegionName;
+          var CreatedAt = results[i].CreatedAt;
+          var UpdatedAt = results[i].UpdatedAt;
           obj.push({
             StreetCode: StreetCode,
             WardName: WardName,
             StreetName: StreetName,
             LgaName: LgaName,
             RegionName: RegionName,
+            CreatedAt: CreatedAt,
+            UpdatedAt: UpdatedAt,
           });
         }
         db.query(
