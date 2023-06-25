@@ -8087,6 +8087,143 @@ router.get("/usajiliMitaa", (req, res, next)=>  {
   );
 });
 
+router.get("/existingSchools", (req, res, next) => {
+  request(
+    {
+      //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
+      url: admin_area_url + "schools",
+      method: "GET",
+      headers: {
+        //   'Authorization': 'Bearer' + " " + req.session.Token,
+        "Content-Type": "application/json",
+      },
+      //json: {trackingNo: trackingNo}
+    },
+    function (error, response, body) {
+      if (error) {
+        console.log(new Date() + ": fail to UsajiliGraph " + error);
+        res.send("failed");
+      }
+      if (body !== undefined) {
+        var jsonData = JSON.parse(body);
+        var total_elements = jsonData.pagination.total;
+        var per_page = 2000;
+        var num_of_pages = Math.ceil(total_elements / per_page);
+        var success = false;
+        for (var index = 1; index <= num_of_pages; index++) {
+          request(
+            {
+              url:
+                admin_area_url +
+                "schools?per_page=" +
+                per_page +
+                "&page=" +
+                index,
+              method: "GET",
+              headers: {
+                //   'Authorization': 'Bearer' + " " + req.session.Token,
+                "Content-Type": "application/json",
+              },
+              //json: {trackingNo: trackingNo}
+            },
+            function (error, response, body) {
+              if (error) {
+                console.log(new Date() + ": fail to UsajiliGraph " + error);
+                res.send("failed");
+              }
+
+              if (body !== undefined) {
+                var jsonData = JSON.parse(body);
+                var school_content = jsonData.data;
+                var established_schools = [];
+                var applications = [];
+                var school_registrations = [];
+                var success = false;
+                //   console.log(jsonData.response.content)
+                for (var i = 0; i < school_content.length; i++) {
+    
+                  var id = school_content[i].id;
+                  var secure_token = school_content[i].school_uid;
+                  var school_name = school_content[i].short_name;
+                  var type_id = school_content[i].type_id;
+                  var tracking_number = (type_id == 1 ? "EA" : (type_id == 2 ? "EM" : (type_id == 3 ? "ES"  : (type_id == 4 ? "EC" : null)))) + "-20001008-"+ id;
+                  var registration_number = school_content[i].registration_number;
+                  var registration_date = school_content[i].registration_date;
+                  var phone_number = school_content[i].phone_number;
+                  var ward_uid = school_content[i].ward_uid;
+                  var village_uid = school_content[i].village_uid;
+                  var email = school_content[i].email;
+                  var address = school_content[i].address;
+                  // var type = school_content[i].type;
+                  var registration_status = 1;
+                  var stage = 3;
+                  var user_id = 71;
+                  var userId = 71;
+                  var application_category = 4;
+                  var registry_type_id = 3;
+                  var is_for_disabled=0;
+                  var is_approved = 2;
+                  var status_id = 1;
+                  var is_complete=1;
+                  var is_hostel=0;
+                  var created_at = formatDate(new Date());
+                  var updated_at = formatDate(new Date());
+
+                  established_schools.push([id,school_name,secure_token,tracking_number,is_for_disabled,is_hostel,stage,ward_uid,village_uid,email,address,type_id,created_at,updated_at]);
+                  applications.push([id, userId,secure_token , secure_token,tracking_number , user_id , application_category, registry_type_id , is_approved, status_id, is_complete , created_at, updated_at]);
+                  school_registrations.push([id, secure_token, id, tracking_number , registration_date,registration_number, registration_status , created_at, updated_at]);
+                  
+                }
+                db.query(
+                  `INSERT INTO establishing_schools (id, school_name, secure_token, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
+                  [established_schools],
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                    }
+                    if (result) {
+                      db.query(
+                        `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), updated_at=VALUES(updated_at)`,
+                        [applications],
+                        (err2, result2) => {
+                          if (err2) {
+                            console.log(err2);
+                          }
+                          if (result2) {
+                            db.query(
+                              `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status),updated_at=VALUES(updated_at)`,
+                              [school_registrations],
+                              (err3, result3) => {
+                                if (err3) {
+                                  console.log(err3);
+                                }
+                                if (result3) {
+                                  console.log(`Shule zimeingia kwa ukamilifu`);
+                                  success = true;
+                                }
+                              }
+                            );
+                          }
+                        }
+                      );
+                    }
+                  }
+                );
+              }
+            }
+          );
+        }
+        return res.send({
+          statusCode: 300,
+          message: success
+            ? "Imefanikiwa kupakia Mitaa mipya"
+            : "Haijafanikiwa kuingiza taarifa za Mitaa.",
+        });
+      }
+    }
+  );
+});
+
 //update mwombaji api
 router.post("/update-applicant", signupValidation, (req, res, next) => {
   // console.log(req.body)
@@ -63783,7 +63920,8 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
   var month = date.getMonth();
   var UserLevel = req.body.UserLevel;
   var Office = req.body.Office;
-  console.log(UserLevel);
+  // console.log(Office);
+
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer") ||
@@ -63820,12 +63958,12 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, registration_number, applications.tracking_number as tracking_number, " +
             " school_name, category, school_registrations.updated_at as updated_at, LgaName, RegionName " +
             " from applications, establishing_schools, school_categories, wards, districts, regions, school_registrations " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND school_registrations.establishing_school_id = establishing_schools.id " +
             " AND districts.RegionCode = regions.RegionCode AND school_registrations.tracking_number = applications.tracking_number " +
-            " AND is_approved = ? and application_category_id = ? AND " +
-            " districts.LgaCode = ?",
+            " AND is_approved = ? AND application_category_id = ?",
+            " AND districts.LgaCode = ?",
           [2, 4, Office],
           function (error, results, fields) {
             if (error) {
@@ -63900,7 +64038,7 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
             " WardName, LgaName, RegionName, school_phone, po_box, school_email FROM school_gender_types, " +
             " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
             " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-            " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+            " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
             " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
             " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
             " school_categories.id = establishing_schools.school_category_id AND " +
@@ -63910,6 +64048,7 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
             if (error) {
               console.log(error);
             }
+            console.log(results.length)
             for (var i = 0; i < results.length; i++) {
               var school_name = results[i].school_name;
               var category = results[i].category;
