@@ -8169,13 +8169,29 @@ router.get("/existingSchools", (req, res, next) => {
                   var created_at = formatDate(new Date());
                   var updated_at = formatDate(new Date());
 
-                  established_schools.push([id,school_name,secure_token,tracking_number,is_for_disabled,is_hostel,stage,ward_uid,village_uid,email,address,type_id,created_at,updated_at]);
+                  established_schools.push([
+                    id,
+                    school_name,
+                    secure_token,
+                    phone_number,
+                    tracking_number,
+                    is_for_disabled,
+                    is_hostel,
+                    stage,
+                    ward_uid,
+                    village_uid,
+                    email,
+                    address,
+                    type_id,
+                    created_at,
+                    updated_at,
+                  ]);
                   applications.push([id, userId,secure_token , secure_token,tracking_number , user_id , application_category, registry_type_id , is_approved, status_id, is_complete , created_at, updated_at]);
                   school_registrations.push([id, secure_token, id, tracking_number , registration_date,registration_number, registration_status , created_at, updated_at]);
                   
                 }
                 db.query(
-                  `INSERT INTO establishing_schools (id, school_name, secure_token, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
+                  `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
                   [established_schools],
                   (err, result) => {
                     if (err) {
@@ -63920,6 +63936,9 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
   var month = date.getMonth();
   var UserLevel = req.body.UserLevel;
   var Office = req.body.Office;
+  var per_page = parseInt(req.query.per_page);
+  var page = parseInt(req.query.page);
+  var offset = (page - 1) * per_page;
   // console.log(Office);
 
   if (
@@ -63963,8 +63982,8 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
             " AND school_registrations.establishing_school_id = establishing_schools.id " +
             " AND districts.RegionCode = regions.RegionCode AND school_registrations.tracking_number = applications.tracking_number " +
             " AND is_approved = ? AND application_category_id = ?",
-            " AND districts.LgaCode = ?",
-          [2, 4, Office],
+            " AND districts.LgaCode = ? Limit ?,?",
+          [2, 4, Office , offset , per_page],
           function (error, results, fields) {
             if (error) {
               console.log(error);
@@ -64013,10 +64032,10 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
     );
   } else {
     db.query(
-      "SELECT COUNT(school_name) as kaunti, category FROM school_gender_types, " +
+      "SELECT COUNT(*) as kaunti FROM school_gender_types, " +
         " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
         " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-        " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+        " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
         " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
@@ -64026,10 +64045,10 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
         if (error) {
           console.log(error);
         }
-        for (var i = 0; i < results.length; i++) {
+        for (var i = 0; i < results.length; i++) { 
           var kaunti = results[i].kaunti;
           var category = results[i].category;
-          obj.push({ kaunti: kaunti, category: category });
+          obj.push({ kaunti: kaunti, category: category }); 
         }
         db.query(
           "SELECT school_registrations.tracking_number as tracking_number, " +
@@ -64042,13 +64061,13 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
             " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
             " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
             " school_categories.id = establishing_schools.school_category_id AND " +
-            " school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ?",
-          [1],
+            " school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ? LIMIT ?,?",
+          [1, offset, per_page],
           function (error, results, fields) {
             if (error) {
               console.log(error);
             }
-            console.log(results.length)
+            console.log(results.length);
             for (var i = 0; i < results.length; i++) {
               var school_name = results[i].school_name;
               var category = results[i].category;
@@ -64073,6 +64092,7 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
               }
               // prints date & time in YYYY-MM-DD HH:MM:SS format
               // console.log(year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + seconds);
+
               objList.push({
                 school_name: school_name,
                 category: category,
@@ -64095,14 +64115,28 @@ router.post("/jumla-sajili-shule", makundiValidation, (req, res, next) => {
               });
             }
 
+            db.query(
+              "SELECT COUNT(*) AS num_rows FROM school_registrations WHERE reg_status = 1 ",
+              function (error2, result2, fields2) {
+                if (error2) console.log(error2);
+                return res.send({
+                  error: false,
+                  statusCode: 300,
+                  data: obj,
+                  list: objList,
+                  numRows: result2[0].num_rows,
+                  message: "Jumla ya shule zilizosajiliwa kwa mwezi.",
+                });
+              }
+            );
             // console.log(objList)
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              list: objList,
-              message: "Jumla ya shule zilizosajiliwa kwa mwezi.",
-            });
+            // return res.send({
+            //   error: false,
+            //   statusCode: 300,
+            //   data: obj,
+            //   list: objList,
+            //   message: "Jumla ya shule zilizosajiliwa kwa mwezi.",
+            // });
           }
         );
       }
