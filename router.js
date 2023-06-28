@@ -23,7 +23,7 @@ const requestIp = require("request-ip");
 var session = require("express-session");
 
 var rateLimit = require("express-rate-limit");
-var admin_area_url = process.env.ADMIN_AREA_BASE_URL;
+var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes
@@ -31,6 +31,7 @@ const loginlimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
+
 
 router.use(
   session({
@@ -149,171 +150,176 @@ function UpdateAuditTrail(
   );
 }
 
-//login api
-router.post("/login", loginlimiter, (req, res, next) => {
-  // console.log(req.body.browser_used)
-  var obj = [];
-  var objRM = [];
-  db.query(
-    `SELECT staffs.id as id, password, staffs.name as name, 
-    staffs.username as username, staffs.phone_no as phone_no, 
-    staffs.user_status as user_status, staffs.last_login as last_login, 
-    staffs.role_id as role_id, staffs.new_role_id as new_role_id, staffs.email as email,
-    staffs.station_level as station_level, user_level, staffs.office as office, 
-    vyeo.rank_name as rank_name, 
-    vyeo.status_id as status_id, vyeo.rank_level as rank_level, twofa
-    FROM staffs, vyeo WHERE staffs.user_level = vyeo.id AND 
-    username = ${db.escape(req.body.username)} AND 
-    user_status = 1;`,
-    (err, result) => {
-      // user does not exists
-      if (err) {
-        console.log(err);
-        return res.status(400).send({
-          error: true,
-          statusCode: 400,
-          message: err,
-        });
-      }
-      if (!result.length) {
-        // if()
-        return res.status(200).send({
-          error: true,
-          statusCode: 302,
-          message: "Username or password is incorrect!",
-        });
-      }
-      // check password
-      bcrypt.compare(
-        req.body.password,
-        result[0]["password"],
-        (bErr, bResult) => {
-          // wrong password
-          if (bErr) {
-            console.log(bErr);
-            return res.status(200).send({
-              error: true,
-              statusCode: 302,
-              message: "Username or password is incorrect!",
-            });
-          }
-          if (bResult) {
-            const token = jwt.sign(
-              { id: result[0].id },
-              "the-super-strong-secrect",
-              { expiresIn: "5m" }
-            );
-            if (result[0].twofa == 0) {
-              db.query(
-                `UPDATE staffs SET last_login = now(), token_id = '${token}' WHERE id = '${result[0].id}'`
-              );
-            }
-            if (result[0].twofa == 1) {
-              var val = Math.floor(1000 + Math.random() * 9000);
-              let transporter = nodeMailer.createTransport({
-                host: process.env.MAIL_HOST,
-                port: 465,
-                secure: true,
-                auth: {
-                  user: process.env.MAIL_USER,
-                  pass: process.env.MAIL_PASS,
-                },
-              });
-              let mailOptions = {
-                from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
-                to: result[0].email, // list of receivers
-                subject: "2-Factor Authentication", // Subject line
-                text:
-                  "Msimbo wako ni " +
-                  val +
-                  ". Itakuwa sahihi ndani ya dakika 15", // plain text body
-                html:
-                  "Msimbo wako ni " +
-                  val +
-                  ". Itakuwa sahihi ndani ya dakika 15", // html body
-              };
+// //login api
+// router.post("/login", loginlimiter, (req, res, next) => {
+//   // console.log(req.body.browser_used)
+//   var obj = [];
+//   var objRM = [];
+//   db.query(
+//     `SELECT staffs.id as id, password, staffs.name as name, 
+//     staffs.username as username, staffs.phone_no as phone_no, 
+//     staffs.user_status as user_status, staffs.last_login as last_login, 
+//     staffs.role_id as role_id, staffs.new_role_id as new_role_id, staffs.email as email,
+//     staffs.station_level as station_level, user_level, staffs.office as office, 
+//     vyeo.rank_name as rank_name, 
+//     vyeo.status_id as status_id, vyeo.rank_level as rank_level, twofa
+//     FROM staffs, vyeo WHERE staffs.user_level = vyeo.id AND 
+//     username = ${db.escape(req.body.username)} AND 
+//     user_status = 1;`,
+//     (err, result) => {
+//       // user does not exists
+//       if (err) {
+//         console.log(err);
+//         return res.status(400).send({
+//           error: true,
+//           statusCode: 400,
+//           message: err,
+//         });
+//       }
+//       if (!result.length) {
+//         // if()
+//         return res.status(200).send({
+//           error: true,
+//           statusCode: 302,
+//           message: "Username or password is incorrect!",
+//         });
+//       }
+//       // check password
+//       bcrypt.compare(
+//         req.body.password,
+//         result[0]["password"],
+//         (bErr, bResult) => {
+//           // wrong password
+//           if (bErr) {
+//             console.log(bErr);
+//             return res.status(200).send({
+//               error: true,
+//               statusCode: 302,
+//               message: "Username or password is incorrect!",
+//             });
+//           }
+//           if (bResult) {
+//             const token = jwt.sign(
+//               { id: result[0].id },
+//               "the-super-strong-secrect",
+//               { expiresIn: "50m" }
+//             );
+//             if (result[0].twofa == 0) {
+//               db.query(
+//                 `UPDATE staffs SET last_login = now(), token_id = '${token}' WHERE id = '${result[0].id}'`
+//               );
+//             }
+//             if (result[0].twofa == 1) {
+//               var val = Math.floor(1000 + Math.random() * 9000);
+//               let transporter = nodeMailer.createTransport({
+//                 host: process.env.MAIL_HOST,
+//                 port: 465,
+//                 secure: true,
+//                 auth: {
+//                   user: process.env.MAIL_USER,
+//                   pass: process.env.MAIL_PASS,
+//                 },
+//               });
+//               let mailOptions = {
+//                 from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
+//                 to: result[0].email, // list of receivers
+//                 subject: "2-Factor Authentication", // Subject line
+//                 text:
+//                   "Msimbo wako ni " +
+//                   val +
+//                   ". Itakuwa sahihi ndani ya dakika 15", // plain text body
+//                 html:
+//                   "Msimbo wako ni " +
+//                   val +
+//                   ". Itakuwa sahihi ndani ya dakika 15", // html body
+//               };
 
-              transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                  return console.log(error);
-                }
-                console.log(
-                  "Message %s sent: %s",
-                  info.messageId,
-                  info.response
-                );
-                // res.render('index');
-                return res.status(200).send({
-                  error: true,
-                  statusCode: 300,
-                  msg: "Mail imetumwa!!!",
-                });
-              });
-              db.query(
-                `UPDATE staffs SET last_login = now(), twofa_digit = ${val}, token_id = '${token}' WHERE id = '${result[0].id}'`
-              );
-            }
+//               transporter.sendMail(mailOptions, (error, info) => {
+//                 if (error) {
+//                   return console.log(error);
+//                 }
+//                 console.log(
+//                   "Message %s sent: %s",
+//                   info.messageId,
+//                   info.response
+//                 );
+//                 // res.render('index');
+//                 return res.status(200).send({
+//                   error: true,
+//                   statusCode: 300,
+//                   msg: "Mail imetumwa!!!",
+//                 });
+//               });
+//               db.query(
+//                 `UPDATE staffs SET last_login = now(), twofa_digit = ${val}, token_id = '${token}' WHERE id = '${result[0].id}'`
+//               );
+//             }
 
-            globalIpAddress = req.body.ip_address;
-            console.log("ip address" + result[0].new_role_id);
+//             globalIpAddress = req.body.ip_address;
+//             console.log("ip address" + result[0].new_role_id);
 
-            obj.push({
-              id: result[0].id,
-              name: result[0].name,
-              username: result[0].username,
-              phone_no: result[0].phone_no,
-              user_status: result[0].user_status,
-              last_login: result[0].last_login,
-              user_level: result[0].user_level,
-              role_id: result[0].role_id,
-              station_level: result[0].station_level,
-              station_level: result[0].station_level,
-              office: result[0].office,
-              rank_name: result[0].rank_name,
-              status_id: result[0].status_id,
-              rank_level: result[0].rank_level,
-              twofa: result[0].twofa,
-              email: result[0].email,
-            });
-            db.query(
-              `SELECT permission_id FROM permissions, permission_role 
-            WHERE permission_role.permission_id = permissions.id 
-            AND permission_role.role_id = ${result[0]["new_role_id"]}`,
-              function (error11, results11, fields11) {
-                if (error11) {
-                  console.log(error11);
-                } else {
-                  for (var i = 0; i < results11.length; i++) {
-                    var permission_id = results11[i].permission_id;
-                    objRM.push({ permission_id: permission_id });
-                  }
+//             obj.push({
+//               id: result[0].id,
+//               name: result[0].name,
+//               username: result[0].username,
+//               phone_no: result[0].phone_no,
+//               user_status: result[0].user_status,
+//               last_login: result[0].last_login,
+//               user_level: result[0].user_level,
+//               role_id: result[0].role_id,
+//               station_level: result[0].station_level,
+//               station_level: result[0].station_level,
+//               office: result[0].office,
+//               rank_name: result[0].rank_name,
+//               status_id: result[0].status_id,
+//               rank_level: result[0].rank_level,
+//               twofa: result[0].twofa,
+//               email: result[0].email,
+//             });
+//             db.query(
+//               `SELECT permission_id , permission_name FROM permissions, permission_role 
+//             WHERE permission_role.permission_id = permissions.id 
+//             AND permission_role.role_id = ${result[0]["new_role_id"]}`,
+//               function (error11, results11, fields11) {
+//                 if (error11) {
+//                   console.log(error11);
+//                 } else {
+//                   for (var i = 0; i < results11.length; i++) {
+//                     var permission_id = results11[i].permission_id;
+//                     var permission_name = results11[i].permission_name;
+//                     objRM.push({
+//                       permission_id: permission_id,
+//                       permission_name: permission_name,
+//                     });
+//                     //  obj.push({ permission_name: permission_name });
+//                   }
 
-                  // })
-                  console.log("objRM");
-                  console.log(objRM);
-                  return res.status(200).send({
-                    error: false,
-                    statusCode: 300,
-                    message: "Logged in!",
-                    token,
-                    user: obj,
-                    RoleManage: objRM,
-                  });
-                }
-              }
-            );
-          } else {
-            return res.status(200).send({
-              error: true,
-              statusCode: 302,
-              message: "Username or password is incorrect!",
-            });
-          }
-        }
-      );
-    }
-  );
-});
+//                   // })
+//                   console.log("objRM");
+//                   console.log(objRM);
+//                   return res.status(200).send({
+//                     error: false,
+//                     statusCode: 300,
+//                     message: "Logged in!",
+//                     token,
+//                     user: obj,
+//                     RoleManage: objRM,
+//                   });
+//                 }
+//               }
+//             );
+//           } else {
+//             return res.status(200).send({
+//               error: true,
+//               statusCode: 302,
+//               message: "Username or password is incorrect!",
+//             });
+//           }
+//         }
+//       );
+//     }
+//   );
+// });
 
 router.post("/send", function (req, res) {
   // db.query(
@@ -7749,496 +7755,159 @@ router.post("/register-application", makundiValidation, (req, res, next) => {
 //     );
 // });
 
-router.get("/usajiliMikoa", (req, res, next) => {
-  request(
-    {
-      // url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=2&page=0&size=1000",
-      url: admin_area_url + "regions?per_page=100",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-      //json: {trackingNo: trackingNo}
-    },
-    function (error, response, body) {
-      if (error) {
-        console.log(new Date() + ": fail to UsajiliGraph " + error);
-        res.send("failed");
-      }
-      if (body !== undefined) {
-        var jsonData = JSON.parse(body);
-        console.log(jsonData);
-        var regi_content = jsonData.data;
-        var totalElements = jsonData.pagination.total;
-        var  success = false;
-        console.log("totalElements " + totalElements);
-        db.query(
-          `SELECT count(id) as kaunti_reg FROM regions`,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            } else {
-              var kaunti_reg = result[0].kaunti_reg;
-              console.log("jumla mikoa " + kaunti_reg);
-              // if (totalElements == kaunti_reg) {
-              //   return res.send({
-              //     statusCode: 306,
-              //     message: "Hakuna Mkoa mpya kwa sasa",
-              //   });
-              // } else if (totalElements > kaunti_reg) {
-                var values = [];
-                for (var i = 0; i < regi_content.length; i++) {
-                    var reg_id = regi_content[i].id;
-                    var reg_name = regi_content[i].name;
-                    var reg_code = regi_content[i].region_uid;
-                    var created_at = formatDate(new Date());
-                    var updated_at = formatDate(new Date());
-                    values.push([reg_id, reg_code, reg_name, created_at, updated_at]);
-                }
-                // console.log(values)
-                 db.query(
-                   `INSERT INTO regions (id, RegionCode, RegionName , created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE RegionCode = VALUES(RegionCode), RegionName = VALUES(RegionName), updated_at = VALUES(updated_at)`,
-                   [values],
-                   (err, result) => {
-                     if (err) {
-                       console.log(err);
-                     }
-                     if (result) {
-                      //  console.log("Regions data created successfully");
-                      success = true;
-                     }
-                     return res.send({
-                       statusCode: 300 ,
-                       message: success
-                         ? "Imefanikiwa kupakia mikoa mipya"
-                         : "Haijafanikiwa kupakia mikoa mipya",
-                     });
-                   }
-                 );
-                 
-            }
-          }
-        );
-      }
-    }
-  );
-});
 
-router.get("/usajiliWilaya", (req, res, next) => {
-  request(
-    {
-    //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=3&page=0&size=1000",
-      url:  admin_area_url + "councils?per_page=1000",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-      //json: {trackingNo: trackingNo}
-    },
-    function (error, response, body) {
-      if (error) {
-        console.log(new Date() + ": fail to UsajiliGraph " + error);
-        res.send("failed");
-      }
-      if (body !== undefined) {
-        var jsonData = JSON.parse(body);
-        var council_content = jsonData.data;
-        var totalElements = jsonData.pagination.total;
-        var success = false;
-        console.log("totalElements " + totalElements);
-        db.query(
-          `SELECT count(id) as kaunti_lga FROM districts`,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-            } else {
-               var values  = [];
-                for (var i = 0; i < council_content.length; i++) {
-                  var council_id = council_content[i].id;
-                  var council_name = council_content[i].name;
-                  var council_code = council_content[i].district_uid;
-                  var region_code = council_content[i].region_uid;
-                  var created_at = formatDate(new Date());
-                  var updated_at = formatDate(new Date());
-                //   console.log(region_code + " - " + council_name);
-                  values.push([council_id , council_code , council_name , region_code , created_at , updated_at])
-                }
-                db.query(
-                  `INSERT INTO districts (id,LgaCode, LgaName, RegionCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE LgaCode = VALUES(LgaCode), LgaName = VALUES(LgaName), RegionCode = VALUES(RegionCode), updated_at = VALUES(updated_at)`,
-                  [values],
-                  (err, result) => {
-                    if (err) {
-                      console.log(err);
-                    }
-                    if (result) {
-                      console.log("Councils created successfully.");
-                      success = true;
-                    }
-                     return res.send({
-                       statusCode: 300,
-                       message: success
-                         ? "Imefanikiwa kupakia Halmashauri mpya"
-                         : "Haijafanikiwa kupakia Halmashauri mpya",
-                     });
-                  }
-                );
-                
-            
-          }
-         
-         }
-        );
-      }
-    }
-  );
-});
+// router.get("/existingSchools", (req, res, next) => {
+//   request(
+//     {
+//       //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
+//       url: admin_area_url + "schools",
+//       method: "GET",
+//       headers: {
+//         //   'Authorization': 'Bearer' + " " + req.session.Token,
+//         "Content-Type": "application/json",
+//       },
+//       //json: {trackingNo: trackingNo}
+//     },
+//     function (error, response, body) {
+//       if (error) {
+//         console.log(new Date() + ": fail to UsajiliGraph " + error);
+//         res.send("failed");
+//       }
+//       if (body !== undefined) {
+//         var jsonData = JSON.parse(body);
+//         var total_elements = jsonData.pagination.total;
+//         var per_page = 2000;
+//         var num_of_pages = Math.ceil(total_elements / per_page);
+//         var success = false;
+//         for (var index = 1; index <= num_of_pages; index++) {
+//           request(
+//             {
+//               url:
+//                 admin_area_url +
+//                 "schools?per_page=" +
+//                 per_page +
+//                 "&page=" +
+//                 index,
+//               method: "GET",
+//               headers: {
+//                 //   'Authorization': 'Bearer' + " " + req.session.Token,
+//                 "Content-Type": "application/json",
+//               },
+//               //json: {trackingNo: trackingNo}
+//             },
+//             function (error, response, body) {
+//               if (error) {
+//                 console.log(new Date() + ": fail to UsajiliGraph " + error);
+//                 res.send("failed");
+//               }
 
-router.get("/usajiliKata", (req, res, next) => {
-//   console.log("lkljkhgf");
-  request(
-    {
-      //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
-      url: admin_area_url + "wards",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-      //json: {trackingNo: trackingNo}
-    },
-    function (error, response, body) {
-      if (error) {
-        console.log(new Date() + ": fail to UsajiliGraph " + error);
-        res.send("failed");
-      }
-      if (body !== undefined) {
-        var jsonData = JSON.parse(body);
-        var total_elements = jsonData.pagination.total;
-        var per_page = 1000;
-        var num_of_pages = Math.ceil(total_elements / per_page);
-        var success = false;
-        for (var index = 1; index <= num_of_pages; index++) {
-          request(
-            {
-              url:admin_area_url + "wards?per_page=" +per_page +"&page=" +index,
-              method: "GET",
-              headers: {
-                //   'Authorization': 'Bearer' + " " + req.session.Token,
-                "Content-Type": "application/json",
-              },
-              //json: {trackingNo: trackingNo}
-            },
-            function (error, response, body) {
-              if (error) {
-                console.log(new Date() + ": fail to UsajiliGraph " + error);
-                res.send("failed");
-              }
-              if (body !== undefined) {
-                var jsonData = JSON.parse(body);
-                var ward_content = jsonData.data;
-                var values = [];
-                var success = false;
-                //   console.log(jsonData.response.content)
-                for (var i = 0; i < ward_content.length; i++) {
-                   var ward_id = ward_content[i].id;
-                   var ward_name = ward_content[i].name;
-                   var ward_code = ward_content[i].ward_uid;
-                   var council_code = ward_content[i].district_uid;
-                   var created_at = formatDate(new Date());
-                   var updated_at = formatDate(new Date());
-                   values.push([
-                     ward_id,
-                     ward_code,
-                     ward_name,
-                     council_code,
-                     created_at,
-                     updated_at
-                   ]);
-                }
-                  db.query(
-                    `INSERT INTO wards (id, WardCode, WardName, LgaCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE WardCode = VALUES(WardCode), WardName = VALUES(WardName), LgaCode = VALUES(LgaCode), updated_at = VALUES(updated_at)`,
-                    [values],
-                    (err, result) => {
-                      if (err) {
-                        console.log(err);
-                      }
-                      if (result) {
-                        console.log(
-                          `Wards created successfully batch ${index}`
-                        );
-                        success = true;
-                      }
-                      return res.send({
-                        statusCode: 300,
-                        message: success
-                          ? "Imefanikiwa kupakia Kat mpya"
-                          : "Haijafanikiwa kuingiza taarifa za Kata.",
-                      }); 
-                    }
-                  );
-                 
-              }
-            }
-          );
-        }
-        
-      }
-    }
-  );
-});
-router.get("/usajiliMitaa", (req, res, next)=>  {
-
-  request(
-    {
-      //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
-      url: admin_area_url + "streets",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-      //json: {trackingNo: trackingNo}
-    },
-    function (error, response, body) {
-      if (error) {
-        console.log(new Date() + ": fail to UsajiliGraph " + error);
-        res.send("failed");
-      }
-      if (body !== undefined) {
-        var jsonData = JSON.parse(body);
-        var total_elements = jsonData.pagination.total;
-        var per_page = 2000;
-        var num_of_pages = Math.ceil(total_elements / per_page);
-        var success = false;
-        for (var index = 1; index <= num_of_pages; index++) {
-          
-          request(
-            {
-              url:
-                admin_area_url +
-                "streets?per_page=" +
-                per_page +
-                "&page=" +
-                index,
-              method: "GET",
-              headers: {
-                //   'Authorization': 'Bearer' + " " + req.session.Token,
-                "Content-Type": "application/json",
-              },
-              //json: {trackingNo: trackingNo}
-            },
-            function (error, response, body) {
-              if (error) {
-                console.log(new Date() + ": fail to UsajiliGraph " + error);
-                res.send("failed");
-              }
-              
-              if (body !== undefined) {
-                var jsonData = JSON.parse(body);
-                var street_content = jsonData.data;
-                var values = [];
-                var success = false;
-                //   console.log(jsonData.response.content)
-                for (var i = 0; i < street_content.length; i++) {
-                  var street_id = street_content[i].id;
-                  var street_name = street_content[i].name;
-                  var street_code = street_content[i].village_uid;
-                  var ward_code = street_content[i].ward_uid;
-                  var created_at = formatDate(new Date());
-                  var updated_at = formatDate(new Date());
-                  values.push([
-                    street_id,
-                    street_code,
-                    street_name,
-                    ward_code,
-                    created_at,
-                    updated_at
-                  ]);
-                }
-                db.query(
-                  `INSERT INTO streets (id, StreetCode, StreetName, WardCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE StreetCode = VALUES(StreetCode), StreetName = VALUES(StreetName), WardCode = VALUES(WardCode), updated_at = VALUES(updated_at)`,
-                  [values],
-                  (err, result) => {
-                    if (err) {
-                      console.log(err);
-                    }
-                    if (result) {
-                      console.log(`Mitaa created successfully`);
-                      success = true;
-                    }
-                     
-                  }
-                );
-                
-              }
-            }
-          );
-        }
-       return res.send({
-         statusCode: 300 ,
-         message: success
-           ? "Imefanikiwa kupakia Mitaa mipya"
-           : "Haijafanikiwa kuingiza taarifa za Mitaa.",
-       });
-      }
-    }
-  );
-});
-
-router.get("/existingSchools", (req, res, next) => {
-  request(
-    {
-      //   url: "https://sis.tamisemi.go.tz/api/v1/external/locations?levelId.equals=4&page=0&size=10000",
-      url: admin_area_url + "schools",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-      //json: {trackingNo: trackingNo}
-    },
-    function (error, response, body) {
-      if (error) {
-        console.log(new Date() + ": fail to UsajiliGraph " + error);
-        res.send("failed");
-      }
-      if (body !== undefined) {
-        var jsonData = JSON.parse(body);
-        var total_elements = jsonData.pagination.total;
-        var per_page = 2000;
-        var num_of_pages = Math.ceil(total_elements / per_page);
-        var success = false;
-        for (var index = 1; index <= num_of_pages; index++) {
-          request(
-            {
-              url:
-                admin_area_url +
-                "schools?per_page=" +
-                per_page +
-                "&page=" +
-                index,
-              method: "GET",
-              headers: {
-                //   'Authorization': 'Bearer' + " " + req.session.Token,
-                "Content-Type": "application/json",
-              },
-              //json: {trackingNo: trackingNo}
-            },
-            function (error, response, body) {
-              if (error) {
-                console.log(new Date() + ": fail to UsajiliGraph " + error);
-                res.send("failed");
-              }
-
-              if (body !== undefined) {
-                var jsonData = JSON.parse(body);
-                var school_content = jsonData.data;
-                var established_schools = [];
-                var applications = [];
-                var school_registrations = [];
-                var success = false;
-                //   console.log(jsonData.response.content)
-                for (var i = 0; i < school_content.length; i++) {
+//               if (body !== undefined) {
+//                 var jsonData = JSON.parse(body);
+//                 var school_content = jsonData.data;
+//                 var established_schools = [];
+//                 var applications = [];
+//                 var school_registrations = [];
+//                 var success = false;
+//                 //   console.log(jsonData.response.content)
+//                 for (var i = 0; i < school_content.length; i++) {
     
-                  var id = school_content[i].id;
-                  var secure_token = school_content[i].school_uid;
-                  var school_name = school_content[i].short_name;
-                  var type_id = school_content[i].type_id;
-                  var tracking_number = (type_id == 1 ? "EA" : (type_id == 2 ? "EM" : (type_id == 3 ? "ES"  : (type_id == 4 ? "EC" : null)))) + "-20001008-"+ id;
-                  var registration_number = school_content[i].registration_number;
-                  var registration_date = school_content[i].registration_date;
-                  var phone_number = school_content[i].phone_number;
-                  var ward_uid = school_content[i].ward_uid;
-                  var village_uid = school_content[i].village_uid;
-                  var email = school_content[i].email;
-                  var address = school_content[i].address;
-                  // var type = school_content[i].type;
-                  var registration_status = 1;
-                  var stage = 3;
-                  var user_id = 71;
-                  var userId = 71;
-                  var application_category = 4;
-                  var registry_type_id = 3;
-                  var is_for_disabled=0;
-                  var is_approved = 2;
-                  var status_id = 1;
-                  var is_complete=1;
-                  var is_hostel=0;
-                  var created_at = formatDate(new Date());
-                  var updated_at = formatDate(new Date());
+//                   var id = school_content[i].id;
+//                   var secure_token = school_content[i].school_uid;
+//                   var school_name = school_content[i].short_name;
+//                   var type_id = school_content[i].type_id;
+//                   var tracking_number = (type_id == 1 ? "EA" : (type_id == 2 ? "EM" : (type_id == 3 ? "ES"  : (type_id == 4 ? "EC" : null)))) + "-20001008-"+ id;
+//                   var registration_number = school_content[i].registration_number;
+//                   var registration_date = school_content[i].registration_date;
+//                   var phone_number = school_content[i].phone_number;
+//                   var ward_uid = school_content[i].ward_uid;
+//                   var village_uid = school_content[i].village_uid;
+//                   var email = school_content[i].email;
+//                   var address = school_content[i].address;
+//                   // var type = school_content[i].type;
+//                   var registration_status = 1;
+//                   var stage = 3;
+//                   var user_id = 71;
+//                   var userId = 71;
+//                   var application_category = 4;
+//                   var registry_type_id = 3;
+//                   var is_for_disabled=0;
+//                   var is_approved = 2;
+//                   var status_id = 1;
+//                   var is_complete=1;
+//                   var is_hostel=0;
+//                   var created_at = formatDate(new Date());
+//                   var updated_at = formatDate(new Date());
 
-                  established_schools.push([
-                    id,
-                    school_name,
-                    secure_token,
-                    phone_number,
-                    tracking_number,
-                    is_for_disabled,
-                    is_hostel,
-                    stage,
-                    ward_uid,
-                    village_uid,
-                    email,
-                    address,
-                    type_id,
-                    created_at,
-                    updated_at,
-                  ]);
-                  applications.push([id, userId,secure_token , secure_token,tracking_number , user_id , application_category, registry_type_id , is_approved, status_id, is_complete , created_at, updated_at]);
-                  school_registrations.push([id, secure_token, id, tracking_number , registration_date,registration_number, registration_status , created_at, updated_at]);
+//                   established_schools.push([
+//                     id,
+//                     school_name,
+//                     secure_token,
+//                     phone_number,
+//                     tracking_number,
+//                     is_for_disabled,
+//                     is_hostel,
+//                     stage,
+//                     ward_uid,
+//                     village_uid,
+//                     email,
+//                     address,
+//                     type_id,
+//                     created_at,
+//                     updated_at,
+//                   ]);
+//                   applications.push([id, userId,secure_token , secure_token,tracking_number , user_id , application_category, registry_type_id , is_approved, status_id, is_complete , created_at, updated_at]);
+//                   school_registrations.push([id, secure_token, id, tracking_number , registration_date,registration_number, registration_status , created_at, updated_at]);
                   
-                }
-                db.query(
-                  `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
-                  [established_schools],
-                  (err, result) => {
-                    if (err) {
-                      console.log(err);
-                    }
-                    if (result) {
-                      db.query(
-                        `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), updated_at=VALUES(updated_at)`,
-                        [applications],
-                        (err2, result2) => {
-                          if (err2) {
-                            console.log(err2);
-                          }
-                          if (result2) {
-                            db.query(
-                              `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status),updated_at=VALUES(updated_at)`,
-                              [school_registrations],
-                              (err3, result3) => {
-                                if (err3) {
-                                  console.log(err3);
-                                }
-                                if (result3) {
-                                  console.log(`Shule zimeingia kwa ukamilifu`);
-                                  success = true;
-                                }
-                              }
-                            );
-                          }
-                        }
-                      );
-                    }
-                  }
-                );
-              }
-            }
-          );
-        }
-        return res.send({
-          statusCode: 300,
-          message: success
-            ? "Imefanikiwa kupakia Mitaa mipya"
-            : "Haijafanikiwa kuingiza taarifa za Mitaa.",
-        });
-      }
-    }
-  );
-});
+//                 }
+          //       db.query(
+          //         `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
+          //         [established_schools],
+          //         (err, result) => {
+          //           if (err) {
+          //             console.log(err);
+          //           }
+          //           if (result) {
+          //             db.query(
+          //               `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), updated_at=VALUES(updated_at)`,
+          //               [applications],
+          //               (err2, result2) => {
+          //                 if (err2) {
+          //                   console.log(err2);
+          //                 }
+          //                 if (result2) {
+          //                   db.query(
+          //                     `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status),updated_at=VALUES(updated_at)`,
+          //                     [school_registrations],
+          //                     (err3, result3) => {
+          //                       if (err3) {
+          //                         console.log(err3);
+          //                       }
+          //                       if (result3) {
+          //                         console.log(`Shule zimeingia kwa ukamilifu`);
+          //                         success = true;
+          //                       }
+          //                     }
+          //                   );
+          //                 }
+          //               }
+          //             );
+          //           }
+          //         }
+          //       );
+          //     }
+          //   }
+          // );
+//         }
+//         return res.send({
+//           statusCode: 300,
+//           message: success
+//             ? "Imefanikiwa kupakia Mitaa mipya"
+//             : "Haijafanikiwa kuingiza taarifa za Mitaa.",
+//         });
+//       }
+//     }
+//   );
+// });
 
 //update mwombaji api
 router.post("/update-applicant", signupValidation, (req, res, next) => {
@@ -64795,64 +64464,7 @@ router.post("/lga-kuanzisha-shule", makundiValidation, (req, res, next) => {
   );
 });
 
-//list of regions
-router.get("/regions", (req, res, next) => {
-  var obj = [];
-  var obj1 = [];
- 
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    "SELECT regions.id AS id, RegionCode, RegionName, zone_name AS ZoneName, regions.created_at AS CreatedAt , regions.updated_at AS UpdatedAt FROM regions LEFT JOIN zones ON zones.zone_code=regions.zone_code ORDER BY RegionName ASC LIMIT ? , ?",
-    [offset , per_page],
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      for (var i = 0; i < results.length; i++) {
-        var regionId = results[i].id;
-        var regionCode = results[i].RegionCode;
-        var regionName = results[i].RegionName;
-        var zoneName = results[i].ZoneName;
-        var createdAt = results[i].CreatedAt;
-        var updatedAt = results[i].UpdatedAt;
-        obj.push({
-          regionId: regionId,
-          regionCode: regionCode,
-          regionName: regionName,
-          zoneName: zoneName ? zoneName : '',
-          createdAt: createdAt,
-          updatedAt: updatedAt
-        });
-      }
-      db.query("SELECT COUNT(*) AS num_rows FROM regions" , function(error , result2, fields2){
-        return res.send({
-          error: false,
-          statusCode: 300,
-          data: obj,
-          numRows: result2[0].num_rows,
-          message: "List of zones.",
-        });
-      });
-    }
-  );
-});
-
+// Hereeeeeeeeeeeeeeeeee
 //list of gender list
 router.get("/genderList", (req, res, next) => {
   var obj = [];
@@ -64928,67 +64540,67 @@ router.post("/districts", (req, res, next) => {
 });
 
 //list of all districts
-router.get("/allDistricts", (req, res, next) => {
-  var obj = [];
-  var regionId = req.body.regionCode;
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  // var regionId = req.body.regionCode;
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    "SELECT regions.id as reg_id, regions.RegionName as RegionName, " +
-      " districts.LgaName as LgaName, districts.LgaCode as LgaCode , districts.created_at AS CreatedAt , districts.updated_at AS UpdatedAt FROM districts, " +
-      " regions WHERE districts.RegionCode = regions.RegionCode " +
-      " ORDER BY RegionName ASC LIMIT ? , ?",
-    [offset, per_page],
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      } else {
-        // regions.RegionCode as RegionCode,
-        for (var i = 0; i < results.length; i++) {
-          var districtId = results[i].LgaCode;
-          var districtName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var createdAt = results[i].UpdatedAt;
-          var updatedAt = results[i].UpdatedAt;
-          obj.push({
-            LgaCode: districtId,
-            LgaName: districtName,
-            regionName: RegionName,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-          });
-        }
-        db.query(
-          "SELECT COUNT(*) AS num_rows FROM districts",
-          function (error2, result2, fields2) {
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              numRows: result2[0].num_rows,
-              message: "List of districts.",
-            });
-          }
-        );
-      }
-    }
-  );
-});
+// router.get("/allDistricts", (req, res, next) => {
+//   var obj = [];
+//   var regionId = req.body.regionCode;
+//   var per_page = parseInt(req.query.per_page);
+//   var page = parseInt(req.query.page);
+//   var offset = (page - 1) * per_page;
+//   // var regionId = req.body.regionCode;
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     "SELECT regions.id as reg_id, regions.RegionName as RegionName, " +
+//       " districts.LgaName as LgaName, districts.LgaCode as LgaCode , districts.created_at AS CreatedAt , districts.updated_at AS UpdatedAt FROM districts, " +
+//       " regions WHERE districts.RegionCode = regions.RegionCode " +
+//       " ORDER BY RegionName ASC LIMIT ? , ?",
+//     [offset, per_page],
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         // regions.RegionCode as RegionCode,
+//         for (var i = 0; i < results.length; i++) {
+//           var districtId = results[i].LgaCode;
+//           var districtName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var createdAt = results[i].UpdatedAt;
+//           var updatedAt = results[i].UpdatedAt;
+//           obj.push({
+//             LgaCode: districtId,
+//             LgaName: districtName,
+//             regionName: RegionName,
+//             createdAt: createdAt,
+//             updatedAt: updatedAt,
+//           });
+//         }
+//         db.query(
+//           "SELECT COUNT(*) AS num_rows FROM districts",
+//           function (error2, result2, fields2) {
+//             return res.send({
+//               error: false,
+//               statusCode: 300,
+//               data: obj,
+//               numRows: result2[0].num_rows,
+//               message: "List of districts.",
+//             });
+//           }
+//         );
+//       }
+//     }
+//   );
+// });
 
 //list of wards
 router.post("/wards", (req, res, next) => {
@@ -65030,131 +64642,131 @@ router.post("/wards", (req, res, next) => {
 });
 
 //list of all wards
-router.get("/allWards", (req, res, next) => {
-  var obj = [];
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  // var districtId = req.body.districtCode;
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    "SELECT WardCode, WardName, LgaName, RegionName , wards.created_at AS CreatedAt , wards.updated_at AS UpdatedAt FROM wards, " +
-      " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC, LgaName  ASC LIMIT ?, ?",
-    [offset, per_page],
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(results);
-        for (var i = 0; i < results.length; i++) {
-          var WardCode = results[i].WardCode;
-          var wardName = results[i].WardName;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var CreatedAt = results[i].CreatedAt;
-          var UpdatedAt = results[i].UpdatedAt;
-          obj.push({
-            WardCode: WardCode,
-            wardName: wardName,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            CreatedAt: CreatedAt,
-            UpdatedAt: UpdatedAt,
-          });
-        }
-        db.query(
-          "SELECT COUNT(*) AS num_rows FROM wards",
-          function (error2, result2, fields2) {
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              numRows: result2[0].num_rows,
-              message: "List of wards.",
-            });
-          }
-        );
-      }
-    }
-  );
-});
+// router.get("/allWards", (req, res, next) => {
+//   var obj = [];
+//   var per_page = parseInt(req.query.per_page);
+//   var page = parseInt(req.query.page);
+//   var offset = (page - 1) * per_page;
+//   // var districtId = req.body.districtCode;
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     "SELECT WardCode, WardName, LgaName, RegionName , wards.created_at AS CreatedAt , wards.updated_at AS UpdatedAt FROM wards, " +
+//       " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC, LgaName  ASC LIMIT ?, ?",
+//     [offset, per_page],
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         console.log(results);
+//         for (var i = 0; i < results.length; i++) {
+//           var WardCode = results[i].WardCode;
+//           var wardName = results[i].WardName;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var CreatedAt = results[i].CreatedAt;
+//           var UpdatedAt = results[i].UpdatedAt;
+//           obj.push({
+//             WardCode: WardCode,
+//             wardName: wardName,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             CreatedAt: CreatedAt,
+//             UpdatedAt: UpdatedAt,
+//           });
+//         }
+//         db.query(
+//           "SELECT COUNT(*) AS num_rows FROM wards",
+//           function (error2, result2, fields2) {
+//             return res.send({
+//               error: false,
+//               statusCode: 300,
+//               data: obj,
+//               numRows: result2[0].num_rows,
+//               message: "List of wards.",
+//             });
+//           }
+//         );
+//       }
+//     }
+//   );
+// });
 
 //list of all streets
-router.get("/allStreets", (req, res, next) => {
-  var obj = [];
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  // var districtId = req.body.districtCode;
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+// router.get("/allStreets", (req, res, next) => {
+//   var obj = [];
+//   var per_page = parseInt(req.query.per_page);
+//   var page = parseInt(req.query.page);
+//   var offset = (page - 1) * per_page;
+//   // var districtId = req.body.districtCode;
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   
-  db.query(
-    "SELECT StreetCode, StreetName, WardName, LgaName, RegionName, streets.created_at AS CreatedAt , streets.updated_at AS UpdatedAt FROM streets, " +
-      " wards,districts,regions WHERE wards.WardCode = streets.WardCode AND wards.LgaCode = districts.LgaCode AND districts.RegionCode = regions.RegionCode ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC LIMIT ?,?",
-    [offset, per_page],
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log("matokeo", results);
-        for (var i = 0; i < results.length; i++) {
-          var StreetCode = results[i].StreetCode;
-          var WardName = results[i].WardName;
-          var StreetName = results[i].StreetName;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var CreatedAt = results[i].CreatedAt;
-          var UpdatedAt = results[i].UpdatedAt;
-          obj.push({
-            StreetCode: StreetCode,
-            WardName: WardName,
-            StreetName: StreetName,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            CreatedAt: CreatedAt,
-            UpdatedAt: UpdatedAt,
-          });
-        }
-        db.query(
-          "SELECT COUNT(*) AS num_rows FROM streets",
-          function (error2, result2, fields2) {
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              numRows: result2[0].num_rows,
-              message: "List of wards.",
-            });
-          }
-        );
-      }
-    }
-  );
-});
+//   db.query(
+//     "SELECT StreetCode, StreetName, WardName, LgaName, RegionName, streets.created_at AS CreatedAt , streets.updated_at AS UpdatedAt FROM streets, " +
+//       " wards,districts,regions WHERE wards.WardCode = streets.WardCode AND wards.LgaCode = districts.LgaCode AND districts.RegionCode = regions.RegionCode ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC LIMIT ?,?",
+//     [offset, per_page],
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         console.log("matokeo", results);
+//         for (var i = 0; i < results.length; i++) {
+//           var StreetCode = results[i].StreetCode;
+//           var WardName = results[i].WardName;
+//           var StreetName = results[i].StreetName;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var CreatedAt = results[i].CreatedAt;
+//           var UpdatedAt = results[i].UpdatedAt;
+//           obj.push({
+//             StreetCode: StreetCode,
+//             WardName: WardName,
+//             StreetName: StreetName,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             CreatedAt: CreatedAt,
+//             UpdatedAt: UpdatedAt,
+//           });
+//         }
+//         db.query(
+//           "SELECT COUNT(*) AS num_rows FROM streets",
+//           function (error2, result2, fields2) {
+//             return res.send({
+//               error: false,
+//               statusCode: 300,
+//               data: obj,
+//               numRows: result2[0].num_rows,
+//               message: "List of wards.",
+//             });
+//           }
+//         );
+//       }
+//     }
+//   );
+// });
 
 //kusajili applications
 router.post("/register-applications", makundiValidation, (req, res, next) => {

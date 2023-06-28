@@ -21,7 +21,24 @@ app.use(express.json());
 
  
 app.use(cors());
- 
+
+// ##############START##########################
+// new Routes make this file short possible
+const regionRouter = require('./routers/regionRouter');
+const districtRouter = require('./routers/districtRouter.js');
+const wardRouter = require('./routers/wardRouter.js');
+const streetRouter = require('./routers/streetRouter.js');
+const schoolRouter = require('./routers/schoolRouter.js');
+const userRouter = require('./routers/userRouter.js');
+const permissionRouter = require('./routers/permissionRouter.js');
+
+app.use("/api", regionRouter);
+app.use("/api", districtRouter);
+app.use("/api", wardRouter);
+app.use("/api", streetRouter);
+app.use("/api", schoolRouter);
+app.use("/api", userRouter);
+app.use("/api", permissionRouter);
 app.use('/api', indexRouter);
 
 
