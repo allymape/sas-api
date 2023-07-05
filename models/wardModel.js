@@ -4,7 +4,7 @@ module.exports = {
   //******** GET A LIST OF WARDS *******************************
   getAllWards: (offset, per_page, callback) => {
     db.query(
-      "SELECT WardCode, WardName AS wardName, LgaName, RegionName , wards.created_at AS CreatedAt , wards.updated_at AS UpdatedAt FROM wards, " +
+      "SELECT WardCode, WardName AS WardName, LgaName, RegionName , wards.created_at AS CreatedAt , wards.updated_at AS UpdatedAt FROM wards, " +
       " districts, regions WHERE districts.LgaCode = wards.LgaCode AND regions.RegionCode = districts.RegionCode  ORDER BY RegionName ASC, LgaName  ASC LIMIT ?, ?",
         [offset, per_page],
       (error, wards, fields) => {

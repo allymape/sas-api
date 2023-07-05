@@ -321,50 +321,62 @@ function UpdateAuditTrail(
 //   );
 // });
 
-// router.post("/send", function (req, res) {
-//   let transporter = nodeMailer.createTransport({
-//     host: process.env.MAIL_HOST,
-//     port: 465,
-//     secure: true,
-//     auth: {
-//       user: process.env.MAIL_USER,
-//       pass: process.env.MAIL_PASS,
-//     },
-//   });
-//   let mailOptions = {
-//     from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
-//     to: req.body.email, // list of receivers
-//     subject: "Kuweka Upya Nenosiri", // Subject line
-//     text: "Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.", // plain text body
-//     html: "Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.", // html body
-//   };
+router.post("/send", function (req, res) {
+  // db.query(
+  //     `SELECT * FROM staffs WHERE LOWER(email) = LOWER(${db.escape(
+  //     req.body.email
+  //     )});`,
+  //     (err, result) => {
+  //     if (result.length) {
+  //         bcrypt.hash('123456', 10, (err, hash) => {
+  //         `UPDATE staffs SET password = ${db.escape(hash)} WHERE email = ${db.escape(req.body.email)}`,
+  //         (err, result) => {
+  //         if (err) {
+  //         console.log(err)
+  //         }
+  let transporter = nodeMailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+  let mailOptions = {
+    from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
+    to: req.body.email, // list of receivers
+    subject: "Kuweka Upya Nenosiri", // Subject line
+    text: "Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.", // plain text body
+    html: "Jinsi ya Kubadili nenosiri lako, ingia https://accredit.moe.go.tz/PasswordReset kuendelea.", // html body
+  };
 
-//   transporter.sendMail(mailOptions, (error, info) => {
-//     if (error) {
-//       return console.log(error);
-//     }
-//     console.log("Message %s sent: %s", info.messageId, info.response);
-//     // res.render('index');
-//     return res.status(200).send({
-//       error: true,
-//       statusCode: 300,
-//       msg: "Mail imetumwa!!!",
-//     });
-//   });
-//   //     }
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    console.log("Message %s sent: %s", info.messageId, info.response);
+    // res.render('index');
+    return res.status(200).send({
+      error: true,
+      statusCode: 300,
+      msg: "Mail imetumwa!!!",
+    });
+  });
+  //     }
 
-//   //     })
-//   // } else {
-//   // // has hashed pw => add to database
-//   // return res.status(200).send({
-//   // error:false,
-//   // statusCode: 300,
-//   // message: 'Barua pepe haipo!'
-//   // });
-//   // }
-//   // }
-//   // );
-// });
+  //     })
+  // } else {
+  // // has hashed pw => add to database
+  // return res.status(200).send({
+  // error:false,
+  // statusCode: 300,
+  // message: 'Barua pepe haipo!'
+  // });
+  // }
+  // }
+  // );
+});
 
 //register api
 router.post("/register", signupValidation, (req, res, next) => {
@@ -2219,6 +2231,2348 @@ router.post("/register", signupValidation, (req, res, next) => {
   );
 });
 
+router.post("/update-user", signupValidation, (req, res, next) => {
+  console.log("req.body");
+  console.log(req.body);
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(200).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    `SELECT * FROM staffs WHERE id = LOWER(${db.escape(req.body.userId)});`,
+    (err, resultdata) => {
+      console.log(resultdata);
+      if (resultdata.length <= 0) {
+        return res.status(200).send({
+          error: true,
+          statusCode: 306,
+          message: "This user is not exist!",
+        });
+      } else {
+        // username is available
+
+        if (req.body.password == "0") {
+          if (req.body.cheo == 1) {
+            db.query(
+              `UPDATE staffs SET username = ${db.escape(req.body.username)}, 
+            email = ${db.escape(req.body.email)}, user_level = ${db.escape(
+                req.body.roleId
+              )}, 
+            name = ${db.escape(req.body.name)}, phone_no = ${db.escape(
+                req.body.phoneNumber
+              )}, 
+            office = ${db.escape(req.body.lgas)}, signature = ${db.escape(
+                req.body.sign
+              )}, 
+            new_role_id = ${db.escape(req.body.roleRMe)} WHERE id = ${db.escape(
+                req.body.userId
+              )}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                // db.query(`SELECT id FROM staffs where email = ${db.escape(req.body.email)}`,
+                // function (error, results, fields) {
+                //     if (error) {console.log(error)}
+                var rollId = req.body.userId;
+                var req_body = {
+                  username: req.body.username,
+                  email: req.body.email,
+                  password: "********",
+                  cheo: req.body.roleId,
+                  name: req.body.name,
+                  phoneNumber: req.body.phoneNumber,
+                  lga: req.body.lgas,
+                  role: req.body.roleRMe,
+                };
+                UpdateAuditTrail(
+                  decoded.id,
+                  "updated",
+                  req_body,
+                  req.url,
+                  req.body.browser_used,
+                  rollId,
+                  "The user has been updated with us!",
+                  req.body.ip_address,
+                  resultdata[0],
+                  "staffs"
+                );
+                // });
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 3) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )}, office = ${db.escape(req.body.lgas)}, 
+                signature = ${db.escape(
+                  req.body.sign
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var req_body = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      req_body,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 2) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(
+                req.body.email
+              )}, user_level = ${db.escape(req.body.roleId)}, 
+            name = ${db.escape(req.body.name)}, phone_no = ${db.escape(
+                req.body.phoneNumber
+              )}, 
+            office = ${db.escape(req.body.kanda)},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var req_body = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      req_body,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 4) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(
+                req.body.email
+              )}, user_level = ${db.escape(req.body.roleId)}, 
+                name = ${db.escape(req.body.name)},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, phone_no = ${db.escape(
+                req.body.phoneNumber
+              )}, office = ${db.escape(req.body.kanda)} WHERE id = ${db.escape(
+                req.body.userId
+              )}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 5) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, phone_no = ${db.escape(req.body.phoneNumber)}
+            , signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 6) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 7) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 8) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 9) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 10) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 11) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 12) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 13) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 14) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 15) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 16) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 17) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+          if (req.body.cheo == 18) {
+            db.query(
+              `update staffs SET username = ${db.escape(
+                req.body.username
+              )}, email = ${db.escape(req.body.email)}, 
+                user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                req.body.name
+              )}, 
+                phone_no = ${db.escape(
+                  req.body.phoneNumber
+                )},new_role_id = ${db.escape(
+                req.body.roleRMe
+              )}, signature = ${db.escape(
+                req.body.sign
+              )} WHERE id = ${db.escape(req.body.userId)}`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).send({
+                    error: true,
+                    statusCode: 400,
+                    message: err,
+                  });
+                }
+                db.query(
+                  `SELECT id FROM staffs where email = ${db.escape(
+                    req.body.email
+                  )}`,
+                  function (error, results, fields) {
+                    if (error) {
+                      console.log(error);
+                    }
+                    var rollId = results[0].id;
+                    var reqbody = {
+                      username: req.body.username,
+                      email: req.body.email,
+                      password: "********",
+                      cheo: req.body.roleId,
+                      name: req.body.name,
+                      phoneNumber: req.body.phoneNumber,
+                      lga: req.body.lgas,
+                      role: req.body.roleRMe,
+                    };
+                    UpdateAuditTrail(
+                      decoded.id,
+                      "updated",
+                      reqbody,
+                      req.url,
+                      req.body.browser_used,
+                      rollId,
+                      "The user has been updated with us!",
+                      req.body.ip_address,
+                      resultdata[0],
+                      "staffs"
+                    );
+                  }
+                );
+                return res.status(200).send({
+                  error: false,
+                  statusCode: 300,
+                  message: "The user has been registerd with us!",
+                });
+              }
+            );
+          }
+        } else {
+          bcrypt.hash(req.body.password, 10, (err, hash) => {
+            if (err) {
+              return res.status(500).send({
+                error: true,
+                statusCode: 500,
+                message: err,
+              });
+            } else {
+              // has hashed pw => add to database
+              if (req.body.cheo == 1) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+    user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+    office = ${db.escape(req.body.lgas)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )}, signature = ${db.escape(
+                    req.body.sign
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 3) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+         user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+         office = ${db.escape(req.body.lgas)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )}, signature = ${db.escape(
+                    req.body.sign
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 2) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+        user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+        office = ${db.escape(req.body.kanda)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 4) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            office = ${db.escape(req.body.kanda)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 5) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+        user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+        signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 6) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 7) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 8) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 9) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 10) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 11) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 12) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 13) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 14) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 15) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 16) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 17) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+              if (req.body.cheo == 18) {
+                db.query(
+                  `update staffs SET username = ${db.escape(
+                    req.body.username
+                  )}, email = ${db.escape(
+                    req.body.email
+                  )}, password = ${db.escape(hash)}, 
+            user_level = ${db.escape(req.body.roleId)}, name = ${db.escape(
+                    req.body.name
+                  )}, phone_no = ${db.escape(req.body.phoneNumber)}, 
+            signature = ${db.escape(req.body.sign)},new_role_id = ${db.escape(
+                    req.body.roleRMe
+                  )} WHERE id = ${db.escape(req.body.userId)}`,
+                  (err, result) => {
+                    if (err) {
+                      console.log(err);
+                      return res.status(400).send({
+                        error: true,
+                        statusCode: 400,
+                        message: err,
+                      });
+                    }
+                    db.query(
+                      `SELECT id FROM staffs where email = ${db.escape(
+                        req.body.email
+                      )}`,
+                      function (error, results, fields) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        var rollId = results[0].id;
+                        var reqbody = {
+                          username: req.body.username,
+                          email: req.body.email,
+                          password: "********",
+                          cheo: req.body.roleId,
+                          name: req.body.name,
+                          phoneNumber: req.body.phoneNumber,
+                          lga: req.body.lgas,
+                          role: req.body.roleRMe,
+                        };
+                        UpdateAuditTrail(
+                          decoded.id,
+                          "updated",
+                          reqbody,
+                          req.url,
+                          req.body.browser_used,
+                          rollId,
+                          "The user has been updated with us!",
+                          req.body.ip_address,
+                          resultdata[0],
+                          "staffs"
+                        );
+                      }
+                    );
+                    return res.status(200).send({
+                      error: false,
+                      statusCode: 300,
+                      message: "The user has been registerd with us!",
+                    });
+                  }
+                );
+              }
+            }
+          });
+        }
+      }
+    }
+  );
+});
+
 router.post("/futauser", makundiValidation, (req, res, next) => {
   if (
     !req.headers.authorization ||
@@ -2963,90 +5317,90 @@ router.post("/add-attachment", shirikishoValidation, (req, res, next) => {
   );
 });
 
-// router.post("/edit-attachment", shirikishoValidation, (req, res, next) => {
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(200).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   // if(req.body.aina_mwombaji == 0 && req.body.aina_ombi == 0){
-//   //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ? WHERE id = ?',
-//   //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.fileId],
-//   //    function (error, results, fields) {
-//   //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
-//   //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
-//   //    });
-//   // }
-//   // if(req.body.aina_mwombaji == 0 && req.body.aina_ombi != 0){
-//   //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, application_category_id = ? WHERE id = ?',
-//   //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.aina_ombi, req.body.fileId],
-//   //    function (error, results, fields) {
-//   //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
-//   //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
-//   //    });
-//   // }
-//   // if(req.body.aina_mwombaji != 0 && req.body.aina_ombi == 0){
-//   //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, registry_type_id = ? WHERE id = ?',
-//   //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.aina_mwombaji, req.body.fileId],
-//   //    function (error, results, fields) {
-//   //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
-//   //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
-//   //    });
-//   // }
-//   // if(req.body.aina_mwombaji != 0 && req.body.aina_ombi != 0){
-//   db.query(
-//     `SELECT * FROM attachment_types WHERE id = ${db.escape(req.body.fileId)};`,
-//     (err, resultdata) => {
-//       if (err) {
-//         console.log(err);
-//       }
-//       db.query(
-//         "UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, registry_type_id = ?, application_category_id = ?  WHERE id = ?",
-//         [
-//           req.body.jina_hati,
-//           req.body.ukubwa,
-//           req.body.file_format,
-//           req.body.aina_mwombaji,
-//           req.body.aina_ombi,
-//           req.body.fileId,
-//         ],
-//         function (error, results, fields) {
-//           if (error) {
-//             console.log(error);
-//             res.send({ error: true, message: "kiambatisho hakijabadilishwa" });
-//           } else {
-//             UpdateAuditTrail(
-//               decoded.id,
-//               "updated",
-//               req.body,
-//               req.url,
-//               req.body.browser_used,
-//               req.body.zoneid,
-//               "Kiambatisho kimesasishwa!",
-//               req.body.ip_address,
-//               resultdata[0],
-//               "attachment_types"
-//             );
-//             return res.send({
-//               error: false,
-//               statusCode: 300,
-//               message: "Kiambatisho kimebadilishwa.",
-//             });
-//           }
-//         }
-//       );
-//       // }
-//     }
-//   );
-// });
+router.post("/edit-attachment", shirikishoValidation, (req, res, next) => {
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(200).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  // if(req.body.aina_mwombaji == 0 && req.body.aina_ombi == 0){
+  //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ? WHERE id = ?',
+  //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.fileId],
+  //    function (error, results, fields) {
+  //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
+  //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
+  //    });
+  // }
+  // if(req.body.aina_mwombaji == 0 && req.body.aina_ombi != 0){
+  //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, application_category_id = ? WHERE id = ?',
+  //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.aina_ombi, req.body.fileId],
+  //    function (error, results, fields) {
+  //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
+  //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
+  //    });
+  // }
+  // if(req.body.aina_mwombaji != 0 && req.body.aina_ombi == 0){
+  //     db.query('UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, registry_type_id = ? WHERE id = ?',
+  //     [req.body.jina_hati, req.body.ukubwa, req.body.file_format, req.body.aina_mwombaji, req.body.fileId],
+  //    function (error, results, fields) {
+  //    if (error) res.send({error: true, message: "kiambatisho hakijabadilishwa"});
+  //    return res.send({ error: false, statusCode: 300, message: 'Kiambatisho kimebadilishwa.' });
+  //    });
+  // }
+  // if(req.body.aina_mwombaji != 0 && req.body.aina_ombi != 0){
+  db.query(
+    `SELECT * FROM attachment_types WHERE id = ${db.escape(req.body.fileId)};`,
+    (err, resultdata) => {
+      if (err) {
+        console.log(err);
+      }
+      db.query(
+        "UPDATE attachment_types SET attachment_name = ?, file_size = ?, file_format = ?, registry_type_id = ?, application_category_id = ?  WHERE id = ?",
+        [
+          req.body.jina_hati,
+          req.body.ukubwa,
+          req.body.file_format,
+          req.body.aina_mwombaji,
+          req.body.aina_ombi,
+          req.body.fileId,
+        ],
+        function (error, results, fields) {
+          if (error) {
+            console.log(error);
+            res.send({ error: true, message: "kiambatisho hakijabadilishwa" });
+          } else {
+            UpdateAuditTrail(
+              decoded.id,
+              "updated",
+              req.body,
+              req.url,
+              req.body.browser_used,
+              req.body.zoneid,
+              "Kiambatisho kimesasishwa!",
+              req.body.ip_address,
+              resultdata[0],
+              "attachment_types"
+            );
+            return res.send({
+              error: false,
+              statusCode: 300,
+              message: "Kiambatisho kimebadilishwa.",
+            });
+          }
+        }
+      );
+      // }
+    }
+  );
+});
 
 router.post("/futakiambatisho", makundiValidation, (req, res, next) => {
   if (
@@ -5772,195 +8126,195 @@ router.get("/vyeolist", signupValidation, (req, res, next) => {
   );
 });
 
-// router.get("/roles", signupValidation, (req, res, next) => {
-//   var obj = [];
-//   var obj1 = [];
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(422).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   db.query(
-//     "SELECT * FROM role_management WHERE status_id = 1",
-//     function (error, results, fields) {
-//       if (error) {
-//         console.log(error);
-//       }
-//       for (var i = 0; i < results.length; i++) {
-//         var rolesId = results[i].id;
-//         var role_name = results[i].role_name;
-//         obj.push({ rolesId: rolesId, role_name: role_name });
-//       }
+router.get("/roles", signupValidation, (req, res, next) => {
+  var obj = [];
+  var obj1 = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(422).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT * FROM role_management WHERE status_id = 1",
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+      for (var i = 0; i < results.length; i++) {
+        var rolesId = results[i].id;
+        var role_name = results[i].role_name;
+        obj.push({ rolesId: rolesId, role_name: role_name });
+      }
 
-//       return res.send({
-//         error: false,
-//         statusCode: 300,
-//         data: obj,
-//         message: "Fetch Successfully.",
-//       });
-//     }
-//   );
-// });
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: obj,
+        message: "Fetch Successfully.",
+      });
+    }
+  );
+});
 
-// router.get("/permissions", signupValidation, (req, res, next) => {
-//   var obj = [];
-//   var obj1 = [];
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(422).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   db.query(
-//     "SELECT * FROM permissions WHERE status_id = ?",
-//     [1],
-//     function (error, results, fields) {
-//       if (error) {
-//         console.log(error);
-//       }
-//       for (var i = 0; i < results.length; i++) {
-//         var perm_id = results[i].id;
-//         var permission_name = results[i].permission_name;
-//         obj.push({ perm_id: perm_id, permission_name: permission_name });
-//       }
-//       return res.send({
-//         error: false,
-//         statusCode: 300,
-//         data: obj,
-//         message: "Fetch Successfully.",
-//       });
-//     }
-//   );
-// });
+router.get("/permissions", signupValidation, (req, res, next) => {
+  var obj = [];
+  var obj1 = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(422).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT * FROM permissions WHERE status_id = ?",
+    [1],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+      for (var i = 0; i < results.length; i++) {
+        var perm_id = results[i].id;
+        var permission_name = results[i].permission_name;
+        obj.push({ perm_id: perm_id, permission_name: permission_name });
+      }
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: obj,
+        message: "Fetch Successfully.",
+      });
+    }
+  );
+});
 
-// router.get("/roles", signupValidation, (req, res, next) => {
-//   var obj = [];
-//   var obj1 = [];
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(422).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   db.query(
-//     "SELECT * FROM role_management WHERE status_id = ?",
-//     [1],
-//     function (error, results, fields) {
-//       if (error) {
-//         console.log(error);
-//       }
-//       for (var i = 0; i < results.length; i++) {
-//         var role_id = results[i].id;
-//         var role_name = results[i].role_name;
-//         obj.push({ role_id: role_id, role_name: role_name });
-//       }
-//       return res.send({
-//         error: false,
-//         statusCode: 300,
-//         data: obj,
-//         message: "Fetch Successfully.",
-//       });
-//     }
-//   );
-// });
+router.get("/roles", signupValidation, (req, res, next) => {
+  var obj = [];
+  var obj1 = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(422).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT * FROM role_management WHERE status_id = ?",
+    [1],
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+      for (var i = 0; i < results.length; i++) {
+        var role_id = results[i].id;
+        var role_name = results[i].role_name;
+        obj.push({ role_id: role_id, role_name: role_name });
+      }
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: obj,
+        message: "Fetch Successfully.",
+      });
+    }
+  );
+});
 
-// router.post("/editRoles", signupValidation, (req, res, next) => {
-//   console.log(req.body);
-//   var permissions = [];
-//   var assigned_permissions = [];
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(422).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   db.query(
-//     "SELECT * FROM role_management WHERE id = ?",
-//     [req.body.role_id],
-//     function (error1, results1, fields1) {
-//       if (error1) {
-//         console.log(error1);
-//       }
-//       // for(var i = 0; i < results1.length; i++){
-//       var role_name = results1[0].role_name;
-//       // var RoleMId = results1[i].id;
-//       // objRM.push({"RoleMId": RoleMId, "role_name": role_name})
-//       // }
+router.post("/editRoles", signupValidation, (req, res, next) => {
+  console.log(req.body);
+  var permissions = [];
+  var assigned_permissions = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(422).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT * FROM role_management WHERE id = ?",
+    [req.body.role_id],
+    function (error1, results1, fields1) {
+      if (error1) {
+        console.log(error1);
+      }
+      // for(var i = 0; i < results1.length; i++){
+      var role_name = results1[0].role_name;
+      // var RoleMId = results1[i].id;
+      // objRM.push({"RoleMId": RoleMId, "role_name": role_name})
+      // }
 
-//       db.query(
-//         "SELECT * FROM permissions WHERE status_id = ?",
-//         [1],
-//         function (error, results, fields) {
-//           if (error) {
-//             console.log(error);
-//           }
-//           for (var i = 0; i < results.length; i++) {
-//             var perm_id = results[i].id;
-//             var permission_name = results[i].permission_name;
-//             permissions.push({
-//               perm_id: perm_id,
-//               permission_name: permission_name,
-//             });
-//           }
-//           db.query(
-//             "SELECT permission_id FROM permissions, permission_role WHERE permissions.status_id = ? " +
-//               " AND permissions.id = permission_role.permission_id AND permission_role.role_id = ? " +
-//               " AND permission_role.status_id = ?",
-//             [1, req.body.role_id, 1],
-//             function (error1, results1, fields1) {
-//               if (error1) {
-//                 console.log(error1);
-//               }
-//               for (var i = 0; i < results1.length; i++) {
-//                 var perm_id = results1[i].permission_id;
-//                 // var permission_name = results1[i].permission_name;
-//                 // obj1.push({"perm_id": perm_id, "permission_name": permission_name})
-//                 assigned_permissions.push(perm_id);
-//               }
-//               return res.send({
-//                 error: false,
-//                 statusCode: 300,
-//                 permissions: permissions,
-//                 assigned_permissions: assigned_permissions,
-//                 role_name: role_name,
-//                 message: "Fetch Successfully.",
-//               });
-//             }
-//           );
-//         }
-//       );
-//     }
-//   );
-// });
+      db.query(
+        "SELECT * FROM permissions WHERE status_id = ?",
+        [1],
+        function (error, results, fields) {
+          if (error) {
+            console.log(error);
+          }
+          for (var i = 0; i < results.length; i++) {
+            var perm_id = results[i].id;
+            var permission_name = results[i].permission_name;
+            permissions.push({
+              perm_id: perm_id,
+              permission_name: permission_name,
+            });
+          }
+          db.query(
+            "SELECT permission_id FROM permissions, permission_role WHERE permissions.status_id = ? " +
+              " AND permissions.id = permission_role.permission_id AND permission_role.role_id = ? " +
+              " AND permission_role.status_id = ?",
+            [1, req.body.role_id, 1],
+            function (error1, results1, fields1) {
+              if (error1) {
+                console.log(error1);
+              }
+              for (var i = 0; i < results1.length; i++) {
+                var perm_id = results1[i].permission_id;
+                // var permission_name = results1[i].permission_name;
+                // obj1.push({"perm_id": perm_id, "permission_name": permission_name})
+                assigned_permissions.push(perm_id);
+              }
+              return res.send({
+                error: false,
+                statusCode: 300,
+                permissions: permissions,
+                assigned_permissions: assigned_permissions,
+                role_name: role_name,
+                message: "Fetch Successfully.",
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
 
 router.get("/auditTrail", signupValidation, (req, res, next) => {
   var obj = [];
@@ -62237,96 +64591,96 @@ router.get("/ainaMajengo", (req, res, next) => {
 });
 
 //list of aina maombi
-// router.get("/ainaMaombi", (req, res, next) => {
-//   var obj = [];
-//   var objWaombaji = [];
-//   var objAttachment = [];
-//   if (
-//     !req.headers.authorization ||
-//     !req.headers.authorization.startsWith("Bearer") ||
-//     !req.headers.authorization.split(" ")[1]
-//   ) {
-//     return res.status(200).json({
-//       error: true,
-//       statusCode: 422,
-//       message: "No access to end point",
-//     });
-//   }
-//   const theToken = req.headers.authorization.split(" ")[1];
-//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//   db.query(
-//     "SELECT id, secure_token, app_name FROM application_categories",
-//     function (error, results, fields) {
-//       if (error) {
-//         console.log(error);
-//       }
-//       for (var i = 0; i < results.length; i++) {
-//         var secure_token = results[i].secure_token;
-//         var app_id = results[i].id;
-//         var app_name = results[i].app_name;
-//         obj.push({
-//           secure_token: secure_token,
-//           app_name: app_name,
-//           app_id: app_id,
-//         });
-//       }
-//       db.query(
-//         "SELECT id, secure_token, registry FROM registry_types",
-//         function (error, results, fields) {
-//           if (error) {
-//             console.log(error);
-//           }
-//           for (var i = 0; i < results.length; i++) {
-//             var secure_token = results[i].secure_token;
-//             var app_id = results[i].id;
-//             var registry = results[i].registry;
-//             objWaombaji.push({
-//               secure_token: secure_token,
-//               registry: registry,
-//               registry_id: app_id,
-//             });
-//           }
-//           db.query(
-//             "SELECT attachment_types.id as id, app_name, file_size, file_format, attachment_name, registry " +
-//               " FROM attachment_types, application_categories, " +
-//               " registry_types WHERE application_categories.id = attachment_types.application_category_id " +
-//               " AND attachment_types.registry_type_id = registry_types.id AND attachment_types.status_id = ?",
-//             [1],
-//             function (error, results, fields) {
-//               if (error) {
-//                 console.log(error);
-//               }
-//               for (var i = 0; i < results.length; i++) {
-//                 var file_format = results[i].file_format;
-//                 var app_id = results[i].id;
-//                 var attachment_name = results[i].attachment_name;
-//                 var registry = results[i].registry;
-//                 var application_name = results[i].app_name;
-//                 var file_size = results[i].file_size;
-//                 objAttachment.push({
-//                   file_format: file_format,
-//                   attachment_name: attachment_name,
-//                   attachment_id: app_id,
-//                   registry: registry,
-//                   application_name: application_name,
-//                   file_size: file_size,
-//                 });
-//               }
-//               return res.send({
-//                 error: false,
-//                 statusCode: 300,
-//                 data: obj,
-//                 listWaombaji: objWaombaji,
-//                 objAttachment: objAttachment,
-//                 message: "Orodha ya Aina ya Maombi.",
-//               });
-//             }
-//           );
-//         }
-//       );
-//     }
-//   );
-// });
+router.get("/ainaMaombi", (req, res, next) => {
+  var obj = [];
+  var objWaombaji = [];
+  var objAttachment = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(200).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT id, secure_token, app_name FROM application_categories",
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+      for (var i = 0; i < results.length; i++) {
+        var secure_token = results[i].secure_token;
+        var app_id = results[i].id;
+        var app_name = results[i].app_name;
+        obj.push({
+          secure_token: secure_token,
+          app_name: app_name,
+          app_id: app_id,
+        });
+      }
+      db.query(
+        "SELECT id, secure_token, registry FROM registry_types",
+        function (error, results, fields) {
+          if (error) {
+            console.log(error);
+          }
+          for (var i = 0; i < results.length; i++) {
+            var secure_token = results[i].secure_token;
+            var app_id = results[i].id;
+            var registry = results[i].registry;
+            objWaombaji.push({
+              secure_token: secure_token,
+              registry: registry,
+              registry_id: app_id,
+            });
+          }
+          db.query(
+            "SELECT attachment_types.id as id, app_name, file_size, file_format, attachment_name, registry " +
+              " FROM attachment_types, application_categories, " +
+              " registry_types WHERE application_categories.id = attachment_types.application_category_id " +
+              " AND attachment_types.registry_type_id = registry_types.id AND attachment_types.status_id = ?",
+            [1],
+            function (error, results, fields) {
+              if (error) {
+                console.log(error);
+              }
+              for (var i = 0; i < results.length; i++) {
+                var file_format = results[i].file_format;
+                var app_id = results[i].id;
+                var attachment_name = results[i].attachment_name;
+                var registry = results[i].registry;
+                var application_name = results[i].app_name;
+                var file_size = results[i].file_size;
+                objAttachment.push({
+                  file_format: file_format,
+                  attachment_name: attachment_name,
+                  attachment_id: app_id,
+                  registry: registry,
+                  application_name: application_name,
+                  file_size: file_size,
+                });
+              }
+              return res.send({
+                error: false,
+                statusCode: 300,
+                data: obj,
+                listWaombaji: objWaombaji,
+                objAttachment: objAttachment,
+                message: "Orodha ya Aina ya Maombi.",
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
 
 //list of aina za shule
 router.get("/ainaShule", (req, res, next) => {

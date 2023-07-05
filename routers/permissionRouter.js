@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 const permissionRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit } = require("../utils.js");
+const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = require("../utils.js");
 const permissionModel = require("../models/permissionModel.js");
 var session = require("express-session");
 permissionRouter.use(
@@ -17,7 +17,16 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  permissionModel.getAllPermission(offset, per_page, (error, permissions, numRows) => {
+  var is_paginated = true;
+  var status = false;
+  if (typeof req.body.is_paginated !== "undefined") {
+    is_paginated = req.body.is_paginated == "false" ? false : true;
+  }
+  if (typeof req.body.status !== "undefined") {
+     status = req.body.status == "false" ? false : true;
+  }
+
+  permissionModel.getAllPermission(offset, per_page, is_paginated,(error, permissions, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
@@ -25,7 +34,7 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
                 numRows: numRows,
                 message: error ? "Something went wrong." : "List of Permissions.",
             });
-  });
+  } , status);
 });
 // Edit Permission
 permissionRouter.get("/editPermission/:id", isAuth, (req, res, next) => {
@@ -43,10 +52,10 @@ permissionRouter.get("/editPermission/:id", isAuth, (req, res, next) => {
 // Store permission
 permissionRouter.post("/addPermission", isAuth, (req, res, next) => {
             var data = [];
-            var name = req.body.permissionName.trim();
-            var display = req.body.displayName.trim();
+            var name = paramCase(req.body.permissionName);
+            var display = sentenceCase(req.body.displayName);
             data.push([
-                    name.replace(/ /g, "-").toLowerCase(),
+                    name,
                     display,
                     1,
                     formatDate(new Date()),
@@ -60,31 +69,25 @@ permissionRouter.post("/addPermission", isAuth, (req, res, next) => {
                        data: success ? result : error,
                        message: success
                          ? "Umefanikiwa kusajili permission."
-                         : "Kuna shida tafadhali wasiliana na Msimizi wa Mfumo. ",
+                         : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
             });
 });
 
 // Store permission
 permissionRouter.put("/updatePermission/:id", isAuth, (req, res, next) => {
-            var data = [];
-            var name = req.body.permissionName.trim().replace(/ /g, "-").toLowerCase();
-            var display = req.body.displayName.trim();
+            var name = paramCase(req.body.permissionName);
+            var display = sentenceCase(req.body.displayName);
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
+            var is_default = req.body.is_default == "on" || req.body.is_default == 1 ? true : false ;
             var id = Number(req.params.id);
-            data.push([
-                        ,
-                        display,
-                        status,
-                        id
-            ]);
-    
-            permissionModel.updatePermission(name , display , status , id , (error , success , permission) => {
+            
+            permissionModel.updatePermission(name , display , status , is_default , id , (error , success , permission) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? permission : error,
-                        message: success ? "Umefanikiwa kubadili permission." : "Kuna shida tafadhali wasiliana na Msimizi wa Mfumo. ",
+                        message: success ? "Umefanikiwa kubadili permission." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
                     
             });

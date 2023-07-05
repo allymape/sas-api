@@ -27,7 +27,7 @@ module.exports = {
         if (err) {
           console.log("Error", err);
         }
-        if (result) {
+        if (result.affectedRows > 0) {
           success = true;
         }
         callback(success);

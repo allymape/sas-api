@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../../Downloads/amazona-master"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "SAS"
+	}
+}

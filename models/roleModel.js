@@ -1,0 +1,208 @@
+const db = require("../dbConnection");
+const { formatDate, uniqueArray } = require("../utils");
+
+module.exports = {
+  //******** GET A LIST OF ROLES *******************************
+  getAllRoles: (offset, per_page, is_paginated, callback) => {
+    //  console.log(is_paginated);
+    db.query(
+      `SELECT r.id AS id, r.role_name AS role_name, r.status_id AS status,
+              GROUP_CONCAT(p.permission_name , ',') AS permissions
+      FROM role_management r  
+      LEFT JOIN permission_role pr ON pr.role_id = r.id
+      LEFT JOIN permissions p ON p.id =pr.permission_id
+      GROUP BY r.id
+      ${is_paginated ? " " : " WHERE r.status_id = 1 "} 
+      ORDER BY r.role_name ASC 
+      
+      ${is_paginated ? " LIMIT ?,?" : ""}
+      `,
+      is_paginated ? [offset, per_page] : [],
+      (error, roles, fields) => {
+        db.query(
+          "SELECT COUNT(*) AS num_rows FROM role_management",
+          (error2, result, fields2) => {
+            callback(error, roles, result[0].num_rows);
+          }
+        );
+      }
+    );
+  },
+  //******** STORE ROLE *******************************
+  storeRole: (roleData, userId, permissions, callback) => {
+    var success = false;
+    db.query(
+      `INSERT INTO role_management (role_name , status_id, created_at , created_by) VALUES ?`,
+      [roleData],
+      (error, result) => {
+        if (error) {
+          console.log("Error", error);
+        }
+
+        if (result.affectedRows > 0 && permissions.length > 0) {
+          syncPermissions(
+            permissions,
+            userId,
+            result.insertId,
+            (syncError, syncSuccess) => {
+              callback(syncError, syncSuccess, result);
+            }
+          );
+        } else {
+          if (result.affectedRows > 0) {
+            success = true;
+          }
+          callback(error, success, result);
+        }
+      }
+    );
+  },
+  //******** FIND ROLE *******************************
+  findRole: (id, callback) => {
+    var success = false;
+    db.query(
+      `SELECT id , role_name 
+        FROM role_management WHERE id = ?`,
+      [id],
+      (error, role) => {
+        if (error) {
+          console.log("Error", error);
+        } else if (role.length > 0) {
+          success = true;
+          db.query(
+            `SELECT * FROM permissions WHERE status_id = 1 ORDER BY permission_name ASC `,
+            (error2, permissions) => {
+              error = error2;
+              // callback(error, success, role, permissions);
+              // console.log(permissions);
+              db.query(
+                `SELECT permission_id FROM permissions, permission_role WHERE permissions.status_id = 1
+                AND permissions.id = permission_role.permission_id AND permission_role.role_id = ?
+                AND permission_role.status_id = 1`,
+                [id],
+                (error3, role_permissions) => {
+                  error = error3;
+                  callback(error, success, role, permissions, role_permissions);
+                }
+              );
+            }
+          );
+        }
+      }
+    );
+  },
+  
+  //******** UPDATE ROLE *******************************
+  updateRole: (roleData, userId, roleId, permissions, callback) => {
+    var success = false;
+
+    db.query(
+      `UPDATE  role_management SET role_name = ? WHERE id = ?`,
+      roleData,
+      (error, result, fields) => {
+        if (error) {
+          console.log("Error", error);
+        }
+        if (result.affectedRows > 0 && permissions.length > 0) {
+          syncPermissions(
+            permissions,
+            userId,
+            roleId,
+            (syncError, syncSuccess) => {
+              callback(syncError, syncSuccess, result);
+            }
+          );
+        } else {
+          if (result.affectedRows > 0) {
+            success = true;
+          }
+          callback(error, success, result);
+        }
+      }
+    );
+  },
+
+  //******** DELETEt ROLE *******************************
+  deleteRole: (id, callback) => {
+    var success = false;
+    db.query(
+      "SELECT COUNT(*) AS num_rows FROM role_management WHERE role_id = ?",
+      [id],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+        }
+        var numRows = result[0].num_rows;
+        if (numRows > 0) {
+          callback(
+            "Haujafanikiwa kufuta kwa kuwa role hii inatumiwa na role " +
+              numRows,
+            success,
+            []
+          );
+          return;
+        } else {
+          db.query(
+            `DELETE FROM roles  WHERE id = ?`,
+            [id],
+            (error2, deletedRole) => {
+              if (error2) {
+                console.log("Error", error2);
+                // error2 = error2 ? "Haikuweza kufuta kuna tatizo" : "";
+              }
+              if (deletedRole) {
+                success = true;
+              }
+              callback(error2, success, deletedRole);
+              return;
+            }
+          );
+        }
+      }
+    );
+  },
+};
+
+const syncPermissions = (permissions , userId , roleId , callback) => {
+          var success = false;
+          var permissions_selected = []; //selected from user
+          var default_permissions = [];   //default from system
+          var permission_role = [];   //new permissions unique (user + system)
+          
+          db.query(`DELETE FROM permission_role WHERE role_id = ?` , 
+          [roleId] , (error , result) => {
+                if(error){
+                  console.log(error)
+                }
+                   db.query(`SELECT id FROM permissions WHERE is_default = 1` , (error , dResults) => {
+                     // from user input convert to number
+                     permissions.forEach((permission) => {
+                          permissions_selected.push(Number(permission));
+                     });
+                     // form db default permissions
+                     if (dResults.length > 0) {
+                       dResults.forEach((d) => {
+                           default_permissions.push(d.id);
+                       });
+                     }
+                     // unique permissions (user + system);
+                        uniqueArray(permissions_selected , default_permissions).forEach( (permissionId) => {
+                            permission_role.push([roleId, Number(permissionId) , 1 , formatDate(new Date()) , userId]);
+                        });
+                   
+                     db.query(
+                       `INSERT INTO permission_role (role_id , permission_id , status_id , created_at, created_by) VALUES ?`,
+                       [permission_role],
+                       (error, result2) => {
+                         if (error) {
+                           console.log("Sync permissions: ", error);
+                         }
+                         if (result2.affectedRows > 0) {
+                           success = true;
+                         }
+                         callback(error, success);
+                       }
+                     );
+                   });
+          })
+}

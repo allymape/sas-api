@@ -1,14 +1,20 @@
 const db = require("../dbConnection");
 module.exports = {
   //******** GET A LIST OF DISTRICTS *******************************
-  getAllDistricts: (offset, per_page, callback) => {
+  getAllDistricts: (offset, per_page, is_paginated , region_code, callback) => {
+
     db.query(
-      "SELECT regions.id AS reg_id, regions.RegionName AS regionName, " +
-        " districts.LgaName AS LgaName, districts.LgaCode AS LgaCode , districts.created_at AS createdAt , districts.updated_at AS updatedAt FROM districts, " +
-        " regions WHERE districts.RegionCode = regions.RegionCode " +
-        " ORDER BY RegionName ASC LIMIT ? , ?",
-      [offset, per_page],
+      `SELECT regions.id AS reg_id, regions.RegionName AS regionName,districts.LgaName AS LgaName, districts.LgaCode AS LgaCode , districts.created_at AS createdAt , districts.updated_at AS updatedAt 
+      FROM districts, regions 
+      WHERE districts.RegionCode = regions.RegionCode ${is_paginated ? '' : 'AND districts.RegionCode = ? ' }
+      ORDER BY RegionName ASC 
+      ${is_paginated ? ' LIMIT ? , ?' : ''
+      }`,
+        is_paginated ? [offset, per_page] : [region_code],
       (error, districts, fields) => {
+        if(error){
+          console.log(error)
+        }
         db.query(
           "SELECT COUNT(*) AS num_rows FROM districts",
           (error2, result, fields2) => {

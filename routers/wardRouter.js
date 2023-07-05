@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const wardRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin, formatDate } = require("../utils.js");
+const { isAuth, isAdmin, formatDate, promiseRequest } = require("../utils.js");
 const wardModel = require("../models/wardModel.js");
 // wardRouter.use(
 //   session({
@@ -34,88 +34,41 @@ wardRouter.get("/allwards", isAuth, (req, res, next) => {
         );
 });
 
-// Store Wards
-wardRouter.get("/usajiliKata", isAuth, (req, res, next) => {
-  request(
-    {
-      url: admin_area_url + "wards",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      },
-    },
-     (error, response, body) =>  {
-                    if (error) {
-                        console.log(new Date() + ": fail to UsajiliGraph " + error);
-                        res.send("failed");
-                    }
-                    if (body !== undefined) {
-                        var jsonData = JSON.parse(body);
-                        var total_elements = jsonData.pagination.total;
-                        var per_page = 1000;
-                        var num_of_pages = Math.ceil(total_elements / per_page);
-                        var success = false;
-                        for (var index = 1; index <= num_of_pages; index++) {
-                            request(
-                                {
-                                url:admin_area_url + "wards?per_page=" +per_page +"&page=" +index,
-                                method: "GET",
-                                headers: {
-                                    //   'Authorization': 'Bearer' + " " + req.session.Token,
-                                    "Content-Type": "application/json",
-                                },
-                                //json: {trackingNo: trackingNo}
-                                },
-                                (error, response, body) => {
-                                        if (error) {
-                                            console.log(new Date() + ": fail to UsajiliGraph " + error);
-                                            res.send("failed");
-                                        }
-                                    if (body !== undefined) {
-                                            var jsonData = JSON.parse(body);
-                                            var ward_content = jsonData.data;
-                                            var values = [];
-                                            var success = false;
-                                            //   console.log(jsonData.response.content)
-                                            for (var i = 0; i < ward_content.length; i++) {
-                                                var ward_id = ward_content[i].id;
-                                                var ward_name = ward_content[i].name;
-                                                var ward_code = ward_content[i].ward_uid;
-                                                var council_code = ward_content[i].district_uid;
-                                                var created_at = formatDate(new Date());
-                                                var updated_at = formatDate(new Date());
-                                                values.push([
-                                                        ward_id,
-                                                        ward_code,
-                                                        ward_name,
-                                                        council_code,
-                                                        created_at,
-                                                        updated_at,
-                                                ]);
-                                        }
-                                        
-                                        wardModel.storeWards(values, (success) => {
-                                               console.log("Wards created successfully");  
-                                               if(!success){
-                                                    return res.send({
-                                                        statusCode:  306 ,
-                                                        message: "Hajafanikiwa kupakia Kata zote kuna tatizo"
-                                                    });
-                                               }
-                                        });
-                                       
-                                        
-                                    }
-                                });
-                        }
-                  
-                        return res.send({
-                          statusCode:  300 ,
-                          message: "Imefanikiwa kupakia Kata mpya"
-                       });
-    }
-    });
-});
 
+// Fetch all wards from wards API and store
+wardRouter.post("/usajiliKata", isAuth, async (req, res, next) => {
+       var apiData = [];
+       var results = await promiseRequest(admin_area_url , 'wards');
+             //iterate through all datas received and store  to apiData array  
+              for (let index = 0; index < results.length; index++) {
+                    results[index].forEach((ward_content) => {
+                                apiData.push([
+                                    ward_content.id,
+                                    ward_content.ward_uid,
+                                    ward_content.name,
+                                    ward_content.district_uid,
+                                    formatDate(new Date()),
+                                    formatDate(new Date()),
+                                ]);
+                    });
+              }
+
+            if (apiData.length > 0) {
+              //store data to database
+                  wardModel.storeWards(apiData, (isSuccess) => {
+                    console.log("Wards created successfully");
+                    res.send({
+                      statusCode: isSuccess ? 300 : 306,
+                      message: isSuccess
+                        ? "Umefanikiwa kupakia taarifa za Kata kikamilifu."
+                        : "Haujafanikiwa kupakia Kata wasiliana na msimamizi wa Mfumo.",
+                    });
+                  });
+            }else{
+                res.send({
+                  statusCode:  306,
+                  message: "Haujafanikiwa kupakia Kata wasiliana na msimamizi wa Mfumo.",
+                });
+            }
+});
 module.exports = wardRouter;

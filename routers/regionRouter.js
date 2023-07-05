@@ -3,9 +3,17 @@ const express = require("express");
 const request = require("request");
 const regionRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin , formatDate , permit } = require("../utils.js");
+const { isAuth, isAdmin , formatDate , permit, promiseRequest } = require("../utils.js");
 const regionModel = require("../models/regionModel.js");
 var session = require("express-session");
+const {
+  // signupValidation,
+  // loginValidation,
+  // makundiValidation,
+  shirikishoValidation,
+  // memberValidation,
+} = require("../validation");
+
 regionRouter.use(
   session({
     secret: "secret",
@@ -14,67 +22,76 @@ regionRouter.use(
   })
 );
 // List of regions
-regionRouter.get("/regions", isAuth, permit("Tazama-Orodha-Mikoa"), (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  regionModel.getAllRegions(offset, per_page, (error, regions, numRows) => {
-    return res.send({
-      error: error ? true : false,
-      statusCode: error ? 306 : 300,
-      data: error ? [] : regions,
-      numRows: numRows,
-      message: "List of Regions.",
+regionRouter.get("/regions", isAuth, (req, res, next) => {
+    var per_page = parseInt(req.query.per_page);
+    var page = parseInt(req.query.page);
+    var offset = (page - 1) * per_page;
+    var is_paginated = true;
+    var zone_id = null;
+    if (typeof req.body.is_paginated !== "undefined") {
+      is_paginated = req.body.is_paginated == "false" ? false : true;
+      zone_id = req.body.zone_id;
+    }
+    regionModel.getAllRegions(offset, per_page, is_paginated, zone_id, (error, regions, numRows) => {
+      return res.send({
+        error: error ? true : false,
+        statusCode: error ? 306 : 300,
+        data: error ? error : regions,
+        numRows: numRows,
+        message: "List of Regions.",
+      });
     });
-  });
 });
 
-// Store regions
-regionRouter.get("/usajiliMikoa", isAuth, (req, res, next) => {
-  request({
-      url: admin_area_url + "regions?per_page=100",
-      method: "GET",
-      headers: {
-        //   'Authorization': 'Bearer' + " " + req.session.Token,
-        "Content-Type": "application/json",
-      }
-    },(error, response, body) => {
-      if (error) {
-                console.log(new Date() + ": fail to UsajiliGraph " + error);
-                res.send("failed");
-      }
-      if (body !== undefined) {
-                var jsonData = JSON.parse(body);
-                var regi_content = jsonData.data;
-                var totalElements = jsonData.pagination.total;
-                var values = [];
-                console.log("totalElements " + totalElements);
-      
-              for (var i = 0; i < regi_content.length; i++) {
-                    var reg_id     = regi_content[i].id;
-                    var reg_name   = regi_content[i].name;
-                    var reg_code   = regi_content[i].region_uid;
-                    var created_at = formatDate(new Date());
-                    var updated_at = formatDate(new Date());
-                    values.push([
-                                reg_id,
-                                reg_code,
-                                reg_name,
-                                created_at,
-                                updated_at,
+// Fetch all regions from regions API and store
+regionRouter.post("/usajiliMikoa", isAuth, async (req, res, next) => {
+       var apiData = [];
+       var results = await promiseRequest(admin_area_url , 'regions' , 100);
+             //iterate through all datas received and store  to apiData array  
+              for (let index = 0; index < results.length; index++) {
+                    results[index].forEach((region_content) => {
+                                apiData.push([
+                                    region_content.id,
+                                    region_content.region_uid,
+                                    region_content.name,
+                                    formatDate(new Date()),
+                                    formatDate(new Date()),
                                 ]);
+                    });
               }
-            regionModel.storeRegions(values , (success) => {
-                console.log("Regions created successfully");
-                     return res.send({
-                       statusCode: success ? 300 : 306,
-                       message: success
-                         ? "Imefanikiwa kupakia mikoa mipya"
-                         : "Haijafanikiwa kupakia mikoa mipya",
-                     });
-            })}
-        }
-  );
+
+            if (apiData.length > 0) {
+              //store data to database
+                  regionModel.storeRegions(apiData, (isSuccess) => {
+                    console.log("Regions created successfully");
+                    res.send({
+                      statusCode: isSuccess ? 300 : 306,
+                      message: isSuccess
+                        ? "Umefanikiwa kupakia taarifa za Mikoa kikamilifu."
+                        : "Haujafanikiwa kupakia Mikoa wasiliana na msimamizi wa Mfumo.",
+                    });
+                  });
+            }else{
+                res.send({
+                  statusCode:  306,
+                  message: "Haujafanikiwa kupakia Mikoa wasiliana na msimamizi wa Mfumo.",
+                });
+            }
+});
+
+
+// Update Region Zone
+regionRouter.post("/assign-region-zone", isAuth, shirikishoValidation, (req, res, next) => {
+  regionModel.updateRegionZone(req.body.regionId, req.body.kanda, (error, success, result) => {
+      return res.send({
+        success: success ? true : false,
+        statusCode: success ? 300 : 306,
+        data: success ? result : error,
+        message: success
+          ? "Umefanikiwa kuusanisha Mkoa na Kanda."
+          : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+      });
+    });
 });
 
 module.exports = regionRouter;
