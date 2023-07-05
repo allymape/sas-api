@@ -1,5 +1,5 @@
 const db = require("../dbConnection");
-const { formatDate, uniqueArray } = require("../utils");
+const { formatDate, uniqueArray, mergeArray } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF ROLES *******************************
@@ -27,6 +27,28 @@ module.exports = {
         );
       }
     );
+  },
+  syncRoles : (roles , callback)=>{
+    try {
+       var success = false;
+       db.query(
+         `INSERT INTO role_management (id , role_name , status_id, created_at , created_by) 
+          VALUES ? ON DUPLICATE KEY 
+          UPDATE role_name = VALUES(role_name) , status_id = VALUES(status_id), created_by = VALUES(created_by)`,
+         [roles],
+         (error, result) => {
+           if (error) {
+             console.log(error);
+           }
+           if (result.affectedRows > 0) {
+             success = true;
+           }
+           callback(error, success, result);
+         }
+       );
+    } catch (error) {
+      callback(error , false , []);
+    }
   },
   //******** STORE ROLE *******************************
   storeRole: (roleData, userId, permissions, callback) => {
@@ -186,7 +208,7 @@ const syncPermissions = (permissions , userId , roleId , callback) => {
                        });
                      }
                      // unique permissions (user + system);
-                        uniqueArray(permissions_selected , default_permissions).forEach( (permissionId) => {
+                        uniqueArray(mergeArray(permissions_selected , default_permissions)).forEach( (permissionId) => {
                             permission_role.push([roleId, Number(permissionId) , 1 , formatDate(new Date()) , userId]);
                         });
                    

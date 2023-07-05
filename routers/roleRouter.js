@@ -2,9 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 const roleRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit, titleCase, headerCase } = require("../utils.js");
+const { isAuth, isAdmin , formatDate , permit, titleCase, headerCase, initiliazeRolesAndPermissions } = require("../utils.js");
 const roleModel = require("../models/roleModel.js");
 var session = require("express-session");
+const permissionModel = require("../models/permissionModel.js");
+const rolePermissionModel = require("../models/rolePermissionModel.js");
 roleRouter.use(
   session({
     secret: "secret",
@@ -119,6 +121,47 @@ roleRouter.delete("/deleteRole/:id", isAuth, (req, res, next) => {
                      });
                     
             });
+});
+
+// Initialize roles and permissions
+roleRouter.post("/generate_roles_permissions" , isAuth, (req , res, next) => {
+      try {
+        console.log("Start Syncing Data ...");
+        initiliazeRolesAndPermissions((roles, permissions, permission_role) => {
+          console.log("Found " + roles.length + " roles");
+          if (roles.length > 0) {
+            roleModel.syncRoles(roles, (error, success, result) => {
+              if (success) {
+                console.log("Syncing roles is succefully. " + result.message);
+                console.log("Found " + permissions.length + " permissions.");
+                permissionModel.syncPermissions(permissions , (error2 , success2 , result2) =>{
+                    if(success2){
+                          console.log("Syncing permissions is succefully. " + result2.message);
+                          console.log("Found " + permission_role.length + " permissions and roles.");
+                          rolePermissionModel.syncRolePermission(permission_role , (error3 , success3 , result3) => {
+                            if(success3){
+                              console.log("Syncing permission role is succefully. " + result3.message);
+                            }
+                            res.send({
+                                  statusCode : success3 ? 300 : 3006,
+                                  message : success3 ? "Umefanikiwa kuingiza majukumu ya watumiaji na permissions" : "Haujafanikiwa kuna tatizo wasiliana na msimamizi wa Mfumo."
+                              });
+                          });
+                    }else{
+                       console.log(
+                         "Syncing permissions failed due to. " + error2.message
+                       );
+                    }
+                });
+              } else {
+                console.log("Syncing roles failed due to. " + error.message);
+              }
+            });
+          }
+        } , req.userId);
+      } catch (error) {
+        console.log("Error:   "+ error);
+      }
 });
 
 module.exports = roleRouter;

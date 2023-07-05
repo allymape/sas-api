@@ -21,7 +21,9 @@ module.exports = {
   storeWards: (wardData, callback) => {
     var success = false;
         db.query(
-          `INSERT INTO wards (id, WardCode, WardName, LgaCode , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE WardCode = VALUES(WardCode), WardName = VALUES(WardName), LgaCode = VALUES(LgaCode), updated_at = VALUES(updated_at)`,
+          `INSERT INTO wards (id, WardCode, WardName, LgaCode , created_at , updated_at) 
+          VALUES ? ON DUPLICATE KEY 
+          UPDATE WardCode = VALUES(WardCode), WardName = VALUES(WardName), LgaCode = VALUES(LgaCode), updated_at = VALUES(updated_at)`,
               [wardData],
               (err, result) => {
                 if (err) {

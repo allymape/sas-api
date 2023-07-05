@@ -70,5 +70,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(process.env.HTTP_PORT || 80, () =>
-   console.log(`API Server is running on port ${process.env.HTTP_PORT || 80}`)
+   console.log(`API Server is running on  port ${process.env.HTTP_PORT || 80}`)
 );

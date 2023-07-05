@@ -6758,7 +6758,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
   }
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  console.log(decoded);
+  // console.log("decode " ,decoded);
   // db.query(`SELECT token_id FROM staffs WHERE id = '${db.escape(decoded.id)}'`,
   // (error, results) => {
   //     if(error){
@@ -6776,14 +6776,14 @@ router.get("/active-user", signupValidation, (req, res, next) => {
       }
       var name = results[0].name;
       db.query(
-        "SELECT COUNT(school_name) as kaunti FROM school_gender_types, " +
-          " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
-          " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-          " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
-          " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
-          " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-          " school_categories.id = establishing_schools.school_category_id AND " +
-          " school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ?",
+        `SELECT COUNT(school_name) as kaunti FROM school_gender_types,
+         school_registrations, establishing_schools, school_categories, school_sub_categories,
+         wards, districts, regions WHERE regions.RegionCode = districts.RegionCode
+         AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND
+         school_gender_types.id = establishing_schools.school_gender_type_id AND
+         school_sub_categories.id = establishing_schools.school_sub_category_id AND
+         school_categories.id = establishing_schools.school_category_id AND
+         school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ?`,
         [1],
         function (error, results, fields) {
           if (error) {
@@ -6941,7 +6941,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                                                   " AND is_approved = ? AND school_registrations.tracking_number = applications.tracking_number " +
                                                   " AND reg_status = ? AND registry_types.id = applications.registry_type_id " +
                                                   " AND establishing_schools.id = school_registrations.establishing_school_id " +
-                                                  " AND school_categories.id = establishing_schools.school_category_id GROUP BY registry_type_id;",
+                                                  " AND school_categories.id = establishing_schools.school_category_id GROUP BY registry_type_id , registry , category;",
                                                 [4, 2, 1],
                                                 function (
                                                   error,

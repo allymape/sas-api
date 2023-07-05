@@ -22,6 +22,28 @@ module.exports = {
       }
     );
   },
+   syncPermissions : (permissions , callback)=>{
+    try {
+       var success = false;
+       db.query(
+         `INSERT INTO permissions (id , permission_name , display_name , status_id, created_at , created_by) 
+          VALUES ? ON DUPLICATE KEY 
+          UPDATE permission_name = VALUES(permission_name) , display_name = VALUES(display_name) , created_at = VALUES(created_at) , created_by = VALUES(created_by) `,
+         [permissions],
+         (error, result) => {
+           if (error) {
+             console.log(error);
+           }
+           if (result.affectedRows > 0) {
+             success = true;
+           }
+           callback(error, success, result);
+         }
+       );
+    } catch (error) {
+      callback(error , false , []);
+    }
+  },
   //******** STORE PERMISSION *******************************
   storePermission: (permissionData, callback) => {
     var success = false;
