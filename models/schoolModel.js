@@ -16,6 +16,33 @@ module.exports = {
       }
     );
   },
+  // LOOK FOR SCHOOLS
+  lookForSchools : (offset , per_page , search, callback) => {
+        const keyword = db.escape(`%${search}%`);
+        const searchSql = search
+          ? ` WHERE e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword} `
+          : "";
+      db.query(
+        `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
+        r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
+                FROM establishing_schools e
+                JOIN school_registrations s ON s.tracking_number = e.tracking_number 
+                JOIN streets st ON st.StreetCode = e.village_id
+                JOIN wards w ON w.WardCode = st.WardCode
+                JOIN districts d ON d.LgaCode = w.LgaCode
+                JOIN regions r ON r.RegionCode = d.RegionCode
+                ${searchSql}
+                ORDER BY school_name ASC
+                LIMIT ? , ?`,
+        [offset, per_page],
+        (error, schools) => {
+          if (error) {
+            console.log(error);
+          }
+          callback(error, schools);
+        }
+      );
+  },
   //******** STORE SCHOOLS *******************************
   storeSchools: (established_schools , applications , school_registrations, callback) => {
     var success = false;

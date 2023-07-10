@@ -19,7 +19,10 @@ applicationCategoryRouter.get("/all-application-categories", isAuth, (req, res, 
   var offset = (page - 1) * per_page;
    var is_paginated = true;
    if (typeof req.body.is_paginated !== "undefined") {
-     is_paginated = req.body.is_paginated == "false" ? false : true;
+     is_paginated =
+       req.body.is_paginated == "false" || !req.body.is_paginated
+         ? false
+         : true;
    }
   applicationCategoryModel.getAllApplicationCategories(offset, per_page, is_paginated, (error, applicationCategorys, numRows) => {
             return res.send({

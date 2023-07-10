@@ -18,7 +18,7 @@ schoolRouter.get("/allschools", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  schoolModel.getAllschools(offset, per_page, (error, schools, numRows) => {
+  schoolModel.getAllSchools(offset, per_page, (error, schools, numRows) => {
     console.log(schools);
     return res.send({
       error: error ? true : false,
@@ -30,6 +30,27 @@ schoolRouter.get("/allschools", isAuth, (req, res, next) => {
   });
 });
 
+// Look for schools
+schoolRouter.get("/look_for_schools", isAuth, (req, res, next) => {
+ var per_page = parseInt(req.query.per_page);
+ var page = parseInt(req.query.page);
+ var offset = (page - 1) * per_page;
+ var search = req.body.search;
+  schoolModel.lookForSchools(offset , per_page , search, (error, schools) => {
+    var data = [];
+       schools.forEach(school => {
+          data.push({
+            id: school.id,
+            text: school.text + ` (${school.registration_number} - ${school.region} ${school.district} ${school.ward})`,
+          });
+       });
+    res.send({
+      statusCode: error ? 306 : 300,
+      data: error ? [] : data,
+      message: error ? "Something went wrong" : "List of schools",
+    });
+  });
+});
 // Store Schools
 schoolRouter.get("/existingSchools", isAuth, (req, res, next) => {
   request(

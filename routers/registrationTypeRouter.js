@@ -19,7 +19,10 @@ registrationTypeRouter.get("/all-registration-types", isAuth, (req, res, next) =
   var offset = (page - 1) * per_page;
    var is_paginated = true;
    if (typeof req.body.is_paginated !== "undefined") {
-     is_paginated = req.body.is_paginated == "false" ? false : true;
+     is_paginated =
+       req.body.is_paginated == "false" || !req.body.is_paginated
+         ? false
+         : true;
    }
   registrationTypeModel.getAllRegistrationTypes(offset, per_page, is_paginated, (error, registrationTypes, numRows) => {
             return res.send({

@@ -1,55 +1,61 @@
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
-const rankRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit } = require("../utils.js");
-const rankModel = require("../models/rankModel.js");
+const designationRouter = express.Router();
+const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
+const designationModel = require("../models/designationModel.js");
 var session = require("express-session");
-rankRouter.use(
+designationRouter.use(
   session({
     secret: "secret",
     resave: true,
     saveUninitialized: true,
   })
 );
-// List of ranks
-rankRouter.get("/allRanks", isAuth, (req, res, next) => {
+// List of designations
+designationRouter.get("/all_designations", isAuth, permission('view-designations'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
+ 
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated = req.body.is_paginated == 'false' ? false : true;
+            is_paginated =
+              req.body.is_paginated == "false" || !req.body.is_paginated
+                ? false
+                : true;
         }
-  rankModel.getAllRanks(offset, per_page, is_paginated , (error, ranks, numRows) => {
-    // console.log(ranks)
+  designationModel.getAllDesignations(offset, per_page, is_paginated , (error, designations,levels, numRows) => {
+    // console.log(designations)
+    console.log(error);
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
-                data: error ? error : ranks,
+                designations: error ? null : designations,
+                levels: error ? null : levels,
                 numRows: numRows,
                 is_paginated : is_paginated,
-                message: error ? "Something went wrong." : "List of Ranks.",
+                message: error ? "Something went wrong." : "List of designations.",
             });
   });
 });
-// Edit Rank
-rankRouter.get("/editRank/:id", isAuth, (req, res, next) => {
+// Edit designation
+designationRouter.get("/edit_designation/:id", isAuth, (req, res, next) => {
     var id = req.params.id;
-  rankModel.findRank(id, (error , success, rank) => {
+  designationModel.finddesignation(id, (error , success, designation) => {
             return res.send({
                 success: success ? true : false,
                 statusCode: success ? 300 : 306,
-                data: success ? rank : error,
+                data: success ? designation : error,
                 message: success ?  "Success" : "Not found",
             });
   });
 });
 
-// Store rank
-rankRouter.post("/addRank", isAuth, (req, res, next) => {
+// Store designation
+designationRouter.post("/add_designation", isAuth, (req, res, next) => {
             var data = [];
-            var name = req.body.rankName.trim();
+            var name = req.body.designationName.trim();
             var display = req.body.displayName.trim();
             data.push([
                     name.replace(/ /g, "-").toLowerCase(),
@@ -59,22 +65,22 @@ rankRouter.post("/addRank", isAuth, (req, res, next) => {
                     req.user.id,
             ]);
     
-            rankModel.storeRank(data , (error , success , result) => {
+            designationModel.storedesignation(data , (error , success , result) => {
                      return res.send({
                        success: success ? true : false,
                        statusCode: success ? 300 : 306,
                        data: success ? result : error,
                        message: success
-                         ? "Umefanikiwa kusajili rank."
+                         ? "Umefanikiwa kusajili designation."
                          : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
                      });
             });
 });
 
-// Store rank
-rankRouter.put("/updateRank/:id", isAuth, (req, res, next) => {
+// Store designation
+designationRouter.put("/update_designation/:id", isAuth, (req, res, next) => {
             var data = [];
-            var name = req.body.rankName.trim().replace(/ /g, "-").toLowerCase();
+            var name = req.body.designationName.trim().replace(/ /g, "-").toLowerCase();
             var display = req.body.displayName.trim();
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
             var id = Number(req.params.id);
@@ -85,29 +91,29 @@ rankRouter.put("/updateRank/:id", isAuth, (req, res, next) => {
                         id
             ]);
     
-            rankModel.updateRank(name , display , status , id , (error , success , rank) => {
+            designationModel.updatedesignation(name , display , status , id , (error , success , designation) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? rank : error,
-                        message: success ? "Umefanikiwa kubadili rank." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
+                        data: success ? designation : error,
+                        message: success ? "Umefanikiwa kubadili designation." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
                      });
                     
             });
 });
 
-// Store rank
-rankRouter.delete("/deleteRank/:id", isAuth, (req, res, next) => {
+// Store designation
+designationRouter.delete("/delete_designation/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
-            rankModel.deleteRank(id , (error , success , rank) => {
+            designationModel.deletedesignation(id , (error , success , designation) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? rank : error,
-                        message: success ? "Umefanikiwa kufuta rank." : error,
+                        data: success ? designation : error,
+                        message: success ? "Umefanikiwa kufuta designation." : error,
                      });
                     
             });
 });
 
-module.exports = rankRouter;
+module.exports = designationRouter;

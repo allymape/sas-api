@@ -29,7 +29,10 @@ regionRouter.get("/regions", isAuth, (req, res, next) => {
     var is_paginated = true;
     var zone_id = null;
     if (typeof req.body.is_paginated !== "undefined") {
-      is_paginated = req.body.is_paginated == "false" ? false : true;
+      is_paginated =
+        req.body.is_paginated == "false" || !req.body.is_paginated
+          ? false
+          : true;
       zone_id = req.body.zone_id;
     }
     regionModel.getAllRegions(offset, per_page, is_paginated, zone_id, (error, regions, numRows) => {

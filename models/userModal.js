@@ -35,13 +35,14 @@ module.exports = {
   //******** LIST USERS *******************************
   getUsers: (offset, per_page, callback) => {
     db.query(
-      `SELECT vyeo.id as vyeoId, username, staffs.id as userId, email, user_level, last_login,
-                staffs.name as name, phone_no, vyeo.rank_name as level_name, rank_level, role_name,
+      `SELECT vyeo.id as vyeoId, username, staffs.id as userId, email, user_level, IFNULL(last_login , '') as last_login,
+                staffs.name as name, phone_no, IFNULL(vyeo.rank_name , '') as level_name, 
+                IFNULL(rank_level , '') as rank_level, IFNULL(role_name , '') as role_name,
                 IFNULL(zones.zone_name , '') as zone_name , regions.RegionName as region_name, IFNULL(districts.LgaName , '') as 
                 lga_name , CASE WHEN staffs.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , user_status
         FROM staffs
-        JOIN vyeo ON vyeo.id = staffs.user_level
-        JOIN role_management ON role_management.id = staffs.new_role_id
+        LEFT JOIN vyeo ON vyeo.id = staffs.user_level
+        LEFT JOIN role_management ON role_management.id = staffs.new_role_id
         LEFT JOIN zones ON zones.id = staffs.zone_id
         LEFT JOIN regions ON regions.RegionCode = staffs.region_code
         LEFT JOIN districts ON districts.LgaCode = staffs.district_code

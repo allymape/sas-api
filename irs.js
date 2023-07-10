@@ -37,11 +37,12 @@ const schoolRouter = require("./routers/schoolRouter.js");
 const userRouter = require("./routers/userRouter.js");
 const permissionRouter = require("./routers/permissionRouter.js");
 const roleRouter = require("./routers/roleRouter.js");
-const rankRouter = require("./routers/rankRouter.js");
 const zoneRouter = require("./routers/zoneRouter.js");
 const attachementTypeRouter = require("./routers/attachmentTypeRouter.js");
 const applicationCategoryRouter = require("./routers/applicationCategoryRouter.js");
 const registrationTypeRouter = require("./routers/registrationTypeRouter.js");
+const designationRouter = require("./routers/designationRouter.js");
+const applicantRouter = require("./routers/applicantRouter.js");
 
 app.use("/api", regionRouter);
 app.use("/api", districtRouter);
@@ -51,11 +52,12 @@ app.use("/api", schoolRouter);
 app.use("/api", userRouter);
 app.use("/api", permissionRouter);
 app.use("/api", roleRouter);
-app.use("/api", rankRouter);
+app.use("/api", designationRouter);
 app.use("/api", zoneRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);
 app.use("/api", registrationTypeRouter);
+app.use("/api", applicantRouter);
 app.use("/api", indexRouter);
 
 // Handling Errors

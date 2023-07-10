@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 const roleRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit, titleCase, headerCase, initiliazeRolesAndPermissions } = require("../utils.js");
+const { isAuth, isAdmin , formatDate , permit, titleCase, headerCase, initiliazeRolesAndPermissions, permission } = require("../utils.js");
 const roleModel = require("../models/roleModel.js");
 var session = require("express-session");
 const permissionModel = require("../models/permissionModel.js");
@@ -15,20 +15,24 @@ roleRouter.use(
   })
 );
 // List of roles
-roleRouter.get("/allRoles", isAuth, (req, res, next) => {
+roleRouter.get("/allRoles", isAuth, permission('view-roles'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated = req.body.is_paginated == 'false' ? false : true;
+            is_paginated =
+              req.body.is_paginated == "false" || !req.body.is_paginated
+                ? false
+                : true;
         }
   roleModel.getAllRoles(offset, per_page, is_paginated , (error, roles, numRows) => {
     // console.log(roles)
+            if(error) console.log(error);
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
-                data: error ? error : roles,
+                data: error ? "" : roles,
                 numRows: numRows,
                 is_paginated : is_paginated,
                 message: error ? "Something went wrong." : "List of Roles.",
@@ -103,7 +107,7 @@ roleRouter.put("/updateRole/:id", isAuth, (req, res, next) => {
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? role : error,
-                        message: success ? "Umefanikiwa kubadili role." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+                        message: success ? "Umefanikiwa kufanya mabadiliko ya role hii." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
                     
             });
@@ -132,15 +136,15 @@ roleRouter.post("/generate_roles_permissions" , isAuth, (req , res, next) => {
           if (roles.length > 0) {
             roleModel.syncRoles(roles, (error, success, result) => {
               if (success) {
-                console.log("Syncing roles is succefully. " + result.message);
+                console.log("Syncing roles is successfully. " + result.message);
                 console.log("Found " + permissions.length + " permissions.");
                 permissionModel.syncPermissions(permissions , (error2 , success2 , result2) =>{
                     if(success2){
-                          console.log("Syncing permissions is succefully. " + result2.message);
+                          console.log("Syncing permissions is successfully. " + result2.message);
                           console.log("Found " + permission_role.length + " permissions and roles.");
                           rolePermissionModel.syncRolePermission(permission_role , (error3 , success3 , result3) => {
                             if(success3){
-                              console.log("Syncing permission role is succefully. " + result3.message);
+                              console.log("Syncing permission role is successfully. " + result3.message);
                             }
                             res.send({
                                   statusCode : success3 ? 300 : 3006,

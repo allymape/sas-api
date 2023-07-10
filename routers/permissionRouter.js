@@ -20,7 +20,8 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
   var is_paginated = true;
   var status = false;
   if (typeof req.body.is_paginated !== "undefined") {
-    is_paginated = req.body.is_paginated == "false" ? false : true;
+    is_paginated =
+      req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
   }
   if (typeof req.body.status !== "undefined") {
      status = req.body.status == "false" ? false : true;

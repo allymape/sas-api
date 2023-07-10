@@ -23,6 +23,7 @@ const requestIp = require("request-ip");
 var session = require("express-session");
 
 var rateLimit = require("express-rate-limit");
+const { permission } = require("./utils");
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 
 const loginlimiter = rateLimit({
@@ -5658,47 +5659,47 @@ router.post("/delete-user", signupValidation, (req, res, next) => {
 
 
 
-router.post("/applicants", signupValidation, (req, res, next) => {
-  // console.log(req.body)
-  var obj = [];
-  var obj1 = [];
-  var obj12 = [];
-  var obj13 = [];
-  var office = req.body.office;
-  var useLevel = req.body.useLevel;
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(422).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  if (useLevel == 11) {
-    db.query("SELECT * FROM users", function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      for (var i = 0; i < results.length; i++) {
-        var userId = results[i].id;
-        var name = results[i].name;
-        var email = results[i].email;
-        obj.push({ userId: userId, name: name, email: email });
-      }
-      return res.send({
-        error: false,
-        statusCode: 300,
-        data: obj,
-        message: "Fetch Successfully.",
-      });
-    });
-  }
-});
+// router.post("/applicants", signupValidation, (req, res, next) => {
+//   // console.log(req.body)
+//   var obj = [];
+//   var obj1 = [];
+//   var obj12 = [];
+//   var obj13 = [];
+//   var office = req.body.office;
+//   var useLevel = req.body.useLevel;
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(422).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   if (useLevel == 11) {
+//     db.query("SELECT * FROM users", function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       for (var i = 0; i < results.length; i++) {
+//         var userId = results[i].id;
+//         var name = results[i].name;
+//         var email = results[i].email;
+//         obj.push({ userId: userId, name: name, email: email });
+//       }
+//       return res.send({
+//         error: false,
+//         statusCode: 300,
+//         data: obj,
+//         message: "Fetch Successfully.",
+//       });
+//     });
+//   }
+// });
 
 //get list of users
 router.get("/vyeolist", signupValidation, (req, res, next) => {
@@ -5718,9 +5719,9 @@ router.get("/vyeolist", signupValidation, (req, res, next) => {
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
   db.query(
-    "SELECT vyeo.id as vyeoId, roles.id as rolesId,  " +
-      " roles.name as name, vyeo.rank_name as role_name FROM roles, " +
-      " vyeo where vyeo.id = roles.vyeoId and roles.status_id = 1",
+    `SELECT vyeo.id as vyeoId, roles.id as rolesId,
+      roles.name as name, vyeo.rank_name as role_name FROM roles, 
+      vyeo where vyeo.id = roles.vyeoId and roles.status_id = 1`,
     function (error, results, fields) {
       if (error) {
         console.log(error);
@@ -6740,8 +6741,8 @@ router.post("/logout", makundiValidation, (req, res, next) => {
   );
 });
 
-//get active user
-router.get("/active-user", signupValidation, (req, res, next) => {
+//dashboard data
+router.get("/dashboard", signupValidation, (req, res, next) => {
   var obj = [];
   var obj1 = [];
   var obj2 = [];
@@ -6758,16 +6759,6 @@ router.get("/active-user", signupValidation, (req, res, next) => {
   }
   const theToken = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  // console.log("decode " ,decoded);
-  // db.query(`SELECT token_id FROM staffs WHERE id = '${db.escape(decoded.id)}'`,
-  // (error, results) => {
-  //     if(error){
-  //         console.log(error)
-  //         return res.send({error: true, statusCode: 400, message: "Kuna tatizo la kimtandao"})
-  //     }else{
-  //         var token_id = results[0].token_id;
-  //         console.log("token_id " + token_id)
-  //         if(token_id != 0){
   db.query(
     `SELECT * FROM staffs where id= '${db.escape(decoded.id)}'`,
     function (error, results, fields) {
@@ -7136,7 +7127,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
       if (error) {
         console.log(error);
       }
-      var kaunti = results[0].kaunti;
+      var kaunti =  results[0].kaunti;
       db.query(
         "select count(*) as kaunti FROM establishing_schools, " +
           " applications, wards, districts, school_categories, registry_types, " +

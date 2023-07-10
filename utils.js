@@ -72,14 +72,15 @@ const ObjectFuctions = {
     }
   },
   // Check user permission
-  permit: (permission) => {
+  permission: (permission) => {
     // return a middleware
     return (req, res, next) => {
       const { user } = req;
       if (user && user.userPermissions.includes(permission)) {
         next(); // role is allowed, so continue on the next middleware
       } else {
-        res.status(403).json({ message: "Forbidden" }); // user is forbidden
+        // console.log(permission, req);
+        return res.status(403).json({ statusCode: 403 ,message: "403 Forbidden" }); // user is forbidden
       }
     };
   },

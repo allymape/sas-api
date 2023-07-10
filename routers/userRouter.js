@@ -80,10 +80,11 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
 });
 
 //get list of users
-userRouter.get("/users", signupValidation, (req, res, next) => {
+userRouter.get("/users", (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
+  
   userModal.getUsers(offset, per_page, (error, users, numRows) => {
     // console.log(users);
     return res.send({

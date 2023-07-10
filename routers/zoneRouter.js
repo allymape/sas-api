@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 const zoneRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit } = require("../utils.js");
+const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const zoneModel = require("../models/zoneModel.js");
 var session = require("express-session");
 zoneRouter.use(
@@ -13,22 +13,23 @@ zoneRouter.use(
   })
 );
 // List of zones
-zoneRouter.get("/allZones", isAuth, (req, res, next) => {
+zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated = req.body.is_paginated == 'false' ? false : true;
+            is_paginated =
+              req.body.is_paginated == "false" || !req.body.is_paginated
+                ? false
+                : true;
         }
   zoneModel.getAllZones(offset, per_page, is_paginated , (error, zones, numRows) => {
-    // console.log(zones)
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
                 data: error ? error : zones,
                 numRows: numRows,
-                is_paginated : is_paginated,
                 message: error ? "Something went wrong." : "List of Zones.",
             });
   });
