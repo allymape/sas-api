@@ -2,7 +2,10 @@
 - Remove column id from permission_role table
 - Add three column zone_id, region_code and district_code to staffs table
 - add default column to permissions with initial value 0 (false)
-- ALTER TABLE MOE.applications CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+Run these statement direct to mysql (copy and paste);
+------------ Start --------
+ALTER TABLE MOE.applications CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE INDEX region_uid_index ON MOE.regions (id,RegionCode);
 CREATE INDEX district_uid_index ON MOE.districts (id,LgaCode);
 CREATE INDEX ward_uid_index ON MOE.wards (id,WardCode);
@@ -10,7 +13,7 @@ CREATE INDEX street_uid_index ON MOE.streets (id,StreetCode);
 CREATE INDEX school_establishment_indexes ON MOE.establishing_schools (id,school_category_id,tracking_number);
 CREATE INDEX application_indexes ON MOE.applications (id,tracking_number);
 CREATE INDEX maoni_indexes ON MOE.maoni (id,trackingNo,user_from, user_to);
-
+--------------- End ------------
 To Generate Roles and Permissions Run  http://ap_base_url/api/generate_roles_permissions  method: POST 
 It will create two roles SuperAdmin and Admin with permissions list and permission_role
 Update staff new_role that you want to login with SuperAdmin previllage give new_role=1
