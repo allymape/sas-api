@@ -4,11 +4,15 @@ module.exports = {
   //******** GET A LIST OF DesignationS *******************************
   getAllDesignations: (offset, per_page, is_paginated, callback) => {
     //  console.log(is_paginated);
-    const vyeoQuery = `SELECT vyeo.id as vyeoId, roles.id as rolesId,
-      roles.name as name, vyeo.rank_name as role, roles.status_id AS status
-      FROM roles
-      RIGHT JOIN vyeo ON vyeo.id = roles.vyeoId 
-      ${is_paginated ? "" : " AND vyeo.status_id = 1"}
+    const vyeoQuery = `SELECT 
+      r.id as id,
+      r.name as name, 
+      v.rank_name as role, 
+      r.vyeoId AS level,
+      r.status_id AS status
+      FROM roles r
+      LEFT JOIN vyeo v ON v.id = r.vyeoId 
+      ${is_paginated ? "" : " AND r.status_id = 1"}
       ${is_paginated ? ' LIMIT ?,?' : ''}`;
 
     db.query(
@@ -37,11 +41,11 @@ module.exports = {
     );
   },
   //******** STORE Designation *******************************
-  storeRole: (DesignationData, callback) => {
+  storeDesignation: (data, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO Designations (Designation_name , display_name , status_id, created_at , created_by) VALUES ?`,
-      [DesignationData],
+      `INSERT INTO roles (name , vyeoId , status_id, created_at) VALUES ?`,
+       [data],
       (error, result) => {
         if (error) {
           console.log("Error", error);
@@ -54,43 +58,43 @@ module.exports = {
     );
   },
   //******** FIND Designation *******************************
-  findRole: (id, callback) => {
+  findDesignation: (id, callback) => {
     var success = false;
     db.query(
       `SELECT id , Designation_name , display_name , status_id FROM Designations WHERE id = ?`,
       [id],
-      (error, Designation) => {
+      (error, designation) => {
         if (error) {
           console.log("Error", err);
         }
-        if (Designation) {
+        if (designation) {
           success = true;
         }
-        callback(error, success, Designation);
+        callback(error, success, designation);
       }
     );
   },
 
   //******** UPDATE Designation *******************************
-  updateRole: (name, display, status, id, callback) => {
+  updateDesignation: ( data, callback) => {
     var success = false;
     db.query(
-      `UPDATE  Designations SET Designation_name = ? , display_name = ? , status_id = ?  WHERE id = ?`,
-      [name, display, status, id],
-      (error, Designation, fields) => {
+      `UPDATE  roles SET name = ? , vyeoId = ? , status_id = ? , updated_at = ?  WHERE id = ?`,
+      data,
+      (error, designation, fields) => {
         if (error) {
           console.log("Error", error);
         }
-        if (Designation) {
+        if (designation.affectedRows > 0) {
           success = true;
         }
-        callback(error, success, Designation);
+        callback(error, success, designation);
       }
     );
   },
 
   //******** DELETEt Designation *******************************
-  deleteRole: (id, callback) => {
+  deleteDesignation: (id, callback) => {
     var success = false;
     db.query(
       "SELECT COUNT(*) AS num_rows FROM Designation_Designation WHERE Designation_id = ?",
@@ -112,15 +116,15 @@ module.exports = {
           db.query(
             `DELETE FROM Designations  WHERE id = ?`,
             [id],
-            (error2, deletedRole) => {
+            (error2, deletedDesignation) => {
               if (error2) {
                 console.log("Error", error2);
                 error2 = error2 ? "Haikuweza kufuta kuna tatizo" : "";
               }
-              if (deletedRole) {
+              if (deletedDesignation) {
                 success = true;
               }
-              callback(error2, success, deletedRole);
+              callback(error2, success, deletedDesignation);
               return;
             }
           );

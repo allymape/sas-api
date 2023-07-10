@@ -1,19 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
-const zoneRouter = express.Router();
+const combinationRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
-const zoneModel = require("../models/zoneModel.js");
+const combinationModel = require("../models/combinationModel.js");
 var session = require("express-session");
-zoneRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
-// List of zones
-zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) => {
+
+// List of combinations
+combinationRouter.get("/allCombinations", isAuth, permission('view-combinations'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
@@ -24,86 +18,85 @@ zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) =
                 ? false
                 : true;
         }
-  zoneModel.getAllZones(offset, per_page, is_paginated , (error, zones, numRows) => {
+  combinationModel.getAllCombinations(offset, per_page, is_paginated , (error, combinationes, specializations, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
-                data: error ? error : zones,
+                combinationes: error ? error : combinationes,
+                specializations : specializations,
                 numRows: numRows,
-                message: error ? "Something went wrong." : "List of Zones.",
+                message: error ? "Kuna Tatizo limetokea." : "Orosha ya Tahasusi.",
             });
   });
 });
-// Edit Zone
-zoneRouter.get("/editZone/:id", isAuth, (req, res, next) => {
+// Edit Combination
+combinationRouter.get("/editCombination/:id", isAuth, (req, res, next) => {
     var id = req.params.id;
-  zoneModel.findZone(id, (error , success, zone) => {
+  combinationModel.findCombination(id, (error , success, combination) => {
             return res.send({
                 success: success ? true : false,
                 statusCode: success ? 300 : 306,
-                data: success ? zone : error,
+                data: success ? combination : error,
                 message: success ?  "Success" : "Not found",
             });
   });
 });
 
-// Store zone
-zoneRouter.post("/addZone", isAuth, (req, res, next) => {
+// Store combination
+combinationRouter.post("/addCombination", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.zonename;
-            var code = req.body.zonecode;
+            var name = req.body.combinationname;
+            var code = req.body.combinationcode;
             formData.push([
                     name,
-                    code,
-                    1,
                     formatDate(new Date()),
-                    req.user.id,
+                    formatDate(new Date())
             ]);
     
-            zoneModel.storeZone(formData , (error , success , result) => {
+            combinationModel.storeCombination(formData , (error , success , result) => {
                      return res.send({
                        success: success ? true : false,
                        statusCode: success ? 300 : 306,
                        data: success ? result : error,
                        message: success
-                         ? "Umefanikiwa kusajili zone."
+                         ? "Umefanikiwa kusajili Ngazi."
                          : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
             });
 });
 
-// Store zone
-zoneRouter.put("/updateZone/:id", isAuth, (req, res, next) => {
+// Store combination
+combinationRouter.put("/updateCombination/:id", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.zonename;
-            var zone_code = req.body.zonecode;
+            var name = req.body.combinationname;
+            var combination_code = req.body.combinationcode;
             var status = req.body.statusid == "on" || Number(req.body.statusid) == 1 ? true : false ;
             var id = Number(req.params.id);
-            formData.push(name,zone_code,status,id);
+            formData.push(name,status,id);
     
-            zoneModel.updateZone( formData , (error , success , zone) => {
+            combinationModel.updateCombination( formData , (error , success , combination) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? zone : error,
-                        message: success ? "Umefanikiwa kubadili zone." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+                        data: success ? combination : error,
+                        message: success ? "Umefanikiwa kubadili Ngazi." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
                     
             });
 });
 
-// Store zone
-zoneRouter.put("/deleteZone/:id", isAuth, (req, res, next) => {
+// Store combination
+combinationRouter.put("/deleteCombination/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
-            zoneModel.deleteZone(id , (error , success , zone) => {
+            combinationModel.deleteCombination(id , (error , success , combination) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? zone : [],
-                        message: success ? "Umefanikiwa kufuta Kanda." : 'Haujafanikiwa kufuta kuna Tatizo, Tafadhali hakiki kama Kanda hii haijatumika kwanza',
+                        data: success ? combination : [],
+                        message: success ? "Umefanikiwa kufuta Ngazi." : 'Haujafanikiwa kufuta kuna Tatizo, Tafadhali hakiki kama Ngazi hii haijatumika kwanza',
                      });
                     
             });
 });
 
-module.exports = zoneRouter;
+module.exports = combinationRouter;

@@ -2379,150 +2379,150 @@ router.post("/registerCheo", (req, res, next) => {
   );
 });
 
-router.post("/updateCheo", (req, res, next) => {
-  console.log(req.body);
-  console.log("sjkdjsk");
-  console.log("sajili cheo " + req.body.ip_address);
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(422).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `SELECT * FROM roles WHERE id = ${db.escape(req.body.cheoId)};`,
-    (err, resultdata) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log(resultdata);
-      if (req.body.level == "#") {
-        db.query(
-          `UPDATE roles SET name = ${db.escape(
-            req.body.name
-          )} WHERE id = ${db.escape(req.body.cheoId)}`,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-              return res.status(400).send({
-                error: true,
-                statusCode: 400,
-                message: err,
-              });
-            }
+// router.post("/updateCheo", (req, res, next) => {
+//   console.log(req.body);
+//   console.log("sjkdjsk");
+//   console.log("sajili cheo " + req.body.ip_address);
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(422).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `SELECT * FROM roles WHERE id = ${db.escape(req.body.cheoId)};`,
+//     (err, resultdata) => {
+//       if (err) {
+//         console.log(err);
+//       }
+//       console.log(resultdata);
+//       if (req.body.level == "#") {
+//         db.query(
+//           `UPDATE roles SET name = ${db.escape(
+//             req.body.name
+//           )} WHERE id = ${db.escape(req.body.cheoId)}`,
+//           (err, result) => {
+//             if (err) {
+//               console.log(err);
+//               return res.status(400).send({
+//                 error: true,
+//                 statusCode: 400,
+//                 message: err,
+//               });
+//             }
 
-            UpdateAuditTrail(
-              decoded.id,
-              "updated",
-              req.body,
-              req.url,
-              req.body.browser_used,
-              req.body.cheoId,
-              "Cheo kimesasishwa!",
-              req.body.ip_address,
-              resultdata[0],
-              "roles"
-            );
-            return res.status(200).send({
-              error: false,
-              statusCode: 300,
-              message: "The cheo has been registerd with us!",
-            });
-          }
-        );
-      } else {
-        db.query(
-          `UPDATE roles SET name = ${db.escape(req.body.name)}, 
-        vyeoId = ${db.escape(req.body.level)} WHERE id = ${db.escape(
-            req.body.cheoId
-          )}`,
-          (err, result) => {
-            if (err) {
-              console.log(err);
-              return res.status(400).send({
-                error: true,
-                statusCode: 400,
-                message: err,
-              });
-            }
-            console.log("aaaaaaa");
-            UpdateAuditTrail(
-              decoded.id,
-              "updated",
-              req.body,
-              req.url,
-              req.body.browser_used,
-              req.body.cheoId,
-              "Cheo kimesasishwa!",
-              req.body.ip_address,
-              resultdata[0],
-              "roles"
-            );
-            return res.status(200).send({
-              error: false,
-              statusCode: 300,
-              message: "The cheo has been registerd with us!",
-            });
-          }
-        );
-      }
-    }
-  );
-});
+//             UpdateAuditTrail(
+//               decoded.id,
+//               "updated",
+//               req.body,
+//               req.url,
+//               req.body.browser_used,
+//               req.body.cheoId,
+//               "Cheo kimesasishwa!",
+//               req.body.ip_address,
+//               resultdata[0],
+//               "roles"
+//             );
+//             return res.status(200).send({
+//               error: false,
+//               statusCode: 300,
+//               message: "The cheo has been registerd with us!",
+//             });
+//           }
+//         );
+//       } else {
+//         db.query(
+//           `UPDATE roles SET name = ${db.escape(req.body.name)}, 
+//         vyeoId = ${db.escape(req.body.level)} WHERE id = ${db.escape(
+//             req.body.cheoId
+//           )}`,
+//           (err, result) => {
+//             if (err) {
+//               console.log(err);
+//               return res.status(400).send({
+//                 error: true,
+//                 statusCode: 400,
+//                 message: err,
+//               });
+//             }
+//             console.log("aaaaaaa");
+//             UpdateAuditTrail(
+//               decoded.id,
+//               "updated",
+//               req.body,
+//               req.url,
+//               req.body.browser_used,
+//               req.body.cheoId,
+//               "Cheo kimesasishwa!",
+//               req.body.ip_address,
+//               resultdata[0],
+//               "roles"
+//             );
+//             return res.status(200).send({
+//               error: false,
+//               statusCode: 300,
+//               message: "The cheo has been registerd with us!",
+//             });
+//           }
+//         );
+//       }
+//     }
+//   );
+// });
 
-router.post("/deleteCheo", (req, res, next) => {
-  console.log(req.body);
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(422).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `UPDATE roles SET status_id = 0 WHERE id = ${db.escape(req.body.cheoId)}`,
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).send({
-          error: true,
-          statusCode: 400,
-          message: err,
-        });
-      }
-      UpdateAuditTrail(
-        decoded.id,
-        "updated",
-        req.body,
-        req.url,
-        req.body.browser_used,
-        req.body.cheoId,
-        "Cheo zimefutwa kikamilifu!",
-        req.body.ip_address,
-        "",
-        "roles"
-      );
-      return res.status(200).send({
-        error: false,
-        statusCode: 300,
-        message: "The cheo has been deleted with us!",
-      });
-    }
-  );
-});
+// router.post("/deleteCheo", (req, res, next) => {
+//   console.log(req.body);
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(422).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `UPDATE roles SET status_id = 0 WHERE id = ${db.escape(req.body.cheoId)}`,
+//     (err, result) => {
+//       if (err) {
+//         console.log(err);
+//         return res.status(400).send({
+//           error: true,
+//           statusCode: 400,
+//           message: err,
+//         });
+//       }
+//       UpdateAuditTrail(
+//         decoded.id,
+//         "updated",
+//         req.body,
+//         req.url,
+//         req.body.browser_used,
+//         req.body.cheoId,
+//         "Cheo zimefutwa kikamilifu!",
+//         req.body.ip_address,
+//         "",
+//         "roles"
+//       );
+//       return res.status(200).send({
+//         error: false,
+//         statusCode: 300,
+//         message: "The cheo has been deleted with us!",
+//       });
+//     }
+//   );
+// });
 
 router.post("/verify", signupValidation, (req, res, next) => {
   console.log(req.body);

@@ -1,3 +1,4 @@
+- change zone_code to zone_id from table regions and set as INTEGER INSTEAD OF VARCHAR
 - Create streets table id, StreetName, StreetCode, WardCode, created_at, updated_at
 - Remove column id from permission_role table
 - Add three column zone_id, region_code and district_code to staffs table
@@ -17,3 +18,8 @@ CREATE INDEX maoni_indexes ON MOE.maoni (id,trackingNo,user_from, user_to);
 To Generate Roles and Permissions Run  http://ap_base_url/api/generate_roles_permissions  method: POST 
 It will create two roles SuperAdmin and Admin with permissions list and permission_role
 Update staff new_role that you want to login with SuperAdmin previllage give new_role=1
+Clarification:
+vyeo Table - Uongozi (Hiararchies)
+roles Table - Vyeo vya Watumishi (Designations)
+role_management - Majukumu ya
+Ranks -   Ngazi za Uongozi (1 Wizara , 2 Kanda na 3 Wilaya)

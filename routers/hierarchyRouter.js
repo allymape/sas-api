@@ -1,19 +1,19 @@
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
-const designationRouter = express.Router();
+const hierarchyRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
-const designationModel = require("../models/designationModel.js");
+const hierarchyModel = require("../models/hierarchyModel.js");
 var session = require("express-session");
-designationRouter.use(
+hierarchyRouter.use(
   session({
     secret: "secret",
     resave: true,
     saveUninitialized: true,
   })
 );
-// List of designations
-designationRouter.get("/all_designations", isAuth, permission('view-designations'), (req, res, next) => {
+// List of hierarchies
+hierarchyRouter.get("/all_hierarchies", isAuth, permission('view-hierarchies'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
@@ -25,82 +25,92 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
                 ? false
                 : true;
         }
-  designationModel.getAllDesignations(offset, per_page, is_paginated , (error, designations,levels, numRows) => {
-    // console.log(designations)
-    console.log(error);
+  hierarchyModel.getAllHierarchies(offset, per_page, is_paginated , (error, hierarchies, ranks, numRows) => {
+    // console.log(hierarchies)
+    // console.log(error);
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
-                designations: error ? null : designations,
-                levels: error ? null : levels,
+                hierarchies: error ? null : hierarchies,
+                ranks : error ? null : ranks,
                 numRows: numRows,
                 is_paginated : is_paginated,
-                message: error ? "Something went wrong." : "List of designations.",
+                message: error ? "Something went wrong." : "List of Hierarchies.",
             });
   });
 });
-// Edit designation
-designationRouter.get("/edit_designation/:id", isAuth, (req, res, next) => {
+// Edit hierarchy
+hierarchyRouter.get("/edit_hierarchy/:id", isAuth, (req, res, next) => {
     var id = req.params.id;
-  designationModel.findDesignation(id, (error , success, designation) => {
+  hierarchyModel.findhierarchy(id, (error , success, hierarchy) => {
             return res.send({
                 success: success ? true : false,
                 statusCode: success ? 300 : 306,
-                data: success ? designation : error,
+                data: success ? hierarchy : error,
                 message: success ?  "Success" : "Not found",
             });
   });
 });
 
-// Store designation
-designationRouter.post("/add_designation", isAuth, (req, res, next) => {
+// Store hierarchy
+hierarchyRouter.post("/add_hierarchy", isAuth, (req, res, next) => {
             var data = [];
-            var name = req.body.name;
-            var level = req.body.level;
-            data.push([name,level,1,formatDate(new Date())]);
-            designationModel.storeDesignation(data , (error , success , result) => {
-            return res.send({
+            var name = req.body.name
+            var rank = req.body.rank
+            data.push([
+                    name,
+                    rank,
+                    1
+            ]);
+            hierarchyModel.storeHierarchy(data , (error , success , result) => {
+                     return res.send({
                        success: success ? true : false,
                        statusCode: success ? 300 : 306,
                        data: success ? result : error,
                        message: success
-                         ? "Umefanikiwa kusajili designation."
+                         ? "Umefanikiwa kusajili hierarchy."
                          : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
                      });
             });
 });
 
-// Store designation
-designationRouter.put("/update_designation/:id", isAuth, (req, res, next) => {
+// Store hierarchy
+hierarchyRouter.put("/update_hierarchy/:id", isAuth, (req, res, next) => {
             var data = [];
             var name = req.body.name;
-            var level = req.body.level
+            var rank = req.body.rank
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
             var id = Number(req.params.id);
-            data.push(name,level,status, formatDate(new Date()), id);
-            designationModel.updateDesignation(data, (error , success , designation) => {
+            data.push(
+                name,
+                rank,
+                status,
+                id
+            );
+    
+            hierarchyModel.updateHierarchy(data, (error , success , hierarchy) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? designation : error,
-                        message: success ? "Umefanikiwa kubadili designation." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
+                        data: success ? hierarchy : error,
+                        message: success ? "Umefanikiwa kubadili hierarchy." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
                      });
                     
             });
 });
 
-// Store designation
-designationRouter.delete("/delete_designation/:id", isAuth, (req, res, next) => {
+// Store hierarchy
+hierarchyRouter.delete("/delete_hierarchy/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
-            designationModel.deletedesignation(id , (error , success , designation) => {
+            hierarchyModel.deletehierarchy(id , (error , success , hierarchy) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
-                        data: success ? designation : error,
-                        message: success ? "Umefanikiwa kufuta designation." : error,
+                        data: success ? hierarchy : error,
+                        message: success ? "Umefanikiwa kufuta hierarchy." : error,
                      });
                     
             });
 });
 
-module.exports = designationRouter;
+module.exports = hierarchyRouter;

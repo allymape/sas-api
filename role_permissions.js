@@ -7,7 +7,9 @@ const rolesPermissions = {
     "Roles|Jukumu": "v,c,u,d",
     "Permissions|Ruhusa": "v,c,u,d",
     "Combinations|Michepuo": "v,c,u,d",
-    "Bias|Tahasusi": "v,c,u,d",
+    "Biases|Tahasusi": "v,c,u,d",
+    "Ranks|Ngazi": "v,c,u,d",
+    "Hierarchies|Uongozi": "v,c,u,d",
     "Designations|Vyeo": "v,c,u,d",
     "Fees|Ada za Malipo": "v,c,u,d",
     "Attachments|Viambatisho": "v,c,u,d",
@@ -36,8 +38,8 @@ const rolesPermissions = {
     "Registered School Reports|Ripoti ya Usajili wa Shule": "v",
     "Rejected Application reports|Ripoti ya Sajiliwa Zilizokataliwa": "v",
     "Initiate School Without Buildings Report|Ripoti ya Vibali Bila Majengo":"v",
-    "Initiate School Without Buildings Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo Kataliwa":"v",
-    "Initiate School With Building Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo ":"v",
+    "Initiate School Without Buildings Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo Kataliwa": "v",
+    "Initiate School With Building Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo ": "v",
     "Initiate School With Building Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo VilivyoKataliwa ":"v",
     "Owner Manager Approval Report|Ripoti ya Uthibitisho wa Umiliki na Meneja":"v",
     "Change School Name Report|Ripoti ya Kubadili Jina la Shule": "v",
@@ -51,7 +53,7 @@ const rolesPermissions = {
     // Audit Trail
     "Audit|Kaguzi": "v,c,u,d",
   },
-  "Admin": {
+  Admin: {
     "Users|Watumiaji": "v,c,u,d",
     "Roles|Jukumu": "v,c",
   },

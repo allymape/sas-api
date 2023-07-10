@@ -14,9 +14,9 @@ const app = express();
 // 	saveUninitialized: true,
 // }));
 
-app.use(bodyParser.json({ limit: "150MB", type: "application/json" }));
-app.use(
-  bodyParser.urlencoded({
+app.use(express.json({ limit: "150MB", type: "application/json" }));
+app.use(express.urlencoded({
+    extended: true,
     limit: "150MB",
     urlencoded: true,
     type: "application/x-www-form-urlencoding",
@@ -43,6 +43,12 @@ const applicationCategoryRouter = require("./routers/applicationCategoryRouter.j
 const registrationTypeRouter = require("./routers/registrationTypeRouter.js");
 const designationRouter = require("./routers/designationRouter.js");
 const applicantRouter = require("./routers/applicantRouter.js");
+const levelRouter = require("./routers/rankRouter.js");
+const hierarchyRouter = require("./routers/hierarchyRouter.js");
+const rankRouter = require("./routers/rankRouter.js");
+const feeRouter = require("./routers/feeRouter.js");
+const biasRouter = require("./routers/combinationRouter.js");
+const combinationRouter = require("./routers/biasRouter.js");
 
 app.use("/api", regionRouter);
 app.use("/api", districtRouter);
@@ -52,12 +58,17 @@ app.use("/api", schoolRouter);
 app.use("/api", userRouter);
 app.use("/api", permissionRouter);
 app.use("/api", roleRouter);
+app.use("/api", hierarchyRouter);
+app.use("/api", rankRouter);
 app.use("/api", designationRouter);
 app.use("/api", zoneRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);
 app.use("/api", registrationTypeRouter);
 app.use("/api", applicantRouter);
+app.use("/api", feeRouter);
+app.use('/api' , biasRouter);
+app.use('/api' , combinationRouter);
 app.use("/api", indexRouter);
 
 // Handling Errors

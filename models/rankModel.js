@@ -1,30 +1,34 @@
 const db = require("../dbConnection");
 
 module.exports = {
-  //******** GET A LIST OF ZONES *******************************
-  getAllZones: (offset, per_page, is_paginated, callback) => {
+  //******** GET A LIST OF RANKS *******************************
+  getAllRanks: (offset, per_page, is_paginated, callback) => {
     //  console.log(is_paginated);
     db.query(
-      `SELECT * FROM zones  ${is_paginated ? ' ' : ' WHERE status_id = 1 '} ORDER BY zone_name ASC ${
+      `SELECT * 
+        FROM ranks  
+        ${is_paginated ? ' ' : ' WHERE status_id = 1 '} 
+        ORDER BY id ASC ${
         is_paginated ? " LIMIT ?,?" : ""
       }`,
       is_paginated ? [offset, per_page] : [],
-      (error, zones, fields) => {
+      (error, ranks, fields) => {
         db.query(
-          "SELECT COUNT(*) AS num_rows FROM zones",
+          "SELECT COUNT(*) AS num_rows FROM ranks",
           (error2, result, fields2) => {
-            callback(error, zones, result[0].num_rows);
+            // console.log('ranks' , is_paginated);
+            callback(error, ranks, result[0].num_rows);
           }
         );
       }
     );
   },
-  //******** STORE ZONE *******************************
-  storeZone: (zoneData, callback) => {
+  //******** STORE RANK *******************************
+  storeRank: (rankData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO zones (zone_name , zone_code , status_id, created_at , created_by) VALUES ?`,
-      [zoneData],
+      `INSERT INTO ranks (name , created_at , updated_at) VALUES ?`,
+      [rankData],
       (error, result) => {
         if (error) {
           console.log("Error", error);
@@ -36,49 +40,49 @@ module.exports = {
       }
     );
   },
-  //******** FIND ZONE *******************************
-  findZone: (id, callback) => {
+  //******** FIND RANK *******************************
+  findRank: (id, callback) => {
     var success = false;
     db.query(
-      `SELECT id , zone_name , display_name , status_id FROM zones WHERE id = ?`,
+      `SELECT id , name  , status_id FROM ranks WHERE id = ?`,
       [id],
-      (error, zone) => {
+      (error, role) => {
         if (error) {
           console.log("Error", err);
         }
-        if (zone) {
+        if (role) {
           success = true;
         }
-        callback(error, success, zone);
+        callback(error, success, role);
       }
     );
   },
 
-  //******** UPDATE ZONE *******************************
-  updateZone: (zoneData, callback) => {
+  //******** UPDATE RANK *******************************
+  updateRank: (rankData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  zones SET zone_name = ? , zone_code = ? , status_id = ?  WHERE id = ?`,
-      zoneData,
-      (error, zone, fields) => {
+      `UPDATE  ranks SET name = ?  , status_id = ?  WHERE id = ?`,
+      rankData,
+      (error, role, fields) => {
         if (error) {
           console.log("Error", error);
         }
-        if (zone) {
+        if (role) {
           success = true;
         }
-        callback(error, success, zone);
+        callback(error, success, role);
       }
     );
   },
 
-  //******** DELETE ZONE *******************************
-  deleteZone: (id, callback) => {
+  //******** DELETE RANK *******************************
+  deleteRank: (id, callback) => {
     var success = false;
     db.query(
       `SELECT COUNT(*) AS num_rows 
-       FROM regions r 
-       WHERE r.zone_id = ?`,
+       FROM vyeo v 
+       WHERE v.rank_level = ?`,
       [id],
       (error, result) => {
         if (error) {
@@ -90,17 +94,17 @@ module.exports = {
           callback(error, success, null);
         } else {
           db.query(
-            `UPDATE zones SET status_id = 0  WHERE id = ?`,
+            `UPDATE ranks SET status_id = 0  WHERE id = ?`,
             [id],
-            (error2, deletedZone) => {
+            (error2, deletedRank) => {
               if (error2) {
                 console.log(error2);
                 error = error2 
               }
-              if (deletedZone.affectedRows > 0) {
+              if (deletedRank.affectedRows > 0) {
                 success = true;
               }
-              callback(error, success, deletedZone);
+              callback(error, success, deletedRank);
             }
           );
         }

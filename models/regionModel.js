@@ -4,11 +4,11 @@ module.exports = {
   getAllRegions: (offset, per_page, is_paginated, zone_id, callback) => {
     console.log(zone_id)
     db.query(
-      `SELECT regions.id AS regionId, RegionCode AS regionCode, RegionName AS regionName, 
-              IFNULL(zone_name , '') AS zoneName , IFNULL(regions.zone_code , '') AS zoneCode, regions.created_at AS createdAt , 
-              regions.updated_at AS updatedAt 
-      FROM regions LEFT JOIN zones ON zones.id=regions.zone_code 
-      ${is_paginated && zone_id == null ? '' : ' WHERE regions.zone_code = ? '}
+      `SELECT r.id AS regionId, RegionCode AS regionCode, RegionName AS regionName, 
+              IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, r.created_at AS createdAt , 
+              r.updated_at AS updatedAt 
+      FROM regions r LEFT JOIN zones z ON z.id=r.zone_id 
+      ${is_paginated && zone_id == null ? '' : ' WHERE r.zone_id = ? '}
       ORDER BY RegionName ASC ${is_paginated ? ' LIMIT ? , ?' : ''}`,
       is_paginated ? [offset, per_page] : [zone_id],
       (error, regions, fields) => {
@@ -40,7 +40,7 @@ module.exports = {
   },
   //******** UPDATE REGION ZONE *******************************
   updateRegionZone: (regionId , zoneCode , callback) => {
-     db.query(`UPDATE regions SET zone_code = ? WHERE RegionCode = ?`,
+     db.query(`UPDATE regions SET zone_id = ? WHERE RegionCode = ?`,
      [zoneCode , regionId],
        (err, result) => {
          if (err) {

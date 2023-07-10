@@ -1,0 +1,112 @@
+const db = require("../dbConnection");
+
+module.exports = {
+  //******** GET A LIST OF BIAS *******************************
+  getAllBiases: (offset, per_page, is_paginated, callback) => {
+    //  console.log(is_paginated);
+    db.query(
+      `SELECT * 
+      FROM school_specializations
+        ${is_paginated ? " " : " WHERE status_id = 1 "} 
+        ${is_paginated ? " LIMIT ?,?" : ""}`,
+      is_paginated ? [offset, per_page] : [],
+      (error, combinations, fields) => {
+        db.query(
+          "SELECT COUNT(*) AS num_rows FROM school_specializations",
+          (error2, result, fields2) => {
+            // console.log('ranks' , is_paginated);
+            callback(error, combinations, result[0].num_rows);
+          }
+        );
+      }
+    );
+  },
+  //******** STORE BIAS *******************************
+  storeBias: (rankData, callback) => {
+    var success = false;
+    db.query(
+      `INSERT INTO ranks (name , created_at , updated_at) VALUES ?`,
+      [rankData],
+      (error, result) => {
+        if (error) {
+          console.log("Error", error);
+        }
+        if (result) {
+          success = true;
+        }
+        callback(error, success, result);
+      }
+    );
+  },
+  //******** FIND BIAS *******************************
+  findBias: (id, callback) => {
+    var success = false;
+    db.query(
+      `SELECT id , name  , status_id FROM ranks WHERE id = ?`,
+      [id],
+      (error, role) => {
+        if (error) {
+          console.log("Error", err);
+        }
+        if (role) {
+          success = true;
+        }
+        callback(error, success, role);
+      }
+    );
+  },
+
+  //******** UPDATE BIAS *******************************
+  updateBias: (rankData, callback) => {
+    var success = false;
+    db.query(
+      `UPDATE  ranks SET name = ?  , status_id = ?  WHERE id = ?`,
+      rankData,
+      (error, role, fields) => {
+        if (error) {
+          console.log("Error", error);
+        }
+        if (role) {
+          success = true;
+        }
+        callback(error, success, role);
+      }
+    );
+  },
+
+  //******** DELETE BIAS *******************************
+  deleteBias: (id, callback) => {
+    var success = false;
+    db.query(
+      `SELECT COUNT(*) AS num_rows 
+       FROM vyeo v 
+       WHERE v.rank_level = ?`,
+      [id],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+        }
+        var numRows = result[0].num_rows;
+        console.log(numRows , id);
+        if (numRows > 0) {
+          callback(error, success, null);
+        } else {
+          db.query(
+            `UPDATE ranks SET status_id = 0  WHERE id = ?`,
+            [id],
+            (error2, deletedBias) => {
+              if (error2) {
+                console.log(error2);
+                error = error2 
+              }
+              if (deletedBias.affectedRows > 0) {
+                success = true;
+              }
+              callback(error, success, deletedBias);
+            }
+          );
+        }
+      }
+    );
+  },
+};
