@@ -2,19 +2,26 @@ const db = require("../dbConnection");
 module.exports = {
   //******** GET A LIST OF REGIONS *******************************
   getAllRegions: (offset, per_page, is_paginated, zone_id, callback) => {
-    console.log(zone_id)
+ 
     db.query(
       `SELECT r.id AS regionId, RegionCode AS regionCode, RegionName AS regionName, 
-              IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, r.created_at AS createdAt , 
+              IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, 
+              r.created_at AS createdAt , 
               r.updated_at AS updatedAt 
-      FROM regions r LEFT JOIN zones z ON z.id=r.zone_id 
-      ${is_paginated && zone_id == null ? '' : ' WHERE r.zone_id = ? '}
+      FROM regions r 
+      LEFT JOIN zones z ON z.id=r.zone_id 
+      ${(is_paginated && zone_id == null) || (!is_paginated && zone_id == undefined)  ? '' : ' WHERE r.zone_id = ? '}
       ORDER BY RegionName ASC ${is_paginated ? ' LIMIT ? , ?' : ''}`,
-      is_paginated ? [offset, per_page] : [zone_id],
-      (error, regions, fields) => {
+      is_paginated ? [offset, per_page] : (zone_id == null || zone_id == undefined ? [] : [zone_id]),
+      (error, regions) => {
         db.query(
           "SELECT COUNT(*) AS num_rows FROM regions",
-           (error2, result2, fields2) => {
+           (error2, result2) => {
+             if(error2){
+              error = error2;
+              console.log(error)
+             }
+             console.log(regions)
             callback(error, regions, result2[0].num_rows);
           }
         );

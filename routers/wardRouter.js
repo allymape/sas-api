@@ -15,12 +15,22 @@ const wardModel = require("../models/wardModel.js");
 
 // List of Wards
 wardRouter.get("/allwards", isAuth, (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
+        var per_page = parseInt(req.query.per_page);
+        var page = parseInt(req.query.page);
+        var offset = (page - 1) * per_page;
+        var is_paginated = true;
+        var lga_code = null;
+
+        if (typeof req.body.is_paginated !== "undefined") {
+          is_paginated = req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
+          lga_code = req.body.lga_code;
+        }
+
         wardModel.getAllWards(
             offset,
             per_page,
+            is_paginated,
+            lga_code,
             (error, wards, numRows) => {
             // console.log(wards);
             return res.send({

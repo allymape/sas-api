@@ -7331,8 +7331,9 @@ router.post("/maombi-kuanzisha-shule", makundiValidation, (req, res, next) => {
   // var districtId = req.body.districtCode;
   var UserLevel = req.body.UserLevel;
   var Office = req.body.Office;
-  console.log("Office");
-  console.log(Office);
+  // console.log("Office");
+  // console.log(Office);
+   
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer") ||
@@ -7355,6 +7356,7 @@ router.post("/maombi-kuanzisha-shule", makundiValidation, (req, res, next) => {
   //         var token_id = results[0].token_id;
   //         console.log("token_id " + token_id)
   //         if(token_id != 0){
+   
   if (UserLevel == 11) {
     db.query(
       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -11966,7 +11968,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -15182,7 +15184,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -24113,7 +24115,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -24132,7 +24134,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
         // var RegionName = results[0].RegionName;
         var registry = "";
         var created_at = "";
-        // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+        // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
         var schoolCategory = "";
         var language = "";
         var school_size = "";
@@ -24569,7 +24571,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
             // var registry1 = results[i].registry;
             var attachment_path = results1[i].attachment_path;
             var created_at = results1[i].created_at;
-            created_at = dateandtime.format(created_at, "DD/MM/YYYY HH:MM:SS");
+            created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY HH:MM:SS");
             var file_size1 = results1[i].file_size;
             objAttachment1.push({
               file_format: file_format1,
@@ -24828,7 +24830,7 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
         var registry = results[0].registry;
         var schoolId = results[0].schoolId;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -26817,7 +26819,7 @@ router.post(
           var registry = results[0].registry;
           var schoolId = results[0].schoolId;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -28808,7 +28810,7 @@ router.post("/view-badili-details", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -31977,7 +31979,7 @@ router.post("/view-rip-badili-details", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -35375,7 +35377,7 @@ router.post("/view-badili-dahalia", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -38553,7 +38555,7 @@ router.post("/ripoti-badili-dahalia", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -41956,7 +41958,7 @@ router.post("/view-bweni-details", makundiValidation, (req, res, next) => {
         var RegionName = results[0].RegionName;
         var registry = results[0].registry;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -42009,7 +42011,7 @@ router.post("/view-bweni-details", makundiValidation, (req, res, next) => {
             // var RegionName = results[0].RegionName;
             // var registry = results[0].registry;
             // var created_at = results[0].created_at;
-            // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+            // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
             // var schoolCategory = results[0].schoolCategory;
             // var language = results[0].language;
             // var school_size = results[0].school_size;
@@ -45065,7 +45067,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -48436,7 +48438,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -49046,7 +49048,7 @@ router.post(
               var attachment_path = results1[i].attachment_path;
               var created_at = results1[i].created_at;
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY HH:MM:SS"
               );
               var file_size1 = results1[i].file_size;
@@ -49189,7 +49191,7 @@ router.post(
             //             // var registry1 = results[i].registry;
             //             var attachment_path = results1[i].attachment;
             //             var created_at = results1[i].created_at;
-            //             created_at = dateandtime.format(created_at,'DD/MM/YYYY HH:MM:SS');
+            //             created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY HH:MM:SS');
             //             var file_size1 = results1[i].file_size;
             //             objAttachment2.push({"file_format": file_format1,
             //             "attachment_name": attachment_name1, "registry_id": app_id1, "file_size": file_size1,
@@ -49289,7 +49291,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -49903,7 +49905,7 @@ router.post(
               var attachment_path = results1[i].attachment_path;
               var created_at = results1[i].created_at;
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY HH:MM:SS"
               );
               var file_size1 = results1[i].file_size;
@@ -50048,7 +50050,7 @@ router.post(
             //             // var registry1 = results[i].registry;
             //             var attachment_path = results1[i].attachment;
             //             var created_at = results1[i].created_at;
-            //             created_at = dateandtime.format(created_at,'DD/MM/YYYY HH:MM:SS');
+            //             created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY HH:MM:SS');
             //             var file_size1 = results1[i].file_size;
             //             objAttachment2.push({"file_format": file_format1,
             //             "attachment_name": attachment_name1, "registry_id": app_id1, "file_size": file_size1,
@@ -50153,7 +50155,7 @@ router.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -50763,7 +50765,7 @@ router.post(
               var attachment_path = results1[i].attachment_path;
               var created_at = results1[i].created_at;
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY HH:MM:SS"
               );
               var file_size1 = results1[i].file_size;
@@ -51472,7 +51474,7 @@ router.post(
               }
               // console.log(maoniTime)
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY hh:mm:ss"
               );
               objMaoni.push({
@@ -52150,7 +52152,7 @@ router.post(
               }
               // console.log(maoniTime)
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY hh:mm:ss"
               );
               objMaoni.push({
@@ -52864,7 +52866,7 @@ router.post(
               }
               // console.log(maoniTime)
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY hh:mm:ss"
               );
               objMaoni.push({
@@ -53612,7 +53614,7 @@ router.post(
               }
               // console.log(maoniTime)
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY hh:mm:ss"
               );
               objMaoni.push({
@@ -54344,7 +54346,7 @@ router.post(
               }
               // console.log(maoniTime)
               created_at = dateandtime.format(
-                created_at,
+                new Date(created_at),
                 "DD/MM/YYYY hh:mm:ss"
               );
               objMaoni.push({
@@ -54623,18 +54625,18 @@ router.post(
           var certificate = results[0].certificate;
           var Stream = results[0].stream;
           var approved_at = results[0].approved_at;
-          approved_at = dateandtime.format(approved_at, "DD/MM/YYYY");
+          approved_at = dateandtime.format(new Date(approved_at), "DD/MM/YYYY");
           var tracking_number_old = results[0].tracking_number_old;
           var school_phone = results[0].school_phone;
           var numberOfStudents = results[0].number_of_students;
           var schoolOpeningDate = results[0].school_opening_date;
           schoolOpeningDate = dateandtime.format(
-            schoolOpeningDate,
+            new Date(schoolOpeningDate),
             "DD/MM/YYYY"
           );
           var registry = "";
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var school_address = results[0].school_address;
           var schoolCategory = results[0].schoolCategory;
           var po_box = results[0].po_box;
@@ -55275,7 +55277,7 @@ router.post(
               var coments = results[i].coments;
               var rank_name = results[i].rank_name;
               var created_at = results[i].created_at;
-              // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+              // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -55629,7 +55631,7 @@ router.post(
           // schoolOpeningDate = dateandtime.format(schoolOpeningDate,'DD/MM/YYYY');
           var registry = "";
           var created_at = results[0].updated_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var school_address = results[0].school_address;
           var schoolCategory = results[0].category;
           var po_box = results[0].po_box;
@@ -56190,7 +56192,7 @@ router.post(
               var coments = results[i].coments;
               var rank_name = results[i].rank_name;
               var created_at = results[i].created_at;
-              // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+              // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -56650,7 +56652,7 @@ router.post(
           // schoolOpeningDate = dateandtime.format(schoolOpeningDate,'DD/MM/YYYY');
           var registry = "";
           var created_at = results[0].updated_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var school_address = results[0].school_address;
           var schoolCategory = results[0].category;
           var po_box = results[0].po_box;
@@ -57211,7 +57213,7 @@ router.post(
               var coments = results[i].coments;
               var rank_name = results[i].rank_name;
               var created_at = results[i].created_at;
-              // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+              // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -57670,7 +57672,7 @@ router.post("/view-majengo-details", makundiValidation, (req, res, next) => {
         // schoolOpeningDate = dateandtime.format(schoolOpeningDate,'DD/MM/YYYY');
         var registry = "";
         var created_at = results[0].updated_at;
-        created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var school_address = results[0].school_address;
         var schoolCategory = results[0].category;
         var po_box = results[0].po_box;
@@ -58231,7 +58233,7 @@ router.post("/view-majengo-details", makundiValidation, (req, res, next) => {
             var coments = results[i].coments;
             var rank_name = results[i].rank_name;
             var created_at = results[i].created_at;
-            // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+            // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
             objMaoni.push({
               user_from: user_from,
               name: name,
@@ -58503,7 +58505,7 @@ router.post(
           // schoolOpeningDate = dateandtime.format(schoolOpeningDate,'DD/MM/YYYY');
           var registry = "";
           var created_at = results[0].updated_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var school_address = results[0].school_address;
           var schoolCategory = results[0].category;
           var po_box = results[0].po_box;
@@ -59064,7 +59066,7 @@ router.post(
               var coments = results[i].coments;
               var rank_name = results[i].rank_name;
               var created_at = results[i].created_at;
-              // created_at = dateandtime.format(created_at,'DD/MM/YYYY');
+              // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -59357,7 +59359,7 @@ router.post(
           );
           var registry = "";
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
           var school_address = results[0].school_address;
           var schoolCategory = results[0].schoolCategory;
           var po_box = results[0].po_box;
@@ -59930,7 +59932,7 @@ router.post(
               var coments = results[i].coments;
               var rank_name = results[i].rank_name;
               var created_at = results[i].created_at;
-              created_at = dateandtime.format(created_at, "DD/MM/YYYY");
+              created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -60214,6 +60216,7 @@ router.get(
         }
         var total_month = results[0].total_month;
         obj.push({ total_month: total_month });
+      
         return res.send({
           error: false,
           statusCode: 300,

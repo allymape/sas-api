@@ -8,20 +8,22 @@ const { isAuth, isAdmin, formatDate, promiseRequest } = require("../utils.js");
 const streetModel = require("../models/streetModel.js");
 const axios  = require("axios");
 const request = require("request-promise");
-// streetRouter.use(
-//   session({
-//     secret: "secret",
-//     resave: true,
-//     saveUninitialized: true,
-//   })
-// );
+
 
 // List of streets
 streetRouter.get("/allStreets", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  streetModel.getAllStreets(offset, per_page, (error, streets, numRows) => {
+  var is_paginated = true;
+  var ward_code = null;
+
+  if (typeof req.body.is_paginated !== "undefined") {
+    is_paginated =
+      req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
+    ward_code = req.body.ward_code;
+  }
+  streetModel.getAllStreets(offset, per_page, is_paginated , ward_code, (error, streets, numRows) => {
     // console.log(streets);
     return res.send({
       error: error ? true : false,

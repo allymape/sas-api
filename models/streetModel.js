@@ -2,15 +2,31 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF streets *******************************
-  getAllStreets: (offset, per_page, callback) => {
+  getAllStreets: (offset, per_page, is_paginated , ward_code, callback) => {
     db.query(
-      "SELECT StreetCode, StreetName, WardName, LgaName, RegionName, streets.created_at AS CreatedAt , streets.updated_at AS UpdatedAt FROM streets, " +
-      " wards,districts,regions WHERE wards.WardCode = streets.WardCode AND wards.LgaCode = districts.LgaCode AND districts.RegionCode = regions.RegionCode ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC LIMIT ?,?",
-        [offset, per_page],
-      (error, streets, fields) => {
+      `SELECT StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
+      FROM streets s
+      JOIN wards w  ON w.WardCode = s.WardCode
+      JOIN districts d ON w.LgaCode = d.LgaCode
+      JOIN regions r ON d.RegionCode = r.RegionCode
+      ${is_paginated ? "" : "WHERE s.WardCode = ?"} 
+      ORDER BY RegionName ASC , LgaName ASC , WardName ASC, StreetName ASC 
+      ${is_paginated ? "LIMIT ?,?" : ""}`,
+      is_paginated ? [offset, per_page] : [ward_code],
+      (error, streets) => {
+        if (error) {
+          console.log(error);
+        }
         db.query(
-          "SELECT COUNT(*) AS num_rows FROM streets",
-          (error2, result, fields2) => {
+          `SELECT COUNT(*) AS num_rows FROM streets s ${
+            is_paginated ? "" : "WHERE s.WardCode = ?"
+          }`,
+          is_paginated ? [] : [ward_code],
+          (error2, result) => {
+            if (error2) {
+              error = error2;
+              console.log(error2);
+            }
             callback(error, streets, result[0].num_rows);
           }
         );

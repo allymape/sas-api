@@ -4,6 +4,7 @@ const rolesPermissions = {
     "Dashboard|Dashibodi": "v",
     // Mpangilio
     "Users|Watumiaji": "v,c,u,d",
+    "Schools|Shule": "v,u",
     "Roles|Jukumu": "v,c,u,d",
     "Permissions|Ruhusa": "v,c,u,d",
     "Combinations|Michepuo": "v,c,u,d",
@@ -18,6 +19,7 @@ const rolesPermissions = {
     "Districts|Wilaya": "v,c,u,d",
     "Regions|Mikoa": "v,c,u,d",
     "Zones|Kanda": "v,c,u,d",
+    "Salaries|Mishahara": "v,c",
     "Applicants|Waombaji": "v,c,u,d",
     // Maombi
     "Initiate Schools|Kuanzisha Shule": "v,c,u",
@@ -33,15 +35,20 @@ const rolesPermissions = {
     "Change School Location|Kuhamisha Shule ": "v,c,u",
     "Change of School Owner|Kubadili Mmiliki wa Shule": "v,c,u",
     "Change of School Manager|Kubadili Meneja wa Shule ": "v,c,u",
-    "Deregistration of School|Kufuta Usajili wa Shule ": "v,c,u",
+    "Deregistration of Schools|Kufuta Usajili wa Shule ": "v,c,u",
     // Report
     "Registered School Reports|Ripoti ya Usajili wa Shule": "v",
     "Rejected Application reports|Ripoti ya Sajiliwa Zilizokataliwa": "v",
-    "Initiate School Without Buildings Report|Ripoti ya Vibali Bila Majengo":"v",
-    "Initiate School Without Buildings Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo Kataliwa": "v",
-    "Initiate School With Building Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo ": "v",
-    "Initiate School With Building Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo VilivyoKataliwa ":"v",
-    "Owner Manager Approval Report|Ripoti ya Uthibitisho wa Umiliki na Meneja":"v",
+    "Initiate School Without Buildings Report|Ripoti ya Vibali Bila Majengo":
+      "v",
+    "Initiate School Without Buildings Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo Kataliwa":
+      "v",
+    "Initiate School With Building Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo ":
+      "v",
+    "Initiate School With Building Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo VilivyoKataliwa ":
+      "v",
+    "Owner Manager Approval Report|Ripoti ya Uthibitisho wa Umiliki na Meneja":
+      "v",
     "Change School Name Report|Ripoti ya Kubadili Jina la Shule": "v",
     "Addition Of Domitory Report|Ripoti ya Kibali cha Kuongeza Bweni": "v",
     "Addition of Combinations Report|Ripoti Kibali cha Kuongeza Daharia": "v",
@@ -57,6 +64,9 @@ const rolesPermissions = {
     "Users|Watumiaji": "v,c,u,d",
     "Roles|Jukumu": "v,c",
   },
+  User : {
+    "Regions|Mikoa" : "v"
+  }
 };
 const translations = {
   en: {

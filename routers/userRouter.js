@@ -9,6 +9,8 @@ const {
   generateToken,
   sendEmail,
   setMailOptions,
+  hash,
+  generateRandomText,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -30,29 +32,27 @@ const loginlimiter = rateLimit({
 
 //login api
 userRouter.post("/login", loginlimiter, (req, res, next) => {
-  userModal.loginUser(req, (user, permissions) => {
+  userModal.loginUser(req, (success , user, permissions) => {
     // console.log("niii", user);
-    if (user) {
-      const userData = [];
+    if (success && user) {
       const permissionData = [];
-      userData.push({
-        id: user[0].id,
-        name: user[0].name,
-        username: user[0].username,
-        phone_no: user[0].phone_no,
-        user_status: user[0].user_status,
-        last_login: user[0].last_login,
-        user_level: user[0].user_level,
-        role_id: user[0].role_id,
-        station_level: user[0].station_level,
-        station_level: user[0].station_level,
-        office: user[0].office,
-        rank_name: user[0].rank_name,
-        status_id: user[0].status_id,
-        rank_level: user[0].rank_level,
-        twofa: user[0].twofa,
-        email: user[0].email,
-      });
+      const userData = {
+              id: user[0].id,
+              name: user[0].name,
+              username: user[0].username,
+              phone_no: user[0].phone_no,
+              user_status: user[0].user_status,
+              last_login: user[0].last_login,
+              user_level: user[0].user_level,
+              role_id: user[0].role_id,
+              station_level: user[0].station_level,
+              office: user[0].office,
+              rank_name: user[0].rank_name,
+              // status_id: user[0].status_id,
+              rank_level: user[0].rank_level,
+              twofa: user[0].twofa,
+              email: user[0].email,
+            }
       if (permissionData) {
         for (var i = 0; i < permissions.length; i++) {
           permissionData.push(permissions[i].permission_name);
@@ -84,8 +84,8 @@ userRouter.get("/users", (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  
-  userModal.getUsers(offset, per_page, (error, users, numRows) => {
+  var searchQuery = req.body; 
+  userModal.getUsers(offset, per_page, searchQuery, (error, users, numRows) => {
     // console.log(users);
     return res.send({
       error: error ? true : false,
@@ -109,19 +109,72 @@ userRouter.get("/users/:id", isAuth, (req, res, next) => {
     });
   });
 });
+// create user
+userRouter.post("/create-user", isAuth, (req, res, next) => {
+  var password = req.body.password;
+      password = password ? password : generateRandomText(10); 
+      console.log(password);
+  hash(password, (isHashed , hashedPassword) => {
+          if (isHashed){
+            console.log(hashedPassword)
+              var userData = {
+                fullname: req.body.name,
+                username: req.body.username,
+                phoneNumber: req.body.phone,
+                email: req.body.email,
+                roleId: req.body.roleId,
+                password: hashedPassword,
+                levelId: req.body.levelId,
+                lgas: req.body.lgas,
+                zone: req.body.zone,
+                region: req.body.region,
+                sign: req.body.selectedFile,
+              };
+              userModal.createUser(userData, (success, user) => {
+                res.send({
+                  error: success ? false : true,
+                  statusCode: success ? 300 : 306,
+                  data: success ? user : [],
+                  message: success 
+                    ? "Umefanikiwa kutengeneza akaunti ya Mtumiaji."
+                    : "Haujafanikiwa kutengeneza Akaunti kuna tatizo limetokea",
+                });
+              });
+          }else{
+            res.send({
+              error: true,
+              statusCode: 306,
+              message: "Haujafanikiwa kutengeneza Akaunti kuna tatizo limetokea."
+            });
+          }
+    
+  })
+ 
+});
 //update a user
 userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
   var userId = req.params.id;
-  var userData = req.body;
-  console.log(userData);
-  userModal.updateUser(userId, userData, (error, success, user) => {
-    return res.send({
-      error: error ? true : false,
-      statusCode: error ? 306 : 300,
-      data: error ? error : user,
-      message: error
-        ? "Haujafanikiwa kubadili taarifa za muhusika kuna tatizo."
-        : "Umefanikiwa kubadili taarifa za mtumiaji.",
+  var userData = {
+              fullname: req.body.name,
+              username: req.body.username,
+              phoneNumber: req.body.phone,
+              email: req.body.email,
+              roleId: req.body.roleId,
+              password: req.body.password,
+              levelId: req.body.levelId,
+              lgas: req.body.lgas,
+              zone: req.body.zone,
+              region: req.body.region,
+              sign: req.body.selectedFile,
+        };
+  userModal.updateUser(userId, userData, (success, user) => {
+    res.send({
+      error: success ? false : true,
+      statusCode: success ? 300 : 306,
+      data: success ? user : [],
+      message: success
+        ? "Umefanikiwa kubadili taarifa za akaunti ya Mtumiaji."
+        : "Haujafanikiwa kubadili taarifa za akaunti hii kuna tatizo limetokea",
     });
   });
 });

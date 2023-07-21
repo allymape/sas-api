@@ -17,17 +17,16 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
- 
+  var hierarchy_id = null;
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
             is_paginated =
               req.body.is_paginated == "false" || !req.body.is_paginated
                 ? false
                 : true;
+            hierarchy_id = req.body.hierarchy_id
         }
-  designationModel.getAllDesignations(offset, per_page, is_paginated , (error, designations,levels, numRows) => {
-    // console.log(designations)
-    console.log(error);
+  designationModel.getAllDesignations(offset, per_page, is_paginated , hierarchy_id, (error, designations,levels, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

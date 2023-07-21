@@ -1,0 +1,46 @@
+require("dotenv").config();
+const express = require("express");
+const dashboardRouter = express.Router();
+const { isAuth, permission } = require("../utils.js");
+const dashboardModel = require("../models/dashboardModel.js");
+
+//Summaries
+dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
+    dashboardModel.getAllSummaries((error , registrations ,categories , owners , applications , structures) => {
+             return res.send({
+               error: error ? true : false,
+               statusCode: error ? 3006 : 300,
+               data: {registrations, owners, categories , applications , structures},
+               message: error ? "Error" : "Summaries Success",
+             });
+    })
+
+});
+dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res, next) => {
+    
+   dashboardModel.getSchoolByRegionsAndCategories((data , minValue, maxValue) => {
+            return res.send({
+              error: data ? false : true,
+              statusCode: data ? 300 : 306,
+              data: { data, minValue, maxValue },
+              message: data ? "Success" : "Error",
+            });
+  });
+});
+
+dashboardRouter.get("/number-of-schools-by-year-of-regitration", isAuth , (req, res) => {
+      dashboardModel.getTotalNumberOfSchoolByYearOfRegistration([] , (individualData , cumulativeData) => {
+             return res.send({
+                   error : individualData ? false : true,
+                   statusCode : individualData ? 300 : 306,
+                   data : {
+                    individualData : individualData , 
+                    cumulativeData : cumulativeData
+                   },
+                   message : individualData ? 'Success' : 'Error'
+             });
+      })
+})
+// Change dashboard of school
+
+module.exports = dashboardRouter;

@@ -2,7 +2,7 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF DesignationS *******************************
-  getAllDesignations: (offset, per_page, is_paginated, callback) => {
+  getAllDesignations: (offset, per_page, is_paginated, hierarchy_id, callback) => {
     //  console.log(is_paginated);
     const vyeoQuery = `SELECT 
       r.id as id,
@@ -12,12 +12,11 @@ module.exports = {
       r.status_id AS status
       FROM roles r
       LEFT JOIN vyeo v ON v.id = r.vyeoId 
-      ${is_paginated ? "" : " AND r.status_id = 1"}
+      ${is_paginated ? "" : " WHERE r.status_id = 1 AND r.vyeoId = ?"}
       ${is_paginated ? ' LIMIT ?,?' : ''}`;
-
     db.query(
       vyeoQuery,
-      is_paginated ? [offset, per_page] : [],
+      is_paginated ? [offset, per_page] : [hierarchy_id],
       (error, designations, fields) => {
         db.query(
           `SELECT vyeo.id as id, vyeo.rank_name as name 

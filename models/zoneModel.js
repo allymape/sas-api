@@ -23,7 +23,7 @@ module.exports = {
   storeZone: (zoneData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO zones (zone_name , zone_code , status_id, created_at , created_by) VALUES ?`,
+      `INSERT INTO zones (zone_name , zone_code , status_id, created_at) VALUES ?`,
       [zoneData],
       (error, result) => {
         if (error) {
@@ -85,7 +85,7 @@ module.exports = {
           console.log(error);
         }
         var numRows = result[0].num_rows;
-        console.log(numRows , id);
+        // console.log(numRows , id);
         if (numRows > 0) {
           callback(error, success, null);
         } else {

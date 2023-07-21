@@ -9,11 +9,12 @@ module.exports = {
     const searchSql = search
       ? ` WHERE u.name LIKE ${keyword} OR u.email LIKE ${keyword} `
       : "";
+
     db.query(
       `SELECT u.id AS id , u.name AS name , u.email AS email, 
               u.created_at as created_at, 
 	          u.updated_at as updated_at, 
-              IFNULL(COUNT(a.id)  , 0) AS total_applications
+              IFNULL(COUNT(a.id) , 0) AS total_applications
               ${subSql}
               ${searchSql}
               ${is_paginated ? "" : ""} 
@@ -101,18 +102,24 @@ module.exports = {
         }
         const applicationsSql = ` 
                       FROM applications a 
-                      LEFT JOIN application_categories c ON c.id = a.application_category_id 
-                      LEFT JOIN maoni m ON m.trackingNo = a.tracking_number
+                      JOIN application_categories c ON c.id = a.application_category_id 
+                      JOIN maoni m ON m.id =  (
+                                              SELECT max(m.id)
+                                              FROM applications a1
+                                              JOIN maoni m ON m.trackingNo = a1.tracking_number 
+                                              WHERE a1.user_id = ${id}
+                                              ORDER BY m.id DESC
+                                              )
                       LEFT JOIN staffs s ON s.id = m.user_to
-                      LEFT JOIN vyeo v ON s.user_level = v.id 
+                      LEFT JOIN roles v ON s.user_level = v.id 
                       WHERE a.user_id = ${id}`;
 
         db.query(
           `SELECT a.id AS id, c.app_name AS application_category,  
                            a.tracking_number AS tracking_number, is_approved, 
-                           a.created_at AS created_at, v.rank_name AS cheo,  MAX(m.id) AS max_id  
+                           a.created_at AS created_at, v.name AS cheo 
                             ${applicationsSql} 
-                            GROUP BY m.trackingNo, id , application_category, created_at, cheo
+                            #GROUP BY m.trackingNo, a.id , application_category, created_at, cheo
                             LIMIT ?, ?`,
           [offset, per_page],
           (error2, applications) => {
@@ -122,7 +129,7 @@ module.exports = {
             }
 
             db.query(
-              `SELECT count(a.id) AS num_rows ${applicationsSql}`,
+              `SELECT count(*) AS num_rows ${applicationsSql}`,
               (error3, result) => {
                 if (error3) {
                   error = error3;
@@ -133,10 +140,10 @@ module.exports = {
                                                     LEFT JOIN school_categories sc ON sc.id = e.school_category_id
                                                     LEFT JOIN applications a ON a.tracking_number = e.tracking_number
                                                     LEFT JOIN streets st ON st.StreetCode = e.village_id
-                                                    LEFT JOIN wards w ON w.WardCode = st.WardCode
+                                                    LEFT JOIN wards w ON w.id = e.ward_id
                                                     LEFT JOIN districts d ON d.LgaCode = w.LgaCode
                                                     LEFT JOIN regions r ON r.RegionCode = d.RegionCode
-                                                    WHERE a.user_id = ${id}`;
+                                                    WHERE a.user_id = ${id} AND reg_status = 1`;
 
                 db.query(
                   `SELECT s.registration_number AS reg_number , e.school_name AS name, 

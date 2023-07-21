@@ -17,17 +17,16 @@ hierarchyRouter.get("/all_hierarchies", isAuth, permission('view-hierarchies'), 
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
- 
+   var rank_id = null;
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
             is_paginated =
               req.body.is_paginated == "false" || !req.body.is_paginated
                 ? false
                 : true;
+            rank_id =  req.body.rank_id;
         }
-  hierarchyModel.getAllHierarchies(offset, per_page, is_paginated , (error, hierarchies, ranks, numRows) => {
-    // console.log(hierarchies)
-    // console.log(error);
+  hierarchyModel.getAllHierarchies(offset, per_page, is_paginated , rank_id , (error, hierarchies, ranks, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

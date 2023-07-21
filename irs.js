@@ -43,12 +43,12 @@ const applicationCategoryRouter = require("./routers/applicationCategoryRouter.j
 const registrationTypeRouter = require("./routers/registrationTypeRouter.js");
 const designationRouter = require("./routers/designationRouter.js");
 const applicantRouter = require("./routers/applicantRouter.js");
-const levelRouter = require("./routers/rankRouter.js");
 const hierarchyRouter = require("./routers/hierarchyRouter.js");
 const rankRouter = require("./routers/rankRouter.js");
 const feeRouter = require("./routers/feeRouter.js");
-const biasRouter = require("./routers/combinationRouter.js");
-const combinationRouter = require("./routers/biasRouter.js");
+const combinationRouter = require("./routers/combinationRouter.js");
+const biasRouter = require("./routers/biasRouter.js");
+const dashboardRouter = require("./routers/dashboardRouter.js");
 
 app.use("/api", regionRouter);
 app.use("/api", districtRouter);
@@ -69,6 +69,7 @@ app.use("/api", applicantRouter);
 app.use("/api", feeRouter);
 app.use('/api' , biasRouter);
 app.use('/api' , combinationRouter);
+app.use('/api' , dashboardRouter);
 app.use("/api", indexRouter);
 
 // Handling Errors

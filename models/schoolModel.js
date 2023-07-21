@@ -1,39 +1,107 @@
 const db = require("../dbConnection");
+const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
-  getAllSchools: (offset, per_page, callback) => {
+  getAllSchools: (offset, per_page, searchKeyword, typeKeyword, ownerKeyword, callback) => {
+    const  keyword  = db.escape(`%${searchKeyword}%`);
+    const  type     = db.escape(Number(typeKeyword));
+    const  owner    = db.escape(Number(ownerKeyword));
+
+    const sqlQuery = `FROM school_registrations s 
+                      JOIN establishing_schools e ON s.establishing_school_id = e.id
+                      JOIN applications a ON a.tracking_number = e.tracking_number
+                      JOIN school_categories sc ON sc.id = e.school_category_id
+                      JOIN registry_types rt ON rt.id = a.registry_type_id
+                      ${ schoolLocationsSqlJoin() }
+                      #LEFT JOIN streets st ON e.village_id = st.StreetCode
+                      #JOIN wards w ON w.WardCode = e.ward_id
+                      #JOIN districts d ON d.LgaCode = w.LgaCode
+                      #JOIN regions r ON r.RegionCode = d.RegionCode
+                      WHERE  s.reg_status = 1
+                      `;
+
+    const searchByKeywordQuery =  searchKeyword ? `AND (e.school_name LIKE ${keyword} OR 
+                                                        s.registration_number LIKE ${keyword})` : '';
+    const searchByTypeQuery    =  typeKeyword    ? `AND  e.school_category_id = ${type}` : '';
+    const searchByOwnerQuery   =  ownerKeyword   ? `AND a.registry_type_id = ${owner}` : '';
+     
+    // console.log(searchByKeywordQuery, searchByTypeQuery, searchByOwnerQuery);
     db.query(
-      "",
+      `SELECT e.tracking_number AS id,
+              school_name AS name, 
+              registration_number AS reg_no, 
+              rt.registry AS ownership,
+              sc.category AS category,
+              school_opening_date AS reg_date, r.RegionName AS region, d.LgaName AS lga,
+              w.WardName AS ward, 
+              st.StreetName AS street,
+              s.created_at AS created_at, 
+              s.updated_at AS updated_at, 
+              s.reg_status AS status
+              ${sqlQuery}
+              ${searchByKeywordQuery}
+              ${searchByTypeQuery}
+              ${searchByOwnerQuery}
+              LIMIT ?, ?`,
       [offset, per_page],
-      (error, Schools, fields) => {
+      (error, schools, fields) => {
+        if (error) {
+          console.log(error);
+        }
         db.query(
-          "SELECT COUNT(*) AS num_rows FROM Schools",
+          `SELECT COUNT(*) AS num_rows 
+              ${sqlQuery}  
+              ${searchByKeywordQuery}
+              ${searchByTypeQuery}
+              ${searchByOwnerQuery}`,
           (error2, result, fields2) => {
-            callback(error, Schools, result[0].num_rows);
+            if (error2) {
+              console.log(error2);
+              error = error2;
+            }
+            callback(error, schools, result[0].num_rows);
           }
         );
       }
     );
   },
+  // SCHOOLS FILTERS
+  getSchoolsFilters: (callback) => {
+     var success = false;
+      db.query(`SELECT id , category AS name FROM school_categories` , (error , categories) => {
+            if(error){
+                console.log("Can't get school categories due to ", error);
+            }
+            db.query(`SELECT id, registry AS name FROM registry_types` , (error2 , ownerships) => {
+              if(error2){
+                 console.log("Can't get ownerships due to ", error2);
+              }
+              if(ownerships && categories){
+                    success = true;
+              }
+              callback(success , categories , ownerships);
+            })
+      });
+  },
   // LOOK FOR SCHOOLS
   lookForSchools : (offset , per_page , search, callback) => {
         const keyword = db.escape(`%${search}%`);
         const searchSql = search
-          ? ` WHERE e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword} `
+          ? ` WHERE (e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword}) `
           : "";
+          
+        const sql = `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
+                    r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
+                            FROM applications a
+                            ${applicationEstablishedRegisteredSchoolsSqlJoin()} 
+                            ${schoolLocationsSqlJoin()}
+                            ${searchSql}
+                            ORDER BY school_name ASC
+                            LIMIT ? , ?`;
+        // console.log(sql);
       db.query(
-        `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
-        r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
-                FROM establishing_schools e
-                JOIN school_registrations s ON s.tracking_number = e.tracking_number 
-                JOIN streets st ON st.StreetCode = e.village_id
-                JOIN wards w ON w.WardCode = st.WardCode
-                JOIN districts d ON d.LgaCode = w.LgaCode
-                JOIN regions r ON r.RegionCode = d.RegionCode
-                ${searchSql}
-                ORDER BY school_name ASC
-                LIMIT ? , ?`,
+        sql,
         [offset, per_page],
         (error, schools) => {
           if (error) {
@@ -47,7 +115,8 @@ module.exports = {
   storeSchools: (established_schools , applications , school_registrations, callback) => {
     var success = false;
      db.query(
-       `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number)`,
+       `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? 
+       ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number) , school_category_id = VALUES(school_category_id)`,
        [established_schools],
        (err, established) => {
          if (err) {
@@ -69,9 +138,9 @@ module.exports = {
                      if (err || err2 || err3) {
                        console.log(err, err2, err3);
                      }
-                        if (registered) {
-                            success = true;
-                        }
+                     if (registered) {
+                       success = true;
+                     }
                      callback(success);
                    }
                  );
@@ -82,4 +151,61 @@ module.exports = {
        }
      );
   },
+  // Edit School
+  editSchool : (tracking_number , callback) => {
+        db.query(`SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
+                  s.school_opening_date AS opening_date,
+                  a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
+                  s.registration_number AS registration_number, e.village_id AS street, 
+                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region 
+                  FROM establishing_schools e
+                  ${ establishedApplicationRegisteredSchoolsSqlJoin() }
+                  ${ schoolLocationsSqlJoin() }
+                  WHERE a.tracking_number = ? ` , [tracking_number] , (error , school) => {
+                          if(error){
+                            console.log(error);
+                          }
+                  callback(error , school[0])
+        });
+  },
+  updateSchool : (tracking_number , data , callback) => {
+    const {school_name , kata , mtaa, category ,opening_date, registration_number , ownership} = data;
+    const currentDate = formatDate(new Date());
+    const values = [
+      school_name,
+      kata,
+      mtaa,
+      category,
+      ownership,
+      opening_date,
+      registration_number,
+      currentDate,
+      currentDate,
+      currentDate,
+      tracking_number
+    ];
+      //  console.log(values , data)
+        db.query(`UPDATE applications a
+                  ${applicationEstablishedRegisteredSchoolsSqlJoin()}
+                  SET e.school_name = ?,
+                      e.ward_id = ?,
+                      e.village_id = ?,
+                      e.school_category_id = ?,
+                      a.registry_type_id = ?,
+                      s.school_opening_date = ?,
+                      s.registration_number = ?,
+                      a.payment_status_id = ?,
+                      s.updated_at = ?,
+                      e.updated_at = ?,
+                      a.updated_at = ?
+                  WHERE e.tracking_number = ?
+                  ` ,
+                  values
+                  , (error , result) => {
+          if(error){
+            console.log(error)
+          }
+          callback(error);
+        })
+  }
 };

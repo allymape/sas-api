@@ -56,8 +56,8 @@ zoneRouter.post("/addZone", isAuth, (req, res, next) => {
                     name,
                     code,
                     1,
-                    formatDate(new Date()),
-                    req.user.id,
+                    formatDate(new Date())
+                    // req.user.id,
             ]);
     
             zoneModel.storeZone(formData , (error , success , result) => {

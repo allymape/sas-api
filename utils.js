@@ -25,6 +25,7 @@ const {
   isLowerCase,
   isUpperCase,
 } = require("text-case");
+const dateAndTime = require("date-and-time");
 
 
 const ObjectFuctions = {
@@ -80,19 +81,52 @@ const ObjectFuctions = {
         next(); // role is allowed, so continue on the next middleware
       } else {
         // console.log(permission, req);
-        return res.status(403).json({ statusCode: 403 ,message: "403 Forbidden" }); // user is forbidden
+        return res
+          .status(403)
+          .json({ statusCode: 403, message: "403 Forbidden" }); // user is forbidden
       }
     };
   },
   // Hash text
   hash: (plainText, callback) => {
-    var hashed = false;
-    bcrypt.hash(plainText, 10, (err, hash) => {
+    var isHashed = false;
+    bcrypt.hash(plainText, 10, (err, encryptedText) => {
       if (!err) {
-        hashed = true;
+        isHashed = true;
+      } else {
+        console.log("Unable to hash ", err);
       }
-      callback(hashed, hash);
+      callback(isHashed, encryptedText);
     });
+  },
+  // Generate Random Text
+  generateRandomText: (length) => {
+    const upperCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lowerCharacters = "abcdefghijklmnopqrstuvwxyz";
+    const numberCharacters = "0123456789";
+    const specialCharacters = "$@&*#%-;:><?!+,.^()[]{}~";
+    let result = "";
+    result += ObjectFuctions.randomString(upperCharacters, 1);
+    result += ObjectFuctions.randomString(lowerCharacters, length - 3);
+    result += ObjectFuctions.randomString(specialCharacters, 1);
+    result += ObjectFuctions.randomString(numberCharacters, 1);
+    return result;
+  },
+  // return random String
+  randomString: (string, length) => {
+    var result = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * string.length);
+      result += string.charAt(randomIndex);
+    }
+    return result;
+  },
+  arraySum: (array) => {
+    let sum = 0;
+    if (array.length > 0) {
+      sum = array.reduce((sum, number) => sum + number);
+    }
+    return sum;
   },
   //Send Email
   sendEmail: (mailOptions, callback) => {
@@ -195,16 +229,14 @@ const ObjectFuctions = {
     // true or false
     return isLowerCase(text);
   },
-  mergeArray : (array1 , array2) => {
+  mergeArray: (array1, array2) => {
     return array1.concat(array2);
   },
   uniqueArray: (array) => {
     // unique permissions (user + system);
     // var duplicated_array = array1.concat(array2);
     // var duplicated_array = ObjectFuctions.mergeArray(array1, array2);
-    var unique_array = array.filter(
-      (item, pos) => array.indexOf(item) === pos
-    );
+    var unique_array = array.filter((item, pos) => array.indexOf(item) === pos);
     return unique_array;
   },
   promiseRequest: async (admin_area_url, segment, per_page = 2000) => {
@@ -236,24 +268,21 @@ const ObjectFuctions = {
           }
         }
       }
+
       return null;
     } catch (error) {
       console.log("Error " + error);
       return null;
     }
   },
-  formatDate: (date) => {
-    var newDate = new Date(
-      (typeof date === "string" ? new Date(date) : date).toLocaleString(
-        "en-US",
-        {
-          timeZone: process.env.TZ || "Africa/Dar_es_salaam",
-        }
-      )
+
+  formatDate: (date, format = "YYYY-MM-DD hh:mm:ss") => {
+    return dateAndTime.format(
+      typeof date === "string" ? new Date(date) : date,
+      format
     );
-    return newDate;
   },
-  initiliazeRolesAndPermissions: (callback , userId = 1) => { 
+  initiliazeRolesAndPermissions: (callback, userId = 1) => {
     let roles = [];
     let permissions = [];
     let permission_role = [];
@@ -262,51 +291,98 @@ const ObjectFuctions = {
     let role_with_permissions = [];
     // build all role , all permissions names and display names
     Object.entries(rolesPermissions).forEach(([roleName, values], i) => {
-        let permission_names = [];
-        let display_names = [];
-          Object.entries(values).forEach(([moduleName, values]) => {
-            values.split(",").forEach((value, j) => {
-              var module_en_name = moduleName.split("|")[0];
-              var module_sw_name = moduleName.split("|")[1];
-              var permission_name = lowerCase(
-                paramCase(translations["en"][value] + " " + module_en_name)
-              );
-              var display_name = capitalCase(
-                translations["sw"][value] +
-                  " " +
-                  (typeof module_sw_name != "undefined" ? module_sw_name : "")
-              );
-              permission_names.push(permission_name);
-              display_names.push(display_name);
-              all_display_names.push(display_name);
-              all_permission_names.push(permission_name);
-            });
+      let permission_names = [];
+      let display_names = [];
+      Object.entries(values).forEach(([moduleName, values]) => {
+        values.split(",").forEach((value, j) => {
+          var module_en_name = moduleName.split("|")[0];
+          var module_sw_name = moduleName.split("|")[1];
+          var permission_name = lowerCase(
+            paramCase(translations["en"][value] + " " + module_en_name)
+          );
+          var display_name = capitalCase(
+            translations["sw"][value] +
+              " " +
+              (typeof module_sw_name != "undefined" ? module_sw_name : "")
+          );
+          permission_names.push(permission_name);
+          display_names.push(display_name);
+          all_display_names.push(display_name);
+          all_permission_names.push(permission_name);
+        });
       });
-      role_with_permissions.push([roleName , permission_names]);
-      
+      role_with_permissions.push([roleName, permission_names]);
     });
     // find unique permissions and set to all roles and assign appropriate permission to role
-    if(all_permission_names.length > 0){
-      role_with_permissions.forEach(([roleName, rolePermissions] , roleIndex) => {
-          var unique_permission_names = ObjectFuctions.uniqueArray(all_permission_names);
-          var unique_display_names = ObjectFuctions.uniqueArray(all_display_names);
+    if (all_permission_names.length > 0) {
+      role_with_permissions.forEach(
+        ([roleName, rolePermissions], roleIndex) => {
+          var unique_permission_names =
+            ObjectFuctions.uniqueArray(all_permission_names);
+          var unique_display_names =
+            ObjectFuctions.uniqueArray(all_display_names);
           var roleId = roleIndex + 1;
           // //  Push roles
-              roles.push([roleId, roleName, 1, ObjectFuctions.formatDate(new Date()) , userId]);
-              unique_permission_names.forEach((permission_name , permissionIndex) => {
-                  var permissionId = permissionIndex + 1;
-                      if(rolePermissions.includes(permission_name)){
-                        console.log(roleName + " has permissions to "+ permission_name , 'role_id '+roleId , 'permission_id '+permissionId);
-                        // push permissions view-users, etc
-                        permissions.push([permissionId,permission_name,unique_display_names[permissionIndex],1,ObjectFuctions.formatDate(new Date()) , userId]);
-                        // push permission role ids
-                        permission_role.push([roleId,permissionId,1,ObjectFuctions.formatDate(new Date()) , userId]);
-                      }
-              });
-      });
+          roles.push([
+            roleId,
+            roleName,
+            1,
+            ObjectFuctions.formatDate(new Date()),
+            userId,
+          ]);
+          unique_permission_names.forEach(
+            (permission_name, permissionIndex) => {
+              var permissionId = permissionIndex + 1;
+              if (rolePermissions.includes(permission_name)) {
+                console.log(
+                  roleName + " has permissions to " + permission_name,
+                  "role_id " + roleId,
+                  "permission_id " + permissionId
+                );
+                // push permissions view-users, etc
+                permissions.push([
+                  permissionId,
+                  permission_name,
+                  unique_display_names[permissionIndex],
+                  1,
+                  ObjectFuctions.formatDate(new Date()),
+                  userId,
+                ]);
+                // push permission role ids
+                permission_role.push([
+                  roleId,
+                  permissionId,
+                  1,
+                  ObjectFuctions.formatDate(new Date()),
+                  userId,
+                ]);
+              }
+            }
+          );
+        }
+      );
     }
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
+  },
+  schoolLocationsSqlJoin: () => {
+    return `LEFT JOIN streets   st ON st.StreetCode = e.village_id
+            INNER JOIN wards      w ON w.id = e.ward_id
+            INNER JOIN districts  d ON d.LgaCode = w.LgaCode
+            INNER JOIN regions    r ON r.RegionCode = d.RegionCode`;
+    // this need  to be reviewed wardCode
+  },
+  establishedApplicationRegisteredSchoolsSqlJoin: () => {
+    return `LEFT JOIN applications a ON a.tracking_number = e.tracking_number
+            LEFT JOIN school_registrations s ON s.establishing_school_id = e.id`;
+  },
+  applicationEstablishedRegisteredSchoolsSqlJoin: () => {
+    return `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number
+            LEFT JOIN school_registrations s ON s.establishing_school_id = e.id`;
+  },
+  registeredSchoolsEstablishedApplicationSqlJoin: () => {
+    return `JOIN establishing_schools e ON s.establishing_school_id = e.id
+            JOIN  applications a ON a.tracking_number = e.tracking_number`;
   },
 };
 

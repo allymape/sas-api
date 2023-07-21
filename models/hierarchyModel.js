@@ -2,20 +2,22 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF Hierarchies *******************************
-  getAllHierarchies: (offset, per_page, is_paginated, callback) => {
-    //  console.log(is_paginated);
+  getAllHierarchies: (offset, per_page, is_paginated, rank_id, callback) => {
+    
     const hierarchiesQuery = `SELECT v.id AS id,
       v.rank_name as name, r.name as rank_name, v.status_id AS status, v.rank_level AS rank_level
       FROM vyeo v
       LEFT JOIN ranks r ON v.rank_level = r.id 
-      ${is_paginated ? "" : " AND v.status_id = 1"}
+      ${is_paginated ? "" : " WHERE v.status_id = 1"} ${ is_paginated ? '' : ' AND v.rank_level = ? '}
       ORDER BY r.id ASC
       ${is_paginated ? " LIMIT ?,?" : ""}`;
-
     db.query(
       hierarchiesQuery,
-      is_paginated ? [offset, per_page] : [],
+      is_paginated ? [offset, per_page] : [Number(rank_id)],
       (error, hierarchies, fields) => {
+        if (error) {
+          console.log(error);
+        }
         db.query(
           `SELECT id, name 
           FROM ranks r where status_id = 1`,
