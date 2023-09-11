@@ -8,9 +8,12 @@ var conn = mysql.createConnection({
       timezone: process.env.TIMEZONE || "+03:00"
 }); 
  
-conn.connect(function(err) {
-  if (err) throw err;
-  console.log('Database is connected successfully !');
+conn.connect((err) => {
+  if (err) {
+    console.error("Error connecting to database:", err);
+    return;
+  };
+  console.info('Database is connected successfully!');
 });
 
 module.exports = conn;

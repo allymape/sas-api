@@ -9,12 +9,14 @@ module.exports = {
   loginUser: (req , callback) => {
       const username = req.body.username;
       const password = req.body.password;
-    //   const userData = [];
+
+        //const userData = [];
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
             s.role_id as role_id, s.new_role_id as new_role_id, s.email as email,
-            s.station_level as station_level, user_level, s.office as office, r.name as rank_name, 
+            s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
+            zone_id,region_code,district_code, 
             #v.status_id as status_id, 
             v.rank_level as rank_level, s.twofa as twofa 
             FROM staffs s
@@ -34,13 +36,19 @@ module.exports = {
                                   console.log(error2);
                                 }
                                 if (bcrypt.compareSync(password, user[0].password)) {
+                                    console.log("User found.");
                                     callback(true ,user, permissions);
+                                    return;
                                 }else{
+                                  console.log("Wrong username or password.");
                                   callback(false, null, null);
+                                  return;
                                 }
                           });
                     }else{
+                      console.log('Username not found.')
                        callback(false, null, null);
+                       return;
                     }
             });
           },

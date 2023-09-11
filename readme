@@ -3,6 +3,7 @@
 - Remove column id from permission_role table
 - Add three column zone_id, region_code and district_code to staffs table
 - add default column to permissions with initial value 0 (false)
+- add village_id AS int and change ward_id from int to varchar
 
 Run these statement direct to mysql (copy and paste);
 ------------ Start --------

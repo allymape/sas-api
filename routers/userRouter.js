@@ -11,6 +11,7 @@ const {
   setMailOptions,
   hash,
   generateRandomText,
+  getUserOffice,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -37,31 +38,35 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
     if (success && user) {
       const permissionData = [];
       const userData = {
-              id: user[0].id,
-              name: user[0].name,
-              username: user[0].username,
-              phone_no: user[0].phone_no,
-              user_status: user[0].user_status,
-              last_login: user[0].last_login,
-              user_level: user[0].user_level,
-              role_id: user[0].role_id,
-              station_level: user[0].station_level,
-              office: user[0].office,
-              rank_name: user[0].rank_name,
-              // status_id: user[0].status_id,
-              rank_level: user[0].rank_level,
-              twofa: user[0].twofa,
-              email: user[0].email,
-            }
+        id: user[0].id,
+        name: user[0].name,
+        username: user[0].username,
+        phone_no: user[0].phone_no,
+        user_status: user[0].user_status,
+        last_login: user[0].last_login,
+        user_level: user[0].user_level,
+        role_id: user[0].role_id,
+        station_level: user[0].station_level,
+        office: getUserOffice(user[0]),
+        rank_name: user[0].rank_name,
+        // status_id: user[0].status_id,
+        zone_id: Number(user[0].zone_id),
+        region_code: user[0].region_code,
+        district_code: user[0].district_code,
+        rank_level: user[0].rank_level,
+        twofa: user[0].twofa,
+        email: user[0].email,
+      };
+      console.log('User Data' , userData);
       if (permissionData) {
         for (var i = 0; i < permissions.length; i++) {
           permissionData.push(permissions[i].permission_name);
         }
       }
       // console.log(permissionData);
-      const token = generateToken(user, permissionData);
+      const token = generateToken(userData, permissionData);
       // console.log(token)
-      return res.status(200).send({
+      res.send({
         error: false,
         statusCode: 300,
         message: "Logged in!",
@@ -70,7 +75,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
         user: userData,
       });
     } else {
-      return res.status(400).send({
+      res.status(400).send({
         error: true,
         statusCode: 302,
         message: "Username or password is incorrect!",

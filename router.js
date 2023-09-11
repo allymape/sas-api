@@ -8244,7 +8244,7 @@ router.post("/majengo-shule", makundiValidation, (req, res, next) => {
           var registry_type_id = results[i].registry_type_id;
           var user_id = results[i].user_id;
           var updated_at = results[i].updated_at;
-          updated_at = dateandtime.format(updated_at, "DD/MM/YYYY");
+          // updated_at = dateandtime.format(updated_at, "DD/MM/YYYY");
           var foreign_token = results[i].foreign_token;
           var school_name = results[i].school_name;
           var subcategory = results[i].subcategory;
@@ -8537,7 +8537,7 @@ router.post("/kataa-majengo-shule", makundiValidation, (req, res, next) => {
           var registry_type_id = results[i].registry_type_id;
           var user_id = results[i].user_id;
           var updated_at = results[i].updated_at;
-          updated_at = dateandtime.format(updated_at, "DD/MM/YYYY");
+          // updated_at = dateandtime.format(updated_at, "DD/MM/YYYY");
           var foreign_token = results[i].foreign_token;
           var school_name = results[i].school_name;
           var subcategory = results[i].subcategory;
@@ -20299,7 +20299,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
           var RegionName = results[i].RegionName;
           var RegionName = results[i].RegionName;
           var remain_days = results[i].approved_at;
-          remain_days = dateandtime.format(remain_days, "DD/MM/YYYY");
+          // remain_days = dateandtime.format(remain_days, "DD/MM/YYYY");
           var registry = results[i].registry;
           var schoolId = results[i].schoolId;
           var created_at = results[i].created_at;
@@ -26608,7 +26608,11 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   if (maoniTime == null) {
                     maoniTime = new Date();
                   }
+<<<<<<< HEAD
                   // console.log(maoniTime)
+=======
+          
+>>>>>>> f4a5ad7 (filter dashboard data)
                   // maoniTime = dateandtime.format(
                   //   maoniTime,
                   //   "DD/MM/YYYY hh:mm:ss"
@@ -44847,10 +44851,10 @@ router.post("/view-bweni-details", makundiValidation, (req, res, next) => {
                         maoniTime = new Date();
                       }
                       // console.log(maoniTime)
-                      maoniTime = dateandtime.format(
-                        maoniTime,
-                        "DD/MM/YYYY hh:mm:ss"
-                      );
+                      // maoniTime = dateandtime.format(
+                      //   maoniTime,
+                      //   "DD/MM/YYYY hh:mm:ss"
+                      // );
                       objMaoni.push({
                         user_from: user_from,
                         name: name,
@@ -48199,10 +48203,10 @@ router.post(
                           maoniTime = new Date();
                         }
                         // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
+                        // maoniTime = dateandtime.format(
+                        //   maoniTime,
+                        //   "DD/MM/YYYY hh:mm:ss"
+                        // );
                         objMaoni.push({
                           user_from: user_from,
                           name: name,
@@ -50709,7 +50713,7 @@ router.post(
                 maoniTime = new Date();
               }
               // console.log(maoniTime)
-              maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
+              // maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
               objMaoni.push({
                 user_from: user_from,
                 name: name,

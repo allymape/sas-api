@@ -12,31 +12,30 @@ module.exports = {
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       JOIN applications a ON a.tracking_number = e.tracking_number
                       JOIN school_categories sc ON sc.id = e.school_category_id
-                      JOIN registry_types rt ON rt.id = a.registry_type_id
+                      LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       ${ schoolLocationsSqlJoin() }
-                      #LEFT JOIN streets st ON e.village_id = st.StreetCode
-                      #JOIN wards w ON w.WardCode = e.ward_id
-                      #JOIN districts d ON d.LgaCode = w.LgaCode
-                      #JOIN regions r ON r.RegionCode = d.RegionCode
                       WHERE  s.reg_status = 1
                       `;
-
+    //  console.log(sqlQuery);
     const searchByKeywordQuery =  searchKeyword ? `AND (e.school_name LIKE ${keyword} OR 
                                                         s.registration_number LIKE ${keyword})` : '';
     const searchByTypeQuery    =  typeKeyword    ? `AND  e.school_category_id = ${type}` : '';
     const searchByOwnerQuery   =  ownerKeyword   ? `AND a.registry_type_id = ${owner}` : '';
      
     // console.log(searchByKeywordQuery, searchByTypeQuery, searchByOwnerQuery);
+   
     db.query(
       `SELECT e.tracking_number AS id,
               school_name AS name, 
               registration_number AS reg_no, 
               rt.registry AS ownership,
               sc.category AS category,
-              school_opening_date AS reg_date, r.RegionName AS region, d.LgaName AS lga,
+              IFNULL(school_opening_date , '') AS opening_date, 
+              r.RegionName AS region, 
+              d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
-              s.created_at AS created_at, 
+              IFNULL(s.created_at , '') AS reg_date, 
               s.updated_at AS updated_at, 
               s.reg_status AS status
               ${sqlQuery}
@@ -45,17 +44,14 @@ module.exports = {
               ${searchByOwnerQuery}
               LIMIT ?, ?`,
       [offset, per_page],
-      (error, schools, fields) => {
-        if (error) {
-          console.log(error);
-        }
+      (error, schools) => {
         db.query(
           `SELECT COUNT(*) AS num_rows 
               ${sqlQuery}  
               ${searchByKeywordQuery}
               ${searchByTypeQuery}
               ${searchByOwnerQuery}`,
-          (error2, result, fields2) => {
+          (error2, result) => {
             if (error2) {
               console.log(error2);
               error = error2;
@@ -124,7 +120,7 @@ module.exports = {
          }
          if (established) {
            db.query(
-             `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), updated_at=VALUES(updated_at)`,
+             `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), registry_type_id=VALUES(registry_type_id), updated_at=VALUES(updated_at)`,
              [applications],
              (err2, application) => {
                if (err2) {
@@ -132,16 +128,22 @@ module.exports = {
                }
                if (application) {
                  db.query(
-                   `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status),updated_at=VALUES(updated_at)`,
-                   [school_registrations],
-                   (err3, registered) => {
-                     if (err || err2 || err3) {
-                       console.log(err, err2, err3);
-                     }
-                     if (registered) {
-                       success = true;
-                     }
-                     callback(success);
+                   `SET sql_mode = "ALLOW_INVALID_DATES"`,
+                   (modeError) => {
+                     console.log(modeError);
+                     db.query(
+                       `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status), school_opening_date = VALUES(school_opening_date), created_at=VALUES(created_at) , updated_at=VALUES(updated_at)`,
+                       [school_registrations],
+                       (err3, registered) => {
+                         if (err || err2 || err3) {
+                           console.log(err, err2, err3);
+                         }
+                         if (registered) {
+                           success = true;
+                         }
+                         callback(success);
+                       }
+                     );
                    }
                  );
                }
@@ -154,7 +156,7 @@ module.exports = {
   // Edit School
   editSchool : (tracking_number , callback) => {
         db.query(`SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
-                  s.school_opening_date AS opening_date,
+                  IFNULL(DATE(s.created_at) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
                   w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region 
@@ -169,7 +171,7 @@ module.exports = {
         });
   },
   updateSchool : (tracking_number , data , callback) => {
-    const {school_name , kata , mtaa, category ,opening_date, registration_number , ownership} = data;
+    const {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
     const currentDate = formatDate(new Date());
     const values = [
       school_name,
@@ -177,12 +179,12 @@ module.exports = {
       mtaa,
       category,
       ownership,
-      opening_date,
+      registration_date,
       registration_number,
       currentDate,
       currentDate,
       currentDate,
-      tracking_number
+      tracking_number,
     ];
       //  console.log(values , data)
         db.query(`UPDATE applications a
@@ -192,9 +194,8 @@ module.exports = {
                       e.village_id = ?,
                       e.school_category_id = ?,
                       a.registry_type_id = ?,
-                      s.school_opening_date = ?,
+                      s.created_at = ?,
                       s.registration_number = ?,
-                      a.payment_status_id = ?,
                       s.updated_at = ?,
                       e.updated_at = ?,
                       a.updated_at = ?

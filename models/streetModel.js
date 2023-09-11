@@ -4,7 +4,7 @@ module.exports = {
   //******** GET A LIST OF streets *******************************
   getAllStreets: (offset, per_page, is_paginated , ward_code, callback) => {
     db.query(
-      `SELECT StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
+      `SELECT s.id AS id , StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
       FROM streets s
       JOIN wards w  ON w.WardCode = s.WardCode
       JOIN districts d ON w.LgaCode = d.LgaCode

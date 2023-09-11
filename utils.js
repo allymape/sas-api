@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 var nodeMailer = require("nodemailer");
 const { default: axios } = require("axios");
 const { rolesPermissions, translations } = require("./role_permissions");
+
+
 const {
   camelCase,
   pascalCase,
@@ -33,14 +35,32 @@ const ObjectFuctions = {
     // console.log(permissions);
     return jwt.sign(
       {
-        id: user[0].id,
+        id: user.id,
+        office : user.office,
+        zone_id : user.zone_id,
+        region_code : user.region_code,
+        district_code : user.district_code,
         userPermissions: permissions,
       },
       process.env.JWT_SECRET || "the-super-strong-secrect",
       {
-        expiresIn: "30d",
+        expiresIn: process.env.EXPIRED_IN || "30d",
       }
     );
+  },
+  getUserOffice : (user) => {
+      if (!user.zone_id && !user.district_code) {
+          return 1; // Makao Makuu
+      }
+
+      if (user.zone_id && !user.district_code) {
+          return 2; // Kanda
+      }
+
+      if(user.district_code){
+          return 3; // Wilaya 
+      }
+      return 0; // Haijakuwa Specified.
   },
 
   isAuth: (req, res, next) => {
@@ -365,9 +385,46 @@ const ObjectFuctions = {
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
   },
+  selectByLocationName : (user) => {
+    const { office } = user;
+    let $select = "";
+    switch (office) {
+      case 1:
+        $select = `r.RegionName AS region`;
+        break;
+      case 2:
+        $select = `d.LgaName AS region`;
+        break;
+      case 3:
+        $select = `w.WardName AS region`;
+        break;
+      default:
+        break;
+    }
+    return $select;
+  },
+  filterByUserOffice : (user) => {
+    const {office , zone_id , region_code , district_code} = user;
+    let $where = "";
+       switch (office) {
+         case 1:
+           $where = ``;
+           break;
+         case 2:
+           $where = `AND r.zone_id = ${zone_id} `;
+           break;
+         case 3:
+           $where = `AND d.LgaCode = "${district_code}" `;
+           break;
+         default:
+           $where = "";
+           break;
+       }
+      return $where;
+  },
   schoolLocationsSqlJoin: () => {
-    return `LEFT JOIN streets   st ON st.StreetCode = e.village_id
-            INNER JOIN wards      w ON w.id = e.ward_id
+    return `INNER JOIN streets   st ON st.id = e.village_id
+            INNER JOIN wards      w ON w.WardCode = e.ward_id
             INNER JOIN districts  d ON d.LgaCode = w.LgaCode
             INNER JOIN regions    r ON r.RegionCode = d.RegionCode`;
     // this need  to be reviewed wardCode

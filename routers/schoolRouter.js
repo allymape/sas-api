@@ -122,10 +122,10 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         id;
                       var registration_number =
                         school_content.registration_number;
-                      var registration_date = school_content.registration_date;
+                      var registration_date = school_content.registration_date ? formatDate(school_content.registration_date , 'YYYY-MM-DD 00:00:00')  : null ;
                       var phone_number = school_content.phone_number;
                       var ward_uid = school_content.ward_uid;
-                      var village_uid = school_content.village_uid;
+                      var village_id = school_content.village_id
                       var email = school_content.email;
                       var address = school_content.address;
                       // var type = school_content.type;
@@ -153,7 +153,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         is_hostel,
                         stage,
                         ward_uid,
-                        village_uid,
+                        village_id,
                         email,
                         address,
                         type_id,
@@ -175,6 +175,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         created_at,
                         updated_at,
                       ]);
+                      
                       school_registrations.push([
                         id,
                         secure_token,
@@ -183,7 +184,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         registration_date,
                         registration_number,
                         registration_status,
-                        created_at,
+                        registration_date,
                         updated_at,
                       ]);
                });

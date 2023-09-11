@@ -7,7 +7,8 @@ const dashboardModel = require("../models/dashboardModel.js");
 //Summaries
 dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
     dashboardModel.getAllSummaries((error , registrations ,categories , owners , applications , structures) => {
-             return res.send({
+            // console.log("dash data"); 
+            res.send({
                error: error ? true : false,
                statusCode: error ? 3006 : 300,
                data: {registrations, owners, categories , applications , structures},
@@ -17,8 +18,9 @@ dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
 
 });
 dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res, next) => {
-    
-   dashboardModel.getSchoolByRegionsAndCategories((data , minValue, maxValue) => {
+  const { user } = req;
+
+   dashboardModel.getSchoolByRegionsAndCategories(user , (data , minValue, maxValue) => {
             return res.send({
               error: data ? false : true,
               statusCode: data ? 300 : 306,

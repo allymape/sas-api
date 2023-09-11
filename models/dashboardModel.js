@@ -1,27 +1,32 @@
 const db = require("../dbConnection");
-const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin } = require("../utils");
+const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectByLocationName } = require("../utils");
 
 module.exports = {
   getAllSummaries : (callback) => {
-        db.query(`SELECT sc.category AS category , COUNT(*) AS total 
-                FROM  establishing_schools e
-                JOIN school_categories sc ON sc.id = e.school_category_id
-                ${establishedApplicationRegisteredSchoolsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 1
-                GROUP BY category
-                ` , (error , summaryCategories) => {
+        const summaryCategoriesSql = `SELECT sc.category AS category, 
+                                      COUNT(*) AS total
+                                      FROM  establishing_schools e
+                                      JOIN school_categories sc ON sc.id = e.school_category_id 
+                                      ${establishedApplicationRegisteredSchoolsSqlJoin()} 
+                                       WHERE 
+                                       #a.is_approved=2 AND 
+                                       s.reg_status = 1 
+                                       GROUP BY category`; 
+        db.query(summaryCategoriesSql, (error , summaryCategories) => {
                     if(error){
                         console.log(error);
                     }
+                  
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
                        FROM establishing_schools e
                        ${establishedApplicationRegisteredSchoolsSqlJoin()}
-                       JOIN registry_types rt ON rt.id = a.registry_type_id
+                       INNER JOIN registry_types rt ON rt.id = a.registry_type_id
                        WHERE a.is_approved = 2 AND s.reg_status = 1
                        GROUP BY owner
                        `,
                       (error2, summaryOwners) => {
+
                         if (error2) {
                           error = error2;
                           console.log(error2);
@@ -33,7 +38,8 @@ module.exports = {
                                   LEFT JOIN applications a ON ac.id = a.application_category_id
                                   LEFT JOIN  establishing_schools e ON e.tracking_number = a.tracking_number
                                   LEFT JOIN owners o ON o.establishing_school_id = e.id
-                                  WHERE ac.id NOT IN (1,4) AND a.is_approved = 2
+                                  WHERE ac.id NOT IN (1,4) 
+                                  #AND a.is_approved = 2
                                   GROUP BY ac.id , ac.app_name 
                                   `,
                           (error3, summaryApplications) => {
@@ -41,16 +47,16 @@ module.exports = {
                               console.log(error3);
                               error = error3;
                             }
+                            console.log(summaryApplications)
                             db.query(
                               `SELECT rs.structure AS label,
                                 COUNT(*) AS total
                                 FROM registration_structures rs
-                                JOIN establishing_schools e ON e.registration_structure_id = rs.id
-                                JOIN applications a ON a.tracking_number = e.tracking_number
-                                JOIN wards ON wards.id = e.ward_id
-                                JOIN districts ON districts.LgaCode = wards.LgaCode  
-                                JOIN regions ON regions.RegionCode = districts.RegionCode 
-                                WHERE a.is_approved = 2 AND a.application_category_id = 1
+                                LEFT JOIN establishing_schools e ON e.registration_structure_id = rs.id
+                                LEFT JOIN applications a ON a.tracking_number = e.tracking_number
+                                WHERE 
+                                #a.is_approved = 2 AND 
+                                a.application_category_id = 1
                                 GROUP BY label
                                 ORDER BY label ASC`,
                               (error4, summaryStructures) => {
@@ -68,6 +74,7 @@ module.exports = {
                                       console.log(error5);
                                       error = error5;
                                     }
+                                    // console.log('Nafika');
                                     callback(
                                       error,
                                       summaryRegisteredSchools[0],
@@ -87,9 +94,11 @@ module.exports = {
                 });
   },
   //******** Schools by Regions and Categories *******************************
-  getSchoolByRegionsAndCategories: (callback) => {
+  getSchoolByRegionsAndCategories: (user , callback) => {
+      const { office } = user;
+      // region means label (it can be region_name , lga_name, ward_name and street_name)
       db.query(
-        `SELECT r.RegionName AS region , 
+        `SELECT ${selectByLocationName(user)} , 
                 sc.id AS category , 
                 #rt.id AS owner, 
                 COUNT(*) AS school_count
@@ -99,6 +108,7 @@ module.exports = {
                 JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
                 WHERE a.is_approved = 2 AND s.reg_status = 1
+                ${filterByUserOffice(user)}
                 GROUP BY region , sc.id #,rt.id
                 ORDER BY region ASC
                 `,
