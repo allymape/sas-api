@@ -14936,10 +14936,10 @@ router.post(
                       maoniTime = new Date();
                     }
                     // console.log(maoniTime)
-                    maoniTime = dateandtime.format(
-                      maoniTime,
-                      "DD/MM/YYYY hh:mm:ss"
-                    );
+                    // maoniTime = dateandtime.format(
+                    //   maoniTime,
+                    //   "DD/MM/YYYY hh:mm:ss"
+                    // );
                     objMaoni.push({
                       user_from: user_from,
                       name: name,
@@ -24516,7 +24516,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
               maoniTime = new Date();
             }
             // console.log(maoniTime)
-            maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
+            // maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
             objMaoni.push({
               user_from: user_from,
               name: name,
@@ -24830,7 +24830,7 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
         var registry = results[0].registry;
         var schoolId = results[0].schoolId;
         var created_at = results[0].created_at;
-        created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
+        // created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
         var schoolCategory = results[0].schoolCategory;
         var language = results[0].language;
         var school_size = results[0].school_size;
@@ -24993,10 +24993,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                       // var registry1 = results[i].registry;
                       var attachment_path = results1[i].attachment_path;
                       var created_at = results1[i].created_at;
-                      created_at = dateandtime.format(
-                        created_at,
-                        "DD/MM/YYYY HH:MM:SS"
-                      );
+                      // created_at = dateandtime.format(
+                      //   created_at,
+                      //   "DD/MM/YYYY HH:MM:SS"
+                      // );
                       var file_size1 = results1[i].file_size;
                       objAttachment1.push({
                         file_format: file_format1,
@@ -25146,10 +25146,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -25204,10 +25204,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -25355,10 +25355,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -25413,10 +25413,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -25564,10 +25564,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -25622,10 +25622,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -25773,10 +25773,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -25831,10 +25831,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -25982,10 +25982,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -26040,10 +26040,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -26191,10 +26191,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -26249,10 +26249,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -26400,10 +26400,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -26609,10 +26609,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                     maoniTime = new Date();
                   }
                   // console.log(maoniTime)
-                  maoniTime = dateandtime.format(
-                    maoniTime,
-                    "DD/MM/YYYY hh:mm:ss"
-                  );
+                  // maoniTime = dateandtime.format(
+                  //   maoniTime,
+                  //   "DD/MM/YYYY hh:mm:ss"
+                  // );
                   objMaoni.push({
                     user_from: user_from,
                     name: name,
@@ -26667,10 +26667,10 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = dateandtime.format(
-                    created_at,
-                    "DD/MM/YYYY HH:MM:SS"
-                  );
+                  // created_at = dateandtime.format(
+                  //   created_at,
+                  //   "DD/MM/YYYY HH:MM:SS"
+                  // );
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -48992,7 +48992,7 @@ router.post(
                 maoniTime = new Date();
               }
               // console.log(maoniTime)
-              maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
+              // maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
               objMaoni.push({
                 user_from: user_from,
                 name: name,
@@ -49047,10 +49047,10 @@ router.post(
               // var registry1 = results[i].registry;
               var attachment_path = results1[i].attachment_path;
               var created_at = results1[i].created_at;
-              created_at = dateandtime.format(
-                new Date(created_at),
-                "DD/MM/YYYY HH:MM:SS"
-              );
+              // created_at = dateandtime.format(
+              //   new Date(created_at),
+              //   "DD/MM/YYYY HH:MM:SS"
+              // );
               var file_size1 = results1[i].file_size;
               objAttachment1.push({
                 file_format: file_format1,
@@ -61087,7 +61087,8 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
   var objList = [];
   var obj2 = [];
   var date = new Date();
-  var todaydate = dateandtime.format(date, "DD/MM/YYYY");
+  var todaydate = date
+  // var todaydate = dateandtime.format(date, "DD/MM/YYYY");
   var month = date.getMonth();
   var UserLevel = req.body.UserLevel;
   var Office = req.body.Office;
@@ -61237,7 +61238,7 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
               var language = results[i].language;
               var dateDisplay;
               if (approved_at != null) {
-                approved_at = dateandtime.format(approved_at, "DD/MM/YYYY");
+                // approved_at = dateandtime.format(approved_at, "DD/MM/YYYY");
                 // dateDisplay = dateandtime.format(approved_at, 'DD-MM-YYYY');
               }
               // prints date & time in YYYY-MM-DD HH:MM:SS format
