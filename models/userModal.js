@@ -51,7 +51,7 @@ module.exports = {
                        return;
                     }
             });
-          },
+  },
   //******** LIST USERS *******************************
   getUsers: (offset, per_page, searchQuery, callback) => {
     const tafuta = searchQuery.tafuta; 
@@ -226,5 +226,35 @@ module.exports = {
     );
   },
 
+  getStaffOfficeName : (office , user , callback) => {
+    const {zone_id , district_code} = user;
+      switch (office) {
+        case 1:
+          callback('HQ')
+          break;
+        case 2:
+          db.query(`SELECT zone_name FROM zones 
+                    WHERE id = ${zone_id}` , (error , result) => {
+              if(error) console.log('unable to find user zone ' , error);
+              if(result.length > 0){
+                 callback(result[0].zone_name);
+              }
+          });
+          break;
+        case 3:
+          db.query(`SELECT LgaName FROM districts 
+                    WHERE LgaCode = "${district_code}"` , (error , result) => {
+              if(error) console.log('unable to find user district ' , error);
+              if(result.length > 0){
+                callback(result[0].LgaName)
+              }
+            });
+          break;
+        default:
+           callback(null);
+          break;
+      }
+     
+  }
 };
 

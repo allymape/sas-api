@@ -6,11 +6,12 @@ const dashboardModel = require("../models/dashboardModel.js");
 
 //Summaries
 dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
-    dashboardModel.getAllSummaries((error , registrations ,categories , owners , applications , structures) => {
+  const {user} = req;
+    dashboardModel.getAllSummaries(user , (error , registrations ,categories , owners , applications , structures) => {
             // console.log("dash data"); 
             res.send({
                error: error ? true : false,
-               statusCode: error ? 3006 : 300,
+               statusCode: error ? 306 : 300,
                data: {registrations, owners, categories , applications , structures},
                message: error ? "Error" : "Summaries Success",
              });
@@ -31,7 +32,8 @@ dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, 
 });
 
 dashboardRouter.get("/number-of-schools-by-year-of-regitration", isAuth , (req, res) => {
-      dashboardModel.getTotalNumberOfSchoolByYearOfRegistration([] , (individualData , cumulativeData) => {
+      let {user} = req;
+      dashboardModel.getTotalNumberOfSchoolByYearOfRegistration( user , (individualData , cumulativeData) => {
              return res.send({
                    error : individualData ? false : true,
                    statusCode : individualData ? 300 : 306,

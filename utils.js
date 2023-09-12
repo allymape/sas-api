@@ -403,18 +403,19 @@ const ObjectFuctions = {
     }
     return $select;
   },
-  filterByUserOffice : (user) => {
-    const {office , zone_id , region_code , district_code} = user;
+  filterByUserOffice : (user , start_with = '') => {
+    const {office , zone_id  , district_code} = user;
+    
     let $where = "";
        switch (office) {
          case 1:
            $where = ``;
            break;
          case 2:
-           $where = `AND r.zone_id = ${zone_id} `;
+           $where = `${start_with} r.zone_id = ${zone_id} `;
            break;
          case 3:
-           $where = `AND d.LgaCode = "${district_code}" `;
+           $where = `${start_with} d.LgaCode = "${district_code}" `;
            break;
          default:
            $where = "";
@@ -423,10 +424,11 @@ const ObjectFuctions = {
       return $where;
   },
   schoolLocationsSqlJoin: () => {
-    return `INNER JOIN streets   st ON st.id = e.village_id
-            INNER JOIN wards      w ON w.WardCode = e.ward_id
-            INNER JOIN districts  d ON d.LgaCode = w.LgaCode
-            INNER JOIN regions    r ON r.RegionCode = d.RegionCode`;
+    return `JOIN streets   st ON st.id = e.village_id
+            JOIN wards      w ON w.WardCode = e.ward_id
+            JOIN districts  d ON d.LgaCode = w.LgaCode
+            JOIN regions    r ON r.RegionCode = d.RegionCode
+            #LEFT JOIN zones z ON  z.id = r.zone_id`;
     // this need  to be reviewed wardCode
   },
   establishedApplicationRegisteredSchoolsSqlJoin: () => {

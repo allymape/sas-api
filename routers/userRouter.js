@@ -33,46 +33,51 @@ const loginlimiter = rateLimit({
 
 //login api
 userRouter.post("/login", loginlimiter, (req, res, next) => {
-  userModal.loginUser(req, (success , user, permissions) => {
-    // console.log("niii", user);
-    if (success && user) {
+  userModal.loginUser(req, (success , loginUser, permissions) => {
+    
+    if (success && loginUser) {
       const permissionData = [];
-      const userData = {
-        id: user[0].id,
-        name: user[0].name,
-        username: user[0].username,
-        phone_no: user[0].phone_no,
-        user_status: user[0].user_status,
-        last_login: user[0].last_login,
-        user_level: user[0].user_level,
-        role_id: user[0].role_id,
-        station_level: user[0].station_level,
-        office: getUserOffice(user[0]),
-        rank_name: user[0].rank_name,
-        // status_id: user[0].status_id,
-        zone_id: Number(user[0].zone_id),
-        region_code: user[0].region_code,
-        district_code: user[0].district_code,
-        rank_level: user[0].rank_level,
-        twofa: user[0].twofa,
-        email: user[0].email,
-      };
-      console.log('User Data' , userData);
-      if (permissionData) {
-        for (var i = 0; i < permissions.length; i++) {
-          permissionData.push(permissions[i].permission_name);
+      let user = loginUser[0];
+      let office = getUserOffice(user);
+      userModal.getStaffOfficeName(office, user, (office_name) => {
+        const userData = {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          phone_no: user.phone_no,
+          user_status: user.user_status,
+          last_login: user.last_login,
+          user_level: user.user_level,
+          role_id: user.role_id,
+          station_level: user.station_level,
+          office: office,
+          office_name: office_name,
+          rank_name: user.rank_name,
+          // status_id: user.status_id,
+          zone_id: Number(user.zone_id),
+          region_code: user.region_code,
+          district_code: user.district_code,
+          rank_level: user.rank_level,
+          twofa: user.twofa,
+          email: user.email,
+        };
+        // console.log("User Data", userData);
+        if (permissionData) {
+          for (var i = 0; i < permissions.length; i++) {
+            permissionData.push(permissions[i].permission_name);
+          }
         }
-      }
-      // console.log(permissionData);
-      const token = generateToken(userData, permissionData);
-      // console.log(token)
-      res.send({
-        error: false,
-        statusCode: 300,
-        message: "Logged in!",
-        token,
-        RoleManage: permissions,
-        user: userData,
+        // console.log(permissionData);
+        const token = generateToken(userData, permissionData);
+        // console.log(token)
+        res.send({
+          error: false,
+          statusCode: 300,
+          message: "Logged in!",
+          token,
+          RoleManage: permissions,
+          user: userData,
+        });
       });
     } else {
       res.status(400).send({
@@ -189,7 +194,7 @@ userRouter.post("/reset-user-password", function (req, res) {
   userModal.findUserByEmail(email , (success , user) => {
        if(success){
               let link = `${(process.env.APP_URL || 'http:localhost:'+process.env.HTTP_PORT)}/PasswordReset`
-              let htmlContent = resetPassword(user[0].name, link);
+              let htmlContent = resetPassword(user.name, link);
               let mailOptions = setMailOptions(email, "Reset Password" , htmlContent);
               sendEmail(mailOptions, (error, info) => {
                 console.log("Message %s sent: %s", info, error);
@@ -289,7 +294,7 @@ module.exports = userRouter;
 //                   rollId,
 //                   "The user has been updated with us!",
 //                   req.body.ip_address,
-//                   resultdata[0],
+//                   resultdata,
 //                   "staffs"
 //                 );
 //                 // });
@@ -334,7 +339,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var req_body = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -354,7 +359,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -397,7 +402,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var req_body = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -417,7 +422,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -461,7 +466,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -481,7 +486,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -522,7 +527,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -542,7 +547,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -587,7 +592,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -607,7 +612,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -652,7 +657,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -672,7 +677,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -717,7 +722,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -737,7 +742,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -782,7 +787,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -802,7 +807,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -847,7 +852,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -867,7 +872,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -910,7 +915,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -930,7 +935,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -975,7 +980,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -995,7 +1000,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1040,7 +1045,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1060,7 +1065,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1105,7 +1110,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1125,7 +1130,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1170,7 +1175,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1190,7 +1195,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1235,7 +1240,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1255,7 +1260,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1300,7 +1305,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1320,7 +1325,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1365,7 +1370,7 @@ module.exports = userRouter;
 //                     if (error) {
 //                       console.log(error);
 //                     }
-//                     var rollId = results[0].id;
+//                     var rollId = results.id;
 //                     var reqbody = {
 //                       username: req.body.username,
 //                       email: req.body.email,
@@ -1385,7 +1390,7 @@ module.exports = userRouter;
 //                       rollId,
 //                       "The user has been updated with us!",
 //                       req.body.ip_address,
-//                       resultdata[0],
+//                       resultdata,
 //                       "staffs"
 //                     );
 //                   }
@@ -1440,7 +1445,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1460,7 +1465,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1505,7 +1510,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1525,7 +1530,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1568,7 +1573,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1588,7 +1593,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1631,7 +1636,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1651,7 +1656,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1694,7 +1699,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1714,7 +1719,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1757,7 +1762,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1777,7 +1782,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1820,7 +1825,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1840,7 +1845,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1883,7 +1888,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1903,7 +1908,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -1946,7 +1951,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -1966,7 +1971,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2009,7 +2014,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2029,7 +2034,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2072,7 +2077,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2092,7 +2097,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2135,7 +2140,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2155,7 +2160,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2198,7 +2203,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2218,7 +2223,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2261,7 +2266,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2281,7 +2286,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2324,7 +2329,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2344,7 +2349,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2387,7 +2392,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2407,7 +2412,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2450,7 +2455,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2470,7 +2475,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }
@@ -2513,7 +2518,7 @@ module.exports = userRouter;
 //                         if (error) {
 //                           console.log(error);
 //                         }
-//                         var rollId = results[0].id;
+//                         var rollId = results.id;
 //                         var reqbody = {
 //                           username: req.body.username,
 //                           email: req.body.email,
@@ -2533,7 +2538,7 @@ module.exports = userRouter;
 //                           rollId,
 //                           "The user has been updated with us!",
 //                           req.body.ip_address,
-//                           resultdata[0],
+//                           resultdata,
 //                           "staffs"
 //                         );
 //                       }

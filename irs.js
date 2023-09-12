@@ -49,7 +49,10 @@ const feeRouter = require("./routers/feeRouter.js");
 const combinationRouter = require("./routers/combinationRouter.js");
 const biasRouter = require("./routers/biasRouter.js");
 const dashboardRouter = require("./routers/dashboardRouter.js");
+const anzishaShuleRequestRouter = require("./routers/maombi/anzishaShuleRequestRouter.js");
 
+// Maombi
+app.use("/api" , anzishaShuleRequestRouter);
 app.use("/api", regionRouter);
 app.use("/api", districtRouter);
 app.use("/api", wardRouter);
