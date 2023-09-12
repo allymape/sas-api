@@ -26608,11 +26608,8 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
                   if (maoniTime == null) {
                     maoniTime = new Date();
                   }
-<<<<<<< HEAD
                   // console.log(maoniTime)
-=======
           
->>>>>>> f4a5ad7 (filter dashboard data)
                   // maoniTime = dateandtime.format(
                   //   maoniTime,
                   //   "DD/MM/YYYY hh:mm:ss"
