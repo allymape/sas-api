@@ -1,32 +1,35 @@
 const db = require("../dbConnection");
-const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectByLocationName } = require("../utils");
+const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectByLocationName, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
 
 module.exports = {
-  getAllSummaries : (callback) => {
+  getAllSummaries : (user , callback) => {
         const summaryCategoriesSql = `SELECT sc.category AS category, 
                                       COUNT(*) AS total
                                       FROM  establishing_schools e
                                       JOIN school_categories sc ON sc.id = e.school_category_id 
                                       ${establishedApplicationRegisteredSchoolsSqlJoin()} 
+                                      ${schoolLocationsSqlJoin()}
                                        WHERE 
-                                       #a.is_approved=2 AND 
+                                       a.is_approved=2 AND 
                                        s.reg_status = 1 
+                                       ${filterByUserOffice(user , 'AND')}
                                        GROUP BY category`; 
         db.query(summaryCategoriesSql, (error , summaryCategories) => {
                     if(error){
                         console.log(error);
                     }
-                  
+            
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
                        FROM establishing_schools e
                        ${establishedApplicationRegisteredSchoolsSqlJoin()}
                        INNER JOIN registry_types rt ON rt.id = a.registry_type_id
+                       ${schoolLocationsSqlJoin()}
                        WHERE a.is_approved = 2 AND s.reg_status = 1
+                       ${filterByUserOffice(user, "AND")}
                        GROUP BY owner
                        `,
                       (error2, summaryOwners) => {
-
                         if (error2) {
                           error = error2;
                           console.log(error2);
@@ -47,7 +50,7 @@ module.exports = {
                               console.log(error3);
                               error = error3;
                             }
-                            console.log(summaryApplications)
+                          
                             db.query(
                               `SELECT rs.structure AS label,
                                 COUNT(*) AS total
@@ -60,6 +63,7 @@ module.exports = {
                                 GROUP BY label
                                 ORDER BY label ASC`,
                               (error4, summaryStructures) => {
+                                console.log("structure: ", summaryStructures);
                                 if (error4) {
                                   console.log(error4);
                                   error = error4;
@@ -68,7 +72,10 @@ module.exports = {
                                 db.query(
                                   `SELECT COUNT(*) AS total 
                                    FROM  school_registrations s
-                                   WHERE s.reg_status = 1`,
+                                   JOIN establishing_schools e ON s.establishing_school_id = e.id
+                                   ${schoolLocationsSqlJoin()}
+                                   WHERE s.reg_status = 1
+                                   ${filterByUserOffice(user, "AND")}`,
                                   (error5, summaryRegisteredSchools) => {
                                     if (error5) {
                                       console.log(error5);
@@ -108,7 +115,7 @@ module.exports = {
                 JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
                 WHERE a.is_approved = 2 AND s.reg_status = 1
-                ${filterByUserOffice(user)}
+                ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id #,rt.id
                 ORDER BY region ASC
                 `,
@@ -164,28 +171,36 @@ module.exports = {
         }
       );
   },
-  // Registered schools by Year of registrations;
-  getTotalNumberOfSchoolByYearOfRegistration : ( years ,callback) => {
-        db.query(`SELECT YEAR(school_opening_date) AS label , COUNT(*) as total
-                  FROM school_registrations s
-                  GROUP BY label
-                  ORDER BY label ASC
-                  ` , (error , individual) => {
-                    if(error){
-                      console.log(error);
-                    }
-                    //Cumulative total
-                    const cumulative = [];
-                    const data = [];
-                    individual.forEach((row) => {
-                      const {label , total} = row;
-                            data.push(total);
-                            cumulative.push({
-                              label,
-                              total : arraySum(data)
-                            });
-                    })
-                    callback(individual , cumulative)
-                  })
+  // Registered schools by Year of registrations trend;
+  getTotalNumberOfSchoolByYearOfRegistration : ( user ,callback) => {
+        
+        let sql = `SELECT YEAR(school_opening_date) AS label , COUNT(*) as total
+                      FROM school_registrations s
+                      JOIN establishing_schools e ON s.establishing_school_id = e.id
+                      ${schoolLocationsSqlJoin()} 
+                      ${filterByUserOffice(user , 'WHERE')}
+                      GROUP BY label
+                      ORDER BY label ASC
+                      `;
+        
+        db.query(sql , function(error, individual)  {
+            if (error) {
+              console.log(error);
+            }
+            //Cumulative total
+            const cumulative = [];
+            const data = [];
+            individual.forEach((row) => {
+              const { label, total } = row;
+              data.push(total);
+              cumulative.push({
+                label,
+                total: arraySum(data),
+              });
+            });
+            
+            callback(individual, cumulative);
+          }
+        );
   }
 };
