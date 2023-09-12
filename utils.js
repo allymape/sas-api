@@ -403,7 +403,7 @@ const ObjectFuctions = {
     }
     return $select;
   },
-  filterByUserOffice : (user , conjuction = '') => {
+  filterByUserOffice : (user , start_with = '') => {
     const {office , zone_id  , district_code} = user;
     
     let $where = "";
@@ -412,10 +412,10 @@ const ObjectFuctions = {
            $where = ``;
            break;
          case 2:
-           $where = `${conjuction} r.zone_id = ${zone_id} `;
+           $where = `${start_with} r.zone_id = ${zone_id} `;
            break;
          case 3:
-           $where = `${conjuction} d.LgaCode = "${district_code}" `;
+           $where = `${start_with} d.LgaCode = "${district_code}" `;
            break;
          default:
            $where = "";
