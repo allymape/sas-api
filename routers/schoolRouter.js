@@ -120,21 +120,19 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                           : null) +
                         "-20001008-" +
                         id;
-                      var registration_number =
-                        school_content.registration_number;
+                      var registration_number = school_content.registration_number;
                       var registration_date = school_content.registration_date ? formatDate(school_content.registration_date , 'YYYY-MM-DD 00:00:00')  : null ;
                       var phone_number = school_content.phone_number;
                       var ward_uid = school_content.ward_uid;
                       var village_id = school_content.village_id
                       var email = school_content.email;
                       var address = school_content.address;
-                      // var type = school_content.type;
                       var registration_status = 1;
                       var stage = 3;
                       var user_id = 71;
                       var userId = 71;
                       var application_category = 4;
-                      var registry_type_id = 3;
+                      var registry_type_id = school_content.ownership_id;
                       var is_for_disabled = 0;
                       var is_approved = 2;
                       var status_id = 1;
@@ -182,14 +180,16 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         id,
                         tracking_number,
                         registration_date,
+                        registration_date,
                         registration_number,
                         registration_status,
+                        created_at,
                         registration_date,
-                        updated_at,
                       ]);
+                      // console.log(registration_date == "0000-00-00 00:00:00" ? 0 : 1);
                });
              }
-
+             
              if (
                established_schools.length > 0 ||
                applications.length > 0 ||

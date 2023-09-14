@@ -35,7 +35,7 @@ module.exports = {
               d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
-              IFNULL(s.created_at , '') AS reg_date, 
+              IFNULL(DATE(s.updated_at) , '') AS reg_date, 
               s.updated_at AS updated_at, 
               s.reg_status AS status
               ${sqlQuery}
@@ -128,11 +128,17 @@ module.exports = {
                }
                if (application) {
                  db.query(
-                   `SET sql_mode = "ALLOW_INVALID_DATES"`,
+                   `SET sql_mode = "NO_ZERO_IN_DATE"`,
                    (modeError) => {
-                     console.log(modeError);
+                     if(modeError){
+                       console.log(modeError);
+                     }
+                    //  console.log(school_registrations);
                      db.query(
-                       `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_number, reg_status, created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), reg_status=VALUES(reg_status), school_opening_date = VALUES(school_opening_date), created_at=VALUES(created_at) , updated_at=VALUES(updated_at)`,
+                       `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_date,registration_number, reg_status, created_at, updated_at) 
+                        VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), 
+                                                        reg_status=VALUES(reg_status), school_opening_date = VALUES(school_opening_date) , registration_date = VALUES(registration_date), created_at=VALUES(created_at) , 
+                                                        updated_at=VALUES(updated_at)`,
                        [school_registrations],
                        (err3, registered) => {
                          if (err || err2 || err3) {
