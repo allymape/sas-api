@@ -3,11 +3,11 @@ const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, 
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
-  getAllSchools: (offset, per_page, searchKeyword, typeKeyword, ownerKeyword, callback) => {
-    const  keyword  = db.escape(`%${searchKeyword}%`);
+  getAllSchools: (offset, per_page, searchKeyword, typeKeyword, ownerKeyword, compare , callback) => {
+    const  keyword  = db.escape(compare == 'LIKE' ? `%${searchKeyword}%` : `${searchKeyword}`);
     const  type     = db.escape(Number(typeKeyword));
     const  owner    = db.escape(Number(ownerKeyword));
-
+    const  sign     = db.escape(compare);
     const sqlQuery = `FROM school_registrations s 
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       JOIN applications a ON a.tracking_number = e.tracking_number
@@ -16,9 +16,13 @@ module.exports = {
                       ${ schoolLocationsSqlJoin() }
                       WHERE  s.reg_status = 1
                       `;
-    //  console.log(sqlQuery);
-    const searchByKeywordQuery =  searchKeyword ? `AND (e.school_name LIKE ${keyword} OR 
-                                                        s.registration_number LIKE ${keyword})` : '';
+     console.log();
+    const searchByKeywordQuery =  searchKeyword ? `AND 
+                  ( ${ (sign == '=' ? 'e.school_name='+keyword : 'e.school_name LIKE '+keyword) }  
+                    OR 
+                    ${ sign == '=' ? 's.registration_number='+keyword : 's.registration_number LIKE '+keyword }
+                  )` : '';
+    //  console.log(sign , searchByKeywordQuery , keyword);
     const searchByTypeQuery    =  typeKeyword    ? `AND  e.school_category_id = ${type}` : '';
     const searchByOwnerQuery   =  ownerKeyword   ? `AND a.registry_type_id = ${owner}` : '';
      
@@ -35,7 +39,7 @@ module.exports = {
               d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
-              IFNULL(DATE(s.updated_at) , '') AS reg_date, 
+              IFNULL(registration_date , '') AS reg_date, 
               s.updated_at AS updated_at, 
               s.reg_status AS status
               ${sqlQuery}

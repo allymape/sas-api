@@ -15,12 +15,13 @@ schoolRouter.get("/all-schools", isAuth, (req, res, next) => {
   const keyword = req.body.tafuta !== undefined ? req.body.tafuta : null;
   const type = req.body.aina !== undefined ? req.body.aina : null;
   const owner = req.body.umiliki !== undefined ? req.body.umiliki : null;
- 
+  const sign = req.body.sign;
   schoolModel.getAllSchools(offset, 
           per_page, 
           keyword,
           type , 
           owner , 
+          sign,
           (error, schools, numRows) => {
     // console.log(schools.length);
     return res.send({
