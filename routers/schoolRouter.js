@@ -129,13 +129,13 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                       var email = school_content.email;
                       var address = school_content.address;
                       var registration_status = 1;
-                      var stage = 3;
+                      var stage = 1;
                       var user_id = 71;
                       var userId = 71;
-                      var application_category = 4;
+                      var application_category = 1;
                       var registry_type_id = school_content.ownership_id;
                       var is_for_disabled = 0;
-                      var is_approved = 2;
+                      var is_approved = 1;
                       var status_id = 1;
                       var is_complete = 1;
                       var is_hostel = 0;
@@ -171,6 +171,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         is_approved,
                         status_id,
                         is_complete,
+                        2,
                         created_at,
                         updated_at,
                       ]);

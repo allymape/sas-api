@@ -1,7 +1,7 @@
 const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { titleCase, hash } = require("../utils");
+const { titleCase, hash, filterByUserOffice } = require("../utils");
 const { lowerCase } = require("text-case");
 
 module.exports = {
@@ -53,7 +53,7 @@ module.exports = {
             });
   },
   //******** LIST USERS *******************************
-  getUsers: (offset, per_page, searchQuery, callback) => {
+  getUsers: (offset, per_page, searchQuery, user , callback) => {
     const tafuta = searchQuery.tafuta; 
     const tafutaQuery =
       tafuta != "undefined" && tafuta
@@ -67,7 +67,9 @@ module.exports = {
                    LEFT JOIN role_management rm ON rm.id = s.new_role_id
                    LEFT JOIN zones z ON z.id = s.zone_id
                    LEFT JOIN regions rg ON rg.RegionCode = s.region_code
-                   LEFT JOIN districts d ON d.LgaCode = s.district_code`;
+                   LEFT JOIN districts d ON d.LgaCode = s.district_code
+                   `;
+                   console.log(user)
     db.query(
       `SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
                 s.name as name, phone_no, IFNULL(r.name , '') as level_name, 
@@ -77,6 +79,7 @@ module.exports = {
                 s.user_status as user_status
         ${commonSql}
         ${tafutaQuery}
+        ${filterByUserOffice(user, tafuta ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
         LIMIT ? , ?`,
       [offset, per_page],
       (error, users) => {
@@ -84,7 +87,10 @@ module.exports = {
           console.log(error);
         }
         db.query(
-          `SELECT COUNT(*) AS num_rows ${commonSql} ${tafutaQuery}`,
+          `SELECT COUNT(*) AS num_rows 
+            ${commonSql} 
+            ${tafutaQuery} 
+            ${filterByUserOffice(user, tafuta ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}`,
           (error2, result2) => {
             if (error2) {
               error = error2;
@@ -201,7 +207,7 @@ module.exports = {
       userData,
       (error, updatedUser) => {
         if (error) {
-          console.log(error);
+          console.log("error findind user: ",error);
         }
           var password = user.password;
           if(password){
@@ -211,17 +217,18 @@ module.exports = {
                           [hash , Number(userId)] , 
                           (errorPassword , updatedUser) => {
                               if(errorPassword){
-                               console.log(errorPassword);
+                                  console.log('Password Error: ',errorPassword);
                               }
                                  if (updatedUser) success = true;
-                                 callback(success, updatedUser);
-                                 return;
+                                    callback(success, updatedUser);
                           })
                   }
             });
+          }else{
+            if (updatedUser) success = true;
+            callback(success, updatedUser);
           }
-          if (updatedUser) success = true;
-         callback(success, updatedUser);
+          
       }
     );
   },

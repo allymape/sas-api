@@ -116,7 +116,7 @@ module.exports = {
     var success = false;
      db.query(
        `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? 
-       ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number) , school_category_id = VALUES(school_category_id)`,
+       ON DUPLICATE KEY UPDATE school_name = VALUES(school_name), stage=VALUES(stage), school_phone =  VALUES(school_phone), ward_id = VALUES(ward_id), village_id = VALUES(village_id), updated_at = VALUES(updated_at), tracking_number = VALUES(tracking_number) , school_category_id = VALUES(school_category_id)`,
        [established_schools],
        (err, established) => {
          if (err) {
@@ -124,7 +124,14 @@ module.exports = {
          }
          if (established) {
            db.query(
-             `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,registry_type_id,is_approved,status_id,is_complete,created_at,updated_at) VALUES ? ON DUPLICATE KEY UPDATE user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), registry_type_id=VALUES(registry_type_id), updated_at=VALUES(updated_at)`,
+             `INSERT INTO applications (id,userId,secure_token,foreign_token,tracking_number,user_id,application_category_id,
+                                        registry_type_id,is_approved,status_id,is_complete,payment_status_id , created_at,updated_at) 
+                                        VALUES ? 
+              ON DUPLICATE KEY UPDATE 
+                          user_id=VALUES(user_id), userId=VALUES(userId), tracking_number=VALUES(tracking_number), 
+                          is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), 
+                          registry_type_id=VALUES(registry_type_id), payment_status_id=VALUES(payment_status_id), 
+                          updated_at=VALUES(updated_at)`,
              [applications],
              (err2, application) => {
                if (err2) {
