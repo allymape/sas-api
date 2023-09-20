@@ -19,7 +19,7 @@ module.exports = {
                     if(error){
                         console.log(error);
                     }
-            
+                    
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
                        FROM establishing_schools e
@@ -123,7 +123,7 @@ module.exports = {
           if (error) {
             console.log(error);
           }
-
+          console.log("data",results);
           //   Start
           // Format the results
           const formattedResults = {};

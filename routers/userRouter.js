@@ -13,6 +13,7 @@ const {
   generateRandomText,
   getUserOffice,
   permission,
+  lowerCase,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -61,6 +62,9 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_level: user.rank_level,
           twofa: user.twofa,
           email: user.email,
+          ngazi: lowerCase(user.ngazi),
+          sehemu: lowerCase(user.sehemu),
+          cheo: lowerCase(user.rank_name),
         };
         // console.log("User Data", userData);
         if (permissionData) {

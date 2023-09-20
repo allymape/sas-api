@@ -1,4 +1,4 @@
-const db = require(`../../dbConnection`)
+const db = require(`../../dbConnection`);
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
   anzishaShuleRequestList: (callback) => {
@@ -33,17 +33,17 @@ module.exports = {
   },
 
   anzishaShuleRequestView: (trackingNumber, callback) => {
-    var userLevel = 1;
-    var office = 1;
-    var obj = [];
-    var objMess = [];
-    var objStaffs = [];
-    var objApps = [];
-    var objAttachment = [];
-    var objMaoni = [];
-    var objAttachment1 = [];
-    var objAttachment2 = [];
-   
+    // var userLevel = 1;
+    // var office = 1;
+    // var obj = [];
+    // var objMess = [];
+    // var objStaffs = [];
+    // var objApps = [];
+    // var objAttachment = [];
+    // var objMaoni = [];
+    // var objAttachment1 = [];
+    // var objAttachment2 = [];
+    // var tracking_number = trackingNumber;
     db.query(
       `SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,
               establishing_schools.area as area, establishing_schools.school_size as school_size,
@@ -61,220 +61,215 @@ module.exports = {
               AND establishing_schools.tracking_number = applications.tracking_number AND
               registry_types.id = applications.registry_type_id AND registration_structures.id = establishing_schools.registration_structure_id AND application_category_id = ? AND applications.tracking_number = ?`,
       [1, trackingNumber],
-      function (error, results) {
+      function (error, obj) {
         if (error) {
           console.log(error);
         }
-        console.log("hapa", results);
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [trackingNumber],
-          function (error, resultsMaoni, fields) {
-            if (error) {
-              console.log(error);
-            }
-          }
-        );
-          db.query(
-            `SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login,
-            staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs,
-            vyeo where user_status = ? AND vyeo.id = staffs.user_level
-            AND staffs.user_level IN (?, ?) #AND staffs.office = ?`,
-            [1, 3, 5],
-            function (error, results, fields) {
-             
-            }
-          );
-        db.query(
-          `SELECT * from application_statuses`,
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-           
-          }
-        );
-
-        db.query(
-          `SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name
-            from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level
-            AND trackingNo = ? ORDER BY maoni.id DESC`,
-          [trackingNumber],
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-
-          }
-        );
-
-        db.query(
-          `SELECT attachment_types.id as id, file_size, file_format, attachment_name
-            FROM attachment_types`,
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-        
-          }
-        );
-
-        db.query(
-          `SELECT attachment_types.id as id, file_size, file_format,
-            attachment_name, attachments.created_at as created_at, attachment_path
-            FROM attachment_types,
-            attachments WHERE attachments.attachment_type_id = attachment_types.id AND
-            attachments.tracking_number = ?`,
-          [trackingNumber],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
-            }
-            
-          }
-        );
-        
-          db.query(
-            `select * from personal_infos, applications, wards, districts, regions
-             WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id
-             AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?`,
-            [trackingNumber],
-            function (error1, results1, fields1) {
-              if (error1) {
-                console.log(error1);
-              }
-              var first_name = results1[0].first_name;
-              var middle_name = results1[0].middle_name;
-              var last_name = results1[0].last_name;
-              var occupation = results1[0].occupation;
-              var personal_address = results1[0].personal_address;
-              var personal_phone_number = results1[0].personal_phone_number;
-              var personal_email = results1[0].personal_email;
-              var WardNameMtu = results1[0].WardName;
-              var LgaNameMtu = results1[0].LgaName;
-              var RegionNameMtu = results1[0].RegionName;
-              var fullname = first_name + " middle_name + "+ last_name;
-              obj.push({
-                tracking_number: tracking_number,
-                school_name: school_name,
-                LgaName: LgaName,
-                RegionName: RegionName,
-                user_id: user_id,
-                registry_type_id: registry_type_id,
-                registry: registry,
-                created_at: created_at,
-                remain_days: remain_days,
-                fullname: fullname,
-                schoolCategory: schoolCategory,
-                occupation: occupation,
-                mwombajiAddress: personal_address,
-                mwombajiPhoneNo: personal_phone_number,
-                baruaPepe: personal_email,
-                language: language,
-                school_size: school_size,
-                area: area,
-                WardName: WardName,
-                structure: structure,
-                subcategory: subcategory,
-                WardNameMtu: WardNameMtu,
-                LgaNameMtu: LgaNameMtu,
-                RegionNameMtu: RegionNameMtu,
-              });
-              objAttachment2.push({
-                file_format: "",
-                attachment_name: "",
-                registry_id: "",
-                file_size: "",
-                registry: "",
-                application_name: "",
-                created_at: "",
-                attachment_path: "",
-              });
-              return res.send({
-                error: false,
-                statusCode: 300,
-                data: obj,
-                maoni: objMess,
-                staffs: objStaffs,
-                status: objApps,
-                Maoni: objMaoni,
-                objAttachment: objAttachment,
-                objAttachment1: objAttachment1,
-                objAttachment2: objAttachment2,
-                message: "Taarifa za ombi kuanzisha shule.",
-              });
-            }
-          );
-      
-          db.query(
-            `select institute_infos.id as id, institute_infos.name as name, institute_infos.address as address,
-              institute_infos.institute_phone as institute_phone, institute_infos.institute_email as institute_email
-              from institute_infos, applications WHERE
-              applications.foreign_token = institute_infos.secure_token AND applications.tracking_number = ?`,
-            [trackingNumber],
-            function (error1, results1, fields1) {
-              if (error1) {
-                console.log(error1);
-              }
-              var instId = results1[0].id;
-              var name = results1[0].name;
-              var address = results1[0].address;
-              var institute_phone = results1[0].institute_phone;
-              var institute_email = results1[0].institute_email;
-              obj.push({
-                tracking_number: tracking_number,
-                school_name: school_name,
-                LgaName: LgaName,
-                RegionName: RegionName,
-                user_id: user_id,
-                registry_type_id: registry_type_id,
-                registry: registry,
-                created_at: created_at,
-                remain_days: remain_days,
-                fullname: name,
-                occupation: "-",
-                mwombajiAddress: address,
-                mwombajiPhoneNo: institute_phone,
-                baruaPepe: institute_email,
-                language: language,
-                school_size: school_size,
-                area: area,
-                WardName: WardName,
-                structure: structure,
-                subcategory: "Oldsubcategory",
-              });
-              db.query(
-                `SELECT attachment_types.id as id, file_size, file_format,
-                  attachment_name, institute_attachments.created_at as created_at, attachment
-                  FROM attachment_types,
-                  institute_attachments WHERE institute_attachments.institute_info_id = ?
-                  AND institute_attachments.attachment_type_id = attachment_types.id`,
-                [instId],
-                function (error1, results1, fields1) {
-                  if (error1) {
-                    console.log(error1);
-                  }
-
+          function (error, objMess) {
+            db.query(
+              `SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login,
+                      staffs.name as name, phone_no, vyeo.rank_name as role_name 
+               FROM staffs,
+                      vyeo where user_status = ? AND vyeo.id = staffs.user_level
+                      AND staffs.user_level IN (?, ?) #AND staffs.office = ?`,
+              [1, 3, 5],
+              function (error, objStaffs) {
+                if (error) {
+                  console.log(error);
                 }
-              );
-            }
-          );
-        console.log(
-          "model",
-          false,
-          obj,
-          objMess,
-          objAttachment,
-          objAttachment1,
-          objAttachment2,
-          objStaffs,
-          objApps,
-          objMaoni
+
+                db.query(
+                  `SELECT * from application_statuses`,
+                  function (error, objApps) {
+                    if (error) {
+                      console.log(error);
+                    }
+
+                    db.query(
+                      `SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name
+                        FROM maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level
+                        AND trackingNo = ? ORDER BY maoni.id DESC`,
+                      [trackingNumber],
+                      function (error, objMaoni) {
+                        if (error) {
+                          console.log(error);
+                        }
+                        db.query(
+                          `SELECT attachment_types.id as id, file_size, file_format, attachment_name
+                           FROM attachment_types`,
+                          function (error, objAttachment) {
+                            if (error) {
+                              console.log(error);
+                            }
+                            db.query(
+                              `SELECT attachment_types.id as id, file_size, file_format,
+                                      attachment_name, attachments.created_at as created_at, attachment_path
+                                      FROM attachment_types,
+                                      attachments WHERE attachments.attachment_type_id = attachment_types.id AND
+                                      attachments.tracking_number = ?`,
+                              [trackingNumber],
+                              function (error1, objAttachment1) {
+                                if (error1) {
+                                  console.log(error1);
+                                }
+
+                                db.query(
+                                  `SELECT * 
+                                   FROM personal_infos, applications, wards, districts, regions
+                                   WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND 
+                                        wards.id = personal_infos.ward_id
+                                        AND applications.foreign_token = personal_infos.secure_token 
+                                        AND applications.tracking_number = ?`,
+                                  [trackingNumber],
+                                  function (error1, obj1) {
+                                    if (error1) {
+                                      console.log(error1);
+                                    }
+                                    // console.log(trackingNumber)
+                                    // var first_name = results1[0].first_name;
+                                    // var middle_name = results1[0].middle_name;
+                                    // var last_name = results1[0].last_name;
+                                    // var occupation = results1[0].occupation;
+                                    // var personal_address = results1[0].personal_address;
+                                    // var personal_phone_number = results1[0].personal_phone_number;
+                                    // var personal_email = results1[0].personal_email;
+                                    // var WardNameMtu = results1[0].WardName;
+                                    // var LgaNameMtu = results1[0].LgaName;
+                                    // var RegionNameMtu = results1[0].RegionName;
+                                    // var fullname = first_name + " middle_name + "+ last_name;
+                                    // obj.push({
+                                    //   tracking_number: tracking_number,
+                                    //   school_name: school_name,
+                                    //   LgaName: LgaName,
+                                    //   RegionName: RegionName,
+                                    //   user_id: user_id,
+                                    //   registry_type_id: registry_type_id,
+                                    //   registry: registry,
+                                    //   created_at: created_at,
+                                    //   remain_days: remain_days,
+                                    //   fullname: fullname,
+                                    //   schoolCategory: schoolCategory,
+                                    //   occupation: occupation,
+                                    //   mwombajiAddress: personal_address,
+                                    //   mwombajiPhoneNo: personal_phone_number,
+                                    //   baruaPepe: personal_email,
+                                    //   language: language,
+                                    //   school_size: school_size,
+                                    //   area: area,
+                                    //   WardName: WardName,
+                                    //   structure: structure,
+                                    //   subcategory: subcategory,
+                                    //   WardNameMtu: WardNameMtu,
+                                    //   LgaNameMtu: LgaNameMtu,
+                                    //   RegionNameMtu: RegionNameMtu,
+                                    // });
+                                    // objAttachment2.push({
+                                    //   file_format: "",
+                                    //   attachment_name: "",
+                                    //   registry_id: "",
+                                    //   file_size: "",
+                                    //   registry: "",
+                                    //   application_name: "",
+                                    //   created_at: "",
+                                    //   attachment_path: "",
+                                    // });
+
+                                    db.query(
+                                      `select institute_infos.id as id, institute_infos.name as name, institute_infos.address as address,
+                                        institute_infos.institute_phone as institute_phone, institute_infos.institute_email as institute_email
+                                        from institute_infos, applications WHERE
+                                        applications.foreign_token = institute_infos.secure_token AND applications.tracking_number = ?`,
+                                      [trackingNumber],
+                                      function (error1, results1) {
+                                        if (error1) {
+                                          console.log(error1);
+                                        }
+                                        // var instId = results1[0].id;
+                                        // var name = results1[0].name;
+                                        // var address = results1[0].address;
+                                        // var institute_phone =
+                                        //   results1[0].institute_phone;
+                                        // var institute_email =
+                                        //   results1[0].institute_email;
+                                        // obj.push({
+                                        //   tracking_number: tracking_number,
+                                        //   school_name: school_name,
+                                        //   LgaName: LgaName,
+                                        //   RegionName: RegionName,
+                                        //   user_id: user_id,
+                                        //   registry_type_id: registry_type_id,
+                                        //   registry: registry,
+                                        //   created_at: created_at,
+                                        //   remain_days: remain_days,
+                                        //   fullname: name,
+                                        //   occupation: "-",
+                                        //   mwombajiAddress: address,
+                                        //   mwombajiPhoneNo: institute_phone,
+                                        //   baruaPepe: institute_email,
+                                        //   language: language,
+                                        //   school_size: school_size,
+                                        //   area: area,
+                                        //   WardName: WardName,
+                                        //   structure: structure,
+                                        //   subcategory: "Oldsubcategory",
+                                        // });
+                                        db.query(
+                                          `SELECT attachment_types.id as id, file_size, file_format,
+                                                  attachment_name, institute_attachments.created_at as created_at, attachment
+                                          FROM attachment_types,institute_attachments 
+                                          WHERE institute_attachments.institute_info_id = ?
+                                          AND institute_attachments.attachment_type_id = attachment_types.id`,
+                                          [1],
+                                          function (error1, objAttachment2) {
+                                            if (error1) {
+                                              console.log(error1);
+                                            }
+                                            // console.log(
+                                            //   "model",
+                                            //   false,
+                                            //   obj,
+                                            //   objMess,
+                                            //   objAttachment,
+                                            //   objAttachment1,
+                                            //   objAttachment2,
+                                            //   objStaffs,
+                                            //   objApps,
+                                            //   objMaoni
+                                            // );
+                                            callback(
+                                              false,
+                                              obj,
+                                              obj1,
+                                              objMess,
+                                              objAttachment,
+                                              objAttachment1,
+                                              objAttachment2,
+                                              objStaffs,
+                                              objApps,
+                                              objMaoni
+                                            );
+                                          }
+                                        );
+                                      }
+                                    );
+                                  }
+                                );
+                              }
+                            );
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
         );
-        callback(false , obj,objMess, objAttachment, objAttachment1,objAttachment2,objStaffs,objApps, objMaoni);
       }
     );
   },
 };
-
-     

@@ -15,6 +15,7 @@ module.exports = {
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
             s.role_id as role_id, s.new_role_id as new_role_id, s.email as email,
+            rnk.name as ngazi, v.rank_name as sehemu,
             s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
             zone_id,region_code,district_code, 
             #v.status_id as status_id, 
@@ -22,6 +23,7 @@ module.exports = {
             FROM staffs s
             INNER JOIN roles r  ON r.id = s.user_level
             INNER JOIN vyeo v ON r.vyeoId = v.id
+            LEFT JOIN ranks rnk ON rnk.id = v.rank_level
             WHERE username = ? AND user_status = 1;`,
             [username],
                   (error, user ) => {

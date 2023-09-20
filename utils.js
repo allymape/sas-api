@@ -36,11 +36,15 @@ const ObjectFuctions = {
     return jwt.sign(
       {
         id: user.id,
-        office : user.office,
-        zone_id : user.zone_id,
-        region_code : user.region_code,
-        district_code : user.district_code,
+        office: user.office,
+        zone_id: user.zone_id,
+        region_code: user.region_code,
+        district_code: user.district_code,
         userPermissions: permissions,
+        user_level: user.user_level,
+        ngazi :  user.ngazi, //wizara,kanda au wilaya
+        sehemu: user.sehemu , // KE,ADSA,HICT,W1,K1,MUS,DLSU
+        cheo: user.cheo,   // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,, 
       },
       process.env.JWT_SECRET || "the-super-strong-secrect",
       {
