@@ -6107,6 +6107,64 @@ router.get("/taasusilist", signupValidation, (req, res, next) => {
   );
 });
 
+router.get("/taasusilist", (req, res, next) => {
+  var obj = [];
+  var obj1 = [];
+  if (
+    !req.headers.authorization ||
+    !req.headers.authorization.startsWith("Bearer") ||
+    !req.headers.authorization.split(" ")[1]
+  ) {
+    return res.status(422).json({
+      error: true,
+      statusCode: 422,
+      message: "No access to end point",
+    });
+  }
+  const theToken = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  db.query(
+    "SELECT specialization, combination, combinations.id as comb_id FROM combinations, school_specializations WHERE " +
+      " school_specializations.id = combinations.school_specialization_id AND combinations.status_id = 1",
+    function (error, results, fields) {
+      if (error) {
+        console.log(error);
+      }
+      for (var i = 0; i < results.length; i++) {
+        var specialization = results[i].specialization;
+        var combination = results[i].combination;
+        var comb_id = results[i].comb_id;
+        obj.push({
+          specialization: specialization,
+          combination: combination,
+          comb_id: comb_id,
+        });
+      }
+      db.query(
+        "SELECT * from school_specializations",
+        [1],
+        function (error1, results1, fields1) {
+          if (error1) {
+            console.log(error1);
+          }
+          for (var i = 0; i < results1.length; i++) {
+            var specialization = results1[i].specialization;
+            var id = results1[i].id;
+            obj1.push({ specialization: specialization, id: id });
+          }
+          return res.send({
+            error: false,
+            statusCode: 300,
+            data: obj,
+            michepuo: obj1,
+            message: "Fetch Successfully.",
+          });
+        }
+      );
+    }
+  );
+});
+
 router.get("/michepuolist", signupValidation, (req, res, next) => {
   var obj = [];
   var obj1 = [];
