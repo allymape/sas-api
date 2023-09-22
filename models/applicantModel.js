@@ -1,4 +1,5 @@
 const db = require("../dbConnection");
+const { schoolLocationsSqlJoin } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
@@ -136,18 +137,15 @@ module.exports = {
                   console.log(error3);
                 }
                 const schoolsSql = `FROM school_registrations s
-                                                    LEFT JOIN establishing_schools e ON e.tracking_number = s.tracking_number
+                                                    LEFT JOIN establishing_schools e ON e.id = s.establishing_school_id
                                                     LEFT JOIN school_categories sc ON sc.id = e.school_category_id
                                                     LEFT JOIN applications a ON a.tracking_number = e.tracking_number
-                                                    LEFT JOIN streets st ON st.StreetCode = e.village_id
-                                                    LEFT JOIN wards w ON w.id = e.ward_id
-                                                    LEFT JOIN districts d ON d.LgaCode = w.LgaCode
-                                                    LEFT JOIN regions r ON r.RegionCode = d.RegionCode
+                                                    ${schoolLocationsSqlJoin()}
                                                     WHERE a.user_id = ${id} AND reg_status = 1`;
 
                 db.query(
                   `SELECT s.registration_number AS reg_number , e.school_name AS name, 
-                                                e.tracking_number AS tracking_number ,s.school_opening_date AS opening_date,
+                                                e.tracking_number AS tracking_number ,s.registration_date AS registration_date,
                                                 sc.category AS type , 
                                                 r.RegionName AS region, d.LgaName AS district, w.WardName AS ward, st.StreetName AS village
                                                 ${schoolsSql} ${searchSql}

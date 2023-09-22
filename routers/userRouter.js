@@ -12,6 +12,8 @@ const {
   hash,
   generateRandomText,
   getUserOffice,
+  permission,
+  lowerCase,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -60,6 +62,9 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_level: user.rank_level,
           twofa: user.twofa,
           email: user.email,
+          ngazi: lowerCase(user.ngazi),
+          sehemu: lowerCase(user.sehemu),
+          cheo: lowerCase(user.rank_name),
         };
         // console.log("User Data", userData);
         if (permissionData) {
@@ -90,12 +95,13 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
 });
 
 //get list of users
-userRouter.get("/users", (req, res, next) => {
+userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var searchQuery = req.body; 
-  userModal.getUsers(offset, per_page, searchQuery, (error, users, numRows) => {
+  var user = req.user;
+  userModal.getUsers(offset, per_page, searchQuery, user, (error, users, numRows) => {
     // console.log(users);
     return res.send({
       error: error ? true : false,

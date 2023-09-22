@@ -3,7 +3,7 @@ const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchool
 
 module.exports = {
   getAllSummaries : (user , callback) => {
-        const summaryCategoriesSql = `SELECT sc.category AS category, 
+        const summaryCategoriesSql = `SELECT sc.id AS id , sc.category AS category, 
                                       COUNT(*) AS total
                                       FROM  establishing_schools e
                                       JOIN school_categories sc ON sc.id = e.school_category_id 
@@ -13,12 +13,13 @@ module.exports = {
                                        a.is_approved=2 AND 
                                        s.reg_status = 1 
                                        ${filterByUserOffice(user , 'AND')}
-                                       GROUP BY category`; 
+                                       GROUP BY category, id
+                                       ORDER BY id ASC`; 
         db.query(summaryCategoriesSql, (error , summaryCategories) => {
                     if(error){
                         console.log(error);
                     }
-            
+                    
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
                        FROM establishing_schools e
@@ -102,7 +103,6 @@ module.exports = {
   },
   //******** Schools by Regions and Categories *******************************
   getSchoolByRegionsAndCategories: (user , callback) => {
-      const { office } = user;
       // region means label (it can be region_name , lga_name, ward_name and street_name)
       db.query(
         `SELECT ${selectByLocationName(user)} , 
@@ -123,7 +123,7 @@ module.exports = {
           if (error) {
             console.log(error);
           }
-
+          console.log("data",results);
           //   Start
           // Format the results
           const formattedResults = {};
@@ -174,11 +174,12 @@ module.exports = {
   // Registered schools by Year of registrations trend;
   getTotalNumberOfSchoolByYearOfRegistration : ( user ,callback) => {
         
-        let sql = `SELECT YEAR(school_opening_date) AS label , COUNT(*) as total
+        let sql = `SELECT IFNULL(YEAR(s.registration_date) , 'NULL') AS label , COUNT(*) as total
                       FROM school_registrations s
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       ${schoolLocationsSqlJoin()} 
-                      ${filterByUserOffice(user , 'WHERE')}
+                      ${filterByUserOffice(user, "WHERE")}
+                      #WHERE YEAR(s.updated_at) <> 0
                       GROUP BY label
                       ORDER BY label ASC
                       `;
@@ -198,7 +199,6 @@ module.exports = {
                 total: arraySum(data),
               });
             });
-            
             callback(individual, cumulative);
           }
         );
