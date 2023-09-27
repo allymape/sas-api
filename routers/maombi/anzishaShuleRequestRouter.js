@@ -573,7 +573,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
         if (registry_type_id == 1) {
           db.query(
             "select * from personal_infos, applications, wards, districts, regions " +
-              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
               " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
             [trackingNumber],
             function (error1, results1, fields1) {

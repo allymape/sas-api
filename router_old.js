@@ -9133,7 +9133,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
         "SELECT COUNT(school_name) as kaunti FROM school_gender_types, " +
           " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
           " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-          " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+          " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
           " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
           " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
           " school_categories.id = establishing_schools.school_category_id AND " +
@@ -9149,7 +9149,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
               " applications, wards, districts, school_categories, registry_types, " +
               " regions WHERE school_categories.id = establishing_schools.school_category_id " +
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-              " AND wards.id = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
+              " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
               " AND registry_types.id = applications.registry_type_id AND application_category_id = ? " +
               " AND is_approved = ? AND registration_structure_id = ?",
             [1, 2, 1],
@@ -9163,7 +9163,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                   " applications, wards, districts, school_categories, registry_types, " +
                   " regions WHERE school_categories.id = establishing_schools.school_category_id " +
                   " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-                  " AND wards.id = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
+                  " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
                   " AND registry_types.id = applications.registry_type_id AND application_category_id = ? " +
                   " AND is_approved = ? AND registration_structure_id = ?",
                 [1, 2, 2],
@@ -9177,7 +9177,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                       " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
                       " establishing_schools.id = owners.establishing_school_id AND " +
                       " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-                      " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+                      " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
                       " AND application_category_id = ? AND is_approved = ?",
                     [2, 2],
                     function (error, results, fields) {
@@ -9190,7 +9190,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                           " AND application_category_id = ? AND is_approved = ?",
                         [9, 2],
                         function (error, results, fields) {
@@ -9203,7 +9203,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                               " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                               " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                              " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                              " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                               " AND application_category_id = ? AND is_approved = ?",
                             [14, 2],
                             function (error, results, fields) {
@@ -9216,7 +9216,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                                   " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                                   " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                                   " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                                  " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                                  " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                                   " AND application_category_id = ? AND is_approved = ?",
                                 [13, 2],
                                 function (error, results, fields) {
@@ -9230,7 +9230,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                                       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                                       " former_school_infos.establishing_school_id = establishing_schools.id AND " +
                                       " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = ? AND " +
-                                      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                                      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                                       " AND application_category_id = ? AND is_approved = ?",
                                     [1, 6, 2],
                                     function (error, results, fields) {
@@ -9267,7 +9267,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                                               " FROM school_registrations, establishing_schools, school_categories, wards, " +
                                               " districts, regions WHERE school_registrations.establishing_school_id = establishing_schools.id " +
                                               " AND school_categories.id = establishing_schools.school_category_id AND reg_status = ? " +
-                                              " AND wards.id = establishing_schools.ward_id AND wards.LgaCode = districts.LgaCode " +
+                                              " AND wards.WardCode = establishing_schools.ward_id AND wards.LgaCode = districts.LgaCode " +
                                               " AND regions.RegionCode = districts.RegionCode GROUP BY regions.RegionCode ORDER BY kaunti DESC;",
                                             [1],
                                             function (error, results, fields) {
@@ -9362,7 +9362,7 @@ router.get("/active-user", signupValidation, (req, res, next) => {
                                                               " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                                                               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                                                               " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-                                                              " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+                                                              " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
                                                               " AND application_category_id = ? AND is_approved = ?",
                                                             [12, 2],
                                                             function (
@@ -9480,7 +9480,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
     "SELECT COUNT(school_name) as kaunti FROM school_gender_types, " +
       " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
       " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-      " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+      " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
       " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
       " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " school_categories.id = establishing_schools.school_category_id AND " +
@@ -9496,7 +9496,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
           " applications, wards, districts, school_categories, registry_types, " +
           " regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-          " AND wards.id = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
+          " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
           " AND registry_types.id = applications.registry_type_id AND application_category_id = ? " +
           " AND is_approved = ?",
         [1, 1],
@@ -9510,7 +9510,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
               " applications, wards, districts, school_categories, registry_types, " +
               " regions WHERE school_categories.id = establishing_schools.school_category_id " +
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-              " AND wards.id = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
+              " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.tracking_number = applications.tracking_number " +
               " AND registry_types.id = applications.registry_type_id AND application_category_id = ? " +
               " AND is_approved = ? AND registration_structure_id = ?",
             [1, 2, 2],
@@ -9524,7 +9524,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
                   " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
                   " establishing_schools.id = owners.establishing_school_id AND " +
                   " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-                  " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+                  " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
                   " AND application_category_id = ? AND is_approved = ?",
                 [2, 2],
                 function (error, results, fields) {
@@ -9537,7 +9537,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
                       " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                       " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                       " AND application_category_id = ? AND is_approved = ?",
                     [9, 2],
                     function (error, results, fields) {
@@ -9550,7 +9550,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
                           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                           " AND application_category_id = ? AND is_approved = ?",
                         [14, 2],
                         function (error, results, fields) {
@@ -9563,7 +9563,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
                               " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
                               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                               " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                              " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                              " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                               " AND application_category_id = ? AND is_approved = ?",
                             [13, 2],
                             function (error, results, fields) {
@@ -9577,7 +9577,7 @@ router.get("/active-menu", signupValidation, (req, res, next) => {
                                   " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
                                   " former_school_infos.establishing_school_id = establishing_schools.id AND " +
                                   " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = ? AND " +
-                                  " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+                                  " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
                                   " AND application_category_id = ? AND is_approved = ?",
                                 [1, 6, 2],
                                 function (error, results, fields) {
@@ -9727,7 +9727,7 @@ router.post("/maombi-kuanzisha-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " AND is_approved <> ? AND applications.registry_type_id <> ? AND payment_status_id = ?",
@@ -9802,7 +9802,7 @@ router.post("/maombi-kuanzisha-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " and status_id = ? AND is_approved <> ? AND applications.registry_type_id <> ? AND payment_status_id = ?",
@@ -9876,7 +9876,7 @@ router.post("/maombi-kuanzisha-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " and status_id = ? AND is_approved <> ? AND applications.registry_type_id <> ? AND payment_status_id = ?",
@@ -9994,7 +9994,7 @@ router.post("/bila-majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id " +
         " AND school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
         " regions.RegionCode = districts.RegionCode AND application_category_id = ? AND " +
         " is_approved = ? AND registration_structure_id = ?",
       [1, 2, 1],
@@ -10083,7 +10083,7 @@ router.post("/bila-majengo-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " and status_id = ? AND is_approved = ? AND applications.registry_type_id <> ?",
@@ -10158,7 +10158,7 @@ router.post("/bila-majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id " +
         " AND school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
         " regions.RegionCode = districts.RegionCode AND application_category_id = ? AND " +
         " is_approved = ? AND registration_structure_id = ?",
       [1, 2, 1],
@@ -10294,7 +10294,7 @@ router.post(
           " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id " +
           " AND school_categories.id = establishing_schools.school_category_id AND " +
           " applications.tracking_number = establishing_schools.tracking_number AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
           " regions.RegionCode = districts.RegionCode AND application_category_id = ? AND " +
           " is_approved = ? AND registration_structure_id = ?",
         [1, 3, 1],
@@ -10383,7 +10383,7 @@ router.post(
           " districts.LgaName as LgaName, registry_types.registry as registry " +
           " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
           " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
           " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
           " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
           " and status_id = ? AND is_approved = ? AND applications.registry_type_id <> ?",
@@ -10458,7 +10458,7 @@ router.post(
           " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id " +
           " AND school_categories.id = establishing_schools.school_category_id AND " +
           " applications.tracking_number = establishing_schools.tracking_number AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
           " regions.RegionCode = districts.RegionCode AND application_category_id = ? AND " +
           " is_approved = ? AND registration_structure_id = ?",
         [1, 3, 1],
@@ -10592,7 +10592,7 @@ router.post("/majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND registration_structure_id = ?",
       [1, 2, 2],
       function (error, results, fields) {
@@ -10679,7 +10679,7 @@ router.post("/majengo-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " and status_id = ? AND is_approved <> ? AND applications.registry_type_id <> ?",
@@ -10754,7 +10754,7 @@ router.post("/majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND registration_structure_id = ?",
       [1, 2, 2],
       function (error, results, fields) {
@@ -10885,7 +10885,7 @@ router.post("/kataa-majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND registration_structure_id = ?",
       [1, 3, 2],
       function (error, results, fields) {
@@ -10972,7 +10972,7 @@ router.post("/kataa-majengo-shule", makundiValidation, (req, res, next) => {
         " districts.LgaName as LgaName, registry_types.registry as registry " +
         " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
         " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-        " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+        " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
         " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
         " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
         " and status_id = ? AND is_approved = ? AND applications.registry_type_id <> ?",
@@ -11047,7 +11047,7 @@ router.post("/kataa-majengo-shule", makundiValidation, (req, res, next) => {
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND registration_structure_id = ?",
       [1, 3, 2],
       function (error, results, fields) {
@@ -11180,7 +11180,7 @@ router.post(
           " districts.LgaName as LgaName, registry_types.registry as registry " +
           " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
           " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
           " AND establishing_schools.tracking_number = applications.tracking_number AND " +
           " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
           " AND is_approved <> ? AND applications.registry_type_id = ?",
@@ -11255,7 +11255,7 @@ router.post(
           " districts.LgaName as LgaName, registry_types.registry as registry " +
           " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
           " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
           " AND establishing_schools.tracking_number = applications.tracking_number AND districts.LgaCode = ? AND " +
           " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
           " and status_id = ? AND is_approved <> ? AND applications.registry_type_id = ?",
@@ -11329,7 +11329,7 @@ router.post(
           " districts.LgaName as LgaName, registry_types.registry as registry " +
           " from establishing_schools, applications, wards, districts, school_categories, registry_types, " +
           " regions WHERE school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-          " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+          " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
           " AND establishing_schools.tracking_number = applications.tracking_number AND " +
           " registry_types.id = applications.registry_type_id AND application_category_id = ? " +
           " and status_id = ? AND is_approved <> ? AND applications.registry_type_id = ?",
@@ -11448,7 +11448,7 @@ router.post("/maombi-usajili-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ? AND applications.registry_type_id <> ?",
       [4, 2, 3],
       function (error, results, fields) {
@@ -11522,7 +11522,7 @@ router.post("/maombi-usajili-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND applications.registry_type_id <> ?",
       [4, UserLevel, 2, Office, 3],
       function (error, results, fields) {
@@ -11595,7 +11595,7 @@ router.post("/maombi-usajili-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id <> ?",
       [4, UserLevel, 2, Office, 3],
       function (error, results, fields) {
@@ -11668,7 +11668,7 @@ router.post("/maombi-usajili-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND applications.registry_type_id <> ?",
       [4, UserLevel, 2, 3],
       function (error, results, fields) {
@@ -11787,7 +11787,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved <> ? AND applications.registry_type_id = ?",
         [4, 2, 3],
         function (error, results, fields) {
@@ -11861,7 +11861,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND applications.registry_type_id = ?",
         [4, UserLevel, 2, Office, 3],
         function (error, results, fields) {
@@ -11934,7 +11934,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id = ?",
         [4, UserLevel, 2, Office, 3],
         function (error, results, fields) {
@@ -12007,7 +12007,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND applications.registry_type_id = ?",
         [4, UserLevel, 2, 3],
         function (error, results, fields) {
@@ -12124,7 +12124,7 @@ router.post("/maombi-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [5, 2],
       function (error, results, fields) {
@@ -12198,7 +12198,7 @@ router.post("/maombi-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -12271,7 +12271,7 @@ router.post("/maombi-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -12344,7 +12344,7 @@ router.post("/maombi-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [5, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -12460,7 +12460,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [5, 2],
       function (error, results, fields) {
@@ -12534,7 +12534,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -12607,7 +12607,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -12681,7 +12681,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [5, 2],
       function (error, results, fields) {
@@ -12755,7 +12755,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [5, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -12871,7 +12871,7 @@ router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [13, 2],
       function (error, results, fields) {
@@ -12945,7 +12945,7 @@ router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13018,7 +13018,7 @@ router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13091,7 +13091,7 @@ router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [13, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -13207,7 +13207,7 @@ router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [13, 2],
       function (error, results, fields) {
@@ -13281,7 +13281,7 @@ router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13354,7 +13354,7 @@ router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13427,7 +13427,7 @@ router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND payment_status_id = ?",
       [13, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -13543,7 +13543,7 @@ router.post("/maombi-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [12, 2],
       function (error, results, fields) {
@@ -13617,7 +13617,7 @@ router.post("/maombi-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13690,7 +13690,7 @@ router.post("/maombi-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -13763,7 +13763,7 @@ router.post("/maombi-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [12, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -13879,7 +13879,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [12, 2],
       function (error, results, fields) {
@@ -13954,7 +13954,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [12, 2],
       function (error, results, fields) {
@@ -14028,7 +14028,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -14101,7 +14101,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -14174,7 +14174,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND payment_status_id = ?",
       [12, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -14306,7 +14306,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND former_school_combinations.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [12, trackingNumber],
@@ -17522,7 +17522,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
         " AND former_school_combinations.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [12, trackingNumber],
@@ -20942,7 +20942,7 @@ router.post("/maombi-badili-bweni", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [14, 2],
       function (error, results, fields) {
@@ -21016,7 +21016,7 @@ router.post("/maombi-badili-bweni", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [14, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -21089,7 +21089,7 @@ router.post("/maombi-badili-bweni", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [14, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -21162,7 +21162,7 @@ router.post("/maombi-badili-bweni", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [14, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -21281,7 +21281,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved = ?",
         [14, 2],
         function (error, results, fields) {
@@ -21355,7 +21355,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ?",
         [14, UserLevel, 2, Office],
         function (error, results, fields) {
@@ -21428,7 +21428,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
         [14, UserLevel, 2, Office],
         function (error, results, fields) {
@@ -21501,7 +21501,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved = ?",
         [14, 2],
         function (error, results, fields) {
@@ -21622,7 +21622,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved <> ?",
         [9, 2],
         function (error, results, fields) {
@@ -21696,7 +21696,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
         [9, UserLevel, 2, Office, 2],
         function (error, results, fields) {
@@ -21769,7 +21769,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
         [9, UserLevel, 2, Office, 2],
         function (error, results, fields) {
@@ -21842,7 +21842,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
         [9, UserLevel, 2, 2],
         function (error, results, fields) {
@@ -21959,7 +21959,7 @@ router.post("/maombi-hamisha-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [10, 2],
       function (error, results, fields) {
@@ -22033,7 +22033,7 @@ router.post("/maombi-hamisha-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [10, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -22106,7 +22106,7 @@ router.post("/maombi-hamisha-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [10, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -22179,7 +22179,7 @@ router.post("/maombi-hamisha-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [10, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -22296,7 +22296,7 @@ router.post("/maombi-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [11, 2],
       function (error, results, fields) {
@@ -22373,7 +22373,7 @@ router.post("/maombi-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [11, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -22448,7 +22448,7 @@ router.post("/maombi-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [11, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -22523,7 +22523,7 @@ router.post("/maombi-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [11, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -22642,7 +22642,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved = ?",
       [11, 2],
       function (error, results, fields) {
@@ -22721,7 +22721,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ?",
       [11, UserLevel, 2, Office],
       function (error, results, fields) {
@@ -22798,7 +22798,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
       [11, UserLevel, 2, Office],
       function (error, results, fields) {
@@ -22875,7 +22875,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved = ?",
       [11, UserLevel, 2],
       function (error, results, fields) {
@@ -22999,7 +22999,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved = ?",
         [9, 2],
         function (error, results, fields) {
@@ -23076,7 +23076,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND districts.LgaCode = ?",
         [9, UserLevel, 2, Office],
         function (error, results, fields) {
@@ -23152,7 +23152,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
         [9, UserLevel, 2, Office],
         function (error, results, fields) {
@@ -23228,7 +23228,7 @@ router.post(
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved = ?",
         [9, 2],
         function (error, results, fields) {
@@ -23351,7 +23351,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = ? AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND is_approved <> ?",
         [1, 6, 2],
         function (error, results, fields) {
@@ -23428,7 +23428,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND school_registrations.reg_status = ? AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
         [1, 6, UserLevel, 2, Office, 2],
         function (error, results, fields) {
@@ -23502,7 +23502,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND school_registrations.reg_status = ? " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
         [1, 6, UserLevel, 2, Office, 2],
@@ -23577,7 +23577,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND school_registrations.reg_status = ? " +
           " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
         [1, 6, UserLevel, 2, 2],
@@ -23695,7 +23695,7 @@ router.post("/maombi-badili-mmiliki", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND is_approved <> ?",
       [7, 2],
       function (error, results, fields) {
@@ -23769,7 +23769,7 @@ router.post("/maombi-badili-mmiliki", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
       [7, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -23842,7 +23842,7 @@ router.post("/maombi-badili-mmiliki", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
       [7, UserLevel, 2, Office, 2],
       function (error, results, fields) {
@@ -23915,7 +23915,7 @@ router.post("/maombi-badili-mmiliki", makundiValidation, (req, res, next) => {
         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
       [7, UserLevel, 2, 2],
       function (error, results, fields) {
@@ -24030,7 +24030,7 @@ router.post("/maombi-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND is_approved <> ?",
       [2, 2],
       function (error, results, fields) {
@@ -24103,7 +24103,7 @@ router.post("/maombi-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ?",
       [2, UserLevel, 2, Office],
       function (error, results, fields) {
@@ -24175,7 +24175,7 @@ router.post("/maombi-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ?",
       [2, UserLevel, 2],
       function (error, results, fields) {
@@ -24291,7 +24291,7 @@ router.post("/thibit-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND is_approved = ?",
       [2, 2],
       function (error, results, fields) {
@@ -24365,7 +24365,7 @@ router.post("/thibit-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ?",
       [2, UserLevel, 2, Office],
       function (error, results, fields) {
@@ -24437,7 +24437,7 @@ router.post("/thibit-mmiliki-shule", makundiValidation, (req, res, next) => {
         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
         " establishing_schools.id = owners.establishing_school_id AND " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+        " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
         " AND application_category_id = ? AND is_approved = ?",
       [2, 2],
       function (error, results, fields) {
@@ -24555,7 +24555,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
         function (error, results, fields) {
@@ -24631,7 +24631,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
@@ -24708,7 +24708,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ?",
         [7, 2],
         function (error, results, fields) {
@@ -24784,7 +24784,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, UserLevel, 2],
         function (error, results, fields) {
@@ -24907,7 +24907,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
         function (error, results, fields) {
@@ -24983,7 +24983,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
@@ -25060,7 +25060,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ?",
         [7, 2],
         function (error, results, fields) {
@@ -25136,7 +25136,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ?",
         [7, 2],
         function (error, results, fields) {
@@ -25212,7 +25212,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, UserLevel, 2],
         function (error, results, fields) {
@@ -25335,7 +25335,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
         function (error, results, fields) {
@@ -25411,7 +25411,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
@@ -25488,7 +25488,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved <> ?",
         [8, 2],
         function (error, results, fields) {
@@ -25567,7 +25567,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND " +
           " applications.tracking_number = former_managers.tracking_number " +
           " AND establishing_schools.id = former_managers.establishing_school_id " +
-          " AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved <> ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, UserLevel, 2],
@@ -25691,7 +25691,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ? AND districts.LgaCode = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
         function (error, results, fields) {
@@ -25767,7 +25767,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved = ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
@@ -25844,7 +25844,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ?",
         [8, 2],
         function (error, results, fields) {
@@ -25920,7 +25920,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_managers, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ?",
         [8, 2],
         function (error, results, fields) {
@@ -25999,7 +25999,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND " +
           " applications.tracking_number = former_managers.tracking_number " +
           " AND establishing_schools.id = former_managers.establishing_school_id " +
-          " AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, UserLevel, 2],
@@ -26114,7 +26114,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ? AND districts.LgaCode = ? AND status_id = ?",
         [7, 2, Office, UserLevel],
         function (error, results, fields) {
@@ -26190,7 +26190,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
           " AND is_approved = ? AND regions.zone_code = ? AND status_id = ?",
         [7, 2, Office, UserLevel],
@@ -26267,7 +26267,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ?",
         [7, 2],
         function (error, results, fields) {
@@ -26343,7 +26343,7 @@ router.post(
           " RegionName, establishing_schools.school_name as school_name FROM " +
           " regions, applications, former_owners, establishing_schools, wards, " +
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.id " +
+          " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? AND is_approved = ?",
         [7, 2],
         function (error, results, fields) {
@@ -26456,7 +26456,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
       " from school_sub_categories, establishing_schools, applications, registration_structures, wards, districts, school_categories, languages, registry_types, " +
       " regions WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND languages.id = establishing_schools.language_id AND " +
       " school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-      " districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id " +
+      " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
       " AND establishing_schools.tracking_number = applications.tracking_number AND " +
       " registry_types.id = applications.registry_type_id AND registration_structures.id = establishing_schools.registration_structure_id AND application_category_id = ? AND applications.tracking_number = ?",
     [1, trackingNumber],
@@ -26963,7 +26963,7 @@ router.post("/view-ombi-details", makundiValidation, (req, res, next) => {
       if (registry_type_id == 1) {
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
           [trackingNumber],
           function (error1, results1, fields1) {
@@ -27171,7 +27171,7 @@ router.post("/view-ombi-futa-details", makundiValidation, (req, res, next) => {
       " AND school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-      " AND wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " AND wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND application_category_id = ? AND applications.tracking_number = ?",
     [11, trackingNumber],
     function (error, results, fields) {
@@ -29160,7 +29160,7 @@ router.post(
         " AND school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " AND wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [11, trackingNumber],
       function (error, results, fields) {
@@ -31149,7 +31149,7 @@ router.post("/view-badili-details", makundiValidation, (req, res, next) => {
       " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND former_school_infos.establishing_school_id = establishing_schools.id " +
       " AND application_category_id = ? AND applications.tracking_number = ?",
     [5, trackingNumber],
@@ -34314,7 +34314,7 @@ router.post("/view-rip-badili-details", makundiValidation, (req, res, next) => {
       " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND former_school_infos.establishing_school_id = establishing_schools.id " +
       " AND application_category_id = ? AND applications.tracking_number = ?",
     [5, trackingNumber],
@@ -37716,7 +37716,7 @@ router.post("/view-badili-dahalia", makundiValidation, (req, res, next) => {
       " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND former_school_infos.establishing_school_id = establishing_schools.id " +
       " AND application_category_id = ? AND applications.tracking_number = ?",
     [13, trackingNumber],
@@ -40894,7 +40894,7 @@ router.post("/ripoti-badili-dahalia", makundiValidation, (req, res, next) => {
       " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND former_school_infos.establishing_school_id = establishing_schools.id " +
       " AND application_category_id = ? AND applications.tracking_number = ?",
     [13, trackingNumber],
@@ -44295,7 +44295,7 @@ router.post("/view-bweni-details", makundiValidation, (req, res, next) => {
       " WHERE " +
       " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
       " AND former_school_infos.establishing_school_id = establishing_schools.id " +
       " AND application_category_id = ? AND applications.tracking_number = ? " +
       " AND former_school_infos.school_sub_category_id = school_sub_categories.id",
@@ -44349,7 +44349,7 @@ router.post("/view-bweni-details", makundiValidation, (req, res, next) => {
           " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id " +
           " AND languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-          " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND former_school_infos.establishing_school_id = establishing_schools.id " +
           " AND application_category_id = ? AND applications.tracking_number = ?",
         [14, trackingNumber],
@@ -47404,7 +47404,7 @@ router.post(
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND former_school_infos.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [10, trackingNumber],
@@ -47456,7 +47456,7 @@ router.post(
             " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
             " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
             " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            " wards.id = former_school_infos.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+            " wards.WardCode = former_school_infos.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
             " AND former_school_infos.establishing_school_id = establishing_schools.id " +
             " AND application_category_id = ? AND applications.tracking_number = ?",
           [10, trackingNumber],
@@ -50776,7 +50776,7 @@ router.post(
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND former_school_infos.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [9, trackingNumber],
@@ -51442,7 +51442,7 @@ router.post(
         // if(registry_type_id == 1){
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
           [trackingNumber],
           function (error1, results1, fields1) {
@@ -51629,7 +51629,7 @@ router.post(
         " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND former_school_infos.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [9, trackingNumber],
@@ -52299,7 +52299,7 @@ router.post(
         // if(registry_type_id == 1){
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
           [trackingNumber],
           function (error1, results1, fields1) {
@@ -52491,7 +52491,7 @@ router.post(
         " AND school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND former_school_infos.establishing_school_id = establishing_schools.id " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [6, trackingNumber],
@@ -53162,7 +53162,7 @@ router.post(
             " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
             " languages.id = establishing_schools.language_id AND school_categories.id = former_school_infos.school_category_id " +
             " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            " wards.id = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+            " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
             " AND former_school_infos.establishing_school_id = establishing_schools.id " +
             " AND application_category_id = ? AND applications.tracking_number = ?",
           [6, trackingNumber],
@@ -53177,7 +53177,7 @@ router.post(
             // if(registry_type_id == 1){
             db.query(
               "select * from personal_infos, applications, wards, districts, regions " +
-                " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+                " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
                 " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
               [trackingNumber],
               function (error1, results1, fields1) {
@@ -53315,7 +53315,7 @@ router.post(
         " FROM owners, establishing_schools, applications, wards, districts, regions, managers WHERE " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " managers.tracking_number = applications.tracking_number AND " +
-        " wards.id = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND owners.establishing_school_id = establishing_schools.id " +
         " AND applications.tracking_number = ?",
       [2, trackingNumber],
@@ -53852,7 +53852,7 @@ router.post(
 
         db.query(
           "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.id " +
+            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
             " AND owners.id = referees.owner_id AND tracking_number = ?",
           [trackingNumber],
           function (error, results, fields) {
@@ -53969,7 +53969,7 @@ router.post(
         }
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token",
           [1, trackingNumber],
           function (error1, results1, fields1) {
@@ -54091,7 +54091,7 @@ router.post(
         " FROM owners, establishing_schools, applications, wards, districts, regions, managers WHERE " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " managers.tracking_number = applications.tracking_number AND " +
-        " wards.id = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND owners.establishing_school_id = establishing_schools.id " +
         " AND applications.tracking_number = ?",
       [2, trackingNumber],
@@ -54530,7 +54530,7 @@ router.post(
 
         db.query(
           "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.id " +
+            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
             " AND owners.id = referees.owner_id AND tracking_number = ?",
           [trackingNumber],
           function (error, results, fields) {
@@ -54616,7 +54616,7 @@ router.post(
             }
             db.query(
               "select * from personal_infos, applications, wards, districts, regions " +
-                " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+                " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
                 " AND applications.foreign_token = personal_infos.secure_token",
               [1, trackingNumber],
               function (error1, results1, fields1) {
@@ -54740,7 +54740,7 @@ router.post(
         " districts.LgaName as LgaName, former_owners.owner_name as owner_name, former_owners.phone_number as owner_phone_no" +
         " FROM former_owners, establishing_schools, applications, wards, districts, regions WHERE " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND former_owners.establishing_school_id = establishing_schools.id " +
         " AND applications.tracking_number = ?",
       [7, trackingNumber],
@@ -55245,7 +55245,7 @@ router.post(
         db.query(
           "SELECT * from former_owner_referees, former_owners, wards, districts, " +
             " regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.id " +
+            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.WardCode " +
             " AND former_owners.id = former_owner_referees.former_owner_id AND tracking_number = ?",
           [trackingNumber],
           function (error, results, fields) {
@@ -55488,7 +55488,7 @@ router.post(
         " districts.LgaName as LgaName, former_managers.manager_first_name as owner_name, former_managers.manager_phone_number as owner_phone_no" +
         " FROM former_managers, establishing_schools, applications, wards, districts, regions WHERE " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_managers.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_managers.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND former_managers.establishing_school_id = establishing_schools.id " +
         " AND applications.tracking_number = ?",
       [8, trackingNumber],
@@ -55993,7 +55993,7 @@ router.post(
         db.query(
           "SELECT * from former_owner_referees, former_owners, wards, districts, " +
             " regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.id " +
+            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.WardCode " +
             " AND former_owners.id = former_owner_referees.former_owner_id AND tracking_number = ?",
           [trackingNumber],
           function (error, results, fields) {
@@ -56218,7 +56218,7 @@ router.post(
         " districts.LgaName as LgaName, former_owners.owner_name as owner_name, former_owners.phone_number as owner_phone_no" +
         " FROM former_owners, establishing_schools, applications, wards, districts, regions WHERE " +
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND former_owners.establishing_school_id = establishing_schools.id " +
         " AND applications.tracking_number = ?",
       [7, trackingNumber],
@@ -56725,7 +56725,7 @@ router.post(
         db.query(
           "SELECT * from former_owner_referees, former_owners, wards, districts, " +
             " regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.id " +
+            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.WardCode " +
             " AND former_owners.id = former_owner_referees.former_owner_id AND tracking_number = ?",
           [trackingNumber],
           function (error, results, fields) {
@@ -56953,7 +56953,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+        " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [4, trackingNumber],
       function (error, results, fields) {
@@ -57670,7 +57670,7 @@ router.post(
               db.query(
                 "select * from personal_infos, applications, wards, districts, regions " +
                   " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode " +
-                  " AND wards.id = personal_infos.ward_id " +
+                  " AND wards.WardCode = personal_infos.ward_id " +
                   " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
                 [tracking_number_old],
                 function (error1, results1, fields1) {
@@ -57953,7 +57953,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND establishing_schools.tracking_number = ?",
       [1, 2, trackingNumber],
       function (error, results, fields) {
@@ -58660,7 +58660,7 @@ router.post(
         // })
 
         // db.query('select * from personal_infos, applications, wards, districts, regions ' +
-        // ' WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id ' +
+        // ' WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id ' +
         // ' AND applications.foreign_token = personal_infos.secure_token',
         // [trackingNumber], function (error1, results1, fields1) {
         //     if (error1) {console.log(error1)}
@@ -58701,7 +58701,7 @@ router.post(
               db.query(
                 "select * from personal_infos, applications, wards, districts, regions " +
                   " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode " +
-                  " AND wards.id = personal_infos.ward_id " +
+                  " AND wards.WardCode = personal_infos.ward_id " +
                   " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
                 [trackingNumber],
                 function (error1, results1, fields1) {
@@ -58978,7 +58978,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND establishing_schools.tracking_number = ?",
       [1, 3, trackingNumber],
       function (error, results, fields) {
@@ -59681,7 +59681,7 @@ router.post(
         // })
 
         // db.query('select * from personal_infos, applications, wards, districts, regions ' +
-        // ' WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id ' +
+        // ' WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id ' +
         // ' AND applications.foreign_token = personal_infos.secure_token',
         // [trackingNumber], function (error1, results1, fields1) {
         //     if (error1) {console.log(error1)}
@@ -59722,7 +59722,7 @@ router.post(
               db.query(
                 "select * from personal_infos, applications, wards, districts, regions " +
                   " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode " +
-                  " AND wards.id = personal_infos.ward_id " +
+                  " AND wards.WardCode = personal_infos.ward_id " +
                   " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
                 [trackingNumber],
                 function (error1, results1, fields1) {
@@ -59993,7 +59993,7 @@ router.post("/view-majengo-details", makundiValidation, (req, res, next) => {
       " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
       " school_categories.id = establishing_schools.school_category_id AND " +
       " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-      " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+      " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
       " AND application_category_id = ? and is_approved = ? AND establishing_schools.tracking_number = ?",
     [1, 2, trackingNumber],
     function (error, results, fields) {
@@ -60702,7 +60702,7 @@ router.post("/view-majengo-details", makundiValidation, (req, res, next) => {
 
       db.query(
         "select * from personal_infos, applications, wards, districts, regions " +
-          " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+          " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
           " AND applications.foreign_token = personal_infos.secure_token",
         [trackingNumber],
         function (error1, results1, fields1) {
@@ -60830,7 +60830,7 @@ router.post(
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
         " applications.tracking_number = establishing_schools.tracking_number AND districts.LgaCode = wards.LgaCode " +
-        " AND wards.id = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
+        " AND wards.WardCode = establishing_schools.ward_id AND regions.RegionCode = districts.RegionCode " +
         " AND application_category_id = ? and is_approved = ? AND establishing_schools.tracking_number = ?",
       [1, 3, trackingNumber],
       function (error, results, fields) {
@@ -61535,7 +61535,7 @@ router.post(
 
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token",
           [trackingNumber],
           function (error1, results1, fields1) {
@@ -61681,7 +61681,7 @@ router.post(
         " languages.id = establishing_schools.language_id AND " +
         " school_categories.id = establishing_schools.school_category_id " +
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.id = establishing_schools.ward_id AND " +
+        " wards.WardCode = establishing_schools.ward_id AND " +
         " school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND applications.tracking_number = ?",
       [4, trackingNumber],
@@ -62401,7 +62401,7 @@ router.post(
 
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
             " AND applications.foreign_token = personal_infos.secure_token",
           [trackingNumber],
           function (error1, results1, fields1) {
@@ -62812,7 +62812,7 @@ router.post("/jumla-kuanzisha-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, applications.tracking_number as tracking_number, " +
             " school_name, category, approved_at, LgaName, RegionName " +
             " from applications, establishing_schools, school_categories, wards, districts, regions " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND districts.RegionCode = regions.RegionCode AND establishing_schools.tracking_number = applications.tracking_number " +
             " AND is_approved = ? and application_category_id = ? AND " +
@@ -62885,7 +62885,7 @@ router.post("/jumla-kuanzisha-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, applications.tracking_number as tracking_number, " +
             " school_name, category, approved_at, LgaName, RegionName " +
             " from applications, establishing_schools, school_categories, wards, districts, regions " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND districts.RegionCode = regions.RegionCode AND establishing_schools.tracking_number = applications.tracking_number " +
             " AND is_approved = ? and application_category_id = ? AND " +
@@ -62953,7 +62953,7 @@ router.post("/jumla-kuanzisha-shule", makundiValidation, (req, res, next) => {
   //         db.query('select wards.WardName as WardName, applications.tracking_number as tracking_number, ' +
   //         ' school_name, category, approved_at, LgaName, RegionName ' +
   //         ' from applications, establishing_schools, school_categories, wards, districts, regions ' +
-  //         ' where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND ' +
+  //         ' where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND ' +
   //         ' school_categories.id = establishing_schools.school_category_id ' +
   //         ' AND districts.RegionCode = regions.RegionCode AND establishing_schools.tracking_number = applications.tracking_number ' +
   //         ' AND is_approved = ? and application_category_id = ? AND ' +
@@ -63035,7 +63035,7 @@ router.post("/jumla-meneja-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, applications.tracking_number as tracking_number, " +
             " school_name, category, approved_at, LgaName, RegionName " +
             " from applications, owners, managers, establishing_schools, school_categories, wards, districts, regions " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND districts.RegionCode = regions.RegionCode " +
             " AND owners.tracking_number = applications.tracking_number " +
@@ -63113,7 +63113,7 @@ router.post("/jumla-meneja-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, applications.tracking_number as tracking_number, " +
             " school_name, category, approved_at, LgaName, RegionName " +
             " from applications, owners, managers, establishing_schools, school_categories, wards, districts, regions " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND districts.RegionCode = regions.RegionCode " +
             " AND owners.tracking_number = applications.tracking_number " +
@@ -63186,7 +63186,7 @@ router.post("/jumla-meneja-shule", makundiValidation, (req, res, next) => {
   //         db.query('select wards.WardName as WardName, applications.tracking_number as tracking_number, ' +
   //         ' school_name, category, approved_at, LgaName, RegionName ' +
   //         ' from applications, owners, managers, establishing_schools, school_categories, wards, districts, regions ' +
-  //         ' where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND ' +
+  //         ' where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND ' +
   //         ' school_categories.id = establishing_schools.school_category_id ' +
   //         ' AND districts.RegionCode = regions.RegionCode ' +
   //         ' AND owners.tracking_number = applications.tracking_number ' +
@@ -63488,7 +63488,7 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, registration_number, applications.tracking_number as tracking_number, " +
             " school_name, category, school_registrations.updated_at as updated_at, LgaName, RegionName " +
             " from applications, establishing_schools, school_categories, wards, districts, regions, school_registrations " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND school_registrations.establishing_school_id = establishing_schools.id " +
             " AND districts.RegionCode = regions.RegionCode AND school_registrations.tracking_number = applications.tracking_number " +
@@ -63546,7 +63546,7 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
       "SELECT COUNT(school_name) as kaunti, category FROM school_gender_types, " +
         " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
         " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-        " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+        " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
         " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
@@ -63568,7 +63568,7 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
             " WardName, LgaName, RegionName, school_phone, po_box, school_email FROM school_gender_types, " +
             " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
             " wards, districts, regions, applications WHERE applications.tracking_number = school_registrations.tracking_number AND regions.RegionCode = districts.RegionCode " +
-            " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+            " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
             " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
             " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
             " school_categories.id = establishing_schools.school_category_id AND " +
@@ -63689,7 +63689,7 @@ router.post(
             "select wards.WardName as WardName, registration_number, applications.tracking_number as tracking_number, " +
               " school_name, category, school_registrations.updated_at as updated_at, LgaName, RegionName " +
               " from applications, establishing_schools, school_categories, wards, districts, regions, school_registrations " +
-              " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+              " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
               " school_categories.id = establishing_schools.school_category_id " +
               " AND school_registrations.establishing_school_id = establishing_schools.id " +
               " AND districts.RegionCode = regions.RegionCode AND school_registrations.tracking_number = applications.tracking_number " +
@@ -63747,7 +63747,7 @@ router.post(
         "SELECT COUNT(school_name) as kaunti, category FROM school_gender_types, " +
           " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
           " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-          " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+          " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
           " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
           " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
           " school_categories.id = establishing_schools.school_category_id AND " +
@@ -63769,7 +63769,7 @@ router.post(
               " WardName, LgaName, RegionName, school_phone, po_box, school_email FROM school_gender_types, " +
               " school_registrations, establishing_schools, school_categories, school_sub_categories, " +
               " wards, districts, regions WHERE regions.RegionCode = districts.RegionCode " +
-              " AND districts.LgaCode = wards.LgaCode AND wards.id = establishing_schools.ward_id AND " +
+              " AND districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id AND " +
               " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
               " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
               " school_categories.id = establishing_schools.school_category_id AND " +
@@ -63888,7 +63888,7 @@ router.post("/jumla-futa-shule", makundiValidation, (req, res, next) => {
           "select wards.WardName as WardName, registration_number, applications.tracking_number as tracking_number, " +
             " school_name, category, school_registrations.updated_at as updated_at, LgaName, RegionName " +
             " from applications, establishing_schools, school_categories, wards, districts, regions, school_registrations " +
-            " where establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " where establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id " +
             " AND school_registrations.establishing_school_id = establishing_schools.id " +
             " AND districts.RegionCode = regions.RegionCode AND school_registrations.tracking_number = applications.tracking_number " +
@@ -63972,7 +63972,7 @@ router.post("/jumla-futa-shule", makundiValidation, (req, res, next) => {
             " WHERE languages.id = establishing_schools.language_id AND " +
             " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
             " certificate_types.id = establishing_schools.certificate_type_id AND " +
-            " establishing_schools.ward_id = wards.id AND wards.LgaCode = districts.LgaCode AND " +
+            " establishing_schools.ward_id = wards.WardCode AND wards.LgaCode = districts.LgaCode AND " +
             " school_categories.id = establishing_schools.school_category_id AND " +
             " former_school_infos.establishing_school_id = establishing_schools.id AND " +
             " school_sub_categories.id = establishing_schools.school_sub_category_id " +
@@ -64070,7 +64070,7 @@ router.post("/lga-kuanzisha-shule", makundiValidation, (req, res, next) => {
   db.query(
     "select school_name, LgaName from establishing_schools, wards, " +
       " districts WHERE districts.LgaCode = wards.LgaCode " +
-      " AND establishing_schools.ward_id = wards.id AND establishing_schools.tracking_number = ?",
+      " AND establishing_schools.ward_id = wards.WardCode AND establishing_schools.tracking_number = ?",
     [tracking_number],
     function (error3, results3, fields3) {
       for (var i = 0; i < results3.length; i++) {

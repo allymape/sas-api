@@ -120,7 +120,7 @@ module.exports = {
                                   `SELECT * 
                                    FROM personal_infos, applications, wards, districts, regions
                                    WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND 
-                                        wards.id = personal_infos.ward_id
+                                        wards.WardCode = personal_infos.ward_id
                                         AND applications.foreign_token = personal_infos.secure_token 
                                         AND applications.tracking_number = ?`,
                                   [trackingNumber],

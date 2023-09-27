@@ -115,7 +115,7 @@ db.query(
 //         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
 //         " establishing_schools.id = owners.establishing_school_id AND " +
 //         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-//         " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+//         " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
 //         " AND application_category_id = ? AND is_approved <> ?",
 //       [2, 2],
 //       function (error, results, fields) {
@@ -190,7 +190,7 @@ db.query(
 //         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
 //         " establishing_schools.id = owners.establishing_school_id AND " +
 //         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-//         " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+//         " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
 //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ?",
 //       [2, UserLevel, 2, Office],
 //       function (error, results, fields) {
@@ -264,7 +264,7 @@ db.query(
 //         " applications, wards, districts, regions, owners WHERE owners.tracking_number = applications.tracking_number AND " +
 //         " establishing_schools.id = owners.establishing_school_id AND " +
 //         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode " +
-//         " AND wards.id = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
+//         " AND wards.WardCode = establishing_schools.ward_id AND establishing_schools.id = owners.establishing_school_id " +
 //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ?",
 //       [2, UserLevel, 2],
 //       function (error, results, fields) {
@@ -362,7 +362,7 @@ umilikiNaMenejaRequestRouter.post(
           " FROM owners, establishing_schools, applications, wards, districts, regions, managers WHERE " +
           " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " managers.tracking_number = applications.tracking_number AND " +
-          " wards.id = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
+          " wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
           " AND application_category_id = ? AND owners.establishing_school_id = establishing_schools.id " +
           " AND applications.tracking_number = ?",
         [2, trackingNumber],
@@ -899,7 +899,7 @@ umilikiNaMenejaRequestRouter.post(
   
           db.query(
             "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
-              " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.id " +
+              " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
               " AND owners.id = referees.owner_id AND tracking_number = ?",
             [trackingNumber],
             function (error, results, fields) {
@@ -1016,7 +1016,7 @@ umilikiNaMenejaRequestRouter.post(
           }
           db.query(
             "select * from personal_infos, applications, wards, districts, regions " +
-              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.id = personal_infos.ward_id " +
+              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
               " AND applications.foreign_token = personal_infos.secure_token",
             [1, trackingNumber],
             function (error1, results1, fields1) {

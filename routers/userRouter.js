@@ -62,9 +62,9 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_level: user.rank_level,
           twofa: user.twofa,
           email: user.email,
-          ngazi: lowerCase(user.ngazi),
-          sehemu: lowerCase(user.sehemu),
-          cheo: lowerCase(user.rank_name),
+          ngazi: user.ngazi ? lowerCase(user.ngazi) : '',
+          sehemu: user.sehemu ? lowerCase(user.sehemu) : '',
+          cheo: user.rank_name ? lowerCase(user.rank_name) : '',
         };
         // console.log("User Data", userData);
         if (permissionData) {
