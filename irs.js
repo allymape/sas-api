@@ -50,6 +50,7 @@ const combinationRouter = require("./routers/combinationRouter.js");
 const biasRouter = require("./routers/biasRouter.js");
 const dashboardRouter = require("./routers/dashboardRouter.js");
 const anzishaShuleRequestRouter = require("./routers/maombi/anzishaShuleRequestRouter.js");
+const umilikiNaMenejaRequestRouter = require("./routers/maombi/umilikiNaMenejaRequestRouter.js");
 
 // Maombi
 app.use("/api" , anzishaShuleRequestRouter);
@@ -74,6 +75,7 @@ app.use('/api' , biasRouter);
 app.use('/api' , combinationRouter);
 app.use('/api' , dashboardRouter);
 app.use("/api", indexRouter);
+app.use("/api", umilikiNaMenejaRequestRouter);
 
 // Handling Errors
 app.use((err, req, res, next) => {

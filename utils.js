@@ -407,6 +407,9 @@ const ObjectFuctions = {
     }
     return $select;
   },
+  selectByOffice : (user) => {
+
+  },
   filterByUserOffice : (user , start_with = '' , table_zone_alias = 'r.zone_id' , table_lga_alias = 'd.LgaCode' , more_sql_filter='') => {
     const {office , zone_id  , district_code} = user;
     
@@ -426,6 +429,29 @@ const ObjectFuctions = {
            break;
        }
       return $where;
+  },
+  filterByUserLevel : (user , start_with = '' , table_alias = 'a.userId' , more_sql_filter='') => {
+    const {cheo, sehemu , ngazi , zone_id  , district_code , id} = user;
+    
+    let $sql = "";
+    // console.log(user);
+    // if(cheo)
+      //  switch (office) {
+      //    case 1:
+      //      $where = ``;
+      //      break;
+      //    case 2:
+      //      $where = `${start_with} ${table_zone_alias} = ${zone_id} ${more_sql_filter}`;
+      //      break;
+      //    case 3:
+      //      $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
+      //      break;
+      //    default:
+      //      $where = ``;
+      //      break;
+      //  }
+
+      return $sql;
   },
   schoolLocationsSqlJoin: () => {
     return `JOIN streets   st ON st.id = e.village_id
