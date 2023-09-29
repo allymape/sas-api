@@ -53,6 +53,10 @@ const anzishaShuleRequestRouter = require("./routers/maombi/anzishaShuleRequestR
 const umilikiNaMenejaRequestRouter = require("./routers/maombi/umilikiNaMenejaRequestRouter.js");
 const sajiliBinafsiRequestRouter = require("./routers/maombi/sajiliBinafsiRequestRouter.js");
 const sajiliSerikaliRequestRouter = require("./routers/maombi/sajiliSerikaliRequestRouter.js");
+const badiliMkondoRequestRouter = require("./routers/maombi/badiliMikondoRequestRouter.js");
+const badiliJinaRequestRouter = require("./routers/maombi/badiliJinaRequestRouter.js");
+const ongezaTahasusiRequestRouter = require("./routers/maombi/ongezaTahasusiRequestRouter.js");
+const badiliBweniRequestRouter = require("./routers/maombi/badiliBweniRequestRouter.js");
 
 // Maombi
 app.use("/api" , anzishaShuleRequestRouter);
@@ -80,6 +84,10 @@ app.use("/api", indexRouter);
 app.use("/api", umilikiNaMenejaRequestRouter);
 app.use("/api", sajiliBinafsiRequestRouter);
 app.use("/api", sajiliSerikaliRequestRouter);
+app.use("/api", badiliMkondoRequestRouter);
+app.use("/api", badiliJinaRequestRouter);
+app.use("/api", ongezaTahasusiRequestRouter);
+app.use("/api", badiliBweniRequestRouter);
 
 // Handling Errors
 app.use((err, req, res, next) => {
