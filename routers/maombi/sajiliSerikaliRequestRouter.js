@@ -7,7 +7,7 @@ const dateandtime = require("date-and-time");
 var session = require("express-session");
 const { isAuth, formatDate, permission, filterByUserLevel } = require("../../utils");
 
-  sajiliSerikaliRequestRouter.post(
+  sajiliSerikaliRequestRouter.post( 
     "/maombi-usajili-ser-shule",
     isAuth, 
     permission('view-school-owners-and-managers'), 

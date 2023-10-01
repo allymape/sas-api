@@ -88,6 +88,11 @@ app.use("/api", badiliMkondoRequestRouter);
 app.use("/api", badiliJinaRequestRouter);
 app.use("/api", ongezaTahasusiRequestRouter);
 app.use("/api", badiliBweniRequestRouter);
+app.use("/api", badiliUsajiliRequestRouter);
+app.use("/api", hamishaRequestRouter);
+app.use("/api", badiliMmilikiRequestRouter);
+app.use("/api", badiliMenejaRequestRouter);
+app.use("/api", futaShuleRequestRouter); 
 
 // Handling Errors
 app.use((err, req, res, next) => {
