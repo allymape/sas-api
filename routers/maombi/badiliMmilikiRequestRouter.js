@@ -13,7 +13,7 @@ badiliMmilikiRequestRouter.post(
   isAuth,
   permission("view-change-of-school-owner"),
   (req, res) => {
- 
+       console.log("hiaiiaia")
         var obj = [];
         var obj1 = [];
         var obj2 = [];
