@@ -19,7 +19,7 @@ sajiliBinafsiRequestRouter.post(
     var UserLevel = req.user.user_level;
     var Office = req.body.Office;
 
-    console.log(UserLevel); 
+    // console.log(UserLevel); 
     db.query(
         "select count(*) as total_month " +
           " from applications " +

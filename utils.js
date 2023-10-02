@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 var nodeMailer = require("nodemailer");
 const { default: axios } = require("axios");
 const { rolesPermissions, translations } = require("./role_permissions");
-
+const db = require('./dbConnection');
 
 const {
   camelCase,
@@ -41,10 +41,11 @@ const ObjectFuctions = {
         region_code: user.region_code,
         district_code: user.district_code,
         userPermissions: permissions,
-        user_level: user.user_level,
-        ngazi :  user.ngazi, //wizara,kanda au wilaya
-        sehemu: user.sehemu , // KE,ADSA,HICT,W1,K1,MUS,DLSU
-        cheo: user.cheo,   // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,, 
+        user_level: Number(user.user_level),
+        section_id : Number(user.section_id),
+        ngazi: user.ngazi, //wizara,kanda au wilaya
+        sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+        cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,,
       },
       process.env.JWT_SECRET || "the-super-strong-secrect",
       {

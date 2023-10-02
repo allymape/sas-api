@@ -14,7 +14,7 @@ module.exports = {
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
-            s.role_id as role_id, s.new_role_id as new_role_id, s.email as email,
+            s.role_id as role_id, s.new_role_id as new_role_id, s.email as email, v.id AS section_id,
             rnk.name as ngazi, v.rank_name as sehemu,
             s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
             zone_id,region_code,district_code, 
@@ -71,10 +71,10 @@ module.exports = {
                    LEFT JOIN regions rg ON rg.RegionCode = s.region_code
                    LEFT JOIN districts d ON d.LgaCode = s.district_code
                    `;
-                   console.log(user)
+                  //  console.log(user)
     db.query(
       `SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
-                s.name as name, phone_no, IFNULL(r.name , '') as level_name, 
+                s.name as name, phone_no, IFNULL(r.name , '') as level_name, v.rank_name AS section_name,
                 IFNULL(rank_level , '') as rank_level, IFNULL(rm.role_name , '') as role_name,
                 IFNULL(z.zone_name , '') as zone_name , rg.RegionName as region_name, IFNULL(d.LgaName , '') as 
                 lga_name , CASE WHEN s.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , 

@@ -6,6 +6,7 @@ const hamishaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 const { isAuth, formatDate, permission, filterByUserLevel } = require("../../utils");
+const sharedModel = require("../../models/sharedModel");
 
 hamishaRequestRouter.post(
   "/maombi-hamisha-shule",
@@ -35,19 +36,19 @@ hamishaRequestRouter.post(
               " applications.created_at as created_at, applications.user_id as user_id, " +
               " applications.foreign_token as foreign_token, " +
               " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-              " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+              " districts.LgaName as LgaName FROM former_school_infos, establishing_schools, applications, " +
               " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
               " former_school_infos.establishing_school_id = establishing_schools.id AND " +
               " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-              " AND application_category_id = ? AND is_approved <> ?",
+              " AND application_category_id = ? AND is_approved = ?",
             [10, 2],
             function (error, results, fields) {
               if (error) {
                 console.log(error);
               }
               for (var i = 0; i < results.length; i++) {
-                console.log(results);
+                
                 var tracking_number = results[i].tracking_number;
                 var registry_type_id = "";
                 var user_id = results[i].user_id;
@@ -462,18 +463,13 @@ hamishaRequestRouter.post(
                 }
               }
             );
-            //w1
-            if (userLevel == 1) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level " +
-                  " AND staffs.user_level IN (?, ?) AND staffs.office = ?",
-                [1, 3, 2, office],
-                function (error, results, fields) {
+            //W1
+            // if (userLevel == 1) {
+                sharedModel.myStaffs( req.user , (results) => {
                   if (error) {
                     console.log(error);
                   }
+                  // console.log(results)
                   for (var i = 0; i < results.length; i++) {
                     var userId = results[i].userId;
                     var email = results[i].email;
@@ -692,2998 +688,3001 @@ hamishaRequestRouter.post(
                   );
                 }
               );
-            }
-            //ofsaw1
-            if (userLevel == 3) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND staffs.office = ?",
-                [1, 1, office],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //k1
-            if (userLevel == 2) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND office = ? ",
-                [1, 4, office],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //mus
-            if (userLevel == 12) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND " +
-                  " staffs.user_level IN (?, ?, ?)",
-                [1, 13, 14, 15],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //mmusu
-            if (userLevel == 13) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 16],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //mmusm
-            if (userLevel == 15) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 16],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //mmuss
-            if (userLevel == 14) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 16],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //maafsa mus
-            if (userLevel == 16) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-                [1, 13, 14, 15],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //ofsak1
-            if (userLevel == 4) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 2],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //adsa
-            if (userLevel == 5) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 7],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //usj
-            if (userLevel == 7) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 5],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //oke
-            if (userLevel == 8) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-                [1, 9],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //ke
-            if (userLevel == 9) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-                [1, 5, 8, 12],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-            //admin
-            if (userLevel == 11) {
-              db.query(
-                "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                  " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                  " vyeo where user_status = ? AND vyeo.id = staffs.user_level",
-                [1],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  for (var i = 0; i < results.length; i++) {
-                    var userId = results[i].userId;
-                    var email = results[i].email;
-                    var user_level = results[i].user_level;
-                    var last_login = results[i].last_login;
-                    var name = results[i].name;
-                    var phone_no = results[i].phone_no;
-                    var role_name = results[i].role_name;
-                    var vyeoId = results[i].vyeoId;
-                    objStaffs.push({
-                      userId: userId,
-                      name: name,
-                      email: email,
-                      phoneNumber: phone_no,
-                      roleId: user_level,
-                      role: role_name,
-                      last_login: last_login,
-                      vyeoId: vyeoId,
-                    });
-                  }
-
-                  db.query(
-                    "SELECT * from application_statuses",
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      for (var i = 0; i < results.length; i++) {
-                        var id = results[i].id;
-                        var statusName = results[i].status;
-                        objApps.push({ statusName: statusName, statusId: id });
-                      }
-                    }
-                  );
-
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        // maoniTime = dateandtime.format(
-                        //   maoniTime,
-                        //   "DD/MM/YYYY hh:mm:ss"
-                        // );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-                          " FROM attachment_types",
-                        function (error, results, fields) {
-                          if (error) {
-                            console.log(error);
-                          }
-                          for (var i = 0; i < results.length; i++) {
-                            var file_format = results[i].file_format;
-                            var app_id = results[i].id;
-                            var attachment_name = results[i].attachment_name;
-                            var registry = "";
-                            var application_name = "";
-                            objAttachment.push({
-                              file_format: file_format,
-                              attachment_name: attachment_name,
-                              registry_id: app_id,
-                              registry: registry,
-                              application_name: application_name,
-                            });
-                          }
-                        }
-                      );
-
-                      db.query(
-                        "SELECT attachment_types.id as id, file_size, file_format, " +
-                          " attachment_name, attachments.created_at as created_at, attachment_path " +
-                          " FROM attachment_types, " +
-                          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                          " attachments.tracking_number = ?",
-                        [trackingNumber],
-                        function (error1, results1, fields1) {
-                          if (error1) {
-                            console.log(error1);
-                          }
-                          for (var i = 0; i < results1.length; i++) {
-                            var file_format1 = results1[i].file_format;
-                            var app_id1 = results1[i].id;
-                            var attachment_name1 = results1[i].attachment_name;
-                            // var registry1 = results[i].registry;
-                            var attachment_path = results1[i].attachment_path;
-                            var created_at = results1[i].created_at;
-                            created_at = dateandtime.format(
-                              created_at,
-                              "DD/MM/YYYY HH:MM:SS"
-                            );
-                            var file_size1 = results1[i].file_size;
-                            objAttachment1.push({
-                              file_format: file_format1,
-                              attachment_name: attachment_name1,
-                              registry_id: app_id1,
-                              file_size: file_size1,
-                              registry: "registry1",
-                              application_name: "application_name1",
-                              created_at: created_at,
-                              attachment_path: attachment_path,
-                            });
-                          }
-                          // console.log(objAttachment1)
-
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
-
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
+
+            // }
+            // END W1
+            
+            // //ofsaw1
+            // if (userLevel == 3) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND staffs.office = ?",
+            //     [1, 1, office],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //k1
+            // if (userLevel == 2) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND office = ? ",
+            //     [1, 4, office],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //mus
+            // if (userLevel == 12) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND " +
+            //       " staffs.user_level IN (?, ?, ?)",
+            //     [1, 13, 14, 15],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //mmusu
+            // if (userLevel == 13) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 16],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //mmusm
+            // if (userLevel == 15) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 16],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //mmuss
+            // if (userLevel == 14) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 16],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //maafsa mus
+            // if (userLevel == 16) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
+            //     [1, 13, 14, 15],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //ofsak1
+            // if (userLevel == 4) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 2],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //adsa
+            // if (userLevel == 5) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 7],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //usj
+            // if (userLevel == 7) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 5],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //oke
+            // if (userLevel == 8) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
+            //     [1, 9],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //ke
+            // if (userLevel == 9) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
+            //     [1, 5, 8, 12],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             maoniTime = dateandtime.format(
+            //               maoniTime,
+            //               "DD/MM/YYYY hh:mm:ss"
+            //             );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
+            // //admin
+            // if (userLevel == 11) {
+            //   db.query(
+            //     "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
+            //       " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
+            //       " vyeo where user_status = ? AND vyeo.id = staffs.user_level",
+            //     [1],
+            //     function (error, results, fields) {
+            //       if (error) {
+            //         console.log(error);
+            //       }
+            //       for (var i = 0; i < results.length; i++) {
+            //         var userId = results[i].userId;
+            //         var email = results[i].email;
+            //         var user_level = results[i].user_level;
+            //         var last_login = results[i].last_login;
+            //         var name = results[i].name;
+            //         var phone_no = results[i].phone_no;
+            //         var role_name = results[i].role_name;
+            //         var vyeoId = results[i].vyeoId;
+            //         objStaffs.push({
+            //           userId: userId,
+            //           name: name,
+            //           email: email,
+            //           phoneNumber: phone_no,
+            //           roleId: user_level,
+            //           role: role_name,
+            //           last_login: last_login,
+            //           vyeoId: vyeoId,
+            //         });
+            //       }
+
+            //       db.query(
+            //         "SELECT * from application_statuses",
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+            //           for (var i = 0; i < results.length; i++) {
+            //             var id = results[i].id;
+            //             var statusName = results[i].status;
+            //             objApps.push({ statusName: statusName, statusId: id });
+            //           }
+            //         }
+            //       );
+
+            //       db.query(
+            //         "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
+            //           " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
+            //           " AND trackingNo = ? ORDER BY maoni.id DESC",
+            //         [trackingNumber],
+            //         function (error, results, fields) {
+            //           if (error) {
+            //             console.log(error);
+            //           }
+
+            //           for (var i = 0; i < results.length; i++) {
+            //             var name = results[i].name;
+            //             var user_from = results[i].user_from;
+            //             var user_to = results[i].user_to;
+            //             var coments = results[i].coments;
+            //             var maoniTime = results[i].created_at;
+            //             var rank_name = results[i].rank_name;
+            //             if (maoniTime == null) {
+            //               maoniTime = new Date();
+            //             }
+            //             // console.log(maoniTime)
+            //             // maoniTime = dateandtime.format(
+            //             //   maoniTime,
+            //             //   "DD/MM/YYYY hh:mm:ss"
+            //             // );
+            //             objMaoni.push({
+            //               user_from: user_from,
+            //               name: name,
+            //               user_to: user_to,
+            //               coments: coments,
+            //               created_at: maoniTime,
+            //               rank_name: rank_name,
+            //             });
+            //           }
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
+            //               " FROM attachment_types",
+            //             function (error, results, fields) {
+            //               if (error) {
+            //                 console.log(error);
+            //               }
+            //               for (var i = 0; i < results.length; i++) {
+            //                 var file_format = results[i].file_format;
+            //                 var app_id = results[i].id;
+            //                 var attachment_name = results[i].attachment_name;
+            //                 var registry = "";
+            //                 var application_name = "";
+            //                 objAttachment.push({
+            //                   file_format: file_format,
+            //                   attachment_name: attachment_name,
+            //                   registry_id: app_id,
+            //                   registry: registry,
+            //                   application_name: application_name,
+            //                 });
+            //               }
+            //             }
+            //           );
+
+            //           db.query(
+            //             "SELECT attachment_types.id as id, file_size, file_format, " +
+            //               " attachment_name, attachments.created_at as created_at, attachment_path " +
+            //               " FROM attachment_types, " +
+            //               " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            //               " attachments.tracking_number = ?",
+            //             [trackingNumber],
+            //             function (error1, results1, fields1) {
+            //               if (error1) {
+            //                 console.log(error1);
+            //               }
+            //               for (var i = 0; i < results1.length; i++) {
+            //                 var file_format1 = results1[i].file_format;
+            //                 var app_id1 = results1[i].id;
+            //                 var attachment_name1 = results1[i].attachment_name;
+            //                 // var registry1 = results[i].registry;
+            //                 var attachment_path = results1[i].attachment_path;
+            //                 var created_at = results1[i].created_at;
+            //                 created_at = dateandtime.format(
+            //                   created_at,
+            //                   "DD/MM/YYYY HH:MM:SS"
+            //                 );
+            //                 var file_size1 = results1[i].file_size;
+            //                 objAttachment1.push({
+            //                   file_format: file_format1,
+            //                   attachment_name: attachment_name1,
+            //                   registry_id: app_id1,
+            //                   file_size: file_size1,
+            //                   registry: "registry1",
+            //                   application_name: "application_name1",
+            //                   created_at: created_at,
+            //                   attachment_path: attachment_path,
+            //                 });
+            //               }
+            //               // console.log(objAttachment1)
+
+            //               var remain_days;
+            //               if (days > 0) {
+            //                 remain_days = "Siku " + days;
+            //               } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            //                 remain_days = "Sek " + seconds + " zilizopita";
+            //               } else if (days <= 0 && hours <= 0) {
+            //                 remain_days = "Dakika " + minutes + " zilizopita";
+            //               } else if (days <= 0) {
+            //                 remain_days = "Saa " + hours;
+            //               }
+
+            //               var first_name = "";
+            //               var middle_name = "";
+            //               var last_name = "";
+            //               var occupation = "";
+            //               var personal_address = "";
+            //               var personal_phone_number = "";
+            //               var personal_email = "";
+            //               var WardNameMtu = "";
+            //               var LgaNameMtu = "";
+            //               var RegionNameMtu = "";
+            //               var fullname =
+            //                 first_name + " " + middle_name + " " + last_name;
+
+            //               obj.push({
+            //                 tracking_number: tracking_number,
+            //                 school_name: school_name,
+            //                 LgaName: LgaName,
+            //                 RegionName: RegionName,
+            //                 user_id: user_id,
+            //                 school_name_new: school_name_new,
+            //                 registry_type_id: registry_type_id,
+            //                 registry: registry,
+            //                 establishId: establishId,
+            //                 created_at: created_at,
+            //                 remain_days: remain_days,
+            //                 streamOld: streamOld,
+            //                 streamNew: streamNew,
+            //                 fullname: fullname,
+            //                 schoolCategory: schoolCategory,
+            //                 occupation: occupation,
+            //                 WardIdNew: WardIdNew,
+            //                 WardIdOld: WardIdOld,
+            //                 mwombajiAddress: personal_address,
+            //                 mwombajiPhoneNo: personal_phone_number,
+            //                 WardNameNew: WardNameNew,
+            //                 baruaPepe: personal_email,
+            //                 language: language,
+            //                 school_size: school_size,
+            //                 LgaNameNew: LgaNameNew,
+            //                 area: area,
+            //                 WardName: WardName,
+            //                 structure: structure,
+            //                 RegionNameNew: RegionNameNew,
+            //                 subcategory: subcategory,
+            //                 WardNameMtu: WardNameMtu,
+            //                 LgaNameMtu: LgaNameMtu,
+            //                 RegionNameMtu: RegionNameMtu,
+            //               });
+            //               objAttachment2.push({
+            //                 file_format: "",
+            //                 attachment_name: "",
+            //                 registry_id: "",
+            //                 file_size: "",
+            //                 registry: "",
+            //                 application_name: "",
+            //                 created_at: "",
+            //                 attachment_path: "",
+            //               });
+            //               return res.send({
+            //                 error: false,
+            //                 statusCode: 300,
+            //                 data: obj,
+            //                 maoni: objMess,
+            //                 staffs: objStaffs,
+            //                 status: objApps,
+            //                 Maoni: objMaoni,
+            //                 objAttachment: objAttachment,
+            //                 objAttachment1: objAttachment1,
+            //                 objAttachment2: objAttachment2,
+            //                 message: "Taarifa za ombi kuanzisha shule.",
+            //               });
+            //             }
+            //           );
+            //         }
+            //       );
+            //     }
+            //   );
+            // }
           }
         );
       }

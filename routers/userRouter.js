@@ -62,6 +62,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_level: user.rank_level,
           twofa: user.twofa,
           email: user.email,
+          section_id : user.section_id,
           ngazi: user.ngazi ? lowerCase(user.ngazi) : '',
           sehemu: user.sehemu ? lowerCase(user.sehemu) : '',
           cheo: user.rank_name ? lowerCase(user.rank_name) : '',

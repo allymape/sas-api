@@ -48,6 +48,7 @@ badiliUsajiliRequestRouter.post(
                  if (error) {
                    console.log(error);
                  }
+                //  console.log(results);
                  for (var i = 0; i < results.length; i++) {
                    console.log(results);
                    var tracking_number = results[i].tracking_number;
