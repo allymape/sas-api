@@ -15,6 +15,7 @@ const {
   permission,
   lowerCase,
   generateRandomInt,
+  upperCase,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -50,7 +51,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           user_status: user.user_status,
           last_login: user.last_login,
           user_level: user.user_level,
-          role_id: user.role_id,
+          role_id: user.new_role_id,
           station_level: user.station_level,
           office: office,
           office_name: office_name,
@@ -62,11 +63,13 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_level: user.rank_level,
           twofa: user.twofa,
           email: user.email,
-          section_id : user.section_id,
-          ngazi: user.ngazi ? lowerCase(user.ngazi) : '',
-          sehemu: user.sehemu ? lowerCase(user.sehemu) : '',
-          cheo: user.rank_name ? lowerCase(user.rank_name) : '',
+          section_id: user.section_id,
+          ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
+          sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
+          cheo: user.rank_name ? lowerCase(user.rank_name) : "",
+          jukumu: user.jukumu ? upperCase(user.jukumu) : "",
         };
+
         // console.log("User Data", userData);
         if (permissionData) {
           for (var i = 0; i < permissions.length; i++) {

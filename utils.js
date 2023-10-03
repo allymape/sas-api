@@ -33,6 +33,7 @@ const dateAndTime = require("date-and-time");
 const ObjectFuctions = {
   generateToken: (user, permissions) => {
     // console.log(permissions);
+    // console.log(user)
     return jwt.sign(
       {
         id: user.id,
@@ -45,7 +46,8 @@ const ObjectFuctions = {
         section_id : Number(user.section_id),
         ngazi: user.ngazi, //wizara,kanda au wilaya
         sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-        cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,,
+        cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+        jukumu: user.jukumu,
       },
       process.env.JWT_SECRET || "the-super-strong-secrect",
       {
