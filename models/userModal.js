@@ -18,7 +18,7 @@ module.exports = {
             rnk.name as ngazi, v.rank_name as sehemu,
             s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
             zone_id,region_code,district_code, 
-            #v.status_id as status_id, 
+            v.status_id as status_id, 
             v.rank_level as rank_level, s.twofa as twofa 
             FROM staffs s
             INNER JOIN roles r  ON r.id = s.user_level
@@ -30,6 +30,7 @@ module.exports = {
                     if(error){
                          console.log(error);
                     }
+                    console.log(user)
                     if (user.length == 1) {
                          db.query(
                            `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,

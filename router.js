@@ -10527,341 +10527,341 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
   // });
 });
 
-router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
-  var obj = [];
-  var obj1 = [];
-  var obj2 = [];
-  // var districtId = req.body.districtCode;
-  var UserLevel = req.body.UserLevel;
-  var Office = req.body.Office;
-  // console.log("UserLevel")
-  console.log(req.body);
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  // db.query(`SELECT token_id FROM staffs WHERE id = '${db.escape(decoded.id)}'`,
-  // (error, results) => {
-  //     if(error){
-  //         console.log(error)
-  //         return res.send({error: true, statusCode: 400, message: "Kuna tatizo la kimtandao"})
-  //     }else{
-  //         var token_id = results[0].token_id;
-  //         console.log("token_id " + token_id)
-  //         if(token_id != 0){
-  if (UserLevel == 11) {
-    db.query(
-      "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.created_at as created_at, applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
-        " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND is_approved <> ?",
-      [13, 2],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
-        for (var i = 0; i < results.length; i++) {
-          console.log(results);
-          var tracking_number = results[i].tracking_number;
-          var registry_type_id = "";
-          var user_id = results[i].user_id;
-          var foreign_token = results[i].foreign_token;
-          var school_name = results[i].school_name;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var RegionName = results[i].RegionName;
-          var registry = results[i].registry;
-          var created_at = results[i].created_at;
-          var schoolCategory = results[i].schoolCategory;
-          var applicantname;
-          var today = new Date();
+// router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
+//   var obj = [];
+//   var obj1 = [];
+//   var obj2 = [];
+//   // var districtId = req.body.districtCode;
+//   var UserLevel = req.body.UserLevel;
+//   var Office = req.body.Office;
+//   // console.log("UserLevel")
+//   console.log(req.body);
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   // db.query(`SELECT token_id FROM staffs WHERE id = '${db.escape(decoded.id)}'`,
+//   // (error, results) => {
+//   //     if(error){
+//   //         console.log(error)
+//   //         return res.send({error: true, statusCode: 400, message: "Kuna tatizo la kimtandao"})
+//   //     }else{
+//   //         var token_id = results[0].token_id;
+//   //         console.log("token_id " + token_id)
+//   //         if(token_id != 0){
+//   if (UserLevel == 11) {
+//     db.query(
+//       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+//         " applications.created_at as created_at, applications.user_id as user_id, " +
+//         " applications.foreign_token as foreign_token, " +
+//         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+//         " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+//         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+//         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+//         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+//         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+//         " AND application_category_id = ? AND is_approved <> ?",
+//       [13, 2],
+//       function (error, results, fields) {
+//         if (error) {
+//           console.log(error);
+//         }
+//         for (var i = 0; i < results.length; i++) {
+//           console.log(results);
+//           var tracking_number = results[i].tracking_number;
+//           var registry_type_id = "";
+//           var user_id = results[i].user_id;
+//           var foreign_token = results[i].foreign_token;
+//           var school_name = results[i].school_name;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var RegionName = results[i].RegionName;
+//           var registry = results[i].registry;
+//           var created_at = results[i].created_at;
+//           var schoolCategory = results[i].schoolCategory;
+//           var applicantname;
+//           var today = new Date();
 
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
+//           var diffInSeconds = Math.abs(today - created_at) / 1000;
+//           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+//           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+//           var minutes = Math.floor((diffInSeconds / 60) % 60);
+//           var seconds = Math.floor(diffInSeconds % 60);
+//           var milliseconds = Math.round(
+//             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+//           );
 
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
-          obj.push({
-            tracking_number: tracking_number,
-            school_name: school_name,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            user_id: user_id,
-            registry_type_id: registry_type_id,
-            registry: registry,
-            created_at: created_at,
-            remain_days: remain_days,
-            schoolCategory: schoolCategory,
-          });
-        }
-        // console.log(obj)
-        return res.send({
-          error: false,
-          statusCode: 300,
-          data: obj,
-          message: "List of maombi kuanzisha shule.",
-        });
-      }
-    );
-  } else if (UserLevel == 1 || UserLevel == 3) {
-    db.query(
-      "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.created_at as created_at, applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
-        " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
-      [13, UserLevel, 2, Office, 2],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
-        for (var i = 0; i < results.length; i++) {
-          // console.log(results)
-          var tracking_number = results[i].tracking_number;
-          var registry_type_id = results[i].registry_type_id;
-          var user_id = results[i].user_id;
-          var foreign_token = results[i].foreign_token;
-          var school_name = results[i].school_name;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var RegionName = results[i].RegionName;
-          var registry = results[i].registry;
-          var created_at = results[i].created_at;
-          var schoolCategory = results[i].schoolCategory;
-          var applicantname;
-          var today = new Date();
+//           var remain_days;
+//           if (days > 0) {
+//             remain_days = "Siku " + days;
+//           } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+//             remain_days = "Sek " + seconds + " zilizopita";
+//           } else if (days <= 0 && hours <= 0) {
+//             remain_days = "Dakika " + minutes + " zilizopita";
+//           } else if (days <= 0) {
+//             remain_days = "Saa " + hours;
+//           }
+//           obj.push({
+//             tracking_number: tracking_number,
+//             school_name: school_name,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             user_id: user_id,
+//             registry_type_id: registry_type_id,
+//             registry: registry,
+//             created_at: created_at,
+//             remain_days: remain_days,
+//             schoolCategory: schoolCategory,
+//           });
+//         }
+//         // console.log(obj)
+//         return res.send({
+//           error: false,
+//           statusCode: 300,
+//           data: obj,
+//           message: "List of maombi kuanzisha shule.",
+//         });
+//       }
+//     );
+//   } else if (UserLevel == 1 || UserLevel == 3) {
+//     db.query(
+//       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+//         " applications.created_at as created_at, applications.user_id as user_id, " +
+//         " applications.foreign_token as foreign_token, " +
+//         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+//         " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+//         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+//         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+//         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+//         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+//         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND payment_status_id = ?",
+//       [13, UserLevel, 2, Office, 2],
+//       function (error, results, fields) {
+//         if (error) {
+//           console.log(error);
+//         }
+//         for (var i = 0; i < results.length; i++) {
+//           // console.log(results)
+//           var tracking_number = results[i].tracking_number;
+//           var registry_type_id = results[i].registry_type_id;
+//           var user_id = results[i].user_id;
+//           var foreign_token = results[i].foreign_token;
+//           var school_name = results[i].school_name;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var RegionName = results[i].RegionName;
+//           var registry = results[i].registry;
+//           var created_at = results[i].created_at;
+//           var schoolCategory = results[i].schoolCategory;
+//           var applicantname;
+//           var today = new Date();
 
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
+//           var diffInSeconds = Math.abs(today - created_at) / 1000;
+//           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+//           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+//           var minutes = Math.floor((diffInSeconds / 60) % 60);
+//           var seconds = Math.floor(diffInSeconds % 60);
+//           var milliseconds = Math.round(
+//             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+//           );
 
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
-          obj.push({
-            tracking_number: tracking_number,
-            school_name: school_name,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            user_id: user_id,
-            registry_type_id: registry_type_id,
-            registry: registry,
-            created_at: created_at,
-            remain_days: remain_days,
-            schoolCategory: schoolCategory,
-          });
-        }
-        return res.send({
-          error: false,
-          statusCode: 300,
-          data: obj,
-          message: "List of maombi kuanzisha shule.",
-        });
-      }
-    );
-  } else if (UserLevel == 2 || UserLevel == 4) {
-    db.query(
-      "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.created_at as created_at, applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
-        " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
-      [13, UserLevel, 2, Office, 2],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
-        for (var i = 0; i < results.length; i++) {
-          // console.log(results)
-          var tracking_number = results[i].tracking_number;
-          var registry_type_id = results[i].registry_type_id;
-          var user_id = results[i].user_id;
-          var foreign_token = results[i].foreign_token;
-          var school_name = results[i].school_name;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var RegionName = results[i].RegionName;
-          var registry = results[i].registry;
-          var created_at = results[i].created_at;
-          var schoolCategory = results[i].schoolCategory;
-          var applicantname;
-          var today = new Date();
+//           var remain_days;
+//           if (days > 0) {
+//             remain_days = "Siku " + days;
+//           } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+//             remain_days = "Sek " + seconds + " zilizopita";
+//           } else if (days <= 0 && hours <= 0) {
+//             remain_days = "Dakika " + minutes + " zilizopita";
+//           } else if (days <= 0) {
+//             remain_days = "Saa " + hours;
+//           }
+//           obj.push({
+//             tracking_number: tracking_number,
+//             school_name: school_name,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             user_id: user_id,
+//             registry_type_id: registry_type_id,
+//             registry: registry,
+//             created_at: created_at,
+//             remain_days: remain_days,
+//             schoolCategory: schoolCategory,
+//           });
+//         }
+//         return res.send({
+//           error: false,
+//           statusCode: 300,
+//           data: obj,
+//           message: "List of maombi kuanzisha shule.",
+//         });
+//       }
+//     );
+//   } else if (UserLevel == 2 || UserLevel == 4) {
+//     db.query(
+//       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+//         " applications.created_at as created_at, applications.user_id as user_id, " +
+//         " applications.foreign_token as foreign_token, " +
+//         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+//         " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+//         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+//         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+//         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+//         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+//         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+//       [13, UserLevel, 2, Office, 2],
+//       function (error, results, fields) {
+//         if (error) {
+//           console.log(error);
+//         }
+//         for (var i = 0; i < results.length; i++) {
+//           // console.log(results)
+//           var tracking_number = results[i].tracking_number;
+//           var registry_type_id = results[i].registry_type_id;
+//           var user_id = results[i].user_id;
+//           var foreign_token = results[i].foreign_token;
+//           var school_name = results[i].school_name;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var RegionName = results[i].RegionName;
+//           var registry = results[i].registry;
+//           var created_at = results[i].created_at;
+//           var schoolCategory = results[i].schoolCategory;
+//           var applicantname;
+//           var today = new Date();
 
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
+//           var diffInSeconds = Math.abs(today - created_at) / 1000;
+//           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+//           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+//           var minutes = Math.floor((diffInSeconds / 60) % 60);
+//           var seconds = Math.floor(diffInSeconds % 60);
+//           var milliseconds = Math.round(
+//             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+//           );
 
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
-          obj.push({
-            tracking_number: tracking_number,
-            school_name: school_name,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            user_id: user_id,
-            registry_type_id: registry_type_id,
-            registry: registry,
-            created_at: created_at,
-            remain_days: remain_days,
-            schoolCategory: schoolCategory,
-          });
-        }
-        return res.send({
-          error: false,
-          statusCode: 300,
-          data: obj,
-          message: "List of maombi kuanzisha shule.",
-        });
-      }
-    );
-  } else {
-    db.query(
-      "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.created_at as created_at, applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
-        " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
-      [13, UserLevel, 2, 2],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
-        for (var i = 0; i < results.length; i++) {
-          // console.log(results)
-          var tracking_number = results[i].tracking_number;
-          var registry_type_id = results[i].registry_type_id;
-          var user_id = results[i].user_id;
-          var foreign_token = results[i].foreign_token;
-          var school_name = results[i].school_name;
-          var LgaName = results[i].LgaName;
-          var RegionName = results[i].RegionName;
-          var RegionName = results[i].RegionName;
-          var registry = results[i].registry;
-          var created_at = results[i].created_at;
-          var schoolCategory = results[i].schoolCategory;
-          var applicantname;
-          var today = new Date();
+//           var remain_days;
+//           if (days > 0) {
+//             remain_days = "Siku " + days;
+//           } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+//             remain_days = "Sek " + seconds + " zilizopita";
+//           } else if (days <= 0 && hours <= 0) {
+//             remain_days = "Dakika " + minutes + " zilizopita";
+//           } else if (days <= 0) {
+//             remain_days = "Saa " + hours;
+//           }
+//           obj.push({
+//             tracking_number: tracking_number,
+//             school_name: school_name,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             user_id: user_id,
+//             registry_type_id: registry_type_id,
+//             registry: registry,
+//             created_at: created_at,
+//             remain_days: remain_days,
+//             schoolCategory: schoolCategory,
+//           });
+//         }
+//         return res.send({
+//           error: false,
+//           statusCode: 300,
+//           data: obj,
+//           message: "List of maombi kuanzisha shule.",
+//         });
+//       }
+//     );
+//   } else {
+//     db.query(
+//       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+//         " applications.created_at as created_at, applications.user_id as user_id, " +
+//         " applications.foreign_token as foreign_token, " +
+//         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+//         " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+//         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+//         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+//         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+//         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+//         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND payment_status_id = ?",
+//       [13, UserLevel, 2, 2],
+//       function (error, results, fields) {
+//         if (error) {
+//           console.log(error);
+//         }
+//         for (var i = 0; i < results.length; i++) {
+//           // console.log(results)
+//           var tracking_number = results[i].tracking_number;
+//           var registry_type_id = results[i].registry_type_id;
+//           var user_id = results[i].user_id;
+//           var foreign_token = results[i].foreign_token;
+//           var school_name = results[i].school_name;
+//           var LgaName = results[i].LgaName;
+//           var RegionName = results[i].RegionName;
+//           var RegionName = results[i].RegionName;
+//           var registry = results[i].registry;
+//           var created_at = results[i].created_at;
+//           var schoolCategory = results[i].schoolCategory;
+//           var applicantname;
+//           var today = new Date();
 
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
+//           var diffInSeconds = Math.abs(today - created_at) / 1000;
+//           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+//           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+//           var minutes = Math.floor((diffInSeconds / 60) % 60);
+//           var seconds = Math.floor(diffInSeconds % 60);
+//           var milliseconds = Math.round(
+//             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+//           );
 
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
-          obj.push({
-            tracking_number: tracking_number,
-            school_name: school_name,
-            LgaName: LgaName,
-            RegionName: RegionName,
-            user_id: user_id,
-            registry_type_id: registry_type_id,
-            registry: registry,
-            created_at: created_at,
-            remain_days: remain_days,
-            schoolCategory: schoolCategory,
-          });
-        }
-        return res.send({
-          error: false,
-          statusCode: 300,
-          data: obj,
-          message: "List of maombi kuanzisha shule.",
-        });
-      }
-    );
-  }
-  // }else if(token_id == 0){
-  //     return res.status(200).send({
-  //         error: true,
-  //         statusCode: 209,
-  //         message: 'No access to endpoint!'
-  //     });
-  // }
-  // }
-  // });
-});
+//           var remain_days;
+//           if (days > 0) {
+//             remain_days = "Siku " + days;
+//           } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+//             remain_days = "Sek " + seconds + " zilizopita";
+//           } else if (days <= 0 && hours <= 0) {
+//             remain_days = "Dakika " + minutes + " zilizopita";
+//           } else if (days <= 0) {
+//             remain_days = "Saa " + hours;
+//           }
+//           obj.push({
+//             tracking_number: tracking_number,
+//             school_name: school_name,
+//             LgaName: LgaName,
+//             RegionName: RegionName,
+//             user_id: user_id,
+//             registry_type_id: registry_type_id,
+//             registry: registry,
+//             created_at: created_at,
+//             remain_days: remain_days,
+//             schoolCategory: schoolCategory,
+//           });
+//         }
+//         return res.send({
+//           error: false,
+//           statusCode: 300,
+//           data: obj,
+//           message: "List of maombi kuanzisha shule.",
+//         });
+//       }
+//     );
+//   }
+//   // }else if(token_id == 0){
+//   //     return res.status(200).send({
+//   //         error: true,
+//   //         statusCode: 209,
+//   //         message: 'No access to endpoint!'
+//   //     });
+//   // }
+//   // }
+//   // });
+// });
 
 router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
   var obj = [];
