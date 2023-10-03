@@ -19,7 +19,6 @@ module.exports = {
                     AND streets.id = establishing_schools.village_id  
                     AND establishing_schools.tracking_number = applications.tracking_number 
                     AND registry_types.id = applications.registry_type_id 
-                    AND staffs.id = applications.staff_id
                     AND application_category_id = 1 
                     AND applications.registry_type_id <> 3
 					          AND payment_status_id = 2

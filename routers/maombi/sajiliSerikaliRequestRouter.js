@@ -191,7 +191,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
             //         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
             //         " school_registrations.establishing_school_id = establishing_schools.id AND " +
             //         " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-            //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id = ?",
+            //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id = ?",
             //     [4, UserLevel, 2, Office, 3],
             //     function (error, results, fields) {
             //         if (error) {
@@ -764,8 +764,8 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo, regions where regions.zone_code = staffs.office AND user_status = ? AND vyeo.id = staffs.user_level " +
-                " AND staffs.user_level IN (?) AND regions.zone_code = ?",
+                " vyeo, regions where regions.zone_id = staffs.office AND user_status = ? AND vyeo.id = staffs.user_level " +
+                " AND staffs.user_level IN (?) AND regions.zone_id = ?",
               [1, 2, office],
               function (error, results, fields) {
                 if (error) {

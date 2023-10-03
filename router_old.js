@@ -11596,7 +11596,7 @@ router.post("/maombi-usajili-shule", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " school_registrations.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id <> ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id <> ?",
       [4, UserLevel, 2, Office, 3],
       function (error, results, fields) {
         if (error) {
@@ -11935,7 +11935,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id = ?",
+          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id = ?",
         [4, UserLevel, 2, Office, 3],
         function (error, results, fields) {
           if (error) {
@@ -12272,7 +12272,7 @@ router.post("/maombi-badili-mkondo", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -12608,7 +12608,7 @@ router.post("/ripoti-badili-mkondo", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ? AND payment_status_id = ?",
       [5, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -13019,7 +13019,7 @@ router.post("/maombi-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -13355,7 +13355,7 @@ router.post("/ripoti-ongeza-dahalia", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ? AND payment_status_id = ?",
       [13, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -13691,7 +13691,7 @@ router.post("/maombi-badili-tahasusi", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -14102,7 +14102,7 @@ router.post("/ripoti-badili-tahasusi", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ? AND payment_status_id = ?",
       [12, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -21090,7 +21090,7 @@ router.post("/maombi-badili-bweni", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [14, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -21429,7 +21429,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
+          " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ?",
         [14, UserLevel, 2, Office],
         function (error, results, fields) {
           if (error) {
@@ -21770,7 +21770,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
         [9, UserLevel, 2, Office, 2],
         function (error, results, fields) {
           if (error) {
@@ -22107,7 +22107,7 @@ router.post("/maombi-hamisha-shule", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [10, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -22449,7 +22449,7 @@ router.post("/maombi-futa-shule", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [11, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -22799,7 +22799,7 @@ router.post("/ripoti-futa-shule", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ?",
       [11, UserLevel, 2, Office],
       function (error, results, fields) {
         if (error) {
@@ -23153,7 +23153,7 @@ router.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_code = ?",
+          " AND application_category_id = ? AND status_id = ? AND is_approved = ? AND regions.zone_id = ?",
         [9, UserLevel, 2, Office],
         function (error, results, fields) {
           if (error) {
@@ -23504,7 +23504,7 @@ router.post(
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
           " AND school_registrations.reg_status = ? " +
-          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+          " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
         [1, 6, UserLevel, 2, Office, 2],
         function (error, results, fields) {
           if (error) {
@@ -23843,7 +23843,7 @@ router.post("/maombi-badili-mmiliki", makundiValidation, (req, res, next) => {
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND payment_status_id = ?",
+        " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND payment_status_id = ?",
       [7, UserLevel, 2, Office, 2],
       function (error, results, fields) {
         if (error) {
@@ -24633,7 +24633,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
           " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
-          " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
+          " AND is_approved <> ? AND regions.zone_id = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
         function (error, results, fields) {
           if (error) {
@@ -24985,7 +24985,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
           " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
-          " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
+          " AND is_approved <> ? AND regions.zone_id = ? AND status_id = ? AND payment_status_id = ?",
         [7, 2, Office, UserLevel, 2],
         function (error, results, fields) {
           if (error) {
@@ -25413,7 +25413,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
           " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
-          " AND is_approved <> ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
+          " AND is_approved <> ? AND regions.zone_id = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
         function (error, results, fields) {
           if (error) {
@@ -25769,7 +25769,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
           " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
-          " AND is_approved = ? AND regions.zone_code = ? AND status_id = ? AND payment_status_id = ?",
+          " AND is_approved = ? AND regions.zone_id = ? AND status_id = ? AND payment_status_id = ?",
         [8, 2, Office, UserLevel, 2],
         function (error, results, fields) {
           if (error) {
@@ -26192,7 +26192,7 @@ router.post(
           " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
           " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
           " AND regions.RegionCode = districts.RegionCode AND application_category_id = ? " +
-          " AND is_approved = ? AND regions.zone_code = ? AND status_id = ?",
+          " AND is_approved = ? AND regions.zone_id = ? AND status_id = ?",
         [7, 2, Office, UserLevel],
         function (error, results, fields) {
           if (error) {
@@ -62062,8 +62062,8 @@ router.post(
           db.query(
             "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
               " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo, regions where regions.zone_code = staffs.office AND user_status = ? AND vyeo.id = staffs.user_level " +
-              " AND staffs.user_level IN (?) AND regions.zone_code = ?",
+              " vyeo, regions where regions.zone_id = staffs.office AND user_status = ? AND vyeo.id = staffs.user_level " +
+              " AND staffs.user_level IN (?) AND regions.zone_id = ?",
             [1, 2, office],
             function (error, results, fields) {
               if (error) {

@@ -192,7 +192,7 @@ sajiliBinafsiRequestRouter.post(
     //       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
     //       " school_registrations.establishing_school_id = establishing_schools.id AND " +
     //       " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-    //       " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_code = ? AND applications.registry_type_id <> ?",
+    //       " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id <> ?",
     //     [4, UserLevel, 2, Office, 3],
     //     function (error, results, fields) {
     //       if (error) {

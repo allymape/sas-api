@@ -425,6 +425,7 @@ const ObjectFuctions = {
   },
   selectConditionByTitle : (user) => {
     const {cheo , ngazi , id , sehemu , district_code , zone_id} = user;
+      // console.log('hapa',user);
         var str = ``;
         if(ngazi == 'wizara'){
               if(sehemu == 'dahrm' || sehemu == 'masijala'  || sehemu == 'registry'){
@@ -442,7 +443,7 @@ const ObjectFuctions = {
               }else{ //Officer W1
                 str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
               }
-              str += ` AND districts.LgaCode = ${district_code}`;
+              str += ` AND districts.LgaCode = "${district_code}"`;
         }else{
               str += ` AND applications.staff_id = -1`;
         }
