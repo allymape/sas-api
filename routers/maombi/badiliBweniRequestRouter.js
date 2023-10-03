@@ -5,7 +5,7 @@ const request = require("request");
 const badiliBweniRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, filterByUserLevel } = require("../../utils");
+const { isAuth, formatDate, permission } = require("../../utils");
 
 badiliBweniRequestRouter.post(
     "/maombi-badili-bweni", 

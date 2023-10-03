@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const schoolRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin, formatDate, promiseRequest } = require("../utils.js");
+const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
 
 
@@ -132,10 +132,10 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                       var stage = 1;
                       var user_id = 71;
                       var userId = 71;
-                      var application_category = 1;
-                      var registry_type_id = 1;//school_content.ownership_id;
+                      var application_category = generateRandomInt(0,14 , [3]);
+                      var registry_type_id = generateRandomInt(0,3);//school_content.ownership_id;
                       var is_for_disabled = 0;
-                      var is_approved = 2;
+                      var is_approved = generateRandomInt(0,2);
                       var status_id = 1;
                       var is_complete = 1;
                       var is_hostel = 0;

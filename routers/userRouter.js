@@ -14,6 +14,7 @@ const {
   getUserOffice,
   permission,
   lowerCase,
+  generateRandomInt,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -36,7 +37,6 @@ const loginlimiter = rateLimit({
 //login api
 userRouter.post("/login", loginlimiter, (req, res, next) => {
   userModal.loginUser(req, (success , loginUser, permissions) => {
-    
     if (success && loginUser) {
       const permissionData = [];
       let user = loginUser[0];

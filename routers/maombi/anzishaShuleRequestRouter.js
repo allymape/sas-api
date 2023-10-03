@@ -9,7 +9,7 @@ var session = require("express-session");
 const { isAuth, formatDate } = require("../../utils");
 
 // List of 
-anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule",(req, res) => {
+anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule", isAuth,(req, res) => {
     var per_page = parseInt(req.query.per_page);
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
@@ -20,7 +20,7 @@ anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule",(req, res) => {
           ? false
           : true;
     }
-    model.anzishaShuleRequestList((error, data, numRows) => {
+    model.anzishaShuleRequestList(req.user , (error, data, numRows) => {
             return res.send({
                     error: error ? true : false,
                     statusCode: error ? 306 : 300,

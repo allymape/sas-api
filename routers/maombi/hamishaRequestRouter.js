@@ -5,7 +5,7 @@ const request = require("request");
 const hamishaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, filterByUserLevel } = require("../../utils");
+const { isAuth, formatDate, permission } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 hamishaRequestRouter.post(

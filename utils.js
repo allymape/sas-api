@@ -153,6 +153,19 @@ const ObjectFuctions = {
     }
     return sum;
   },
+  randomInt : (min = 0 , max = 0) => {
+    if(max > 0){
+      return Math.ceil(Math.random() * max);
+    }
+    return min;
+  },
+  generateRandomInt : (min , max , except = []) => {
+      var i = ObjectFuctions.randomInt(min , max);
+          while (except.includes(i)) {
+              i = ObjectFuctions.randomInt(min, max);  
+          }
+          return i;
+  },
   //Send Email
   sendEmail: (mailOptions, callback) => {
     let transporter = nodeMailer.createTransport({
@@ -390,7 +403,7 @@ const ObjectFuctions = {
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
   },
-  selectByLocationName : (user) => {
+  selectConditionByRanks : (user) => {
     const { office } = user;
     let $select = "";
     switch (office) {
@@ -408,8 +421,30 @@ const ObjectFuctions = {
     }
     return $select;
   },
-  selectByOffice : (user) => {
-
+  selectConditionByTitle : (user) => {
+    const {cheo , ngazi , id , sehemu , district_code , zone_id} = user;
+        var str = ``;
+        if(ngazi == 'wizara'){
+              if(sehemu == 'dahrm' || sehemu == 'masijala'  || sehemu == 'registry'){
+                str += ` AND is_approved = 2`;
+              }else{
+                str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+              }
+        }else if(ngazi == 'kanda'){
+              //  K1 && Officers
+              str += ` AND applications.staff_id = ${id} AND is_approved <> 2 AND regions.zone_id = ${zone_id}`;
+        }else if(ngazi == 'wilaya'){
+              //  W1
+              if(cheo == 'w1'){ 
+                str += ` AND (applications.staff_id = ${id} OR  applications.staff_id IS NULL) AND is_approved <> 2 `;
+              }else{ //Officer W1
+                str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+              }
+              str += ` AND districts.LgaCode = ${district_code}`;
+        }else{
+              str += ` AND applications.staff_id = -1`;
+        }
+        return str;
   },
   filterByUserOffice : (user , start_with = '' , table_zone_alias = 'r.zone_id' , table_lga_alias = 'd.LgaCode' , more_sql_filter='') => {
     const {office , zone_id  , district_code} = user;
@@ -430,29 +465,6 @@ const ObjectFuctions = {
            break;
        }
       return $where;
-  },
-  filterByUserLevel : (user , start_with = '' , table_alias = 'a.userId' , more_sql_filter='') => {
-    const {cheo, sehemu , ngazi , zone_id  , district_code , id} = user;
-    
-    let $sql = "";
-    // console.log(user);
-    // if(cheo)
-      //  switch (office) {
-      //    case 1:
-      //      $where = ``;
-      //      break;
-      //    case 2:
-      //      $where = `${start_with} ${table_zone_alias} = ${zone_id} ${more_sql_filter}`;
-      //      break;
-      //    case 3:
-      //      $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
-      //      break;
-      //    default:
-      //      $where = ``;
-      //      break;
-      //  }
-
-      return $sql;
   },
   schoolLocationsSqlJoin: () => {
     return `JOIN streets   st ON st.id = e.village_id

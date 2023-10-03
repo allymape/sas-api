@@ -1,5 +1,5 @@
 const db = require("../dbConnection");
-const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectByLocationName, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
+const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectConditionByRanks, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
 
 module.exports = {
   getAllSummaries : (user , callback) => {
@@ -105,7 +105,7 @@ module.exports = {
   getSchoolByRegionsAndCategories: (user , callback) => {
       // region means label (it can be region_name , lga_name, ward_name and street_name)
       db.query(
-        `SELECT ${selectByLocationName(user)} , 
+        `SELECT ${selectConditionByRanks(user)} , 
                 sc.id AS category , 
                 #rt.id AS owner, 
                 COUNT(*) AS school_count
