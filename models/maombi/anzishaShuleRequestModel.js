@@ -10,20 +10,18 @@ module.exports = {
                     applications.user_id as user_id, applications.foreign_token as foreign_token,  
                     establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
                     districts.LgaName as LgaName, registry_types.registry as registry  
-            FROM    establishing_schools, applications, wards, districts, streets,
-                    school_categories, registry_types,regions, staffs
-            WHERE   school_categories.id = establishing_schools.school_category_id 
-                    AND regions.RegionCode = districts.RegionCode 
-                    AND districts.LgaCode = wards.LgaCode 
-                    AND wards.wardCode = establishing_schools.ward_id  
-                    AND streets.id = establishing_schools.village_id  
-                    AND establishing_schools.tracking_number = applications.tracking_number 
-                    AND registry_types.id = applications.registry_type_id 
-                    AND application_category_id = 1 
-                    AND applications.registry_type_id <> 3
-					          AND payment_status_id = 2
-                    ${selectConditionByTitle(user)}
-                    `,
+            FROM establishing_schools
+            JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
+            JOIN wards ON wards.wardCode = establishing_schools.ward_id  
+            JOIN districts ON districts.LgaCode = wards.LgaCode 
+            JOIN streets ON streets.id = establishing_schools.village_id  
+            JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+            JOIN registry_types ON registry_types.id = applications.registry_type_id 
+            JOIN regions ON regions.RegionCode = districts.RegionCode 
+            LEFT JOIN staffs ON applications.staff_id = staffs.id
+            WHERE  application_category_id = 1 AND applications.registry_type_id <> 3 AND payment_status_id = 2
+            ${selectConditionByTitle(user)}
+            `,
       (error, result) => {
         if (error) console.log(error);
         callback(error, result, 10);

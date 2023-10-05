@@ -155,21 +155,35 @@ module.exports = {
             if(user.sign){ 
               userData.push(user.sign);
             }
-    db.query(
-      `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
-              new_role_id, password , zone_id, region_code, district_code, user_status 
-              ${user.sign ? ",signature" : ""}) VALUES ?`,
-      [[userData]],
-      (error, createdUser) => {
-        if (error) {
-          console.log(error);
-        }
-        if (createdUser.affectedRows > 0) {
-          success = true;
-        }
-        callback(success, createdUser);
-      }
-    );
+     db.query(
+      `SELECT * 
+      FROM staffs 
+      WHERE user_level = ? AND 
+      ${userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"} AND 
+      ${userData[11] ? "district_code=" + userData[11] : "district_code IS NULL"}`,
+      [userData[3], userData[9], userData[11]],
+      (err, result) => {
+        if (err) console.log(err);
+          if(result.length == 0){
+            db.query(
+              `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
+                    new_role_id, password , zone_id, region_code, district_code, user_status 
+                    ${user.sign ? ",signature" : ""}) VALUES ?`,
+              [[userData]],
+              (error, createdUser) => {
+                if (error) {
+                  console.log(error);
+                }
+                if (createdUser.affectedRows > 0) {
+                  success = true;
+                }
+                callback(success, createdUser);
+              }
+            );
+          }else{
+             callback(false, null , true);
+          }
+      });
   },
 
   findUserByEmail : (email , callback) => {
@@ -190,7 +204,7 @@ module.exports = {
             [
               lowerCase(user.username),
               lowerCase(user.email),
-              user.levelId,
+              Number(user.levelId),
               titleCase(user.fullname),
               user.phoneNumber,
               user.lgas ? user.lgas : user.zone ? user.zone : null,
@@ -205,35 +219,49 @@ module.exports = {
             }
             userData.push(Number(userId));
     db.query(
-      `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
+      `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
+      ${userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"} AND 
+      ${userData[9] ? "district_code=" + userData[9] : "district_code IS NULL"} `,
+      [userData[2], Number(userId)],
+      (err, result) => {
+        if (err) console.log(err);
+        if (result.length == 0) {
+          db.query(
+            `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
               new_role_id = ?, zone_id=?, region_code=?, district_code=? 
               ${user.sign ? ", signature = ?" : ""}
-        WHERE id = ?`,
-      userData,
-      (error, updatedUser) => {
-        if (error) {
-          console.log("error findind user: ",error);
-        }
-          var password = user.password;
-          if(password){
-            hash(password , (hashed , hash) => {
-                  if(hashed){
-                    db.query(`UPDATE staffs SET password = ? WHERE id = ?` , 
-                          [hash , Number(userId)] , 
-                          (errorPassword , updatedUser) => {
-                              if(errorPassword){
-                                  console.log('Password Error: ',errorPassword);
-                              }
-                                 if (updatedUser) success = true;
-                                    callback(success, updatedUser);
-                          })
+              WHERE id = ?`,
+            userData,
+            (error, updatedUser) => {
+              if (error) {
+                console.log("error findind user: ", error);
+              }
+              var password = user.password;
+              if (password) {
+                hash(password, (hashed, hash) => {
+                  if (hashed) {
+                    db.query(
+                      `UPDATE staffs SET password = ? WHERE id = ?`,
+                      [hash, Number(userId)],
+                      (errorPassword, updatedUser) => {
+                        if (errorPassword) {
+                          console.log("Password Error: ", errorPassword);
+                        }
+                        if (updatedUser) success = true;
+                        callback(success, updatedUser);
+                      }
+                    );
                   }
-            });
-          }else{
-            if (updatedUser) success = true;
-            callback(success, updatedUser);
-          }
-          
+                });
+              } else {
+                if (updatedUser) success = true;
+                callback(success, updatedUser);
+              }
+            }
+          );
+        } else {
+          callback(false, null, true);
+        }
       }
     );
   },

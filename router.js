@@ -3604,82 +3604,82 @@ router.post("/deleteMchepuo", (req, res, next) => {
   );
 });
 
-router.post("/tuma-ombi-majibu", shirikishoValidation, (req, res, next) => {
-  console.log(req.body);
-  var today = new Date();
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
-        type_of_comment, created_at) VALUES 
-    (${db.escape(req.body.trackerId)}, ${db.escape(req.body.from_user)}, 
-    ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
-    ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      db.query(
-        "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
-        [
-          req.body.staffs,
-          req.body.department,
-          req.body.haliombi,
-          today,
-          req.body.trackerId,
-        ],
-        function (error, results, fields) {
-          if (error) {
-            console.log(error);
-          }
-          //sendMail(req.body.staffs)
-          db.query(
-            `SELECT id FROM maoni where 
-            trackingNo = ${db.escape(req.body.trackerId)} AND 
-            user_from = ${db.escape(req.body.from_user)} AND 
-            user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
-              req.body.coments
-            )}`,
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              var rollId = results[0].id;
-              InsertAuditTrail(
-                decoded.id,
-                "created",
-                req.body,
-                req.url,
-                req.body.browser_used,
-                rollId,
-                "Maoni umiliki yameongezwa!",
-                req.body.ip_address,
-                "maoni"
-              );
-            }
-          );
-          return res.send({
-            error: false,
-            statusCode: 300,
-            data: "success",
-            message: "Majibu Successfully Recorded.",
-          });
-        }
-      );
-    }
-  );
-});
+// router.post("/tuma-ombi-majibu", shirikishoValidation, (req, res, next) => {
+//   console.log(req.body);
+//   var today = new Date();
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
+//         type_of_comment, created_at) VALUES 
+//     (${db.escape(req.body.trackerId)}, ${db.escape(req.body.from_user)}, 
+//     ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
+//     ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       db.query(
+//         "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
+//         [
+//           req.body.staffs,
+//           req.body.department,
+//           req.body.haliombi,
+//           today,
+//           req.body.trackerId,
+//         ],
+//         function (error, results, fields) {
+//           if (error) {
+//             console.log(error);
+//           }
+//           //sendMail(req.body.staffs)
+//           db.query(
+//             `SELECT id FROM maoni where 
+//             trackingNo = ${db.escape(req.body.trackerId)} AND 
+//             user_from = ${db.escape(req.body.from_user)} AND 
+//             user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
+//               req.body.coments
+//             )}`,
+//             function (error, results, fields) {
+//               if (error) {
+//                 console.log(error);
+//               }
+//               var rollId = results[0].id;
+//               InsertAuditTrail(
+//                 decoded.id,
+//                 "created",
+//                 req.body,
+//                 req.url,
+//                 req.body.browser_used,
+//                 rollId,
+//                 "Maoni umiliki yameongezwa!",
+//                 req.body.ip_address,
+//                 "maoni"
+//               );
+//             }
+//           );
+//           return res.send({
+//             error: false,
+//             statusCode: 300,
+//             data: "success",
+//             message: "Majibu Successfully Recorded.",
+//           });
+//         }
+//       );
+//     }
+//   );
+// });
 
 router.post("/tuma-mmiliki-majibu", shirikishoValidation, (req, res, next) => {
   console.log(req.body);

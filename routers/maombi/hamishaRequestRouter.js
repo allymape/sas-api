@@ -466,9 +466,9 @@ hamishaRequestRouter.post(
             //W1
             // if (userLevel == 1) {
                 sharedModel.myStaffs( req.user , (results) => {
-                  if (error) {
-                    console.log(error);
-                  }
+                  // if (error) {
+                  //   console.log(error);
+                  // }
                   // console.log(results)
                   for (var i = 0; i < results.length; i++) {
                     var userId = results[i].userId;

@@ -52,21 +52,24 @@ designationRouter.get("/edit_designation/:id", isAuth, (req, res, next) => {
 });
 
 // Store designation
-designationRouter.post("/add_designation", isAuth, (req, res, next) => {
+designationRouter.post("/add_designation", isAuth, (req, res) => {
             var data = [];
             var name = req.body.name;
             var level = req.body.level;
-            data.push([name,level,1,formatDate(new Date())]);
-            designationModel.storeDesignation(data , (error , success , result) => {
-            return res.send({
-                       success: success ? true : false,
-                       statusCode: success ? 300 : 306,
-                       data: success ? result : error,
-                       message: success
-                         ? "Umefanikiwa kusajili designation."
-                         : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
-                     });
-            });
+            data.push(name,level,1,formatDate(new Date()));
+            designationModel.storeDesignation(data, (error, success, result, duplicate = false) => {
+                return res.send({
+                  success: success ? true : false,
+                  statusCode: success ? 300 : 306,
+                  data: success ? result : error,
+                  message: duplicate
+                    ? "Ooooh!  Cheo Kimeshasajiliwa."
+                    : success
+                    ? "Umefanikiwa kusajili designation."
+                    : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
+                });
+              }
+            );
 });
 
 // Store designation
@@ -77,12 +80,12 @@ designationRouter.put("/update_designation/:id", isAuth, (req, res, next) => {
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
             var id = Number(req.params.id);
             data.push(name,level,status, formatDate(new Date()), id);
-            designationModel.updateDesignation(data, (error , success , designation) => {
+            designationModel.updateDesignation(data, (error , success , designation , duplicate = false) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? designation : error,
-                        message: success ? "Umefanikiwa kubadili designation." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. ",
+                        message: duplicate ? 'Ooooh!  Cheo Kimeshasajiliwa.' : (success ? "Umefanikiwa kubadili designation." : "Kuna shida tafadhali wasiliana na Msimamizi wa Mfumo. "),
                      });
                     
             });

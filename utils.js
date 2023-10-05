@@ -43,7 +43,7 @@ const ObjectFuctions = {
         district_code: user.district_code,
         userPermissions: permissions,
         user_level: Number(user.user_level),
-        section_id : Number(user.section_id),
+        section_id: Number(user.section_id),
         ngazi: user.ngazi, //wizara,kanda au wilaya
         sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
         cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
@@ -55,19 +55,19 @@ const ObjectFuctions = {
       }
     );
   },
-  getUserOffice : (user) => {
-      if (!user.zone_id && !user.district_code) {
-          return 1; // Makao Makuu
-      }
+  getUserOffice: (user) => {
+    if (!user.zone_id && !user.district_code) {
+      return 1; // Makao Makuu
+    }
 
-      if (user.zone_id && !user.district_code) {
-          return 2; // Kanda
-      }
+    if (user.zone_id && !user.district_code) {
+      return 2; // Kanda
+    }
 
-      if(user.district_code){
-          return 3; // Wilaya 
-      }
-      return 0; // Haijakuwa Specified.
+    if (user.district_code) {
+      return 3; // Wilaya
+    }
+    return 0; // Haijakuwa Specified.
   },
 
   isAuth: (req, res, next) => {
@@ -155,18 +155,18 @@ const ObjectFuctions = {
     }
     return sum;
   },
-  randomInt : (min = 0 , max = 0) => {
-    if(max > 0){
+  randomInt: (min = 0, max = 0) => {
+    if (max > 0) {
       return Math.ceil(Math.random() * max);
     }
     return min;
   },
-  generateRandomInt : (min , max , except = []) => {
-      var i = ObjectFuctions.randomInt(min , max);
-          while (except.includes(i)) {
-              i = ObjectFuctions.randomInt(min, max);  
-          }
-          return i;
+  generateRandomInt: (min, max, except = []) => {
+    var i = ObjectFuctions.randomInt(min, max);
+    while (except.includes(i)) {
+      i = ObjectFuctions.randomInt(min, max);
+    }
+    return i;
   },
   //Send Email
   sendEmail: (mailOptions, callback) => {
@@ -405,7 +405,7 @@ const ObjectFuctions = {
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
   },
-  selectConditionByRanks : (user) => {
+  selectConditionByRanks: (user) => {
     const { office } = user;
     let $select = "";
     switch (office) {
@@ -423,51 +423,94 @@ const ObjectFuctions = {
     }
     return $select;
   },
-  selectConditionByTitle : (user) => {
-    const {cheo , ngazi , id , sehemu , district_code , zone_id} = user;
-      // console.log('hapa',user);
-        var str = ``;
-        if(ngazi == 'wizara'){
-              if(sehemu == 'dahrm' || sehemu == 'masijala'  || sehemu == 'registry'){
-                str += ` AND is_approved = 2`;
-              }else{
-                str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
-              }
-        }else if(ngazi == 'kanda'){
-              //  K1 && Officers
-              str += ` AND applications.staff_id = ${id} AND is_approved <> 2 AND regions.zone_id = ${zone_id}`;
-        }else if(ngazi == 'wilaya'){
-              //  W1
-              if(cheo == 'w1'){ 
-                str += ` AND (applications.staff_id = ${id} OR  applications.staff_id IS NULL) AND is_approved <> 2 `;
-              }else{ //Officer W1
-                str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
-              }
-              str += ` AND districts.LgaCode = "${district_code}"`;
-        }else{
-              str += ` AND applications.staff_id = -1`;
-        }
-        return str;
+  selectStaffsBySection: (user) => {
+    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+    // console.log('hapa',user);
+    var str = `AND s.id <> ${id} `;
+    if (ngazi == "wizara") {
+      // if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
+      //   str += ` AND is_approved = 2`;
+      // } else {
+      //   str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+      // }
+    } else if (ngazi == "kanda") {
+      //  K1 && Officers
+      str += ` AND s.zone_id = ${zone_id} AND s.district_code IS NULL`;
+    } else if (ngazi == "wilaya") {
+      str += ` AND s.zone_id IS NOT NULL AND s.district_code = "${district_code}"`;
+    } else {
+      str += ` AND s.id = -1`;
+    }
+    return str;
   },
-  filterByUserOffice : (user , start_with = '' , table_zone_alias = 'r.zone_id' , table_lga_alias = 'd.LgaCode' , more_sql_filter='') => {
-    const {office , zone_id  , district_code} = user;
-    
+  getMyNextBoss : (user ,application_category, staff_id) => {
+      const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+           if(staff_id == 0){
+                if ([1].includes(application_category)) {
+                  if (cheo == "w1") {
+                    return ` AND LOWER(r.name) =  'adsa' `;
+                  }
+                }
+                if (cheo == "adsa") {
+                  return ` AND LOWER(r.name) =  'ke' `;
+                }
+           }
+          return ` AND s.id < -1`;
+  },
+  selectConditionByTitle: (user) => {
+    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+    // console.log('hapa',user);
+    var str = ``;
+    if (ngazi == "wizara") {
+      if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
+        str += ` AND is_approved = 2`;
+      } else {
+        str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+      }
+    } else if (ngazi == "kanda") {
+      //  K1 && Officers
+      str += ` AND applications.staff_id = ${id} AND is_approved <> 2 AND regions.zone_id = ${zone_id}`;
+    } else if (ngazi == "wilaya") {
+      //  W1
+      if (cheo == "w1") {
+        // console.log("I am w1 "+ user.id);
+        str += ` AND (applications.staff_id = ${id} OR  applications.staff_id IS NULL)`;
+      } else {
+        //Officer W1
+        console.log("I am w1 Officer");
+        str += ` AND applications.staff_id = ${id}`;
+      }
+      str += ` AND districts.LgaCode = "${district_code}" AND is_approved <> 2 `;
+    } else {
+      str += ` AND applications.staff_id = -1`;
+    }
+    return str;
+  },
+  filterByUserOffice: (
+    user,
+    start_with = "",
+    table_zone_alias = "r.zone_id",
+    table_lga_alias = "d.LgaCode",
+    more_sql_filter = ""
+  ) => {
+    const { office, zone_id, district_code } = user;
+
     let $where = "";
-       switch (office) {
-         case 1:
-           $where = ``;
-           break;
-         case 2:
-           $where = `${start_with} ${table_zone_alias} = ${zone_id} ${more_sql_filter}`;
-           break;
-         case 3:
-           $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
-           break;
-         default:
-           $where = ``;
-           break;
-       }
-      return $where;
+    switch (office) {
+      case 1:
+        $where = ``;
+        break;
+      case 2:
+        $where = `${start_with} ${table_zone_alias} = ${zone_id} ${more_sql_filter}`;
+        break;
+      case 3:
+        $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
+        break;
+      default:
+        $where = ``;
+        break;
+    }
+    return $where;
   },
   schoolLocationsSqlJoin: () => {
     return `JOIN streets   st ON st.id = e.village_id
@@ -489,6 +532,72 @@ const ObjectFuctions = {
     return `JOIN establishing_schools e ON s.establishing_school_id = e.id
             JOIN  applications a ON a.tracking_number = e.tracking_number`;
   },
+
+
+  InsertAuditTrail : (user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,tableId) => {
+  console.log(JSON.stringify(new_body));
+  db.query(
+    "INSERT INTO audit_trail (user_id, event_type, new_body, " +
+      "created_at, ip_address, api_router, browser_used, rollId, message, tableName) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      user_id,
+      event_type,
+      JSON.stringify(new_body),
+      new Date(),
+      ip_address,
+      api_router,
+      browser_used,
+      rollId,
+      message,
+      tableId,
+    ],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return {
+          error: true,
+          statusCode: 400,
+          message: err,
+        };
+      }
+      return "sent";
+    }
+  );
+},
+
+UpdateAuditTrail :(user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,old_body,tableId)  => {
+  // console.log(JSON.stringify(new_body))
+  db.query(
+    "INSERT INTO audit_trail (user_id, event_type, new_body, " +
+      "created_at, ip_address, api_router, browser_used, rollId, message, old_body, tableName) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      user_id,
+      event_type,
+      JSON.stringify(new_body),
+      new Date(),
+      ip_address,
+      api_router,
+      browser_used,
+      rollId,
+      message,
+      JSON.stringify(old_body),
+      tableId,
+    ],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return {
+          error: true,
+          statusCode: 400,
+          message: err,
+        };
+      }
+      return "sent";
+    }
+  );
+}
 };
 
 module.exports = ObjectFuctions;

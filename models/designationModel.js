@@ -1,4 +1,5 @@
 const db = require("../dbConnection");
+const { lowerCase } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF DesignationS *******************************
@@ -42,20 +43,32 @@ module.exports = {
   //******** STORE Designation *******************************
   storeDesignation: (data, callback) => {
     var success = false;
+    // console.log(data[0][0])
     db.query(
-      `INSERT INTO roles (name , vyeoId , status_id, created_at) VALUES ?`,
-       [data],
-      (error, result) => {
-        if (error) {
-          console.log("Error", error);
-        }
-        if (result) {
-          success = true;
-        }
-        callback(error, success, result);
-      }
-    );
+         `SELECT * FROM roles WHERE name =  ?`,
+         [lowerCase(data[0].trim())],
+         (err, result) => {
+           if(err) console.log(err)
+            if(result.length == 0){
+               db.query(
+                 `INSERT INTO roles (name , vyeoId , status_id, created_at) VALUES ?`,
+                 [[data]],
+                 (error, result) => {
+                   if (error) {
+                     console.log("Error", error);
+                   }
+                   if (result) {
+                     success = true;
+                   }
+                   callback(error, success, result);
+                 }
+               );
+            }else{
+              callback(null, false, null , true);
+            }
+         });
   },
+
   //******** FIND Designation *******************************
   findDesignation: (id, callback) => {
     var success = false;
@@ -77,19 +90,30 @@ module.exports = {
   //******** UPDATE Designation *******************************
   updateDesignation: ( data, callback) => {
     var success = false;
-    db.query(
-      `UPDATE  roles SET name = ? , vyeoId = ? , status_id = ? , updated_at = ?  WHERE id = ?`,
-      data,
-      (error, designation, fields) => {
-        if (error) {
-          console.log("Error", error);
-        }
-        if (designation.affectedRows > 0) {
-          success = true;
-        }
-        callback(error, success, designation);
-      }
-    );
+       db.query(
+         `SELECT * FROM roles WHERE name =  ?  AND id <> ?`,
+         [lowerCase(data[0].trim()), data[4]],
+         (err, result) => {
+            if(err) console.log(err)
+            if(result.length == 0){
+               db.query(
+                 `UPDATE  roles SET name = ? , vyeoId = ? , status_id = ? , updated_at = ?  WHERE id = ?`,
+                 data,
+                 (error, designation) => {
+                   if (error) {
+                     console.log("Error", error);
+                   }
+                   if (designation.affectedRows > 0) {
+                     success = true;
+                   }
+                   callback(error, success, designation);
+                 }
+               );
+            }else{
+              callback(null, false, null , true);
+            }
+         }
+       );
   },
 
   //******** DELETEt Designation *******************************
