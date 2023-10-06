@@ -341,10 +341,11 @@ module.exports = {
                      // var registry1 = results[i].registry;
                      var attachment_path = results1[i].attachment;
                      var created_at = results1[i].created_at;
-                     created_at = dateandtime.format(
-                       created_at,
-                       "DD/MM/YYYY HH:MM:SS"
-                     );
+                    //  created_at = dateandtime.format(
+                    //    created_at,
+                    //    "DD/MM/YYYY HH:MM:SS"
+                    //  );
+                    created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS");
                      var file_size1 = results1[i].file_size;
                      objAttachment2.push({
                        file_format: file_format1,
@@ -368,29 +369,29 @@ module.exports = {
      );
   } 
   ,
-  tumaMaoni : (req , callback) => {
+  tumaMaoni : (req , application_category, callback) => {
     var success = false;
     const today = new Date();
     const {user} = req;
     const userTo = Number(req.body.staffs);
     const staff_id =  userTo == 0 ? null : userTo;
-    console.log("hahah ",getMyNextBoss(user, 1, staff_id));
+    console.log("inatumwa kwa ",getMyNextBoss(user, 1, staff_id));
     db.query(
       `SELECT s.id AS id 
                   FROM staffs s 
                   JOIN roles r ON r.id = s.user_level
                   JOIN vyeo v ON v.id = r.vyeoId
                   WHERE s.user_status = 1  
-                  ${getMyNextBoss(user , 1 , staff_id)}
+                  ${getMyNextBoss(user, application_category, staff_id)}
                   LIMIT 1
                   `,
-      (err , staff) => {
-        if(err) console.log(err);
-           var user_to = staff_id;
-           if(staff.length > 0){
-             user_to = staff[0].id
-           }
-           
+      (err, staff) => {
+        if (err) console.log(err);
+        var user_to = staff_id;
+        if (staff.length > 0) {
+          user_to = staff[0].id;
+        }
+
         db.query(
           `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
         type_of_comment, created_at) VALUES 
@@ -449,5 +450,12 @@ module.exports = {
         );
       }
     );
-  }
+  },
+
+  findOneApplication : (tracking_number , callback) =>{
+         db.query(`SELECT * FROM applications WHERE tracking_number = ?` , [tracking_number] , (error , applications) => {
+            if(error) console.log(error);
+            callback(applications[0])
+         })
+  } 
 };

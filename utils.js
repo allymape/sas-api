@@ -452,36 +452,50 @@ const ObjectFuctions = {
            if(staff_id == 0 || staff_id == '' || staff_id == null){
                 var str = ``;
                 // Business Flow base on application category
-                if ([1].includes(application_category)) { // Kuanzisha etc
-                  switch (cheo) {
-                    case "w1":
-                      str = ` AND LOWER(r.name) =  'adsa' `;
-                      break;
-                    case "adsa":
-                      str = ` AND LOWER(r.name) =  'ke' `;
-                      break;
-                    default:
-                      str = ` AND s.id < -1`;
-                      break;
-                  }
+                if ([1,2,7,8].includes(application_category)) { // W1->ADSA->KE
+                      switch (cheo) {
+                        case "w1":
+                          str = ` AND LOWER(r.name) =  'adsa' `;
+                          break;
+                        case "adsa":
+                          str = ` AND LOWER(r.name) =  'ke' `;
+                          break;
+                        default:
+                          str = ` AND s.id < -1`;
+                          break;
+                      }
                 }
-
-                if ([4].includes(application_category)) {  //Usajili wa shule
-                  switch (cheo) {
-                    case "w1":
-                      str = ` AND LOWER(r.name) =  'k1' `;
-                      break;
-                    case "k1":
-                      str = ` AND LOWER(r.name) =  'mus' `;
-                      break;
-                    case "mus":
-                      str = ` AND LOWER(r.name) =  'ke' `;
-                      break;
-                    default:
-                      str = ` AND s.id < -1`;
-                      break;
-                  }
-                  
+                if ([4,5,6,11,12,13,14].includes(application_category)) {  // W1->K1->MUS->KE
+                        switch (cheo) {
+                          case "w1":
+                            str = ` AND LOWER(r.name) =  'k1' `;
+                            break;
+                          case "k1":
+                            str = ` AND LOWER(r.name) =  'mus' `;
+                            break;
+                          case "mus":
+                            str = ` AND LOWER(r.name) =  'ke' `;
+                            break;
+                          default:
+                            str = ` AND s.id < -1`;
+                            break;
+                        }
+                }
+                if ([9,10,11].includes(application_category)) {  //W1->K1->ADSA->KE
+                      switch (cheo) {
+                        case "w1":
+                          str = ` AND LOWER(r.name) =  'k1' `;
+                          break;
+                        case "k1":
+                          str = ` AND LOWER(r.name) =  'adsa' `;
+                          break;
+                        case "adsa":
+                          str = ` AND LOWER(r.name) =  'ke' `;
+                          break;
+                        default:
+                          str = ` AND s.id < -1`;
+                          break;
+                      }
                 }
               return str;
            }
@@ -492,21 +506,25 @@ const ObjectFuctions = {
     // console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
+      if (lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
+        return `AND is_approved <> 2`;
+      }
+
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
         str += ` AND is_approved = 2`;
       } else {
+        console.log(cheo , id)
         str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
       }
-      if (lowerCase(jukumu) == "super admin") {
-        return `AND is_approved <> 2`;
-      }
+
+      return str;
     } else if (ngazi == "kanda") {
       //  K1 && Officers
       str += ` AND applications.staff_id = ${id} AND is_approved <> 2 AND regions.zone_id = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
-        // console.log("I am w1 "+ user.id);
+        console.log("I am w1 "+ user.id);
         str += ` AND (applications.staff_id = ${id} OR  applications.staff_id IS NULL)`;
       } else {
         //Officer W1
@@ -514,8 +532,10 @@ const ObjectFuctions = {
         str += ` AND applications.staff_id = ${id}`;
       }
       str += ` AND districts.LgaCode = "${district_code}" AND is_approved <> 2 `;
+      return str;
     } else {
       str += ` AND applications.staff_id = -1`;
+      return str;
     }
     return str;
   },

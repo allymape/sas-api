@@ -64,15 +64,21 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
 });
 
 anzishaShuleRequestRouter.post("/tuma-ombi-majibu", isAuth , (req, res) => {
-  
-  sharedModel.tumaMaoni(req , (success) => {
-        return res.send({
-          error: success ? false : true ,
-          statusCode: success ? 300 : 306,
-          data: success ? "success" : 'fail',
-          message: "Majibu Successfully Recorded.",
-        });
-  })
+      const tracking_number = req.body.trackerId;
+      console.log("maoni "+req.bpdy)
+      sharedModel.findOneApplication( tracking_number, (app) => {
+        const app_category = app["application_category_id"];
+             if(app_category){
+                  sharedModel.tumaMaoni(req, app_category, (success) => {
+                    return res.send({
+                      error: success ? false : true,
+                      statusCode: success ? 300 : 306,
+                      data: success ? "success" : "fail",
+                      message: "Majibu Successfully Recorded.",
+                    });
+                  });
+             }
+      })
 });
 
 
