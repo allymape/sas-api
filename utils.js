@@ -458,14 +458,17 @@ const ObjectFuctions = {
           return ` AND s.id < -1`;
   },
   selectConditionByTitle: (user) => {
-    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
-    // console.log('hapa',user);
+    const { cheo, ngazi, id, sehemu, district_code, zone_id , jukumu} = user;
+    console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
         str += ` AND is_approved = 2`;
       } else {
         str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+      }
+      if (lowerCase(jukumu) == "super admin") {
+        return `AND is_approved <> 2`;
       }
     } else if (ngazi == "kanda") {
       //  K1 && Officers
@@ -513,7 +516,7 @@ const ObjectFuctions = {
     return $where;
   },
   schoolLocationsSqlJoin: () => {
-    return `JOIN streets   st ON st.id = e.village_id
+    return `JOIN streets   st ON st.StreetCode = e.village_id
             JOIN wards      w ON w.WardCode = e.ward_id
             JOIN districts  d ON d.LgaCode = w.LgaCode
             JOIN regions    r ON r.RegionCode = d.RegionCode

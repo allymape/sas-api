@@ -159,8 +159,8 @@ module.exports = {
       `SELECT * 
       FROM staffs 
       WHERE user_level = ? AND 
-      ${userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"} AND 
-      ${userData[11] ? "district_code=" + userData[11] : "district_code IS NULL"}`,
+      ${userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"} AND  user_status = 1 AND
+      ${userData[11] ? "district_code='" + userData[11]+"'" : "district_code IS NULL"}`,
       [userData[3], userData[9], userData[11]],
       (err, result) => {
         if (err) console.log(err);
@@ -220,8 +220,8 @@ module.exports = {
             userData.push(Number(userId));
     db.query(
       `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
-      ${userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"} AND 
-      ${userData[9] ? "district_code=" + userData[9] : "district_code IS NULL"} `,
+      ${userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"} AND  user_status = 1 AND
+      ${userData[9] ? "district_code='" + userData[9]+"'" : "district_code IS NULL"} `,
       [userData[2], Number(userId)],
       (err, result) => {
         if (err) console.log(err);
