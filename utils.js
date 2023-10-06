@@ -445,21 +445,47 @@ const ObjectFuctions = {
   },
   getMyNextBoss : (user ,application_category, staff_id) => {
       const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
-           if(staff_id == 0){
-                if ([1].includes(application_category)) {
-                  if (cheo == "w1") {
-                    return ` AND LOWER(r.name) =  'adsa' `;
+           if(staff_id == 0 || staff_id == '' || staff_id == null){
+                var str = ``;
+                // Business Flow base on application category
+                if ([1].includes(application_category)) { // Kuanzisha etc
+                  switch (cheo) {
+                    case "w1":
+                      str = ` AND LOWER(r.name) =  'adsa' `;
+                      break;
+                    case "adsa":
+                      str = ` AND LOWER(r.name) =  'ke' `;
+                      break;
+                    default:
+                      str = ` AND s.id < -1`;
+                      break;
                   }
                 }
-                if (cheo == "adsa") {
-                  return ` AND LOWER(r.name) =  'ke' `;
+
+                if ([4].includes(application_category)) {  //Usajili wa shule
+                  switch (cheo) {
+                    case "w1":
+                      str = ` AND LOWER(r.name) =  'k1' `;
+                      break;
+                    case "k1":
+                      str = ` AND LOWER(r.name) =  'mus' `;
+                      break;
+                    case "mus":
+                      str = ` AND LOWER(r.name) =  'ke' `;
+                      break;
+                    default:
+                      str = ` AND s.id < -1`;
+                      break;
+                  }
+                  
                 }
+              return str;
            }
           return ` AND s.id < -1`;
   },
   selectConditionByTitle: (user) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id , jukumu} = user;
-    console.log(user);
+    // console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {

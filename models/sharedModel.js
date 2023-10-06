@@ -371,7 +371,8 @@ module.exports = {
     var success = false;
     const today = new Date();
     const {user} = req;
-    const staff_id = Number(req.body.staffs);
+    const userTo = Number(req.body.staffs);
+    const staff_id =  userTo == 0 ? null : userTo;
     console.log("hahah ",getMyNextBoss(user, 1, staff_id));
     db.query(
       `SELECT s.id AS id 
@@ -388,6 +389,7 @@ module.exports = {
            if(staff.length > 0){
              user_to = staff[0].id
            }
+           
         db.query(
           `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
         type_of_comment, created_at) VALUES 
