@@ -428,11 +428,15 @@ const ObjectFuctions = {
     // console.log('hapa',user);
     var str = `AND s.id <> ${id} `;
     if (ngazi == "wizara") {
+      if(cheo == "ke"){
+        str += ` OR LOWER(r.name) IN ('adsa','mus','dsne') `;
+      }
       // if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
       //   str += ` AND is_approved = 2`;
       // } else {
       //   str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
       // }
+
     } else if (ngazi == "kanda") {
       //  K1 && Officers
       str += ` AND s.zone_id = ${zone_id} AND s.district_code IS NULL`;

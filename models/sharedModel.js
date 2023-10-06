@@ -12,6 +12,7 @@ module.exports = {
          JOIN roles r ON r.id = s.user_level
          JOIN vyeo v ON v.id = r.vyeoId
          WHERE s.user_status = 1 AND v.id = ${user.section_id} ${selectStaffsBySection(user)}
+         ORDER BY name ASC
          `,
       (error, results) => {
         if (error) {
