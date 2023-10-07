@@ -82,13 +82,14 @@ module.exports = {
        }
      );
   },
-  findApplication: (tracking_number , callback) => {
+  findApplicationDetails: (tracking_number , callback) => {
     const obj = [];
+    const objAttachment = [];
     const objAttachment1 = [];
     const objAttachment2 = [];
     const objMess = [];
      db.query(
-       "select registration_structures.structure as structure, school_sub_categories.subcategory as subcategory, " +
+       "SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,application_category_id, " +
          " establishing_schools.area as area, establishing_schools.school_size as school_size, " +
          " languages.language as language, school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
          " applications.tracking_number as tracking_number, " +
@@ -111,6 +112,7 @@ module.exports = {
          if (results.length > 0) {
            var tracking_number = results[0].tracking_number;
            var registry_type_id = results[0].registry_type_id;
+           var application_category_id = results[0].application_category_id;
            var user_id = results[0].user_id;
            var foreign_token = results[0].foreign_token;
            var school_name = results[0].school_name;
@@ -130,6 +132,7 @@ module.exports = {
          } else {
            var tracking_number = "";
            var registry_type_id = "";
+           var application_category_id = "";
            var user_id = "";
            var foreign_token = "";
            var school_name = "";
@@ -247,41 +250,67 @@ module.exports = {
              }
            );
          }
+        //  console.log(application_category_id , registry_type_id);
+         db.query(
+           `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
+              FROM attachment_types
+              WHERE status_id = 1 AND registry_type_id = ${registry_type_id} AND application_category_id = ${application_category_id}`,
+           function (error, results) {
+             if (error) {
+               console.log(error);
+             }
+            //  console.log(results);
+             for (var i = 0; i < results.length; i++) {
+               var file_format = results[i].file_format;
+               var app_id = results[i].id;
+               var attachment_name = results[i].attachment_name;
+               var registry = "";
+               var application_name = "";
+               objAttachment.push({
+                 file_format: file_format,
+                 attachment_name: attachment_name,
+                 registry_id: app_id,
+                 registry: registry,
+                 application_name: application_name,
+               });
+             }
+           }
+         );
 
-               db.query(
-                 "SELECT attachment_types.id as id, file_size, file_format, " +
-                   " attachment_name, attachments.created_at as created_at, attachment_path " +
-                   " FROM attachment_types, " +
-                   " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-                   " attachments.tracking_number = ?",
-                 [tracking_number],
-                 function (error1, results1) {
-                   if (error1) {
-                     console.log(error1);
-                   }
-                   for (var i = 0; i < results1.length; i++) {
-                     var file_format1 = results1[i].file_format;
-                     var app_id1 = results1[i].id;
-                     var attachment_name1 = results1[i].attachment_name;
-                     // var registry1 = results[i].registry;
-                     var attachment_path = results1[i].attachment_path;
-                     var created_at = results1[i].created_at;
-                     created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS"); //dateandtime.format( new Date(created_at), "DD/MM/YYYY HH:MM:SS");
-                     var file_size1 = results1[i].file_size;
-                     objAttachment1.push({
-                       file_format: file_format1,
-                       attachment_name: attachment_name1,
-                       registry_id: app_id1,
-                       file_size: file_size1,
-                       registry: "registry1",
-                       application_name: "application_name1",
-                       created_at: created_at,
-                       attachment_path: attachment_path,
-                     });
-                   }
-                   // console.log(objAttachment1)
-                 }
-               );
+         db.query(
+           "SELECT attachment_types.id as id, file_size, file_format, " +
+             " attachment_name, attachments.created_at as created_at, attachment_path " +
+             " FROM attachment_types, " +
+             " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+             " attachments.tracking_number = ?",
+           [tracking_number],
+           function (error1, results1) {
+             if (error1) {
+               console.log(error1);
+             }
+             for (var i = 0; i < results1.length; i++) {
+               var file_format1 = results1[i].file_format;
+               var app_id1 = results1[i].id;
+               var attachment_name1 = results1[i].attachment_name;
+               // var registry1 = results[i].registry;
+               var attachment_path = results1[i].attachment_path;
+               var created_at = results1[i].created_at;
+               created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS"); //dateandtime.format( new Date(created_at), "DD/MM/YYYY HH:MM:SS");
+               var file_size1 = results1[i].file_size;
+               objAttachment1.push({
+                 file_format: file_format1,
+                 attachment_name: attachment_name1,
+                 registry_id: app_id1,
+                 file_size: file_size1,
+                 registry: "registry1",
+                 application_name: "application_name1",
+                 created_at: created_at,
+                 attachment_path: attachment_path,
+               });
+             }
+             // console.log(objAttachment1)
+           }
+         );
 
          if (registry_type_id == 2) {
            db.query(
@@ -341,11 +370,11 @@ module.exports = {
                      // var registry1 = results[i].registry;
                      var attachment_path = results1[i].attachment;
                      var created_at = results1[i].created_at;
-                    //  created_at = dateandtime.format(
-                    //    created_at,
-                    //    "DD/MM/YYYY HH:MM:SS"
-                    //  );
-                    created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS");
+                     //  created_at = dateandtime.format(
+                     //    created_at,
+                     //    "DD/MM/YYYY HH:MM:SS"
+                     //  );
+                     created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS");
                      var file_size1 = results1[i].file_size;
                      objAttachment2.push({
                        file_format: file_format1,
@@ -364,7 +393,7 @@ module.exports = {
            );
          }
 
-         callback(obj, objAttachment1, objAttachment2, objMess);
+         callback(obj, objAttachment, objAttachment1, objAttachment2, objMess);
        }
      );
   } 
