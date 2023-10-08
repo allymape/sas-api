@@ -89,26 +89,31 @@ module.exports = {
     const objAttachment2 = [];
     const objMess = [];
      db.query(
-       "SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,application_category_id, " +
-         " establishing_schools.area as area, establishing_schools.school_size as school_size, " +
-         " languages.language as language, school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-         " applications.tracking_number as tracking_number, " +
-         " applications.created_at as created_at, applications.registry_type_id as registry_type_id, " +
-         " applications.user_id as user_id, applications.foreign_token as foreign_token, " +
-         " establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, " +
-         " districts.LgaName as LgaName, registry_types.registry as registry " +
-         " from school_sub_categories, establishing_schools, applications, registration_structures, wards, districts, school_categories, languages, registry_types, " +
-         " regions WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND languages.id = establishing_schools.language_id AND " +
-         " school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND " +
-         " districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id " +
-         " AND establishing_schools.tracking_number = applications.tracking_number AND " +
-         " registry_types.id = applications.registry_type_id AND registration_structures.id = establishing_schools.registration_structure_id  AND applications.tracking_number = ?",
+       `SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,application_category_id, 
+               establishing_schools.area as area, establishing_schools.school_size as school_size,
+               languages.language as language, school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
+               applications.tracking_number as tracking_number,
+               applications.created_at as created_at, applications.registry_type_id as registry_type_id, 
+               applications.user_id as user_id, applications.foreign_token as foreign_token, 
+               establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
+               districts.LgaName as LgaName, registry_types.registry as registry
+          FROM applications  
+          JOIN establishing_schools  ON  establishing_schools.tracking_number = applications.tracking_number  
+          JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+          LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+          LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
+          LEFT JOIN languages ON languages.id = establishing_schools.language_id
+          LEFT JOIN registry_types ON registry_types.id = applications.registry_type_id
+          JOIN wards ON wards.WardCode = establishing_schools.ward_id
+          JOIN districts ON districts.LgaCode = wards.LgaCode
+          JOIN regions ON regions.RegionCode = districts.RegionCode
+          WHERE applications.tracking_number = ?`,
        [tracking_number],
        function (error, results) {
          if (error) {
            console.log(error);
          }
-
+        //  console.log(results);
          if (results.length > 0) {
            var tracking_number = results[0].tracking_number;
            var registry_type_id = results[0].registry_type_id;
@@ -131,8 +136,8 @@ module.exports = {
            var subcategory = results[0].subcategory;
          } else {
            var tracking_number = "";
-           var registry_type_id = "";
-           var application_category_id = "";
+           var registry_type_id = null;
+           var application_category_id = null;
            var user_id = "";
            var foreign_token = "";
            var school_name = "";
@@ -192,7 +197,7 @@ module.exports = {
          }
          if (registry_type_id == 1) {
            db.query(
-             "select * from personal_infos, applications, wards, districts, regions " +
+             "select *, IFNULL(middle_name , '') AS middle_name, IFNULL(last_name , '') AS last_name FROM personal_infos, applications, wards, districts, regions " +
                " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
                " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
              [tracking_number],
@@ -200,17 +205,33 @@ module.exports = {
                if (error1) {
                  console.log(error1);
                }
-               var first_name = results1[0].first_name;
-               var middle_name = results1[0].middle_name;
-               var last_name = results1[0].last_name;
-               var occupation = results1[0].occupation;
-               var personal_address = results1[0].personal_address;
-               var personal_phone_number = results1[0].personal_phone_number;
-               var personal_email = results1[0].personal_email;
-               var WardNameMtu = results1[0].WardName;
-               var LgaNameMtu = results1[0].LgaName;
-               var RegionNameMtu = results1[0].RegionName;
-               var fullname = first_name + " " + middle_name + " " + last_name;
+               console.log(results1);
+               if (results1.length > 0) {
+                 var first_name = results1[0].first_name;
+                 var middle_name = results1[0].middle_name;
+                 var last_name = results1[0].last_name;
+                 var occupation = results1[0].occupation;
+                 var personal_address = results1[0].personal_address;
+                 var personal_phone_number = results1[0].personal_phone_number;
+                 var personal_email = results1[0].personal_email;
+                 var WardNameMtu = results1[0].WardName;
+                 var LgaNameMtu = results1[0].LgaName;
+                 var RegionNameMtu = results1[0].RegionName;
+                 var fullname =
+                   first_name + " " + middle_name + " " + last_name;
+               } else {
+                 var first_name = "";
+                 var middle_name = "";
+                 var last_name = "";
+                 var occupation = "";
+                 var personal_address = "";
+                 var personal_phone_number = "";
+                 var personal_email = "";
+                 var WardNameMtu = "";
+                 var LgaNameMtu = "";
+                 var RegionNameMtu = "";
+                 var fullname = "";
+               }
                obj.push({
                  tracking_number: tracking_number,
                  school_name: school_name,
@@ -250,16 +271,17 @@ module.exports = {
              }
            );
          }
-        //  console.log(application_category_id , registry_type_id);
+         console.log(application_category_id, registry_type_id);
          db.query(
            `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
-              WHERE status_id = 1 AND registry_type_id = ${registry_type_id} AND application_category_id = ${application_category_id}`,
+              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+                    AND application_category_id = ${application_category_id}`,
            function (error, results) {
              if (error) {
                console.log(error);
              }
-            //  console.log(results);
+             //  console.log(results);
              for (var i = 0; i < results.length; i++) {
                var file_format = results[i].file_format;
                var app_id = results[i].id;
@@ -324,11 +346,19 @@ module.exports = {
                  console.log(error1);
                }
                //  console.log("bibb", results1);
-               var instId = results1[0].id;
-               var name = results1[0].name;
-               var address = results1[0].address;
-               var institute_phone = results1[0].institute_phone;
-               var institute_email = results1[0].institute_email;
+                if(results1.length > 0){
+                   var instId = results1[0].id;
+                   var name = results1[0].name;
+                   var address = results1[0].address;
+                   var institute_phone = results1[0].institute_phone;
+                   var institute_email = results1[0].institute_email;
+                }else{
+                   var instId = '';
+                   var name = '';
+                   var address = '';
+                   var institute_phone = '';
+                   var institute_email = '';
+                }
                obj.push({
                  tracking_number: tracking_number,
                  school_name: school_name,

@@ -30,7 +30,7 @@ badiliMmilikiRequestRouter.post(
             console.log(error1);
           }
           var total_month = summary[0].total_month;
-        // if (UserLevel == 1 || UserLevel == 3) {
+        // if (UserLevel == "w1" || UserLevel == 3) {
           db.query(
             "SELECT applications.tracking_number as tracking_number, applications.created_at as created_at, " +
               " former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person, " +
@@ -107,7 +107,7 @@ badiliMmilikiRequestRouter.post(
               });
             }
           );
-        // } else if (UserLevel == 2 || UserLevel == 4) {
+        // } else if (UserLevel == "k1" || UserLevel == 4) {
         //   db.query(
         //     "SELECT applications.tracking_number as tracking_number, applications.created_at as created_at, " +
         //       " former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person, " +
@@ -449,7 +449,7 @@ badiliMmilikiRequestRouter.post(
           }
         );
         //w1
-        if (userLevel == 1) {
+        if (userLevel == "w1") {
           db.query(
             "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
               " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -518,7 +518,7 @@ badiliMmilikiRequestRouter.post(
           );
         }
         //k1
-        if (userLevel == 2) {
+        if (userLevel == "k1") {
           db.query(
             "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
               " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -586,7 +586,7 @@ badiliMmilikiRequestRouter.post(
           );
         }
         //adsa
-        if (userLevel == 5) {
+        if (userLevel == "adsa") {
           db.query(
             "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
               " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -688,7 +688,7 @@ badiliMmilikiRequestRouter.post(
           );
         }
         //ke
-        if (userLevel == 9) {
+        if (userLevel == "ke") {
           db.query(
             "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
               " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +

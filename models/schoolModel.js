@@ -112,7 +112,7 @@ module.exports = {
       );
   },
   //******** STORE SCHOOLS *******************************
-  storeSchools: (established_schools , applications , school_registrations, callback) => {
+  storeSchools: (established_schools , applications , school_registrations, owners, applicants, callback) => {
     var success = false;
      db.query(
        `INSERT INTO establishing_schools (id, school_name, secure_token,school_phone, tracking_number, is_for_disabled, is_hostel, stage,ward_id, village_id, school_email, po_box ,school_category_id , created_at , updated_at) VALUES ? 
@@ -128,7 +128,7 @@ module.exports = {
                                         registry_type_id,is_approved,status_id,is_complete,payment_status_id , created_at,updated_at) 
                                         VALUES ? 
               ON DUPLICATE KEY UPDATE 
-                          user_id=VALUES(user_id), staff_id=VALUES(staff_id), tracking_number=VALUES(tracking_number), 
+                          secure_token=VALUES(secure_token),foreign_token=VALUES(foreign_token),user_id=VALUES(user_id), staff_id=VALUES(staff_id), tracking_number=VALUES(tracking_number), 
                           is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), 
                           registry_type_id=VALUES(registry_type_id), payment_status_id=VALUES(payment_status_id), 
                           updated_at=VALUES(updated_at)`,
@@ -138,31 +138,46 @@ module.exports = {
                  console.log(err2);
                }
                if (application) {
-                 db.query(
-                   `SET sql_mode = "NO_ZERO_IN_DATE"`,
-                   (modeError) => {
-                     if(modeError){
-                       console.log(modeError);
-                     }
-                    //  console.log(school_registrations);
-                     db.query(
-                       `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_date,registration_number, reg_status, created_at, updated_at) 
+                 db.query(`SET sql_mode = "NO_ZERO_IN_DATE"`, (modeError) => {
+                   if (modeError) {
+                     console.log(modeError);
+                   }
+                   //  console.log(school_registrations);
+                   db.query(
+                     `INSERT INTO school_registrations (id,secure_token,establishing_school_id,tracking_number,school_opening_date,registration_date,registration_number, reg_status, created_at, updated_at) 
                         VALUES ? ON DUPLICATE KEY UPDATE establishing_school_id=VALUES(establishing_school_id), secure_token=VALUES(secure_token), registration_number=VALUES(registration_number), tracking_number=VALUES(tracking_number), 
                                                         reg_status=VALUES(reg_status), school_opening_date = VALUES(school_opening_date) , registration_date = VALUES(registration_date), created_at=VALUES(created_at) , 
                                                         updated_at=VALUES(updated_at)`,
-                       [school_registrations],
-                       (err3, registered) => {
-                         if (err || err2 || err3) {
-                           console.log(err, err2, err3);
-                         }
-                         if (registered) {
-                           success = true;
-                         }
-                         callback(success);
+                     [school_registrations],
+                     (err3, registered) => {
+                       if (err || err2 || err3) {
+                         console.log(err, err2, err3);
                        }
-                     );
-                   }
-                 );
+
+                       db.query(
+                         `INSERT INTO personal_infos (id, secure_token , first_name , ward_id , created_at)
+                                   VALUES ? ON DUPLICATE KEY UPDATE secure_token=VALUES(secure_token), first_name = VALUES(first_name), 
+                                   middle_name = VALUES(middle_name), last_name = VALUES(last_name), ward_id = VALUES(ward_id)`,
+                         [applicants],
+                         (err4) => {
+                           if (err4) console.log(err4);
+                           db.query(
+                             `INSERT INTO owners (id, secure_token , establishing_school_id , owner_name ,created_at) 
+                                                VALUES ? ON DUPLICATE KEY UPDATE secure_token=VALUES(secure_token), owner_name = VALUES(owner_name)`,
+                             [owners],
+                             (err5, owners) => {
+                               if (err5) console.log(err5);
+                               if (owners) {
+                                 success = true;
+                               }
+                               callback(success);
+                             }
+                           );
+                         }
+                       );
+                     }
+                   );
+                 });
                }
              }
            );

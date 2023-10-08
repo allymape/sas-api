@@ -93,7 +93,7 @@ badiliJinaRequestRouter.post(
             });
           }
         );
-      // } else if (UserLevel == 1 || UserLevel == 3) {
+      // } else if (UserLevel == "w1" || UserLevel == 3) {
       //   db.query(
       //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
       //       " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -166,7 +166,7 @@ badiliJinaRequestRouter.post(
       //       });
       //     }
       //   );
-      // } else if (UserLevel == 2 || UserLevel == 4) {
+      // } else if (UserLevel == "k1" || UserLevel == 4) {
       //   db.query(
       //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
       //       " applications.created_at as created_at, applications.user_id as user_id, " +

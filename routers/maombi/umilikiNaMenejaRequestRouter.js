@@ -183,7 +183,7 @@ db.query(
 //     );
 //   } 
 //   //W1 & K1
-//   else if (UserLevel == 1 || UserLevel == 3) {
+//   else if (UserLevel == "w1" || UserLevel == 3) {
 //     db.query(
 //       "select applications.tracking_number as tracking_number, " +
 //         " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -439,7 +439,7 @@ umilikiNaMenejaRequestRouter.post(
             }
           );
           //w1
-          if (userLevel == 1) {
+          if (userLevel == "w1") {
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -508,7 +508,7 @@ umilikiNaMenejaRequestRouter.post(
             );
           }
           //k1
-          if (userLevel == 2) {
+          if (userLevel == "k1") {
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -576,7 +576,7 @@ umilikiNaMenejaRequestRouter.post(
             );
           }
           //adsa
-          if (userLevel == 5) {
+          if (userLevel == "adsa") {
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -678,7 +678,7 @@ umilikiNaMenejaRequestRouter.post(
             );
           }
           //ke
-          if (userLevel == 9) {
+          if (userLevel == "ke") {
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
@@ -746,7 +746,7 @@ umilikiNaMenejaRequestRouter.post(
             );
           }
           //ke
-          if (userLevel == 9) {
+          if (userLevel == "ke") {
             db.query(
               "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
                 " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
