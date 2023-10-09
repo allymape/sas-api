@@ -31,7 +31,7 @@ module.exports = {
             if (error) {
               console.log(error);
             }
-            if (user !== "undefined" && user.length == 1) {
+            if (user  && user.length == 1) {
               db.query(
                 `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
                 (error2, permissions) => {
@@ -64,7 +64,13 @@ module.exports = {
       tafuta != "undefined" && tafuta
         ? ` WHERE (s.email LIKE '%${tafuta}%' OR 
                    s.username LIKE '%${tafuta}%' OR
-                   s.name LIKE '%${tafuta}%')`
+                   s.name LIKE '%${tafuta}%' OR
+                   r.name LIKE '%${tafuta}%' OR
+                   v.rank_name LIKE '%${tafuta}%' OR
+                   d.LgaName LIKE '%${tafuta}%' OR
+                   rg.RegionName LIKE '%${tafuta}%' OR
+                   z.zone_name LIKE '%${tafuta}%'
+                  )`
         : "";
     const commonSql = `FROM staffs s
                    LEFT JOIN roles r ON r.id = s.user_level

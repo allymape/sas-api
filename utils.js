@@ -455,42 +455,45 @@ const ObjectFuctions = {
                 if ([1,2,7,8].includes(application_category)) { // W1->ADSA->KE
                       switch (cheo) {
                         case "w1":
-                          str = ` AND LOWER(r.name) =  'adsa' `;
+                          str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
                           break;
                         case "adsa":
-                          str = ` AND LOWER(r.name) =  'ke' `;
+                          str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
                           break;
                         default:
                           str = ` AND s.id < -1`;
                           break;
                       }
                 }
-                if ([4,5,6,11,12,13,14].includes(application_category)) {  // W1->K1->MUS->KE
+                if ([4,5,6,12,13,14].includes(application_category)) {  // W1->K1->MUS->KE
                         switch (cheo) {
                           case "w1":
-                            str = ` AND LOWER(r.name) =  'k1' `;
+                            str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
                             break;
                           case "k1":
-                            str = ` AND LOWER(r.name) =  'mus' `;
+                            str = ` AND LOWER(r.name) =  'mus' AND s.zone_id IS NULL `;
                             break;
                           case "mus":
-                            str = ` AND LOWER(r.name) =  'ke' `;
+                            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
+                            break;
+                          case "adsa":
+                            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
                             break;
                           default:
                             str = ` AND s.id < -1`;
                             break;
                         }
                 }
-                if ([9,10,11].includes(application_category)) {  //W1->K1->ADSA->KE
+                if ([9,10,11].includes(application_category)) {  //W1->K1->ADSA->KE   
                       switch (cheo) {
                         case "w1":
-                          str = ` AND LOWER(r.name) =  'k1' `;
+                          str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
                           break;
                         case "k1":
-                          str = ` AND LOWER(r.name) =  'adsa' `;
+                          str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
                           break;
                         case "adsa":
-                          str = ` AND LOWER(r.name) =  'ke' `;
+                          str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
                           break;
                         default:
                           str = ` AND s.id < -1`;

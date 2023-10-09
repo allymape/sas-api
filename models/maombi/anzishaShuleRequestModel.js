@@ -30,17 +30,6 @@ module.exports = {
   },
 
   anzishaShuleRequestView: (trackingNumber, callback) => {
-    // var userLevel = 1;
-    // var office = 1;
-    // var obj = [];
-    // var objMess = [];
-    // var objStaffs = [];
-    // var objApps = [];
-    // var objAttachment = [];
-    // var objMaoni = [];
-    // var objAttachment1 = [];
-    // var objAttachment2 = [];
-    // var tracking_number = trackingNumber;
     db.query(
       `SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,
               establishing_schools.area as area, establishing_schools.school_size as school_size,

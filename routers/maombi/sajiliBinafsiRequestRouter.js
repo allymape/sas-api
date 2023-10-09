@@ -5,7 +5,8 @@ const request = require("request");
 const sajiliBinafsiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const sharedModel = require("../../models/sharedModel");
 
 sajiliBinafsiRequestRouter.post(
     "/maombi-usajili-shule", 
@@ -30,7 +31,7 @@ sajiliBinafsiRequestRouter.post(
           if (error1) {
             console.log(error1);
           }
-          var total_month = summary[0].total_month;
+          var total_month = summary.length > 0 ? summary[0].total_month : 0;
     // if (UserLevel == 33) {
       db.query(
         "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -106,230 +107,6 @@ sajiliBinafsiRequestRouter.post(
           });
         }
       );
-
-    // } else if (UserLevel == "w1" || UserLevel == 3) {
-    //   db.query(
-    //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-    //       " applications.created_at as created_at, applications.user_id as user_id, " +
-    //       " applications.foreign_token as foreign_token, " +
-    //       " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-    //       " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-    //       " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-    //       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-    //       " school_registrations.establishing_school_id = establishing_schools.id AND " +
-    //       " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-    //       " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND applications.registry_type_id <> ?",
-    //     [4, UserLevel, 2, Office, 3],
-    //     function (error, results, fields) {
-    //       if (error) {
-    //         console.log(error);
-    //       }
-    //       for (var i = 0; i < results.length; i++) {
-    //         // console.log(results)
-    //         var tracking_number = results[i].tracking_number;
-    //         var registry_type_id = results[i].registry_type_id;
-    //         var user_id = results[i].user_id;
-    //         var foreign_token = results[i].foreign_token;
-    //         var school_name = results[i].school_name;
-    //         var LgaName = results[i].LgaName;
-    //         var RegionName = results[i].RegionName;
-    //         var RegionName = results[i].RegionName;
-    //         var registry = results[i].registry;
-    //         var created_at = results[i].created_at;
-    //         var schoolCategory = results[i].schoolCategory;
-    //         var applicantname;
-    //         var today = new Date();
-  
-    //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-    //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-    //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-    //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-    //         var seconds = Math.floor(diffInSeconds % 60);
-    //         var milliseconds = Math.round(
-    //           (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-    //         );
-  
-    //         var remain_days;
-    //         if (days > 0) {
-    //           remain_days = "Siku " + days;
-    //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-    //           remain_days = "Sek " + seconds + " zilizopita";
-    //         } else if (days <= 0 && hours <= 0) {
-    //           remain_days = "Dakika " + minutes + " zilizopita";
-    //         } else if (days <= 0) {
-    //           remain_days = "Saa " + hours;
-    //         }
-    //         obj.push({
-    //           tracking_number: tracking_number,
-    //           school_name: school_name,
-    //           LgaName: LgaName,
-    //           RegionName: RegionName,
-    //           user_id: user_id,
-    //           registry_type_id: registry_type_id,
-    //           registry: registry,
-    //           created_at: created_at,
-    //           remain_days: remain_days,
-    //           schoolCategory: schoolCategory,
-    //         });
-    //       }
-    //       return res.send({
-    //         error: false,
-    //         statusCode: 300,
-    //         dataSummary: total_month,
-    //         dataList: obj,
-    //         message: "List of maombi kuanzisha shule.",
-    //       });
-    //     }
-    //   );
-    // } else if (UserLevel == "k1" || UserLevel == 4) {
-    //   db.query(
-    //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-    //       " applications.created_at as created_at, applications.user_id as user_id, " +
-    //       " applications.foreign_token as foreign_token, " +
-    //       " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-    //       " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-    //       " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-    //       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-    //       " school_registrations.establishing_school_id = establishing_schools.id AND " +
-    //       " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-    //       " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id <> ?",
-    //     [4, UserLevel, 2, Office, 3],
-    //     function (error, results, fields) {
-    //       if (error) {
-    //         console.log(error);
-    //       }
-    //       for (var i = 0; i < results.length; i++) {
-    //         // console.log(results)
-    //         var tracking_number = results[i].tracking_number;
-    //         var registry_type_id = results[i].registry_type_id;
-    //         var user_id = results[i].user_id;
-    //         var foreign_token = results[i].foreign_token;
-    //         var school_name = results[i].school_name;
-    //         var LgaName = results[i].LgaName;
-    //         var RegionName = results[i].RegionName;
-    //         var RegionName = results[i].RegionName;
-    //         var registry = results[i].registry;
-    //         var created_at = results[i].created_at;
-    //         var schoolCategory = results[i].schoolCategory;
-    //         var applicantname;
-    //         var today = new Date();
-  
-    //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-    //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-    //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-    //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-    //         var seconds = Math.floor(diffInSeconds % 60);
-    //         var milliseconds = Math.round(
-    //           (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-    //         );
-  
-    //         var remain_days;
-    //         if (days > 0) {
-    //           remain_days = "Siku " + days;
-    //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-    //           remain_days = "Sek " + seconds + " zilizopita";
-    //         } else if (days <= 0 && hours <= 0) {
-    //           remain_days = "Dakika " + minutes + " zilizopita";
-    //         } else if (days <= 0) {
-    //           remain_days = "Saa " + hours;
-    //         }
-    //         obj.push({
-    //           tracking_number: tracking_number,
-    //           school_name: school_name,
-    //           LgaName: LgaName,
-    //           RegionName: RegionName,
-    //           user_id: user_id,
-    //           registry_type_id: registry_type_id,
-    //           registry: registry,
-    //           created_at: created_at,
-    //           remain_days: remain_days,
-    //           schoolCategory: schoolCategory,
-    //         });
-    //       }
-    //       return res.send({
-    //         error: false,
-    //         statusCode: 300,
-    //         dataSummary: total_month,
-    //         dataList: obj,
-    //         message: "List of maombi kuanzisha shule.",
-    //       });
-    //     }
-    //   );
-    // } else {
-    //   db.query(
-    //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-    //       " applications.created_at as created_at, applications.user_id as user_id, " +
-    //       " applications.foreign_token as foreign_token, " +
-    //       " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-    //       " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-    //       " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-    //       " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-    //       " school_registrations.establishing_school_id = establishing_schools.id AND " +
-    //       " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-    //       " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND applications.registry_type_id <> ?",
-    //     [4, UserLevel, 2, 3],
-    //     function (error, results, fields) {
-    //       if (error) {
-    //         console.log(error);
-    //       }
-    //       for (var i = 0; i < results.length; i++) {
-    //         // console.log(results)
-    //         var tracking_number = results[i].tracking_number;
-    //         var registry_type_id = results[i].registry_type_id;
-    //         var user_id = results[i].user_id;
-    //         var foreign_token = results[i].foreign_token;
-    //         var school_name = results[i].school_name;
-    //         var LgaName = results[i].LgaName;
-    //         var RegionName = results[i].RegionName;
-    //         var RegionName = results[i].RegionName;
-    //         var registry = results[i].registry;
-    //         var created_at = results[i].created_at;
-    //         var schoolCategory = results[i].schoolCategory;
-    //         var applicantname;
-    //         var today = new Date();
-  
-    //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-    //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-    //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-    //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-    //         var seconds = Math.floor(diffInSeconds % 60);
-    //         var milliseconds = Math.round(
-    //           (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-    //         );
-  
-    //         var remain_days;
-    //         if (days > 0) {
-    //           remain_days = "Siku " + days;
-    //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-    //           remain_days = "Sek " + seconds + " zilizopita";
-    //         } else if (days <= 0 && hours <= 0) {
-    //           remain_days = "Dakika " + minutes + " zilizopita";
-    //         } else if (days <= 0) {
-    //           remain_days = "Saa " + hours;
-    //         }
-    //         obj.push({
-    //           tracking_number: tracking_number,
-    //           school_name: school_name,
-    //           LgaName: LgaName,
-    //           RegionName: RegionName,
-    //           user_id: user_id,
-    //           registry_type_id: registry_type_id,
-    //           registry: registry,
-    //           created_at: created_at,
-    //           remain_days: remain_days,
-    //           schoolCategory: schoolCategory,
-    //         });
-    //       }
-    //       return res.send({
-    //         error: false,
-    //         statusCode: 300,
-    //         dataSummary: total_month,
-    //         dataList: obj,
-    //         message: "List of maombi kuanzisha shule.",
-    //       });
-    //     }
-    //   );
-    // }
     });
 });
 
@@ -339,7 +116,8 @@ sajiliBinafsiRequestRouter.post(
     permission('view-school-owners-and-managers'), 
     (req, res) => {
       var trackingNumber = req.body.TrackingNumber;
-      var userLevel = req.user.user_level;
+      const user = req.user;
+      var userLevel = user.user_level;
       var office = req.body.office;
       console.log(req.body);
       var todaydate = dateandtime.format(new Date(), "DD/MM/YYYY");
@@ -354,7 +132,7 @@ sajiliBinafsiRequestRouter.post(
       var SeminaryTitle;
   
       db.query(
-        "SELECT establishing_schools.id as schoolId, " +
+        "SELECT establishing_schools.id as schoolId, application_category_id," +
           " school_registrations.registration_number as reg_no, " +
           " school_registrations.updated_at as approved_at, number_of_teachers, gender_type, teacher_student_ratio_recommendation, " +
           " registration_structures.structure as structure, school_opening_date, number_of_students, " +
@@ -400,6 +178,7 @@ sajiliBinafsiRequestRouter.post(
             var school_email = results[0].school_email;
             var school_name = results[0].school_name;
             var gender_type = results[0].gender_type;
+            var application_category_id = results[0].application_category_id;
             var LgaName = results[0].LgaName;
             var reg_no = results[0].reg_no;
             var RegionName = results[0].RegionName;
@@ -477,15 +256,16 @@ sajiliBinafsiRequestRouter.post(
               }
             }
           );
-  
-          //w1
-          if (userLevel == "w1") {
             db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level " +
-                " AND staffs.user_level IN (?, ?) AND staffs.office = ?",
-              [1, 3, 2, office],
+              `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
+                        s.name as name, phone_no, r.name as role_name 
+                FROM staffs s
+                JOIN roles r ON r.id = s.user_level
+                JOIN vyeo v ON v.id = r.vyeoId
+                WHERE s.user_status = 1 AND v.id = ${
+                  user.section_id
+                } ${selectStaffsBySection(user)}
+                ORDER BY name ASC`,
               function (error, results, fields) {
                 if (error) {
                   console.log(error);
@@ -512,455 +292,12 @@ sajiliBinafsiRequestRouter.post(
                 }
               }
             );
-          }
-          //ofsaw1
-          if (userLevel == 3) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND staffs.office = ?",
-              [1, 1, office],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //k1
-          if (userLevel == "k1") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND office = ? ",
-              [1, 4, office],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mus
-          if (userLevel == "mus") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND " +
-                " staffs.user_level IN (?, ?, ?)",
-              [1, 13, 14, 15],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmusu
-          if (userLevel == "mus-") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmusm
-          if (userLevel == 15) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmuss
-          if (userLevel == "mus-") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //maafsa mus
-          if (userLevel == 16) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-              [1, 13, 14, 15],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //ofsak1
-          if (userLevel == 4) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 2],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //adsa
-          if (userLevel == "adsa") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?)",
-              [1, 7, 9],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //usj
-          if (userLevel == 7) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 5],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //oke
-          if (userLevel == 8) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 9],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //ke
-          if (userLevel == "ke") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-              [1, 5, 8, 12],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //admin
-          if (userLevel == 33) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level",
-              [1],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
+            // console.log(application_category_id , registry_type_id)
           db.query(
-            "SELECT attachment_types.id as id, app_name, file_size, file_format, attachment_name, registry " +
-              " FROM attachment_types, application_categories, " +
-              " registry_types WHERE application_categories.id = attachment_types.application_category_id " +
-              " AND attachment_types.registry_type_id = registry_types.id",
+            `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
+              FROM attachment_types
+              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+                    AND application_category_id = ${application_category_id}`,
             function (error, results, fields) {
               if (error) {
                 console.log(error);
@@ -1043,12 +380,14 @@ sajiliBinafsiRequestRouter.post(
             }
           );
   
-          db.query(
-            "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-              " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-              " AND trackingNo = ? ORDER BY maoni.id DESC",
+          db.query(`SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
+                    roles.name AS cheo 
+                    FROM maoni, staffs, roles 
+                    WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
+                    AND trackingNo = ? 
+                    ORDER BY maoni.id DESC`,
             [trackingNumber],
-            function (error, results, fields) {
+            function (error, results) {
               if (error) {
                 console.log(error);
               }
@@ -1057,7 +396,7 @@ sajiliBinafsiRequestRouter.post(
                 var user_from = results[i].user_from;
                 var user_to = results[i].user_to;
                 var coments = results[i].coments;
-                var rank_name = results[i].rank_name;
+                var rank_name = results[i].cheo;
                 var created_at = results[i].created_at;
                 // created_at = dateandtime.format( new Date(created_at),'DD/MM/YYYY');
                 objMaoni.push({
@@ -1349,7 +688,286 @@ sajiliBinafsiRequestRouter.post(
 );
 
 
-//total application of the month
+sajiliBinafsiRequestRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
+  const tracking_number = req.body.trackerId;
+  const schoolCatId = req.body.schoolCategoryID;
+  const today = new Date();
+  sharedModel.findOneApplication(tracking_number, (app) => {
+    const app_category = app["application_category_id"];
+    if (app_category) {
+      sharedModel.tumaMaoni(req, app_category, (success) => {
+      
+          if (req.body.haliombi == 2) {
+             sharedModel.updateAlgorithm(tracking_number, schoolCatId, () => {
+                // console.log(updated);
+               db.query(
+                 `SELECT last_number FROM algorthm WHERE id = ?`,
+                 [schoolCatId],
+                 function (error, results, fields) {
+                   if (error) {
+                     console.log(error);
+                   }
+                   //  console.log(results);
+                   var last_number = results[0].last_number;
+                   let givenNo = parseInt(last_number);
+                   var finalNumber;
+                   if (schoolCatId == 1) {
+                     finalNumber = "EA." + givenNo;
+                   }
+                   if (schoolCatId == 2) {
+                     finalNumber = "EM." + givenNo;
+                   }
+                   if (schoolCatId == 3) {
+                     finalNumber = "S." + givenNo;
+                   }
+                   if (schoolCatId == 4) {
+                     finalNumber = "CU." + givenNo;
+                   }
+                   console.log("finalNumber11");
+                   console.log(finalNumber);
+                   db.query(
+                     "UPDATE school_registrations SET registration_number = ?, registration_date = ?, updated_at = ?, " +
+                       " reg_status = ? WHERE tracking_number = ?",
+                     [
+                       finalNumber,
+                       formatDate(today, "YYYY-MM-DD"),
+                       today,
+                       1,
+                       req.body.trackerId,
+                     ],
+                     function (error) {
+                       if (error) {
+                         console.log(error);
+                       }
+
+                       db.query(
+                         "UPDATE algorthm SET last_number = ? WHERE id = ?",
+                         [givenNo, schoolCatId],
+                         function (error, results, fields) {
+                           if (error) {
+                             console.log(error);
+                           }
+                         }
+                       );
+                     }
+                   );
+                 }
+               );
+             });
+          }
+          return res.send({
+            error: success ? false : true,
+            statusCode: success ? 300 : 306,
+            data: success ? "success" : "fail",
+            message: "Majibu Successfully Recorded.",
+          });
+      
+      });
+    }
+  });
+});
+
+// router.post("/tuma-sajili-majibu", shirikishoValidation, (req, res, next) => {
+//   console.log(req.body);
+//   var obj = [];
+//   var schoolCatId = req.body.schoolCategoryID;
+//   var today = new Date();
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+//     (${db.escape(req.body.trackerId)}, ${db.escape(
+//       req.body.from_user
+//     )}, ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
+//     ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       db.query(
+//         "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
+//         [
+//           req.body.staffs,
+//           req.body.department,
+//           req.body.haliombi,
+//           today,
+//           req.body.trackerId,
+//         ],
+//         function (error, results, fields) {
+//           if (error) {
+//             console.log(error);
+//           }
+//           if (req.body.haliombi == 1) {
+//             db.query(
+//               "select email from staffs where id = ?",
+//               [req.body.staffs],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 var email = results[0].email;
+//                 let transporter = nodeMailer.createTransport({
+//                   host: process.env.MAIL_HOST,
+//                   port: 465,
+//                   secure: true,
+//                   auth: {
+//                     user: process.env.MAIL_USER,
+//                     pass: process.env.MAIL_PASS,
+//                   },
+//                 });
+//                 let mailOptions = {
+//                   from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+//                   to: email, // list of receivers
+//                   subject: "Taarifa ya Ombi", // Subject line
+//                   html:
+//                     "Ombi la Kuanzisha shule lenye namba " +
+//                     req.body.trackerId +
+//                     " limetumwa kwako. Asante", // plain text body
+//                   text: "<b>EA.20220920-220</b>", // html body
+//                 };
+
+//                 transporter.sendMail(mailOptions, (error, info) => {
+//                   if (error) {
+//                     return console.log(error);
+//                   }
+//                   console.log(
+//                     "Message %s sent: %s",
+//                     info.messageId,
+//                     info.response
+//                   );
+//                   // res.render('index');
+//                   return res.status(200).send({
+//                     error: true,
+//                     statusCode: 300,
+//                     msg: "Mail imetumwa!!!",
+//                   });
+//                 });
+//               }
+//             );
+//           }
+//           if (req.body.haliombi == 2) {
+//             console.log("yes we can do it");
+//             db.query(
+//               "select last_number from algorthm where id = ?",
+//               [schoolCatId],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 console.log(results);
+//                 var last_number = results[0].last_number;
+//                 let valueT = 1;
+//                 let givenNo = parseInt(last_number) + parseInt(valueT);
+//                 var finalNumber;
+//                 if (schoolCatId == 1) {
+//                   finalNumber = "EA." + givenNo;
+//                 }
+//                 if (schoolCatId == 2) {
+//                   finalNumber = "EM." + givenNo;
+//                 }
+//                 if (schoolCatId == 3) {
+//                   finalNumber = "S." + givenNo;
+//                 }
+//                 if (schoolCatId == 4) {
+//                   finalNumber = "CU." + givenNo;
+//                 }
+//                 console.log("finalNumber11");
+//                 console.log(finalNumber);
+//                 db.query(
+//                   "UPDATE school_registrations SET registration_number = ?, updated_at = ?, " +
+//                     " reg_status = ? WHERE tracking_number = ?",
+//                   [finalNumber, today, 1, req.body.trackerId],
+//                   function (error, results, fields) {
+//                     if (error) {
+//                       console.log(error);
+//                     }
+//                     db.query(
+//                       "UPDATE algorthm SET last_number = ? WHERE id = ?",
+//                       [givenNo, schoolCatId],
+//                       function (error, results, fields) {
+//                         if (error) {
+//                           console.log(error);
+//                         }
+//                       }
+//                     );
+//                   }
+//                 );
+//               }
+//             );
+//             db.query(
+//               `SELECT id FROM maoni where 
+//                 trackingNo = ${db.escape(req.body.trackerId)} AND 
+//                 user_from = ${db.escape(req.body.from_user)} AND 
+//                 user_to = ${db.escape(
+//                   req.body.staffs
+//                 )} AND coments = ${db.escape(req.body.coments)}`,
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 var rollId = results[0].id;
+//                 InsertAuditTrail(
+//                   decoded.id,
+//                   "created",
+//                   req.body,
+//                   req.url,
+//                   req.body.browser_used,
+//                   rollId,
+//                   "Usajili wa shule/chuo umekamilika!",
+//                   req.body.ip_address,
+//                   "maoni"
+//                 );
+//               }
+//             );
+//           }
+//           db.query(
+//             `SELECT id FROM maoni where 
+//         trackingNo = ${db.escape(req.body.trackerId)} AND 
+//         user_from = ${db.escape(req.body.from_user)} AND 
+//         user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
+//               req.body.coments
+//             )}`,
+//             function (error, results, fields) {
+//               if (error) {
+//                 console.log(error);
+//               }
+//               var rollId = results[0].id;
+//               InsertAuditTrail(
+//                 decoded.id,
+//                 "created",
+//                 req.body,
+//                 req.url,
+//                 req.body.browser_used,
+//                 rollId,
+//                 "maoni ya usajili yamerekodiwa!",
+//                 req.body.ip_address,
+//                 "maoni"
+//               );
+//             }
+//           );
+//           return res.send({
+//             error: false,
+//             statusCode: 300,
+//             data: "success",
+//             message: "Majibu Successfully Recorded.",
+//           });
+//           // });
+//         }
+//       );
+//     }
+//   );
+// });
 
 
 module.exports = sajiliBinafsiRequestRouter;

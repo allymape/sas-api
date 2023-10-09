@@ -3681,160 +3681,160 @@ router.post("/deleteMchepuo", (req, res, next) => {
 //   );
 // });
 
-router.post("/tuma-mmiliki-majibu", shirikishoValidation, (req, res, next) => {
-  console.log(req.body);
-  var owner_name = req.body.owner_name;
-  var authorized_person = req.body.authorized_person;
-  var owner_name_old = req.body.owner_name_old;
-  var authorized_person_old = req.body.authorized_person_old;
-  var today = new Date();
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
-    (${db.escape(req.body.trackerId)}, ${db.escape(
-      req.body.from_user
-    )}, ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
-    ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      db.query(
-        "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
-        [
-          req.body.staffs,
-          req.body.department,
-          req.body.haliombi,
-          today,
-          req.body.trackerId,
-        ],
-        function (error, results, fields) {
-          if (error) {
-            console.log(error);
-          }
-          if (req.body.haliombi == 1) {
-            db.query(
-              "select email from staffs where id = ?",
-              [req.body.staffs],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                var email = results[0].email;
-                let transporter = nodeMailer.createTransport({
-                  host: process.env.MAIL_HOST,
-                  port: 465,
-                  secure: true,
-                  auth: {
-                    user: process.env.MAIL_USER,
-                    pass: process.env.MAIL_PASS,
-                  },
-                });
-                let mailOptions = {
-                  from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-                  to: email, // list of receivers
-                  subject: "Taarifa ya Ombi", // Subject line
-                  html:
-                    "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " +
-                    req.body.trackerId +
-                    " limetumwa kwako. Asante", // plain text body
-                  text: "<b>EA.20220920-220</b>", // html body
-                };
+// router.post("/tuma-mmiliki-majibu", shirikishoValidation, (req, res, next) => {
+//   console.log(req.body);
+//   var owner_name = req.body.owner_name;
+//   var authorized_person = req.body.authorized_person;
+//   var owner_name_old = req.body.owner_name_old;
+//   var authorized_person_old = req.body.authorized_person_old;
+//   var today = new Date();
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+//     (${db.escape(req.body.trackerId)}, ${db.escape(
+//       req.body.from_user
+//     )}, ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
+//     ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       db.query(
+//         "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
+//         [
+//           req.body.staffs,
+//           req.body.department,
+//           req.body.haliombi,
+//           today,
+//           req.body.trackerId,
+//         ],
+//         function (error, results, fields) {
+//           if (error) {
+//             console.log(error);
+//           }
+//           if (req.body.haliombi == 1) {
+//             db.query(
+//               "select email from staffs where id = ?",
+//               [req.body.staffs],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 var email = results[0].email;
+//                 let transporter = nodeMailer.createTransport({
+//                   host: process.env.MAIL_HOST,
+//                   port: 465,
+//                   secure: true,
+//                   auth: {
+//                     user: process.env.MAIL_USER,
+//                     pass: process.env.MAIL_PASS,
+//                   },
+//                 });
+//                 let mailOptions = {
+//                   from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+//                   to: email, // list of receivers
+//                   subject: "Taarifa ya Ombi", // Subject line
+//                   html:
+//                     "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " +
+//                     req.body.trackerId +
+//                     " limetumwa kwako. Asante", // plain text body
+//                   text: "<b>EA.20220920-220</b>", // html body
+//                 };
 
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    return console.log(error);
-                  }
-                  console.log(
-                    "Message %s sent: %s",
-                    info.messageId,
-                    info.response
-                  );
-                  // res.render('index');
-                  return res.status(200).send({
-                    error: true,
-                    statusCode: 300,
-                    msg: "Mail imetumwa!!!",
-                  });
-                });
-              }
-            );
-          }
-          if (req.body.haliombi == 2) {
-            db.query(
-              "UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?",
-              [today, req.body.establishId],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                  console.log("yes we can do it");
-                }
-                db.query(
-                  "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
-                  [owner_name, authorized_person, req.body.establishId],
-                  function (error, results, fields) {
-                    if (error) {
-                      console.log(error);
-                    }
-                    if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                      console.log("yes we can do it");
-                    }
-                  }
-                );
-              }
-            );
-          }
-          db.query(
-            `SELECT id FROM maoni where 
-        trackingNo = ${db.escape(req.body.trackerId)} AND 
-        user_from = ${db.escape(req.body.from_user)} AND 
-        user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
-              req.body.coments
-            )}`,
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              var rollId = results[0].id;
-              InsertAuditTrail(
-                decoded.id,
-                "created",
-                req.body,
-                req.url,
-                req.body.browser_used,
-                rollId,
-                "Maoni ya umiliki yameongezwa!",
-                req.body.ip_address,
-                "maoni"
-              );
-            }
-          );
-          return res.send({
-            error: false,
-            statusCode: 300,
-            data: "success",
-            message: "Majibu Successfully Recorded.",
-          });
-          // });
-        }
-      );
-    }
-  );
-});
+//                 transporter.sendMail(mailOptions, (error, info) => {
+//                   if (error) {
+//                     return console.log(error);
+//                   }
+//                   console.log(
+//                     "Message %s sent: %s",
+//                     info.messageId,
+//                     info.response
+//                   );
+//                   // res.render('index');
+//                   return res.status(200).send({
+//                     error: true,
+//                     statusCode: 300,
+//                     msg: "Mail imetumwa!!!",
+//                   });
+//                 });
+//               }
+//             );
+//           }
+//           if (req.body.haliombi == 2) {
+//             db.query(
+//               "UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?",
+//               [today, req.body.establishId],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+//                   console.log("yes we can do it");
+//                 }
+//                 db.query(
+//                   "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
+//                   [owner_name, authorized_person, req.body.establishId],
+//                   function (error, results, fields) {
+//                     if (error) {
+//                       console.log(error);
+//                     }
+//                     if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+//                       console.log("yes we can do it");
+//                     }
+//                   }
+//                 );
+//               }
+//             );
+//           }
+//           db.query(
+//             `SELECT id FROM maoni where 
+//         trackingNo = ${db.escape(req.body.trackerId)} AND 
+//         user_from = ${db.escape(req.body.from_user)} AND 
+//         user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
+//               req.body.coments
+//             )}`,
+//             function (error, results, fields) {
+//               if (error) {
+//                 console.log(error);
+//               }
+//               var rollId = results[0].id;
+//               InsertAuditTrail(
+//                 decoded.id,
+//                 "created",
+//                 req.body,
+//                 req.url,
+//                 req.body.browser_used,
+//                 rollId,
+//                 "Maoni ya umiliki yameongezwa!",
+//                 req.body.ip_address,
+//                 "maoni"
+//               );
+//             }
+//           );
+//           return res.send({
+//             error: false,
+//             statusCode: 300,
+//             data: "success",
+//             message: "Majibu Successfully Recorded.",
+//           });
+//           // });
+//         }
+//       );
+//     }
+//   );
+// });
 
 router.post("/tuma-meneja-majibu", shirikishoValidation, (req, res, next) => {
   console.log(req.body);
@@ -5004,207 +5004,207 @@ router.post("/change-shule", shirikishoValidation, (req, res, next) => {
 });
 
 //kusajili shirikisho
-router.post("/tuma-sajili-majibu", shirikishoValidation, (req, res, next) => {
-  console.log(req.body);
-  var obj = [];
-  var schoolCatId = req.body.schoolCategoryID;
-  var today = new Date();
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
-    (${db.escape(req.body.trackerId)}, ${db.escape(
-      req.body.from_user
-    )}, ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
-    ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      db.query(
-        "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
-        [
-          req.body.staffs,
-          req.body.department,
-          req.body.haliombi,
-          today,
-          req.body.trackerId,
-        ],
-        function (error, results, fields) {
-          if (error) {
-            console.log(error);
-          }
-          if (req.body.haliombi == 1) {
-            db.query(
-              "select email from staffs where id = ?",
-              [req.body.staffs],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                var email = results[0].email;
-                let transporter = nodeMailer.createTransport({
-                  host: process.env.MAIL_HOST,
-                  port: 465,
-                  secure: true,
-                  auth: {
-                    user: process.env.MAIL_USER,
-                    pass: process.env.MAIL_PASS,
-                  },
-                });
-                let mailOptions = {
-                  from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-                  to: email, // list of receivers
-                  subject: "Taarifa ya Ombi", // Subject line
-                  html:
-                    "Ombi la Kuanzisha shule lenye namba " +
-                    req.body.trackerId +
-                    " limetumwa kwako. Asante", // plain text body
-                  text: "<b>EA.20220920-220</b>", // html body
-                };
+// router.post("/tuma-sajili-majibu", shirikishoValidation, (req, res, next) => {
+//   console.log(req.body);
+//   var obj = [];
+//   var schoolCatId = req.body.schoolCategoryID;
+//   var today = new Date();
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+//     (${db.escape(req.body.trackerId)}, ${db.escape(
+//       req.body.from_user
+//     )}, ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
+//     ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       db.query(
+//         "UPDATE applications SET userId = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
+//         [
+//           req.body.staffs,
+//           req.body.department,
+//           req.body.haliombi,
+//           today,
+//           req.body.trackerId,
+//         ],
+//         function (error, results, fields) {
+//           if (error) {
+//             console.log(error);
+//           }
+//           if (req.body.haliombi == 1) {
+//             db.query(
+//               "select email from staffs where id = ?",
+//               [req.body.staffs],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 var email = results[0].email;
+//                 let transporter = nodeMailer.createTransport({
+//                   host: process.env.MAIL_HOST,
+//                   port: 465,
+//                   secure: true,
+//                   auth: {
+//                     user: process.env.MAIL_USER,
+//                     pass: process.env.MAIL_PASS,
+//                   },
+//                 });
+//                 let mailOptions = {
+//                   from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
+//                   to: email, // list of receivers
+//                   subject: "Taarifa ya Ombi", // Subject line
+//                   html:
+//                     "Ombi la Kuanzisha shule lenye namba " +
+//                     req.body.trackerId +
+//                     " limetumwa kwako. Asante", // plain text body
+//                   text: "<b>EA.20220920-220</b>", // html body
+//                 };
 
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    return console.log(error);
-                  }
-                  console.log(
-                    "Message %s sent: %s",
-                    info.messageId,
-                    info.response
-                  );
-                  // res.render('index');
-                  return res.status(200).send({
-                    error: true,
-                    statusCode: 300,
-                    msg: "Mail imetumwa!!!",
-                  });
-                });
-              }
-            );
-          }
-          if (req.body.haliombi == 2) {
-            console.log("yes we can do it");
-            db.query(
-              "select last_number from algorthm where id = ?",
-              [schoolCatId],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                console.log(results);
-                var last_number = results[0].last_number;
-                let valueT = 1;
-                let givenNo = parseInt(last_number) + parseInt(valueT);
-                var finalNumber;
-                if (schoolCatId == 1) {
-                  finalNumber = "EA." + givenNo;
-                }
-                if (schoolCatId == 2) {
-                  finalNumber = "EM." + givenNo;
-                }
-                if (schoolCatId == 3) {
-                  finalNumber = "S." + givenNo;
-                }
-                if (schoolCatId == 4) {
-                  finalNumber = "CU." + givenNo;
-                }
-                console.log("finalNumber11");
-                console.log(finalNumber);
-                db.query(
-                  "UPDATE school_registrations SET registration_number = ?, updated_at = ?, " +
-                    " reg_status = ? WHERE tracking_number = ?",
-                  [finalNumber, today, 1, req.body.trackerId],
-                  function (error, results, fields) {
-                    if (error) {
-                      console.log(error);
-                    }
-                    db.query(
-                      "UPDATE algorthm SET last_number = ? WHERE id = ?",
-                      [givenNo, schoolCatId],
-                      function (error, results, fields) {
-                        if (error) {
-                          console.log(error);
-                        }
-                      }
-                    );
-                  }
-                );
-              }
-            );
-            db.query(
-              `SELECT id FROM maoni where 
-                trackingNo = ${db.escape(req.body.trackerId)} AND 
-                user_from = ${db.escape(req.body.from_user)} AND 
-                user_to = ${db.escape(
-                  req.body.staffs
-                )} AND coments = ${db.escape(req.body.coments)}`,
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                var rollId = results[0].id;
-                InsertAuditTrail(
-                  decoded.id,
-                  "created",
-                  req.body,
-                  req.url,
-                  req.body.browser_used,
-                  rollId,
-                  "Usajili wa shule/chuo umekamilika!",
-                  req.body.ip_address,
-                  "maoni"
-                );
-              }
-            );
-          }
-          db.query(
-            `SELECT id FROM maoni where 
-        trackingNo = ${db.escape(req.body.trackerId)} AND 
-        user_from = ${db.escape(req.body.from_user)} AND 
-        user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
-              req.body.coments
-            )}`,
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              var rollId = results[0].id;
-              InsertAuditTrail(
-                decoded.id,
-                "created",
-                req.body,
-                req.url,
-                req.body.browser_used,
-                rollId,
-                "maoni ya usajili yamerekodiwa!",
-                req.body.ip_address,
-                "maoni"
-              );
-            }
-          );
-          return res.send({
-            error: false,
-            statusCode: 300,
-            data: "success",
-            message: "Majibu Successfully Recorded.",
-          });
-          // });
-        }
-      );
-    }
-  );
-});
+//                 transporter.sendMail(mailOptions, (error, info) => {
+//                   if (error) {
+//                     return console.log(error);
+//                   }
+//                   console.log(
+//                     "Message %s sent: %s",
+//                     info.messageId,
+//                     info.response
+//                   );
+//                   // res.render('index');
+//                   return res.status(200).send({
+//                     error: true,
+//                     statusCode: 300,
+//                     msg: "Mail imetumwa!!!",
+//                   });
+//                 });
+//               }
+//             );
+//           }
+//           if (req.body.haliombi == 2) {
+//             console.log("yes we can do it");
+//             db.query(
+//               "select last_number from algorthm where id = ?",
+//               [schoolCatId],
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 console.log(results);
+//                 var last_number = results[0].last_number;
+//                 let valueT = 1;
+//                 let givenNo = parseInt(last_number) + parseInt(valueT);
+//                 var finalNumber;
+//                 if (schoolCatId == 1) {
+//                   finalNumber = "EA." + givenNo;
+//                 }
+//                 if (schoolCatId == 2) {
+//                   finalNumber = "EM." + givenNo;
+//                 }
+//                 if (schoolCatId == 3) {
+//                   finalNumber = "S." + givenNo;
+//                 }
+//                 if (schoolCatId == 4) {
+//                   finalNumber = "CU." + givenNo;
+//                 }
+//                 console.log("finalNumber11");
+//                 console.log(finalNumber);
+//                 db.query(
+//                   "UPDATE school_registrations SET registration_number = ?, updated_at = ?, " +
+//                     " reg_status = ? WHERE tracking_number = ?",
+//                   [finalNumber, today, 1, req.body.trackerId],
+//                   function (error, results, fields) {
+//                     if (error) {
+//                       console.log(error);
+//                     }
+//                     db.query(
+//                       "UPDATE algorthm SET last_number = ? WHERE id = ?",
+//                       [givenNo, schoolCatId],
+//                       function (error, results, fields) {
+//                         if (error) {
+//                           console.log(error);
+//                         }
+//                       }
+//                     );
+//                   }
+//                 );
+//               }
+//             );
+//             db.query(
+//               `SELECT id FROM maoni where 
+//                 trackingNo = ${db.escape(req.body.trackerId)} AND 
+//                 user_from = ${db.escape(req.body.from_user)} AND 
+//                 user_to = ${db.escape(
+//                   req.body.staffs
+//                 )} AND coments = ${db.escape(req.body.coments)}`,
+//               function (error, results, fields) {
+//                 if (error) {
+//                   console.log(error);
+//                 }
+//                 var rollId = results[0].id;
+//                 InsertAuditTrail(
+//                   decoded.id,
+//                   "created",
+//                   req.body,
+//                   req.url,
+//                   req.body.browser_used,
+//                   rollId,
+//                   "Usajili wa shule/chuo umekamilika!",
+//                   req.body.ip_address,
+//                   "maoni"
+//                 );
+//               }
+//             );
+//           }
+//           db.query(
+//             `SELECT id FROM maoni where 
+//         trackingNo = ${db.escape(req.body.trackerId)} AND 
+//         user_from = ${db.escape(req.body.from_user)} AND 
+//         user_to = ${db.escape(req.body.staffs)} AND coments = ${db.escape(
+//               req.body.coments
+//             )}`,
+//             function (error, results, fields) {
+//               if (error) {
+//                 console.log(error);
+//               }
+//               var rollId = results[0].id;
+//               InsertAuditTrail(
+//                 decoded.id,
+//                 "created",
+//                 req.body,
+//                 req.url,
+//                 req.body.browser_used,
+//                 rollId,
+//                 "maoni ya usajili yamerekodiwa!",
+//                 req.body.ip_address,
+//                 "maoni"
+//               );
+//             }
+//           );
+//           return res.send({
+//             error: false,
+//             statusCode: 300,
+//             data: "success",
+//             message: "Majibu Successfully Recorded.",
+//           });
+//           // });
+//         }
+//       );
+//     }
+//   );
+// });
 
 router.post("/futa-sajili", shirikishoValidation, (req, res, next) => {
   console.log(req.body);
