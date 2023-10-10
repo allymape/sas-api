@@ -18631,16 +18631,16 @@ router.post(
 //   //         if(token_id != 0){
 //   if (UserLevel == 11) {
 //     db.query(
-//       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-//         " applications.created_at as created_at, applications.user_id as user_id, " +
-//         " applications.foreign_token as foreign_token, " +
-//         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-//         " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
-//         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-//         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-//         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-//         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-//         " AND application_category_id = ? AND is_approved <> ?",
+      // "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+      //   " applications.created_at as created_at, applications.user_id as user_id, " +
+      //   " applications.foreign_token as foreign_token, " +
+      //   " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+      //   " districts.LgaName as LgaName from former_school_infos, establishing_schools, applications, " +
+      //   " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+      //   " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+      //   " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+      //   " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+      //   " AND application_category_id = ? AND is_approved <> ?",
 //       [14, 2],
 //       function (error, results, fields) {
 //         if (error) {
