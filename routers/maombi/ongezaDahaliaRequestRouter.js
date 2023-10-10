@@ -279,12 +279,13 @@ ongezaDahaliaRequestRouter.post(
 });
 
 ongezaDahaliaRequestRouter.post(
-    "/view-bweni-details", 
-    isAuth,
-    permission('view-school-owners-and-managers'), 
-    (req, res) => {
+  "/view-badili-dahalia",
+  isAuth,
+  permission("view-school-owners-and-managers"),
+  (req, res) => {
     var trackingNumber = req.body.TrackingNumber;
-    const user = req.user; var userLevel = user.user_level;
+    const user = req.user;
+    var userLevel = user.user_level;
     var office = req.body.office;
     // console.log("=====-==--++")
     var obj = [];
@@ -295,7 +296,7 @@ ongezaDahaliaRequestRouter.post(
     var objMaoni = [];
     var objAttachment1 = [];
     var objAttachment2 = [];
-  
+
     db.query(
       "SELECT establishing_schools.id as establishId, " +
         " school_sub_categories.subcategory as Newsubcategory, " +
@@ -339,7 +340,7 @@ ongezaDahaliaRequestRouter.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
+          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -349,7 +350,7 @@ ongezaDahaliaRequestRouter.post(
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
         }
-  
+
         db.query(
           "SELECT establishing_schools.id as establishId, " +
             " school_sub_categories.subcategory as Newsubcategory, " +
@@ -402,9 +403,9 @@ ongezaDahaliaRequestRouter.post(
               var Oldsubcategory = results[0].subcategory;
               // var establishId = results[0].establishId;
             }
-  
+
             var today = new Date();
-  
+
             var diffInSeconds = Math.abs(today - created_at) / 1000;
             var days = Math.floor(diffInSeconds / 60 / 60 / 24);
             var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
@@ -413,7 +414,7 @@ ongezaDahaliaRequestRouter.post(
             var milliseconds = Math.round(
               (diffInSeconds - Math.floor(diffInSeconds)) * 1000
             );
-  
+
             db.query(
               "select * from maoni WHERE trackingNo = ?",
               [trackingNumber],
@@ -477,7 +478,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -487,7 +488,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -536,7 +537,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -573,7 +574,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -584,7 +585,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -622,7 +623,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           console.log(objAttachment1);
                           return res.send({
                             error: false,
@@ -688,7 +689,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -698,7 +699,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -746,7 +747,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -782,7 +783,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -793,7 +794,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -831,7 +832,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -897,7 +898,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -907,7 +908,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -955,7 +956,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -991,7 +992,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -1002,7 +1003,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -1040,7 +1041,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -1107,7 +1108,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -1117,7 +1118,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -1165,7 +1166,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -1201,7 +1202,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -1212,7 +1213,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -1250,7 +1251,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -1316,7 +1317,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -1326,7 +1327,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -1351,7 +1352,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -1375,7 +1376,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -1411,7 +1412,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -1422,7 +1423,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -1460,7 +1461,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -1526,7 +1527,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -1536,7 +1537,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -1561,7 +1562,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -1585,7 +1586,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -1621,7 +1622,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -1632,7 +1633,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -1670,7 +1671,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -1736,7 +1737,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -1746,7 +1747,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -1771,7 +1772,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -1795,7 +1796,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -1831,7 +1832,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -1842,7 +1843,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -1880,7 +1881,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -1946,7 +1947,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -1956,7 +1957,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -1981,7 +1982,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -2005,7 +2006,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -2041,7 +2042,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -2052,7 +2053,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -2090,7 +2091,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -2156,7 +2157,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -2166,7 +2167,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -2191,7 +2192,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -2215,7 +2216,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -2251,7 +2252,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -2262,7 +2263,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -2300,7 +2301,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -2366,7 +2367,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -2376,7 +2377,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -2401,7 +2402,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -2425,7 +2426,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -2461,7 +2462,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -2472,7 +2473,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -2510,7 +2511,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -2576,7 +2577,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -2586,7 +2587,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -2611,7 +2612,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -2635,7 +2636,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -2671,7 +2672,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -2682,7 +2683,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -2720,7 +2721,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -2786,7 +2787,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -2796,7 +2797,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -2821,7 +2822,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -2845,7 +2846,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -2881,7 +2882,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -2892,7 +2893,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -2930,7 +2931,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -2996,7 +2997,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -3006,7 +3007,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -3031,7 +3032,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -3055,7 +3056,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -3091,7 +3092,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -3102,7 +3103,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -3140,7 +3141,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -3206,7 +3207,7 @@ ongezaDahaliaRequestRouter.post(
                       }
                     }
                   );
-  
+
                   db.query(
                     "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
                       " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
@@ -3216,7 +3217,7 @@ ongezaDahaliaRequestRouter.post(
                       if (error) {
                         console.log(error);
                       }
-  
+
                       for (var i = 0; i < results.length; i++) {
                         var name = results[i].name;
                         var user_from = results[i].user_from;
@@ -3241,7 +3242,7 @@ ongezaDahaliaRequestRouter.post(
                           rank_name: rank_name,
                         });
                       }
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
                           " FROM attachment_types",
@@ -3265,7 +3266,7 @@ ongezaDahaliaRequestRouter.post(
                           }
                         }
                       );
-  
+
                       db.query(
                         "SELECT attachment_types.id as id, file_size, file_format, " +
                           " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -3301,7 +3302,7 @@ ongezaDahaliaRequestRouter.post(
                             });
                           }
                           // console.log(objAttachment1)
-  
+
                           var remain_days = 0;
                           if (days > 0) {
                             remain_days = "Siku " + days;
@@ -3312,7 +3313,7 @@ ongezaDahaliaRequestRouter.post(
                           } else if (days <= 0) {
                             remain_days = "Saa " + hours;
                           }
-  
+
                           objAttachment2.push({
                             file_format: "",
                             attachment_name: "",
@@ -3350,7 +3351,7 @@ ongezaDahaliaRequestRouter.post(
                             structure: structure,
                             subcategory: Oldsubcategory,
                           });
-  
+
                           // console.log(obj)
                           return res.send({
                             error: false,
@@ -3376,6 +3377,7 @@ ongezaDahaliaRequestRouter.post(
         );
       }
     );
-  });
+  }
+);
 
 module.exports = ongezaDahaliaRequestRouter;

@@ -7,6 +7,7 @@ const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 
 const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const sharedModel = require("../../models/sharedModel");
 
 badiliMmilikiRequestRouter.post(
   "/maombi-badili-mmiliki-shule",
@@ -1079,6 +1080,48 @@ badiliMmilikiRequestRouter.post(
   }
 );
 
+badiliMmilikiRequestRouter.post("/tuma-mmiliki-badili-majibu", isAuth, (req, res) => {
+  const tracking_number = req.body.trackerId;
+  sharedModel.findOneApplication(tracking_number, (app) => {
+    const app_category = app["application_category_id"];
+    if (app_category) {
+      sharedModel.tumaMaoni(req, app_category, (success) => {
+        if (req.body.haliombi == 2) {
+          db.query(
+            "UPDATE owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
+            [owner_name_old, authorized_person_old, req.body.establishId],
+            function (error) {
+              if (error) {
+                console.log(error);
+              }
+              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+                console.log("yes we can do it");
+              }
+              db.query(
+                "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
+                [owner_name, authorized_person, req.body.establishId],
+                function (error) {
+                  if (error) {
+                    console.log(error);
+                  }
+                  if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+                    console.log("yes we can do it");
+                  }
+                }
+              );
+            }
+          );
+        }
+        return res.send({
+          error: success ? false : true,
+          statusCode: success ? 300 : 306,
+          data: success ? "success" : "fail",
+          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
+        });
+      });
+    }
+  });
+});
 
 //total application of the month
 

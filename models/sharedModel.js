@@ -84,6 +84,76 @@ module.exports = {
       }
     );
   },
+  getAttachmentTypes : (registry_type_id, application_category_id, registration_structure_id, callback) => {
+      const objAttachment = [];
+       db.query(
+         `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
+          FROM attachment_types
+          WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+          AND application_category_id = ${application_category_id}`,
+         function (error, results, fields) {
+           if (error) {
+             console.log(error);
+           }
+           for (var i = 0; i < results.length; i++) {
+             var file_format = results[i].file_format;
+             var app_id = results[i].id;
+             var attachment_name = results[i].attachment_name;
+             var registry = "";
+             var application_name = "";
+             objAttachment.push({
+               file_format: file_format,
+               attachment_name: attachment_name,
+               registry_id: app_id,
+               registry: registry,
+               application_name: application_name,
+             });
+           }
+           callback(objAttachment);
+         }
+       );
+  },
+  getAttachments : (tracking_number , callback) => {
+    const  objAttachment = [];
+     db.query(
+       "SELECT attachment_types.id as id, file_size, file_format, " +
+         " attachment_name, attachments.created_at as created_at, attachment_path " +
+         " FROM attachment_types, " +
+         " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+         " attachments.tracking_number = ?",
+       [tracking_number],
+       function (error, results) {
+         if (error) {
+           console.log(error);
+         }
+         for (var i = 0; i < results.length; i++) {
+           var file_format1 = results[i].file_format;
+           var app_id = results[i].id;
+           var attachment_name1 = results[i].attachment_name;
+           // var registry1 = results[i].registry;
+           var attachment_path = results[i].attachment_path;
+           var created_at = results[i].created_at;
+           // created_at = dateandtime.format(
+           //   new Date(created_at),
+           //   "DD/MM/YYYY HH:MM:SS"
+           // );
+           var file_size = results[i].file_size;
+           objAttachment.push({
+             file_format: file_format1,
+             attachment_name: attachment_name1,
+             registry_id: app_id,
+             file_size: file_size,
+             registry: "registry1",
+             application_name: "application_name1",
+             created_at: created_at,
+             attachment_path: attachment_path,
+           });
+         }
+         callback(objAttachment)
+         // console.log(objAttachment1)
+       }
+     );
+  },
   findApplicationDetails: (tracking_number, callback) => {
     const obj = [];
     const objAttachment = [];

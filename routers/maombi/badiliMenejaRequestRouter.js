@@ -7,6 +7,7 @@ const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 
 const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const sharedModel = require("../../models/sharedModel");
 
 badiliMenejaRequestRouter.post(
   "/maombi-badili-meneja-shule",
@@ -1072,7 +1073,34 @@ badiliMenejaRequestRouter.post(
   }
 );
 
-//total application of the month
-
-
+badiliMenejaRequestRouter.post("/tuma-meneja-majibu", isAuth, (req, res) => {
+  const tracking_number = req.body.trackerId;
+  sharedModel.findOneApplication(tracking_number, (app) => {
+    const app_category = app["application_category_id"];
+    if (app_category) {
+      sharedModel.tumaMaoni(req, app_category, (success) => {
+        if (req.body.haliombi == 2) {
+          db.query(
+            "UPDATE managers SET updated_at = ? WHERE establishing_school_id = ?",
+            [today, req.body.establishId],
+            function (error, results, fields) {
+              if (error) {
+                console.log(error);
+              }
+              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+                console.log("yes we can do it");
+              }
+            }
+          );
+        }
+        return res.send({
+          error: success ? false : true,
+          statusCode: success ? 300 : 306,
+          data: success ? "success" : "fail",
+          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
+        });
+      });
+    }
+  });
+});
 module.exports = badiliMenejaRequestRouter;

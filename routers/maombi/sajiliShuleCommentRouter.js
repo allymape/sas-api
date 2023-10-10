@@ -79,7 +79,7 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
             error: success ? false : true,
             statusCode: success ? 300 : 306,
             data: success ? "success" : "fail",
-            message: "Majibu Successfully Recorded.",
+            message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
           });
       
       });

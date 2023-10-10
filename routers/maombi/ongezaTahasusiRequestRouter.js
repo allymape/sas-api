@@ -3515,6 +3515,38 @@ ongezaTahasusiRequestRouter.post(
         }
       );
     }
-  );
+);
+
+ongezaTahasusiRequestRouter.post("/tuma-ongeza-majibu", isAuth, (req, res) => {
+  const tracking_number = req.body.trackerId;
+  sharedModel.findOneApplication(tracking_number, (app) => {
+    const app_category = app["application_category_id"];
+    if (app_category) {
+      sharedModel.tumaMaoni(req, app_category, (success) => {
+        if (req.body.haliombi == 2) {
+          db.query(
+            "INSERT INTO school_combinations (school_registration_id, combination_id) VALUES (? , ?)",
+            [req.body.establishId, req.body.newstream],
+            function (error) {
+              if (error) {
+                console.log(error);
+              }
+              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+                console.log("yes we can do it");
+              }
+            }
+          );
+        }
+        return res.send({
+          error: success ? false : true,
+          statusCode: success ? 300 : 306,
+          data: success ? "success" : "fail",
+          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
+        });
+      });
+    }
+  });
+});
+
 
 module.exports = ongezaTahasusiRequestRouter;
