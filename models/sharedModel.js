@@ -559,7 +559,7 @@ module.exports = {
               FROM school_registrations s
               WHERE s.tracking_number <> "${tracking_number}" 
                     AND s.registration_number LIKE "${code}%" 
-                    AND reg_status=1
+                    AND reg_status=2
               ORDER BY length(s.registration_number ) DESC,s.registration_number 
 			        LIMIT 1`,
       (error, result) => {

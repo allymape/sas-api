@@ -348,7 +348,7 @@ badiliUsajiliRequestRouter.post(
   permission("view-change-registration-type"),
   (req, res) => {
     var trackingNumber = req.body.TrackingNumber;
-    var userLevel = req.user.user_level;
+    const user = req.user; var userLevel = user.user_level;
     var office = req.body.office;
 
     var obj = [];

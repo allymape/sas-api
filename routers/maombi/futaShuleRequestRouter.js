@@ -342,7 +342,7 @@ futaShuleRequestRouter.post(
 futaShuleRequestRouter.post("/view-ombi-futa-details",isAuth,
   permission("view-deregistration-of-schools"), (req, res) => {
   var trackingNumber = req.body.TrackingNumber;
-  var userLevel = req.user.user_level;
+  const user = req.user; var userLevel = user.user_level;
   var office = req.body.office;
 
   var obj = [];

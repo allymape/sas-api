@@ -5,12 +5,12 @@ const request = require("request");
 const sajiliSerikaliRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
 
-  sajiliSerikaliRequestRouter.post( 
+  sajiliSerikaliRequestRouter.post(
     "/maombi-usajili-ser-shule",
-    isAuth, 
-    permission('view-school-owners-and-managers'), 
+    isAuth,
+    permission("view-school-registration-government"),
     (req, res, next) => {
       var obj = [];
       var obj1 = [];
@@ -31,316 +31,95 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
             console.log(error);
           }
           var total_month = results[0].total_month;
-            // if (UserLevel == 33) {
-                db.query(
-                  "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-                    " applications.created_at as created_at, applications.user_id as user_id, " +
-                    " applications.foreign_token as foreign_token, " +
-                    " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-                    " districts.LgaName as LgaName FROM school_registrations, establishing_schools, applications, " +
-                    " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-                    " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-                    " school_registrations.establishing_school_id = establishing_schools.id AND " +
-                    " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-                    " AND application_category_id = 4 AND applications.registry_type_id = 3 " +
-                    selectConditionByTitle(user),
-                  function (error, results) {
-                    if (error) {
-                      console.log(error);
-                    }
-                    for (var i = 0; i < results.length; i++) {
-                      console.log(results);
-                      var tracking_number = results[i].tracking_number;
-                      var registry_type_id = "";
-                      var user_id = results[i].user_id;
-                      var foreign_token = results[i].foreign_token;
-                      var school_name = results[i].school_name;
-                      var LgaName = results[i].LgaName;
-                      var RegionName = results[i].RegionName;
-                      var RegionName = results[i].RegionName;
-                      var registry = results[i].registry;
-                      var created_at = results[i].created_at;
-                      var schoolCategory = results[i].schoolCategory;
-                      var applicantname;
-                      var today = new Date();
+          // if (UserLevel == 33) {
+          db.query(
+            "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+              " applications.created_at as created_at, applications.user_id as user_id, " +
+              " applications.foreign_token as foreign_token, " +
+              " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+              " districts.LgaName as LgaName FROM school_registrations, establishing_schools, applications, " +
+              " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+              " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+              " school_registrations.establishing_school_id = establishing_schools.id AND " +
+              " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
+              " AND application_category_id = 4 AND applications.registry_type_id = 3 " +
+              selectConditionByTitle(user),
+            function (error, results) {
+              if (error) {
+                console.log(error);
+              }
+              console.log(results);
+              for (var i = 0; i < results.length; i++) {
+                console.log(results);
+                var tracking_number = results[i].tracking_number;
+                var registry_type_id = "";
+                var user_id = results[i].user_id;
+                var foreign_token = results[i].foreign_token;
+                var school_name = results[i].school_name;
+                var LgaName = results[i].LgaName;
+                var RegionName = results[i].RegionName;
+                var RegionName = results[i].RegionName;
+                var registry = results[i].registry;
+                var created_at = results[i].created_at;
+                var schoolCategory = results[i].schoolCategory;
+                var applicantname;
+                var today = new Date();
 
-                      var diffInSeconds = Math.abs(today - created_at) / 1000;
-                      var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                      var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                      var minutes = Math.floor((diffInSeconds / 60) % 60);
-                      var seconds = Math.floor(diffInSeconds % 60);
-                      var milliseconds = Math.round(
-                        (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                      );
-
-                      var remain_days;
-                      if (days > 0) {
-                        remain_days = "Siku " + days;
-                      } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                        remain_days = "Sek " + seconds + " zilizopita";
-                      } else if (days <= 0 && hours <= 0) {
-                        remain_days = "Dakika " + minutes + " zilizopita";
-                      } else if (days <= 0) {
-                        remain_days = "Saa " + hours;
-                      }
-                      obj.push({
-                        tracking_number: tracking_number,
-                        school_name: school_name,
-                        LgaName: LgaName,
-                        RegionName: RegionName,
-                        user_id: user_id,
-                        registry_type_id: registry_type_id,
-                        registry: registry,
-                        created_at: created_at,
-                        remain_days: remain_days,
-                        schoolCategory: schoolCategory,
-                      });
-                    }
-                    // console.log(obj)
-                    return res.send({
-                      error: false,
-                      statusCode: 300,
-                      dataSummary: total_month,
-                      dataList: obj,
-                      message: "List of maombi kuanzisha shule.",
-                    });
-                  }
+                var diffInSeconds = Math.abs(today - created_at) / 1000;
+                var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+                var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+                var minutes = Math.floor((diffInSeconds / 60) % 60);
+                var seconds = Math.floor(diffInSeconds % 60);
+                var milliseconds = Math.round(
+                  (diffInSeconds - Math.floor(diffInSeconds)) * 1000
                 );
-            // } else if (UserLevel == "w1" || UserLevel == 3) {
-            //     db.query(
-            //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-            //         " applications.created_at as created_at, applications.user_id as user_id, " +
-            //         " applications.foreign_token as foreign_token, " +
-            //         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-            //         " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-            //         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-            //         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            //         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-            //         " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-            //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND districts.LgaCode = ? AND applications.registry_type_id = ?",
-            //     [4, UserLevel, 2, Office, 3],
-            //     function (error, results, fields) {
-            //         if (error) {
-            //         console.log(error);
-            //         }
-            //         for (var i = 0; i < results.length; i++) {
-            //         console.log(results);
-            //         var tracking_number = results[i].tracking_number;
-            //         var registry_type_id = results[i].registry_type_id;
-            //         var user_id = results[i].user_id;
-            //         var foreign_token = results[i].foreign_token;
-            //         var school_name = results[i].school_name;
-            //         var LgaName = results[i].LgaName;
-            //         var RegionName = results[i].RegionName;
-            //         var RegionName = results[i].RegionName;
-            //         var registry = results[i].registry;
-            //         var created_at = results[i].created_at;
-            //         var schoolCategory = results[i].schoolCategory;
-            //         var applicantname;
-            //         var today = new Date();
-        
-            //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-            //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-            //         var seconds = Math.floor(diffInSeconds % 60);
-            //         var milliseconds = Math.round(
-            //             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            //         );
-        
-            //         var remain_days;
-            //         if (days > 0) {
-            //             remain_days = "Siku " + days;
-            //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            //             remain_days = "Sek " + seconds + " zilizopita";
-            //         } else if (days <= 0 && hours <= 0) {
-            //             remain_days = "Dakika " + minutes + " zilizopita";
-            //         } else if (days <= 0) {
-            //             remain_days = "Saa " + hours;
-            //         }
-            //         obj.push({
-            //             tracking_number: tracking_number,
-            //             school_name: school_name,
-            //             LgaName: LgaName,
-            //             RegionName: RegionName,
-            //             user_id: user_id,
-            //             registry_type_id: registry_type_id,
-            //             registry: registry,
-            //             created_at: created_at,
-            //             remain_days: remain_days,
-            //             schoolCategory: schoolCategory,
-            //         });
-            //         }
-            //         return res.send({
-            //         error: false,
-            //         statusCode: 300,
-            //         dataSummary: total_month,
-            //         dataList: obj,
-            //         message: "List of maombi kuanzisha shule.",
-            //         });
-            //     }
-            //     );
-            // } else if (UserLevel == "k1" || UserLevel == 4) {
-            //     db.query(
-            //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-            //         " applications.created_at as created_at, applications.user_id as user_id, " +
-            //         " applications.foreign_token as foreign_token, " +
-            //         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-            //         " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-            //         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-            //         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            //         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-            //         " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-            //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND regions.zone_id = ? AND applications.registry_type_id = ?",
-            //     [4, UserLevel, 2, Office, 3],
-            //     function (error, results, fields) {
-            //         if (error) {
-            //         console.log(error);
-            //         }
-            //         for (var i = 0; i < results.length; i++) {
-            //         // console.log(results)
-            //         var tracking_number = results[i].tracking_number;
-            //         var registry_type_id = results[i].registry_type_id;
-            //         var user_id = results[i].user_id;
-            //         var foreign_token = results[i].foreign_token;
-            //         var school_name = results[i].school_name;
-            //         var LgaName = results[i].LgaName;
-            //         var RegionName = results[i].RegionName;
-            //         var RegionName = results[i].RegionName;
-            //         var registry = results[i].registry;
-            //         var created_at = results[i].created_at;
-            //         var schoolCategory = results[i].schoolCategory;
-            //         var applicantname;
-            //         var today = new Date();
-        
-            //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-            //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-            //         var seconds = Math.floor(diffInSeconds % 60);
-            //         var milliseconds = Math.round(
-            //             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            //         );
-        
-            //         var remain_days;
-            //         if (days > 0) {
-            //             remain_days = "Siku " + days;
-            //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            //             remain_days = "Sek " + seconds + " zilizopita";
-            //         } else if (days <= 0 && hours <= 0) {
-            //             remain_days = "Dakika " + minutes + " zilizopita";
-            //         } else if (days <= 0) {
-            //             remain_days = "Saa " + hours;
-            //         }
-            //         obj.push({
-            //             tracking_number: tracking_number,
-            //             school_name: school_name,
-            //             LgaName: LgaName,
-            //             RegionName: RegionName,
-            //             user_id: user_id,
-            //             registry_type_id: registry_type_id,
-            //             registry: registry,
-            //             created_at: created_at,
-            //             remain_days: remain_days,
-            //             schoolCategory: schoolCategory,
-            //         });
-            //         }
-            //         return res.send({
-            //         error: false,
-            //         statusCode: 300,
-            //         dataSummary: total_month,
-            //         dataList: obj,
-            //         message: "List of maombi kuanzisha shule.",
-            //         });
-            //     }
-            //     );
-            // } else {
-            //     db.query(
-            //     "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-            //         " applications.created_at as created_at, applications.user_id as user_id, " +
-            //         " applications.foreign_token as foreign_token, " +
-            //         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-            //         " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-            //         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-            //         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            //         " school_registrations.establishing_school_id = establishing_schools.id AND " +
-            //         " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-            //         " AND application_category_id = ? AND status_id = ? AND is_approved <> ? AND applications.registry_type_id = ?",
-            //     [4, UserLevel, 2, 3],
-            //     function (error, results, fields) {
-            //         if (error) {
-            //         console.log(error);
-            //         }
-            //         for (var i = 0; i < results.length; i++) {
-            //         // console.log(results)
-            //         var tracking_number = results[i].tracking_number;
-            //         var registry_type_id = results[i].registry_type_id;
-            //         var user_id = results[i].user_id;
-            //         var foreign_token = results[i].foreign_token;
-            //         var school_name = results[i].school_name;
-            //         var LgaName = results[i].LgaName;
-            //         var RegionName = results[i].RegionName;
-            //         var RegionName = results[i].RegionName;
-            //         var registry = results[i].registry;
-            //         var created_at = results[i].created_at;
-            //         var schoolCategory = results[i].schoolCategory;
-            //         var applicantname;
-            //         var today = new Date();
-        
-            //         var diffInSeconds = Math.abs(today - created_at) / 1000;
-            //         var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            //         var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            //         var minutes = Math.floor((diffInSeconds / 60) % 60);
-            //         var seconds = Math.floor(diffInSeconds % 60);
-            //         var milliseconds = Math.round(
-            //             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            //         );
-        
-            //         var remain_days;
-            //         if (days > 0) {
-            //             remain_days = "Siku " + days;
-            //         } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            //             remain_days = "Sek " + seconds + " zilizopita";
-            //         } else if (days <= 0 && hours <= 0) {
-            //             remain_days = "Dakika " + minutes + " zilizopita";
-            //         } else if (days <= 0) {
-            //             remain_days = "Saa " + hours;
-            //         }
-            //         obj.push({
-            //             tracking_number: tracking_number,
-            //             school_name: school_name,
-            //             LgaName: LgaName,
-            //             RegionName: RegionName,
-            //             user_id: user_id,
-            //             registry_type_id: registry_type_id,
-            //             registry: registry,
-            //             created_at: created_at,
-            //             remain_days: remain_days,
-            //             schoolCategory: schoolCategory,
-            //         });
-            //         }
-            //         return res.send({
-            //         error: false,
-            //         statusCode: 300,
-            //         dataSummary: total_month,
-            //         dataList: obj,
-            //         message: "List of maombi kuanzisha shule.",
-            //         });
-            //     }
-            //     );
-            // }
+
+                var remain_days;
+                if (days > 0) {
+                  remain_days = "Siku " + days;
+                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+                  remain_days = "Sek " + seconds + " zilizopita";
+                } else if (days <= 0 && hours <= 0) {
+                  remain_days = "Dakika " + minutes + " zilizopita";
+                } else if (days <= 0) {
+                  remain_days = "Saa " + hours;
+                }
+                obj.push({
+                  tracking_number: tracking_number,
+                  school_name: school_name,
+                  LgaName: LgaName,
+                  RegionName: RegionName,
+                  user_id: user_id,
+                  registry_type_id: registry_type_id,
+                  registry: registry,
+                  created_at: created_at,
+                  remain_days: remain_days,
+                  schoolCategory: schoolCategory,
+                });
+              }
+              // console.log(obj)
+              return res.send({
+                error: false,
+                statusCode: 300,
+                dataSummary: total_month,
+                dataList: obj,
+                message: "List of maombi kuanzisha shule.",
+              });
             }
-            );
+          );
+        }
+      );
     }
   );
 
   sajiliSerikaliRequestRouter.post(
     "/view-ombi-kusajili-ser-details",
-    isAuth, 
-    permission('view-school-owners-and-managers'),
+    isAuth,
+    permission("view-school-registration-government"),
     (req, res, next) => {
       var trackingNumber = req.body.TrackingNumber;
-      var userLevel = req.user.user_level;
+      const user = req.user; 
+      var userLevel = user.user_level;
       var office = req.body.office;
       console.log(req.body);
       var obj = [];
@@ -354,7 +133,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
       var SeminaryTitle;
       var DisabledValue;
       var DisabledTitle;
-  
+
       db.query(
         "SELECT manager_first_name, owner_name, number_of_teachers, gender_type," +
           " is_for_disabled, building, teacher_student_ratio_recommendation, " +
@@ -367,7 +146,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
           " school_categories.id as schoolCategoryID, school_categories.category as schoolCategory, " +
           " applications.tracking_number as tracking_number, is_seminary, " +
           " applications.created_at as created_at, teacher_information, " +
-          " applications.registry_type_id as registry_type_id, applications.user_id as user_id, stream, " +
+          " applications.registry_type_id as registry_type_id, application_category_id, applications.user_id as user_id, stream, " +
           " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
           " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName " +
           " FROM managers, owners, building_structures, school_gender_types, " +
@@ -384,17 +163,18 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " wards.WardCode = establishing_schools.ward_id AND " +
           " school_registrations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND applications.tracking_number = ?",
-        [4, trackingNumber],
+          " AND application_category_id = 4 AND applications.tracking_number = ?",
+        [trackingNumber],
         function (error, results, fields) {
           if (error) {
             console.log(error);
           }
-          console.log("results");
-          console.log(results);
+          // console.log("results");
+          // console.log(results);
           if (results.length > 0) {
             var tracking_number = results[0].tracking_number;
             var registry_type_id = results[0].registry_type_id;
+            var application_category_id = results[0].application_category_id;
             var user_id = results[0].user_id;
             var TeacherRatioStudent =
               results[0].teacher_student_ratio_recommendation;
@@ -419,7 +199,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
             //   schoolOpeningDate,
             //   "DD/MM/YYYY"
             // );
-            schoolOpeningDate = formatDate(schoolOpeningDate)
+            schoolOpeningDate = formatDate(schoolOpeningDate);
             var registry = "";
             var created_at = results[0].created_at;
             created_at = formatDate(created_at);
@@ -453,9 +233,9 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               DisabledTitle = "Jumuishi";
             }
           }
-  
+
           var today = new Date();
-  
+
           var diffInSeconds = Math.abs(today - created_at) / 1000;
           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
@@ -464,7 +244,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
           var milliseconds = Math.round(
             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
           );
-  
+
           db.query(
             "select * from maoni WHERE trackingNo = ?",
             [trackingNumber],
@@ -483,16 +263,17 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               }
             }
           );
-  
-          //w1
-          if (userLevel == "w1") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level " +
-                " AND staffs.user_level IN (?, ?) AND staffs.office = ?",
-              [1, 3, 2, office],
-              function (error, results, fields) {
+
+            db.query(`SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
+                        s.name as name, phone_no, r.name as role_name 
+                FROM staffs s
+                JOIN roles r ON r.id = s.user_level
+                JOIN vyeo v ON v.id = r.vyeoId
+                WHERE s.user_status = 1 AND v.id = ${
+                  user.section_id
+                } ${selectStaffsBySection(user)}
+                ORDER BY name ASC`,
+              function (error, results) {
                 if (error) {
                   console.log(error);
                 }
@@ -518,453 +299,9 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
                 }
               }
             );
-          }
-          //ofsaw1
-          if (userLevel == 3) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND " +
-                " staffs.user_level IN (?) AND staffs.office = ?",
-              [1, 1, office],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //k1
-          if (userLevel == "k1") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND office = ? ",
-              [1, 4, office],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mus
-          if (userLevel == "mus") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND " +
-                " staffs.user_level IN (?, ?, ?)",
-              [1, 13, 14, 15],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmusu
-          if (userLevel == "mus-") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmusm
-          if (userLevel == 15) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //mmuss
-          if (userLevel == "mus-") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 16],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //maafsa mus
-          if (userLevel == 16) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-              [1, 13, 14, 15],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //ofsak1
-          if (userLevel == 4) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo, regions where regions.zone_id = staffs.office AND user_status = ? AND vyeo.id = staffs.user_level " +
-                " AND staffs.user_level IN (?) AND regions.zone_id = ?",
-              [1, 2, office],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //adsa
-          if (userLevel == "adsa") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?)",
-              [1, 7, 9],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //usj
-          if (userLevel == 7) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 5],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //oke
-          if (userLevel == 8) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-              [1, 9],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //ke
-          if (userLevel == "ke") {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-              [1, 5, 8, 12],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-          //admin
-          if (userLevel == 33) {
-            db.query(
-              "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-                " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-                " vyeo where user_status = ? AND vyeo.id = staffs.user_level",
-              [1],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
-              }
-            );
-          }
-  
+          
+     
+
           db.query(
             "SELECT * from application_statuses",
             function (error, results, fields) {
@@ -978,11 +315,14 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               }
             }
           );
-  
+
           db.query(
-            "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-              " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-              " AND trackingNo = ? ORDER BY maoni.id DESC",
+            `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
+                    roles.name AS cheo 
+            FROM maoni, staffs, roles 
+            WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
+            AND trackingNo = ? 
+            ORDER BY maoni.id DESC`,
             [trackingNumber],
             function (error, results, fields) {
               if (error) {
@@ -993,9 +333,12 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
                 var user_from = results[i].user_from;
                 var user_to = results[i].user_to;
                 var coments = results[i].coments;
-                var rank_name = results[i].rank_name;
+                var rank_name = results[i].cheo;
                 var created_at = results[i].created_at;
-                created_at = dateandtime.format( new Date(created_at), "DD/MM/YYYY");
+                created_at = dateandtime.format(
+                  new Date(created_at),
+                  "DD/MM/YYYY"
+                );
                 objMaoni.push({
                   user_from: user_from,
                   name: name,
@@ -1007,12 +350,12 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               }
             }
           );
-  
+          // console.log(application_category_id , registry_type_id)
           db.query(
-            "SELECT attachment_types.id as id, app_name, file_size, file_format, attachment_name, registry " +
-              " FROM attachment_types, application_categories, " +
-              " registry_types WHERE application_categories.id = attachment_types.application_category_id " +
-              " AND attachment_types.registry_type_id = registry_types.id",
+            `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
+              FROM attachment_types
+              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+                    AND application_category_id = ${application_category_id}`,
             function (error, results, fields) {
               if (error) {
                 console.log(error);
@@ -1033,7 +376,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               }
             }
           );
-  
+
           db.query(
             "SELECT attachment_types.id as id, file_size, file_format, " +
               " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -1079,7 +422,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
               }
             }
           );
-  
+
           var remain_days;
           if (days > 0) {
             remain_days = "Siku " + days;
@@ -1090,7 +433,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
           } else if (days <= 0) {
             remain_days = "Saa " + hours;
           }
-  
+
           db.query(
             "select * from personal_infos, applications, wards, districts, regions " +
               " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
@@ -1099,97 +442,99 @@ const { isAuth, formatDate, permission, selectConditionByTitle } = require("../.
             function (error1, results1, fields1) {
               if (error1) {
                 console.log(error1);
-              }else{
-                if(results1.length > 0){
-              var first_name = results1[0].first_name;
-              var middle_name = results1[0].middle_name;
-              var last_name = results1[0].last_name;
-              var occupation = results1[0].occupation;
-              var personal_address = results1[0].personal_address;
-              var personal_phone_number = results1[0].personal_phone_number;
-              var personal_email = results1[0].personal_email;
-              var WardNameMtu = results1[0].WardName;
-              var LgaNameMtu = results1[0].LgaName;
-              var RegionNameMtu = results1[0].RegionName;
-              var fullname = first_name + " " + middle_name + " " + last_name;
-            }else{
-                var first_name = "";
-                var middle_name = "";
-                var last_name = "";
-                var occupation = "";
-                var personal_address = "";
-                var personal_phone_number = "";
-                var personal_email = "";
-                var WardNameMtu = "";
-                var LgaNameMtu = "";
-                var RegionNameMtu = "";
-                var fullname = first_name + " " + middle_name + " " + last_name; 
-            }
-              obj.push({
-                tracking_number: tracking_number,
-                school_name: school_name,
-                schoolOpeningDate: schoolOpeningDate,
-                LgaName: LgaName,
-                RegionName: RegionName,
-                user_id: user_id,
-                school_phone: school_phone,
-                owner_name: owner_name,
-                registry_type_id: registry_type_id,
-                registry: registry,
-                school_address: school_address,
-                Stream: Stream,
-                created_at: created_at,
-                remain_days: remain_days,
-                po_box: po_box,
-                school_email: school_email,
-                gender_type: gender_type,
-                fullname: "",
-                schoolCategory: schoolCategory,
-                Certificate: certificate,
-                numberOfTeachers: numberOfTeachers,
-                occupation: "",
-                Website: website,
-                teacherInformation: teacherInformation,
-                specialization: specialization,
-                lessons_and_courses: lessons_and_courses,
-                TeacherRatioStudent: TeacherRatioStudent,
-                schoolCategoryID: schoolCategoryID,
-                mwombajiAddress: "",
-                mwombajiPhoneNo: "",
-                SeminaryTitle: SeminaryTitle,
-                DisabledTitle: DisabledTitle,
-                building: building,
-                baruaPepe: "",
-                language: language,
-                school_size: school_size,
-                SeminaryValue: SeminaryValue,
-                managerName: manager_first_name,
-                area: area,
-                WardName: WardName,
-                structure: structure,
-                isSeminary: isSeminary,
-                numberOfStudents: numberOfStudents,
-                subcategory: subcategory,
-                WardNameMtu: "",
-                LgaNameMtu: "",
-                RegionNameMtu: "",
-              });
-  
-              // console.log(obj)
-  
-              return res.send({
-                error: false,
-                statusCode: 300,
-                data: obj,
-                maoni: objMess,
-                staffs: objStaffs,
-                status: objApps,
-                Maoni: objMaoni,
-                objAttachment: objAttachment,
-                objAttachment1: objAttachment1,
-                message: "Taarifa za ombi kuanzisha shule.",
-              });
-            }
+              } else {
+                if (results1.length > 0) {
+                  var first_name = results1[0].first_name;
+                  var middle_name = results1[0].middle_name;
+                  var last_name = results1[0].last_name;
+                  var occupation = results1[0].occupation;
+                  var personal_address = results1[0].personal_address;
+                  var personal_phone_number = results1[0].personal_phone_number;
+                  var personal_email = results1[0].personal_email;
+                  var WardNameMtu = results1[0].WardName;
+                  var LgaNameMtu = results1[0].LgaName;
+                  var RegionNameMtu = results1[0].RegionName;
+                  var fullname =
+                    first_name + " " + middle_name + " " + last_name;
+                } else {
+                  var first_name = "";
+                  var middle_name = "";
+                  var last_name = "";
+                  var occupation = "";
+                  var personal_address = "";
+                  var personal_phone_number = "";
+                  var personal_email = "";
+                  var WardNameMtu = "";
+                  var LgaNameMtu = "";
+                  var RegionNameMtu = "";
+                  var fullname =
+                    first_name + " " + middle_name + " " + last_name;
+                }
+                obj.push({
+                  tracking_number: tracking_number,
+                  school_name: school_name,
+                  schoolOpeningDate: schoolOpeningDate,
+                  LgaName: LgaName,
+                  RegionName: RegionName,
+                  user_id: user_id,
+                  school_phone: school_phone,
+                  owner_name: owner_name,
+                  registry_type_id: registry_type_id,
+                  registry: registry,
+                  school_address: school_address,
+                  Stream: Stream,
+                  created_at: created_at,
+                  remain_days: remain_days,
+                  po_box: po_box,
+                  school_email: school_email,
+                  gender_type: gender_type,
+                  fullname: "",
+                  schoolCategory: schoolCategory,
+                  Certificate: certificate,
+                  numberOfTeachers: numberOfTeachers,
+                  occupation: "",
+                  Website: website,
+                  teacherInformation: teacherInformation,
+                  specialization: specialization,
+                  lessons_and_courses: lessons_and_courses,
+                  TeacherRatioStudent: TeacherRatioStudent,
+                  schoolCategoryID: schoolCategoryID,
+                  mwombajiAddress: "",
+                  mwombajiPhoneNo: "",
+                  SeminaryTitle: SeminaryTitle,
+                  DisabledTitle: DisabledTitle,
+                  building: building,
+                  baruaPepe: "",
+                  language: language,
+                  school_size: school_size,
+                  SeminaryValue: SeminaryValue,
+                  managerName: manager_first_name,
+                  area: area,
+                  WardName: WardName,
+                  structure: structure,
+                  isSeminary: isSeminary,
+                  numberOfStudents: numberOfStudents,
+                  subcategory: subcategory,
+                  WardNameMtu: "",
+                  LgaNameMtu: "",
+                  RegionNameMtu: "",
+                });
+
+                // console.log(obj)
+
+                return res.send({
+                  error: false,
+                  statusCode: 300,
+                  data: obj,
+                  maoni: objMess,
+                  staffs: objStaffs,
+                  status: objApps,
+                  Maoni: objMaoni,
+                  objAttachment: objAttachment,
+                  objAttachment1: objAttachment1,
+                  message: "Taarifa za ombi kuanzisha shule.",
+                });
+              }
             }
           );
         }

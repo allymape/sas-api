@@ -506,7 +506,7 @@ const ObjectFuctions = {
   },
   selectConditionByTitle: (user) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id , jukumu} = user;
-    // console.log(user);
+    console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
       if (lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
