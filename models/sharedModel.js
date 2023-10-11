@@ -600,7 +600,7 @@ module.exports = {
       }
     );
   },
-  updateAlgorithm: (tracking_number, schoolCatId, callback) => {
+  updateOrCreateRegistrationNumber: (tracking_number, schoolCatId, existing_reg_no = null  , callback) => {
     var code = '';
     var id = 0;
     switch (Number(schoolCatId)) {
@@ -623,47 +623,87 @@ module.exports = {
       default:
         break;
     }
-    db.query(
-      `SELECT substring_index(s.registration_number , '.', 1) AS registration_code,
-		          substring_index(s.registration_number , '.', -1) AS registration_number
-              FROM school_registrations s
-              WHERE s.tracking_number <> "${tracking_number}" 
-                    AND s.registration_number LIKE "${code}%" 
-                    AND reg_status=2
-              ORDER BY length(s.registration_number ) DESC,s.registration_number 
-			        LIMIT 1`,
-      (error, result) => {
-        if (error) console.log(error);
-        var registration_number = 1;
-        if (result.length > 0) {
-              registration_number += Number(result[0].registration_number);
-              db.query(
-                `UPDATE algorthm SET last_number = ? WHERE id = ${id}`,
-                [registration_number],
-                (error, updated) => {
-                  if (error) console.log(error);
-                  if (updated) {
-                    console.log("Algorithm updated successfully ");
+
+    db.query(`SELECT * FROM algorthm WHERE id = ${id}` , (error , result) => {
+         if(error) console.log(error)
+           var registration_number = 1;
+           var last_number = 1;
+           var exist = false;
+           if(result.length > 0){
+              registration_number = result[0].last_number;
+              last_number = registration_number + 1;
+              exist = true;
+           }else{
+            // Find registration number from existing schools
+             db.query(
+               `SELECT substring_index(s.registration_number , '.', 1) AS registration_code,
+		                    substring_index(s.registration_number , '.', -1) AS registration_number
+                FROM school_registrations s
+                WHERE s.tracking_number <> "${tracking_number}" 
+                      AND s.registration_number LIKE "%${code}%" 
+                ORDER BY length(s.registration_number) DESC , s.registration_number DESC 
+                LIMIT 1`,
+               (error, result) => {
+                 if (error) console.log(error);
+                 if (result.length > 0) {
+                   registration_number = parseInt(result[0].registration_number) + 1
+                   last_number = registration_number + 1 ;
+                 } 
+               }
+             );
+           }
+         
+          //  Update registered schools
+           const today = new Date();
+           db.query(
+             `UPDATE school_registrations SET registration_number = ?, updated_at = ? 
+                          WHERE ${
+                            existing_reg_no
+                              ? "registration_number = ?"
+                              : "tracking_number = ?"
+                          }`,
+             [
+               code + "." + registration_number,
+               today,
+               existing_reg_no ? existing_reg_no : tracking_number,
+             ],
+             function (error , result) {
+               if (error) {
+                 console.log(error);
+               }
+               if(result.affectedRows > 0){
+                  if (exist) {
+                    //  Update algorithm
+                    db.query(
+                      `UPDATE algorthm SET last_number = ? WHERE id = ${id}`,
+                      [last_number],
+                      (error, updated) => {
+                        if (error) console.log(error);
+                        if (updated) {
+                          console.log(
+                            `Algorithm updated successfully  ${code}.${registration_number}`
+                          );
+                        }
+                      }
+                    );
+                  } else {
+                    //  INSERT IF NOT EXISTING
+                    db.query(
+                      `INSERT INTO algorthm (id, school_type, last_number) VALUES(?,?,?)`,
+                      [id, code, last_number],
+                      (error) => {
+                        if (error) console.log(error);
+                      }
+                    );
                   }
-                }
-              );
-        } else {
-          if(id > 0){
-            db.query(
-              `UPDATE algorthm SET last_number = ? WHERE id = ${id}`,
-              [registration_number],
-              (error, updated) => {
-                if (error) console.log(error);
-                if (updated) {
-                  console.log("Algorithm updated successfully");
-                }
-              }
-            );
-            
-          }
-        }
-        callback()
-      }
-    );
+               }
+               callback(registration_number);
+             }
+           );
+    });
+
+
+
+   
   },
 };

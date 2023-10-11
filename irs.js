@@ -64,6 +64,8 @@ const futaShuleRequestRouter = require("./routers/maombi/futaShuleRequestRouter.
 const badiliUsajiliRequestRouter = require("./routers/maombi/badiliUsajiliRequestRouter.js");
 const ongezaDahaliaRequestRouter = require("./routers/maombi/ongezaDahaliaRequestRouter.js");
 const sajiliShuleCommentRouter = require("./routers/maombi/sajiliShuleCommentRouter.js");
+const algorithmRouter = require("./routers/algorithmRouter.js");
+const schoolCategoryRouter = require("./routers/schoolCategoryRouter.js");
 
 app.use("/api", indexRouter);
 // Maombi
@@ -80,6 +82,8 @@ app.use("/api", hierarchyRouter);
 app.use("/api", rankRouter);
 app.use("/api", designationRouter);
 app.use("/api", zoneRouter);
+app.use("/api", algorithmRouter);
+app.use("/api", schoolCategoryRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);
 app.use("/api", registrationTypeRouter);

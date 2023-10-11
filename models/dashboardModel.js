@@ -11,7 +11,7 @@ module.exports = {
                                       ${schoolLocationsSqlJoin()}
                                        WHERE 
                                        a.is_approved=2 AND 
-                                       s.reg_status = 1 
+                                       s.reg_status = 2 
                                        ${filterByUserOffice(user , 'AND')}
                                        GROUP BY category, id
                                        ORDER BY id ASC`; 
@@ -26,7 +26,7 @@ module.exports = {
                        ${establishedApplicationRegisteredSchoolsSqlJoin()}
                        INNER JOIN registry_types rt ON rt.id = a.registry_type_id
                        ${schoolLocationsSqlJoin()}
-                       WHERE a.is_approved = 2 AND s.reg_status = 1
+                       WHERE a.is_approved = 2 AND s.reg_status = 2
                        ${filterByUserOffice(user, "AND")}
                        GROUP BY owner
                        `,
@@ -75,7 +75,7 @@ module.exports = {
                                    FROM  school_registrations s
                                    JOIN establishing_schools e ON s.establishing_school_id = e.id
                                    ${schoolLocationsSqlJoin()}
-                                   WHERE s.reg_status = 1
+                                   WHERE s.reg_status = 2
                                    ${filterByUserOffice(user, "AND")}`,
                                   (error5, summaryRegisteredSchools) => {
                                     if (error5) {
@@ -114,7 +114,7 @@ module.exports = {
                 JOIN applications a ON a.tracking_number = e.tracking_number
                 JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 1
+                WHERE a.is_approved = 2 AND s.reg_status = 2
                 ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id #,rt.id
                 ORDER BY region ASC

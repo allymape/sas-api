@@ -14,9 +14,9 @@ module.exports = {
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       ${ schoolLocationsSqlJoin() }
-                      WHERE  s.reg_status = 1
+                      WHERE  s.reg_status IN (2,3)
                       `;
-     console.log();
+  
     const searchByKeywordQuery =  searchKeyword ? `AND 
                   ( ${ (sign == '=' ? 'e.school_name='+keyword : 'e.school_name LIKE '+keyword) }  
                     OR 

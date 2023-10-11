@@ -44,7 +44,7 @@ badiliUsajiliRequestRouter.post(
                  " former_school_infos.establishing_school_id = establishing_schools.id AND " +
                  " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = 1 AND " +
                  " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-                 " AND application_category_id = 6 AND is_approved <> 2 "+ selectConditionByTitle(user),
+                 " AND application_category_id = 6  "+ selectConditionByTitle(user),
                function (error, results, fields) {
                  if (error) {
                    console.log(error);
@@ -378,85 +378,40 @@ badiliUsajiliRequestRouter.post(
       if (app_category) {
         sharedModel.tumaMaoni(req, app_category, (success) => {
           if (req.body.haliombi == 2) {
-             sharedModel.updateAlgorithm(tracking_number, schoolCatId, () => {
+             sharedModel.updateOrCreateRegistrationNumber(tracking_number, school_category_id_new, registration_number , (created_registration_number) => {
+                console.log("Created registration number is "+ created_registration_number)
                 db.query(
-                  "select last_number from algorthm where id = ?",
-                  [school_category_id_new],
+                  "UPDATE establishing_schools SET school_category_id = ? WHERE id = ?",
+                  [
+                    req.body.school_category_id_new,
+                    req.body.establishId,
+                  ],
                   function (error, results, fields) {
                     if (error) {
                       console.log(error);
                     }
-                    console.log(results);
-                    var last_number = results[0].last_number;
-                    let valueT = 1;
-                    let givenNo = parseInt(last_number) + parseInt(valueT);
-                    var finalNumber;
-                    if (school_category_id_new == 1) {
-                      finalNumber = "EA." + givenNo;
+                    if (
+                      req.body.ombitype == 1 &&
+                      req.body.haliombi == 0
+                    ) {
+                      console.log("yes we can do it");
                     }
-                    if (school_category_id_new == 2) {
-                      finalNumber = "EM." + givenNo;
-                    }
-                    if (school_category_id_new == 3) {
-                      finalNumber = "S." + givenNo;
-                    }
-                    if (school_category_id_new == 4) {
-                      finalNumber = "CU." + givenNo;
-                    }
-                    console.log("finalNumber11");
-                    console.log(finalNumber);
                     db.query(
-                      "UPDATE school_registrations SET registration_number = ?, changed_at = ? WHERE registration_number = ?",
-                      [finalNumber, today, registration_number],
+                      "UPDATE former_school_infos SET school_name = ? WHERE tracking_number = ?",
+                      [
+                        req.body.school_category_id_old,
+                        req.body.trackerId,
+                      ],
                       function (error, results, fields) {
                         if (error) {
                           console.log(error);
                         }
-                        db.query(
-                          "UPDATE algorthm SET last_number = ? WHERE id = ?",
-                          [givenNo, school_category_id_new],
-                          function (error, results, fields) {
-                            if (error) {
-                              console.log(error);
-                            }
-                            db.query(
-                              "UPDATE establishing_schools SET school_category_id = ? WHERE id = ?",
-                              [
-                                req.body.school_category_id_new,
-                                req.body.establishId,
-                              ],
-                              function (error, results, fields) {
-                                if (error) {
-                                  console.log(error);
-                                }
-                                if (
-                                  req.body.ombitype == 1 &&
-                                  req.body.haliombi == 0
-                                ) {
-                                  console.log("yes we can do it");
-                                }
-                                db.query(
-                                  "UPDATE former_school_infos SET school_name = ? WHERE tracking_number = ?",
-                                  [
-                                    req.body.school_category_id_old,
-                                    req.body.trackerId,
-                                  ],
-                                  function (error, results, fields) {
-                                    if (error) {
-                                      console.log(error);
-                                    }
-                                    if (
-                                      req.body.ombitype == 1 &&
-                                      req.body.haliombi == 0
-                                    ) {
-                                      console.log("yes we can do it");
-                                    }
-                                  }
-                                );
-                              }
-                            );
-                          }
-                        );
+                        if (
+                          req.body.ombitype == 1 &&
+                          req.body.haliombi == 0
+                        ) {
+                          console.log("yes we can do it");
+                        }
                       }
                     );
                   }

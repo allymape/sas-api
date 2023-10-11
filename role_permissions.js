@@ -21,6 +21,7 @@ const rolesPermissions = {
     "Zones|Kanda": "v,c,u,d",
     "Salaries|Mishahara": "v,c",
     "Applicants|Waombaji": "v,c,u,d",
+    "Algorithm|Namba za Usajili": "v,c,u,d",
     // Maombi
     "Initiate Schools|Kuanzisha Shule": "v,c,u",
     "School Owners and Managers|Wamiliki na Meneja wa Shule": "v,c,u",
@@ -64,9 +65,9 @@ const rolesPermissions = {
     "Users|Watumiaji": "v,c,u,d",
     "Roles|Jukumu": "v,c",
   },
-  User : {
-    "Regions|Mikoa" : "v"
-  }
+  User: {
+    "Regions|Mikoa": "v",
+  },
 };
 const translations = {
   en: {

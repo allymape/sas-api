@@ -26,6 +26,7 @@ const {
   sentenceCase,
   isLowerCase,
   isUpperCase,
+  localeLowerCase,
 } = require("text-case");
 const dateAndTime = require("date-and-time");
 
@@ -509,8 +510,8 @@ const ObjectFuctions = {
     console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
-      if (lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
-        return `AND is_approved <> 2`;
+      if ( ObjectFuctions.lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
+      return `AND is_approved <> 2`;
       }
 
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
