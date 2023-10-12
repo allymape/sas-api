@@ -375,11 +375,11 @@ const ObjectFuctions = {
             (permission_name, permissionIndex) => {
               var permissionId = permissionIndex + 1;
               if (rolePermissions.includes(permission_name)) {
-                console.log(
-                  roleName + " has permissions to " + permission_name,
-                  "role_id " + roleId,
-                  "permission_id " + permissionId
-                );
+                // console.log(
+                //   roleName + " has permissions to " + permission_name,
+                //   "role_id " + roleId,
+                //   "permission_id " + permissionId
+                // );
                 // push permissions view-users, etc
                 permissions.push([
                   permissionId,
@@ -505,9 +505,9 @@ const ObjectFuctions = {
            }
           return ` AND s.id < -1`;
   },
-  selectConditionByTitle: (user) => {
+  selectConditionByTitle: (user , useAlias = false) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id , jukumu} = user;
-    console.log(user);
+    // console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
       if ( ObjectFuctions.lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
@@ -517,28 +517,28 @@ const ObjectFuctions = {
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
         str += ` AND is_approved = 2`;
       } else {
-        console.log(cheo , id)
-        str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
+        // console.log(cheo , id)
+        str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id} AND is_approved <> 2`;
       }
 
       return str;
     } else if (ngazi == "kanda") {
       //  K1 && Officers
-      str += ` AND applications.staff_id = ${id} AND is_approved <> 2 AND regions.zone_id = ${zone_id}`;
+      str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id} AND is_approved <> 2 AND ${useAlias ? 'r.zone_id' : 'regions.zone_id'} = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
         console.log("I am w1 "+ user.id);
-        str += ` AND (applications.staff_id = ${id} OR  applications.staff_id IS NULL)`;
+        str += ` AND (${ useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} OR  ${useAlias ? "a.staff_id" : "applications.staff_id"} IS NULL)`;
       } else {
         //Officer W1
         console.log("I am w1 Officer");
-        str += ` AND applications.staff_id = ${id}`;
+        str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id}`;
       }
-      str += ` AND districts.LgaCode = "${district_code}" AND is_approved <> 2 `;
+      str += ` AND ${ useAlias ? 'd.LgaCode' : 'districts.LgaCode'} = "${district_code}" AND is_approved <> 2 `;
       return str;
     } else {
-      str += ` AND applications.staff_id = -1`;
+      str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = -1`;
       return str;
     }
     return str;
@@ -592,7 +592,7 @@ const ObjectFuctions = {
 
 
   InsertAuditTrail : (user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,tableId) => {
-  console.log(JSON.stringify(new_body));
+  // console.log(JSON.stringify(new_body));
   db.query(
     "INSERT INTO audit_trail (user_id, event_type, new_body, " +
       "created_at, ip_address, api_router, browser_used, rollId, message, tableName) " +
@@ -622,7 +622,101 @@ const ObjectFuctions = {
     }
   );
 },
-
+calculcateRemainDays : (fromDate) => {
+                var today = new Date();
+                var diffInSeconds = Math.abs(today - new Date(fromDate)) / 1000;
+                var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+                var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+                var minutes = Math.floor((diffInSeconds / 60) % 60);
+                var seconds = Math.floor(diffInSeconds % 60);
+                var milliseconds = Math.round(
+                  (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+                );
+                var remain_days = null;
+                if (days > 0) {
+                  remain_days = "Siku " + days;
+                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+                  remain_days = "Sek " + seconds + " zilizopita";
+                } else if (days <= 0 && hours <= 0) {
+                  remain_days = "Dakika " + minutes + " zilizopita";
+                } else if (days <= 0) {
+                  remain_days = "Saa " + hours;
+                }
+                return remain_days;
+},
+notificationUrl : (application_category_id , registry_id) => {
+  let url = `#`;
+     switch (application_category_id) {
+      case 1:
+            if(registry_id != 3){
+              url = `/MaombiKuanzishaShule`;
+            }
+            break;
+      case 2:
+            url = `/MaombiMmilikiShule`;
+            break;
+      case 4:
+            if (registry_id ==3 ){
+                url = `/MaombiKusajiliShuleSerikali`;
+            }else{
+                url = `/MaombiKusajiliShule`;
+            } 
+            break;
+      case 5:
+            url = `/KuongezaMikondo`;
+            break;
+      case 6:
+            url = `/BadiliUsajili`;
+            break;
+      case 7:
+            url = `/BadiliMmiliki`;
+            break;
+      case 8:
+            url = `/BadiliMeneja`;
+            break;
+      case 9:
+            url = `/BadiliJina`;
+            break;
+      case 10:
+            url = `/Hamisha`;
+            break;
+      case 11:
+            url = `/FutaShule`;
+            break;
+      case 12:
+            url = `/KuongezaTahasusi`;
+            break;
+      case 13:
+            url = `/KuongezaDahalia`;
+            break;
+      case 14:
+            url = `/KuongezaBweni`;
+            break;
+      default:
+            url = `#`;
+            break;
+     }
+     return url;
+},
+notificationArrayData : (results , callback) => {
+       const data = [];
+        results.forEach((item) => {
+          const {
+            tracking_number,
+            task,
+            application_category_id,
+            registry_type_id,
+            school_name,
+          } = item;
+              data.push({
+                tracking_number: tracking_number,
+                task: `Ombi la ${task}`,
+                url: ObjectFuctions.notificationUrl(application_category_id, registry_type_id),
+                school_name: school_name,
+              });
+        });
+        callback(data)
+},
 UpdateAuditTrail :(user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,old_body,tableId)  => {
   // console.log(JSON.stringify(new_body))
   db.query(

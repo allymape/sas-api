@@ -44,7 +44,7 @@ badiliUsajiliRequestRouter.post(
                  " former_school_infos.establishing_school_id = establishing_schools.id AND " +
                  " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = 1 AND " +
                  " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-                 " AND application_category_id = 6  "+ selectConditionByTitle(user),
+                 " AND application_category_id = 6 AND payment_status_id = 2  "+ selectConditionByTitle(user),
                function (error, results, fields) {
                  if (error) {
                    console.log(error);

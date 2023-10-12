@@ -5,7 +5,7 @@ const request = require("request");
 const badiliMkondoRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliMkondoRequestRouter.post(
@@ -42,7 +42,7 @@ badiliMkondoRequestRouter.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_infos.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-          " AND application_category_id = 5 AND is_approved <> 2 " +
+          " AND application_category_id = 5 AND is_approved <> 2 AND payment_status_id = 2 " +
           selectConditionByTitle(user),
         function (error, results, fields) {
           if (error) {
@@ -62,28 +62,9 @@ badiliMkondoRequestRouter.post(
             var registry = results[i].registry;
             var created_at = results[i].created_at;
             var schoolCategory = results[i].schoolCategory;
-            var applicantname;
-            var today = new Date();
-
-            var diffInSeconds = Math.abs(today - created_at) / 1000;
-            var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            var minutes = Math.floor((diffInSeconds / 60) % 60);
-            var seconds = Math.floor(diffInSeconds % 60);
-            var milliseconds = Math.round(
-              (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            );
-
-            var remain_days;
-            if (days > 0) {
-              remain_days = "Siku " + days;
-            } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-              remain_days = "Sek " + seconds + " zilizopita";
-            } else if (days <= 0 && hours <= 0) {
-              remain_days = "Dakika " + minutes + " zilizopita";
-            } else if (days <= 0) {
-              remain_days = "Saa " + hours;
-            }
+           
+            var remain_days = calculcateRemainDays(created_at);
+          
             obj.push({
               tracking_number: tracking_number,
               school_name: school_name,

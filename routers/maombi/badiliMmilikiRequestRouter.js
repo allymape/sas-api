@@ -143,7 +143,7 @@ badiliMmilikiRequestRouter.post(
         " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
         " AND application_category_id = ? AND former_owners.establishing_school_id = establishing_schools.id " +
-        " AND applications.tracking_number = ?",
+        " AND applications.tracking_number = ? AND payment_status_id = 2",
       [7, trackingNumber],
       function (error, results, fields) {
         if (error) {
@@ -218,7 +218,7 @@ badiliMmilikiRequestRouter.post(
             }
           }
         );
-        
+
         sharedModel.myStaffs(user, (staffs) => {
           objStaffs = staffs;
         });
@@ -264,8 +264,6 @@ badiliMmilikiRequestRouter.post(
           }
         );
 
-        
-        
         sharedModel.getAttachmentTypes(
           registry_type_id,
           application_category_id,

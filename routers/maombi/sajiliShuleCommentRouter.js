@@ -11,17 +11,6 @@ const sharedModel = require("../../models/sharedModel");
 sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
   const tracking_number = req.body.trackerId;
   const schoolCatId = req.body.schoolCategoryID;
-  sharedModel.updateOrCreateRegistrationNumber(
-    "EC-20230307-772",
-    1,
-    null,
-    (created_registration_number) => {
-      res.send({
-        created_registration_number,
-      });
-    }
-  );
-  return;
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {

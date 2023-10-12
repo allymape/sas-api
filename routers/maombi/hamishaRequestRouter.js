@@ -5,7 +5,7 @@ const request = require("request");
 const hamishaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 hamishaRequestRouter.post(
@@ -42,8 +42,8 @@ hamishaRequestRouter.post(
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
               " former_school_infos.establishing_school_id = establishing_schools.id AND " +
               " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-              " AND application_category_id = 10 AND is_approved = 2 "+selectConditionByTitle(user),
-            function (error, results, fields) {
+              " AND application_category_id = 10 AND is_approved <> 2 AND payment_status_id = 2  "+selectConditionByTitle(user),
+            function (error, results) {
               if (error) {
                 console.log(error);
               }
@@ -61,27 +61,8 @@ hamishaRequestRouter.post(
                 var created_at = results[i].created_at;
                 var schoolCategory = results[i].schoolCategory;
                 var applicantname;
-                var today = new Date();
-
-                var diffInSeconds = Math.abs(today - created_at) / 1000;
-                var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                var minutes = Math.floor((diffInSeconds / 60) % 60);
-                var seconds = Math.floor(diffInSeconds % 60);
-                var milliseconds = Math.round(
-                  (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                );
-
-                var remain_days;
-                if (days > 0) {
-                  remain_days = "Siku " + days;
-                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                  remain_days = "Sek " + seconds + " zilizopita";
-                } else if (days <= 0 && hours <= 0) {
-                  remain_days = "Dakika " + minutes + " zilizopita";
-                } else if (days <= 0) {
-                  remain_days = "Saa " + hours;
-                }
+                var remain_days = calculcateRemainDays(created_at);
+             ;
                 obj.push({
                   tracking_number: tracking_number,
                   school_name: school_name,
@@ -136,7 +117,7 @@ hamishaRequestRouter.post(
         " establishing_schools.school_size as school_size, languages.language as language, " +
         " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
         " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-        " applications.registry_type_id as registry_type_id,  establishing_schools.ward_id as WardIdOld, applications.user_id as user_id, " +
+        " applications.registry_type_id as registry_type_id, application_category_id, establishing_schools.ward_id as WardIdOld, applications.user_id as user_id, " +
         " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
         " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName FROM " +
         " former_school_infos, school_sub_categories, establishing_schools, applications, " +
@@ -146,8 +127,8 @@ hamishaRequestRouter.post(
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
         " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-        " AND application_category_id = ? AND applications.tracking_number = ?",
-      [10, trackingNumber],
+        " AND application_category_id = 10 AND applications.tracking_number = ?",
+      [trackingNumber],
       function (error, results, fields) {
         if (error) {
           console.log(error);
@@ -156,6 +137,7 @@ hamishaRequestRouter.post(
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
+          var application_category_id = results[0].application_category_id;
           var user_id = results[0].user_id;
           var streamOld = results[0].streamOld;
           var WardIdOld = results[0].WardIdOld;
@@ -168,7 +150,7 @@ hamishaRequestRouter.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
+              // created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -211,17 +193,8 @@ hamishaRequestRouter.post(
               var RegionNameNew = results11[0].RegionName;
               var WardIdNew = results11[0].WardIdNew;
             }
-
-            var today = new Date();
-
-            var diffInSeconds = Math.abs(today - created_at) / 1000;
-            var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            var minutes = Math.floor((diffInSeconds / 60) % 60);
-            var seconds = Math.floor(diffInSeconds % 60);
-            var milliseconds = Math.round(
-              (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            );
+             var remain_days = calculcateRemainDays(created_at)
+             console.log("",created_at , trackingNumber)
 
             db.query(
               "select * from maoni WHERE trackingNo = ?",
@@ -241,137 +214,99 @@ hamishaRequestRouter.post(
                 }
               }
             );
-         
-                sharedModel.myStaffs( req.user , (staffs) => {
-                 objStaffs = staffs
-                
-                  db.query(
-                    "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                      " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                      " AND trackingNo = ? ORDER BY maoni.id DESC",
-                    [trackingNumber],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
 
-                      for (var i = 0; i < results.length; i++) {
-                        var name = results[i].name;
-                        var user_from = results[i].user_from;
-                        var user_to = results[i].user_to;
-                        var coments = results[i].coments;
-                        var maoniTime = results[i].created_at;
-                        var rank_name = results[i].rank_name;
-                        if (maoniTime == null) {
-                          maoniTime = new Date();
-                        }
-                        // console.log(maoniTime)
-                        maoniTime = dateandtime.format(
-                          maoniTime,
-                          "DD/MM/YYYY hh:mm:ss"
-                        );
-                        objMaoni.push({
-                          user_from: user_from,
-                          name: name,
-                          user_to: user_to,
-                          coments: coments,
-                          created_at: maoniTime,
-                          rank_name: rank_name,
-                        });
-                      }
+            sharedModel.myStaffs(req.user, (staffs) => {
+              objStaffs = staffs;
 
-                      sharedModel.getAttachmentTypes(registry_type_id , application_category_id , "" , (attachement_types) => {
-                           objAttachment = attachement_types
-                      })
-                       sharedModel.getAttachments(trackingNumber ,function (attachments) {
-                          objAttachment1 = attachments
-                          var remain_days;
-                          if (days > 0) {
-                            remain_days = "Siku " + days;
-                          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                            remain_days = "Sek " + seconds + " zilizopita";
-                          } else if (days <= 0 && hours <= 0) {
-                            remain_days = "Dakika " + minutes + " zilizopita";
-                          } else if (days <= 0) {
-                            remain_days = "Saa " + hours;
-                          }
-                          var first_name = "";
-                          var middle_name = "";
-                          var last_name = "";
-                          var occupation = "";
-                          var personal_address = "";
-                          var personal_phone_number = "";
-                          var personal_email = "";
-                          var WardNameMtu = "";
-                          var LgaNameMtu = "";
-                          var RegionNameMtu = "";
-                          var fullname =
-                            first_name + " " + middle_name + " " + last_name;
+              sharedModel.myMaoni(trackingNumber ,  (maoni) => {
+                  objMaoni = maoni;
+                  sharedModel.getAttachmentTypes(
+                    registry_type_id,
+                    application_category_id,
+                    "",
+                    (attachement_types) => {
+                      objAttachment = attachement_types;
+                    }
+                  );
+                  sharedModel.getAttachments(trackingNumber,(attachments) => {
+                      objAttachment1 = attachments;
+                      
+                      var first_name = "";
+                      var middle_name = "";
+                      var last_name = "";
+                      var occupation = "";
+                      var personal_address = "";
+                      var personal_phone_number = "";
+                      var personal_email = "";
+                      var WardNameMtu = "";
+                      var LgaNameMtu = "";
+                      var RegionNameMtu = "";
+                      var fullname =
+                        first_name + " " + middle_name + " " + last_name;
 
-                          obj.push({
-                            tracking_number: tracking_number,
-                            school_name: school_name,
-                            LgaName: LgaName,
-                            RegionName: RegionName,
-                            user_id: user_id,
-                            school_name_new: school_name_new,
-                            registry_type_id: registry_type_id,
-                            registry: registry,
-                            establishId: establishId,
-                            created_at: created_at,
-                            remain_days: remain_days,
-                            streamOld: streamOld,
-                            streamNew: streamNew,
-                            fullname: fullname,
-                            schoolCategory: schoolCategory,
-                            occupation: occupation,
-                            WardIdNew: WardIdNew,
-                            WardIdOld: WardIdOld,
-                            mwombajiAddress: personal_address,
-                            mwombajiPhoneNo: personal_phone_number,
-                            WardNameNew: WardNameNew,
-                            baruaPepe: personal_email,
-                            language: language,
-                            school_size: school_size,
-                            LgaNameNew: LgaNameNew,
-                            area: area,
-                            WardName: WardName,
-                            structure: structure,
-                            RegionNameNew: RegionNameNew,
-                            subcategory: subcategory,
-                            WardNameMtu: WardNameMtu,
-                            LgaNameMtu: LgaNameMtu,
-                            RegionNameMtu: RegionNameMtu,
-                          });
-                          objAttachment2.push({
-                            file_format: "",
-                            attachment_name: "",
-                            registry_id: "",
-                            file_size: "",
-                            registry: "",
-                            application_name: "",
-                            created_at: "",
-                            attachment_path: "",
-                          });
-                          return res.send({
-                            error: false,
-                            statusCode: 300,
-                            data: obj,
-                            maoni: objMess,
-                            staffs: objStaffs,
-                            status: objApps,
-                            Maoni: objMaoni,
-                            objAttachment: objAttachment,
-                            objAttachment1: objAttachment1,
-                            objAttachment2: objAttachment2,
-                            message: "Taarifa za ombi kuanzisha shule.",
-                          });
-                        }
-                      );
+                      obj.push({
+                        tracking_number: tracking_number,
+                        school_name: school_name,
+                        LgaName: LgaName,
+                        RegionName: RegionName,
+                        user_id: user_id,
+                        school_name_new: school_name_new,
+                        registry_type_id: registry_type_id,
+                        registry: registry,
+                        establishId: establishId,
+                        created_at: created_at,
+                        remain_days: remain_days,
+                        streamOld: streamOld,
+                        streamNew: streamNew,
+                        fullname: fullname,
+                        schoolCategory: schoolCategory,
+                        occupation: occupation,
+                        WardIdNew: WardIdNew,
+                        WardIdOld: WardIdOld,
+                        mwombajiAddress: personal_address,
+                        mwombajiPhoneNo: personal_phone_number,
+                        WardNameNew: WardNameNew,
+                        baruaPepe: personal_email,
+                        language: language,
+                        school_size: school_size,
+                        LgaNameNew: LgaNameNew,
+                        area: area,
+                        WardName: WardName,
+                        structure: structure,
+                        RegionNameNew: RegionNameNew,
+                        subcategory: subcategory,
+                        WardNameMtu: WardNameMtu,
+                        LgaNameMtu: LgaNameMtu,
+                        RegionNameMtu: RegionNameMtu,
+                      });
+                      objAttachment2.push({
+                        file_format: "",
+                        attachment_name: "",
+                        registry_id: "",
+                        file_size: "",
+                        registry: "",
+                        application_name: "",
+                        created_at: "",
+                        attachment_path: "",
+                      });
+                      return res.send({
+                        error: false,
+                        statusCode: 300,
+                        data: obj,
+                        maoni: objMess,
+                        staffs: objStaffs,
+                        status: objApps,
+                        Maoni: objMaoni,
+                        objAttachment: objAttachment,
+                        objAttachment1: objAttachment1,
+                        objAttachment2: objAttachment2,
+                        message: "Taarifa za ombi kuanzisha shule.",
+                      });
                     }
                   );
                 }
               );
+            });
           }
         );
       }

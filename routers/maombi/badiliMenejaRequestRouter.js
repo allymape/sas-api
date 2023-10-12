@@ -6,7 +6,7 @@ const badiliMenejaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliMenejaRequestRouter.post(
@@ -359,7 +359,8 @@ badiliMenejaRequestRouter.post(
   permission("view-change-of-school-manager"),
   (req, res, ) => {
     var trackingNumber = req.body.TrackingNumber;
-    const user = req.user; var userLevel = user.user_level;
+    const user = req.user; 
+    var userLevel = user.user_level;
     var office = req.body.office;
     console.log(req.body);
 
@@ -373,7 +374,7 @@ badiliMenejaRequestRouter.post(
     var objRef = [];
 
     db.query(
-      "select manager_first_name, manager_first_name, " +
+      "select manager_first_name, manager_first_name, registry_type_id , application_category_id, " +
         " establishing_schools.area as area, former_managers.establishing_school_id as establishing_school_id, " +
         " establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, " +
         " applications.tracking_number as tracking_number, manager_first_name, " +
@@ -393,6 +394,8 @@ badiliMenejaRequestRouter.post(
         }
         if (results.length > 0) {
           var area = results[0].area;
+          var registry_type_id = results[0].registry_type_id;
+          var application_category_id = results[0].application_category_id;
           var education_level = "";
           var expertise_level = "";
           var school_size = results[0].school_size;
@@ -430,16 +433,7 @@ badiliMenejaRequestRouter.post(
           var subcategory = results[0].subcategory;
         }
 
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+      
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -458,430 +452,16 @@ badiliMenejaRequestRouter.post(
             }
           }
         );
-        //w1
-        if (userLevel == "w1") {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level " +
-              " AND staffs.user_level IN (?) AND staffs.office = ?",
-            [1, 3, office],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //ofsaw1
-        if (userLevel == 3) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND staffs.office = ?",
-            [1, 1, office],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //k1
-        if (userLevel == "k1") {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?) AND office = ?",
-            [1, 4, office],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //ofsak1
-        if (userLevel == 4) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-            [1, 2],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //adsa
-        if (userLevel == "adsa") {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-            [1, 7],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //usj
-        if (userLevel == 7) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-            [1, 5],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //oke
-        if (userLevel == 8) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-            [1, 9],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //ke
-        if (userLevel == "ke") {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?, ?)",
-            [1, 5, 8, 17],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //mwanasheria
-        if (userLevel == 17) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?, ?)",
-            [1, 18, 9],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //mwanasheria karani
-        if (userLevel == 18) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level AND staffs.user_level IN (?)",
-            [1, 17],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
-        //admin
-        if (userLevel == 11) {
-          db.query(
-            "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-              " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-              " vyeo where user_status = ? AND vyeo.id = staffs.user_level",
-            [1],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              for (var i = 0; i < results.length; i++) {
-                var userId = results[i].userId;
-                var email = results[i].email;
-                var user_level = results[i].user_level;
-                var last_login = results[i].last_login;
-                var name = results[i].name;
-                var phone_no = results[i].phone_no;
-                var role_name = results[i].role_name;
-                var vyeoId = results[i].vyeoId;
-                objStaffs.push({
-                  userId: userId,
-                  name: name,
-                  email: email,
-                  phoneNumber: phone_no,
-                  roleId: user_level,
-                  role: role_name,
-                  last_login: last_login,
-                  vyeoId: vyeoId,
-                });
-              }
-            }
-          );
-        }
 
-        db.query(
-          "SELECT * from application_statuses",
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var id = results[i].id;
-              var statusName = results[i].status;
-              objApps.push({ statusName: statusName, statusId: id });
-            }
-          }
-        );
-
-        db.query(
-          "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-            " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-            " AND trackingNo = ? ORDER BY maoni.id DESC",
-          [trackingNumber],
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            console.log(results);
-            for (var i = 0; i < results.length; i++) {
-              var name = results[i].name;
-              var user_from = results[i].user_from;
-              var user_to = results[i].user_to;
-              var coments = results[i].coments;
-              var created_at = results[i].created_at;
-              var rank_name = results[i].rank_name;
-              if (created_at == null) {
-                created_at = new Date();
-              }
-              // console.log(maoniTime)
-              created_at = dateandtime.format(
-                new Date(created_at),
-                "DD/MM/YYYY hh:mm:ss"
-              );
-              objMaoni.push({
-                user_from: user_from,
-                name: name,
-                user_to: user_to,
-                coments: coments,
-                created_at: created_at,
-                rank_name: rank_name,
-              });
-            }
+        sharedModel.myMaoni(trackingNumber, (maoni) => {
+          objMaoni = maoni;
+        });
+        sharedModel.getAttachmentTypes(
+          registry_type_id,
+          application_category_id,
+          "",
+          (attachment_types) => {
+            objAttachment = attachment_types;
           }
         );
 
@@ -922,69 +502,13 @@ badiliMenejaRequestRouter.post(
           }
         );
 
-        db.query(
-          "SELECT attachment_types.id as id, file_size, file_format, attachment_name " +
-            " FROM attachment_types",
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var file_format = results[i].file_format;
-              var app_id = results[i].id;
-              var attachment_name = results[i].attachment_name;
-              var registry = "";
-              var application_name = "";
-              objAttachment.push({
-                file_format: file_format,
-                attachment_name: attachment_name,
-                registry_id: app_id,
-                registry: registry,
-                application_name: application_name,
-              });
-            }
-          }
-        );
-        db.query(
-          "SELECT attachment_types.id as id, file_size, file_format, " +
-            " attachment_name, attachments.created_at as created_at, attachment_path " +
-            " FROM attachment_types, " +
-            " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-            " attachments.tracking_number = ?",
-          [old_tracking_number],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
-            }
-            console.log(results1);
-            for (var i = 0; i < results.length; i++) {
-              var file_format = results[i].file_format;
-              var app_id = results[i].id;
-              var attachment_name = results[i].attachment_name;
-              var attachment_path = results[i].attachment_path;
-              var registry = "";
-              var application_name = "";
-              objAttachment1.push({
-                file_format: file_format,
-                attachment_path: attachment_path,
-                attachment_name: attachment_name,
-                registry_id: app_id,
-                registry: registry,
-                application_name: application_name,
-              });
-            }
-          }
-        );
-        var remain_days;
-        if (days > 0) {
-          remain_days = "Siku " + days;
-        } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-          remain_days = "Sek " + seconds + " zilizopita";
-        } else if (days <= 0 && hours <= 0) {
-          remain_days = "Dakika " + minutes + " zilizopita";
-        } else if (days <= 0) {
-          remain_days = "Saa " + hours;
-        }
+        sharedModel.getAttachments(trackingNumber, (attachments) => {
+          objAttachment1 = attachments;
+        });
+        sharedModel.myStaffs(user , (staffs) => {
+            objStaffs = staffs
+        })
+        var remain_days =  calculcateRemainDays(created_at)
         db.query(
           "select * from managers " + " WHERE establishing_school_id = ?",
           [establishing_school_id],
@@ -1023,7 +547,7 @@ badiliMenejaRequestRouter.post(
               manager_name: manager_name,
               education_level: education_level,
               created_at: created_at,
-              remain_days: "",
+              remain_days: remain_days,
               manager_phone_number: manager_phone_number,
               manager_email: manager_email,
               fullname: fullname,

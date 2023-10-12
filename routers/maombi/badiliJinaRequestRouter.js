@@ -32,7 +32,7 @@ badiliJinaRequestRouter.post(
         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND application_category_id = 9 AND is_approved <> 2 " +
+        " AND application_category_id = 9 AND is_approved <> 2  AND payment_status_id = 2 " +
         selectConditionByTitle(user),
       function (error, results) {
         if (error) {

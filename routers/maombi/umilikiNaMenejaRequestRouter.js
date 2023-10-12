@@ -19,16 +19,16 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
   const user = req.user;
 //   const {cheo , sehemu , ngazi} = user;
 db.query(
-    "SELECT count(*) as total_month " +
-      " FROM applications " +
-      " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-    [2],
-    function (errorSummary, summary) {
-        if(errorSummary){
-            console.log(errorSummary)
-        }
-            db.query(
-              `SELECT   applications.tracking_number as tracking_number,
+  "SELECT count(*) as total_month " +
+    " FROM applications " +
+    " WHERE application_category_id = 2 AND payment_status_id = 2 AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
+  
+  function (errorSummary, summary) {
+    if (errorSummary) {
+      console.log(errorSummary);
+    }
+    db.query(
+      `SELECT   applications.tracking_number as tracking_number,
                         applications.created_at as created_at, applications.user_id as user_id, 
                         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
                         regions.RegionName as RegionName, districts.LgaName as LgaName 
@@ -38,72 +38,73 @@ db.query(
                 INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
                 INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
                 INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-                WHERE   application_category_id = 2
+                WHERE application_category_id = 2 AND payment_status_id = 2
                 ${selectConditionByTitle(user)}
                         `,
-              function (error, results) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  // console.log(results);
-                  var tracking_number = results[i].tracking_number;
-                  var registry_type_id = results[i].registry_type_id;
-                  var user_id = results[i].user_id;
-                  var foreign_token = results[i].foreign_token;
-                  var school_name = results[i].school_name;
-                  var LgaName = results[i].LgaName;
-                  var RegionName = results[i].RegionName;
-                  var RegionName = results[i].RegionName;
-                  var registry = results[i].registry;
-                  var created_at = results[i].created_at;
-                  var schoolCategory = results[i].schoolCategory;
-                  var applicantname;
-                  var today = new Date();
+      function (error, results) {
+        if (error) {
+          console.log(error);
+        }
+        for (var i = 0; i < results.length; i++) {
+          // console.log(results);
+          var tracking_number = results[i].tracking_number;
+          var registry_type_id = results[i].registry_type_id;
+          var user_id = results[i].user_id;
+          var foreign_token = results[i].foreign_token;
+          var school_name = results[i].school_name;
+          var LgaName = results[i].LgaName;
+          var RegionName = results[i].RegionName;
+          var RegionName = results[i].RegionName;
+          var registry = results[i].registry;
+          var created_at = results[i].created_at;
+          var schoolCategory = results[i].schoolCategory;
+          var applicantname;
+          var today = new Date();
 
-                  var diffInSeconds = Math.abs(today - created_at) / 1000;
-                  var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                  var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                  var minutes = Math.floor((diffInSeconds / 60) % 60);
-                  var seconds = Math.floor(diffInSeconds % 60);
-                  var milliseconds = Math.round(
-                    (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                  );
+          var diffInSeconds = Math.abs(today - created_at) / 1000;
+          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+          var minutes = Math.floor((diffInSeconds / 60) % 60);
+          var seconds = Math.floor(diffInSeconds % 60);
+          var milliseconds = Math.round(
+            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+          );
 
-                  var remain_days;
-                  if (days > 0) {
-                    remain_days = "Siku " + days;
-                  } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                    remain_days = "Sek " + seconds + " zilizopita";
-                  } else if (days <= 0 && hours <= 0) {
-                    remain_days = "Dakika " + minutes + " zilizopita";
-                  } else if (days <= 0) {
-                    remain_days = "Saa " + hours;
-                  }
-                  obj.push({
-                    tracking_number: tracking_number,
-                    school_name: school_name,
-                    LgaName: LgaName,
-                    RegionName: RegionName,
-                    user_id: user_id,
-                    registry_type_id: registry_type_id,
-                    registry: registry,
-                    created_at: created_at,
-                    remain_days: remain_days,
-                    schoolCategory: schoolCategory,
-                  });
-                }
-                // console.log(obj)
-                return res.send({
-                  error: false,
-                  statusCode: 300,
-                  dataList: obj,
-                  dataSummary: summary[0].total_month,
-                  message: "List of maombi kuanzisha shule.",
-                });
-              }
-            );
-    }); 
+          var remain_days;
+          if (days > 0) {
+            remain_days = "Siku " + days;
+          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+            remain_days = "Sek " + seconds + " zilizopita";
+          } else if (days <= 0 && hours <= 0) {
+            remain_days = "Dakika " + minutes + " zilizopita";
+          } else if (days <= 0) {
+            remain_days = "Saa " + hours;
+          }
+          obj.push({
+            tracking_number: tracking_number,
+            school_name: school_name,
+            LgaName: LgaName,
+            RegionName: RegionName,
+            user_id: user_id,
+            registry_type_id: registry_type_id,
+            registry: registry,
+            created_at: created_at,
+            remain_days: remain_days,
+            schoolCategory: schoolCategory,
+          });
+        }
+        // console.log(obj)
+        return res.send({
+          error: false,
+          statusCode: 300,
+          dataList: obj,
+          dataSummary: summary[0].total_month,
+          message: "List of maombi kuanzisha shule.",
+        });
+      }
+    );
+  }
+); 
 });
 
 umilikiNaMenejaRequestRouter.post(

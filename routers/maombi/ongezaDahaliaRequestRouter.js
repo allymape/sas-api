@@ -43,7 +43,7 @@ ongezaDahaliaRequestRouter.post(
             " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
             " former_school_infos.establishing_school_id = establishing_schools.id AND " +
             " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-            " AND application_category_id = 13 " +
+            " AND application_category_id = 13 AND payment_status_id = 2 " +
             selectConditionByTitle(user),
           function (error, results, fields) {
             if (error) {
@@ -130,7 +130,7 @@ ongezaDahaliaRequestRouter.post(
     var objMaoni = [];
     var objAttachment1 = [];
     var objAttachment2 = [];
-    console.log("ajajdajdjajdjajdjajdjjajdj")
+  
     db.query(
       "SELECT registration_structures.structure as structure, establishing_schools.id as establishId, " +
         " school_sub_categories.subcategory as subcategory, former_school_infos.stream as streamOld, " +
