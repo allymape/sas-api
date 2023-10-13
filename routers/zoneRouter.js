@@ -34,6 +34,18 @@ zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) =
             });
   });
 });
+
+zoneRouter.get("/lookup-zones", isAuth, (req, res) => {
+  const {user} = req
+  zoneModel.lookupZones(user, (error, zones) => {
+            return res.send({
+                error: error ? true : false,
+                statusCode: error ? 306 : 300,
+                data: error ? error : zones,
+                message: error ? "Something went wrong." : "List of Zones.",
+            });
+  });
+});
 // Edit Zone
 zoneRouter.get("/editZone/:id", isAuth, (req, res, next) => {
     var id = req.params.id;

@@ -46,6 +46,19 @@ regionRouter.get("/regions", isAuth, (req, res, next) => {
     });
 });
 
+regionRouter.get("/lookup-regions", isAuth, (req, res, next) => {
+    var zone_id = req.body.zone_id;
+    const {user} = req
+    regionModel.lookupRegions(user, zone_id, (error, regions) => {
+      return res.send({
+          error: error ? true : false,
+          statusCode: error ? 306 : 300,
+          data: error ? error : regions,
+          message: "List of Regions.",
+      });
+    });
+});
+
 // Fetch all regions from regions API and store
 regionRouter.post("/usajiliMikoa", isAuth, async (req, res, next) => {
        var apiData = [];

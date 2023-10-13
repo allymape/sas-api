@@ -24,6 +24,26 @@ module.exports = {
       }
     );
   },
+   lookupDistricts: (user, region_code, callback) => {
+    db.query(
+      ` SELECT regions.id AS reg_id, regions.RegionName AS regionName,districts.LgaName AS LgaName, districts.LgaCode AS LgaCode , districts.created_at AS createdAt , districts.updated_at AS updatedAt 
+        FROM districts, regions 
+        WHERE districts.RegionCode = regions.RegionCode AND districts.RegionCode = ?
+        ${
+          ["wilaya"].includes(user.ngazi)
+            ? " AND districts.LgaCode = '"+user.district_code+"'"
+            : ""
+        }
+        ORDER BY RegionName ASC`,
+      [region_code],
+      (error, districts) => {
+        if (error) {
+          console.log(error);
+        }
+        callback(error, districts);
+      }
+    );
+  },
   //******** STORE DISTRICTS *******************************
   storeDistricts: (districtData, callback) => {
     db.query(

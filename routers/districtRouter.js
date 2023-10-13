@@ -42,6 +42,19 @@ districtRouter.get("/allDistricts", isAuth, (req, res, next) => {
     }
   );
 });
+
+districtRouter.get("/lookup-districts", isAuth, (req, res, next) => {
+  var region_code  = req.body.region_code;
+  const {user} = req;
+  districtModel.lookupDistricts(user, region_code, (error, districts) => {
+    return res.send({
+      error: error ? true : false,
+      statusCode: error ? 306 : 300,
+      data: error ? [] : districts,
+      message: "List of Disticts.",
+    });
+  });
+});
 // Fetch all councils from councils API and store
 districtRouter.post("/usajiliWilaya", isAuth, async (req, res, next) => {
        var apiData = [];

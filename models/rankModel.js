@@ -7,10 +7,8 @@ module.exports = {
     db.query(
       `SELECT * 
         FROM ranks  
-        ${is_paginated ? ' ' : ' WHERE status_id = 1 '} 
-        ORDER BY id ASC ${
-        is_paginated ? " LIMIT ?,?" : ""
-      }`,
+        ${is_paginated ? " " : " WHERE status_id = 1 "} 
+        ORDER BY id ASC ${is_paginated ? " LIMIT ?,?" : ""}`,
       is_paginated ? [offset, per_page] : [],
       (error, ranks, fields) => {
         db.query(
@@ -20,6 +18,24 @@ module.exports = {
             callback(error, ranks, result[0].num_rows);
           }
         );
+      }
+    );
+  },
+  lookupRanks: (user , callback) => {
+    // console.log(user)
+    db.query(
+      `SELECT * 
+        FROM ranks  
+        ${
+          ["kanda", "wilaya"].includes(user.ngazi)
+            ? 'WHERE name = "' + user.ngazi + '"'
+            : ""
+        }
+        ORDER BY id ASC `,
+
+      (error, ranks) => {
+        if (error) console.log(error);
+        callback(error, ranks);
       }
     );
   },
@@ -89,7 +105,7 @@ module.exports = {
           console.log(error);
         }
         var numRows = result[0].num_rows;
-        console.log(numRows , id);
+        console.log(numRows, id);
         if (numRows > 0) {
           callback(error, success, null);
         } else {
@@ -99,7 +115,7 @@ module.exports = {
             (error2, deletedRank) => {
               if (error2) {
                 console.log(error2);
-                error = error2 
+                error = error2;
               }
               if (deletedRank.affectedRows > 0) {
                 success = true;

@@ -65,6 +65,23 @@ module.exports = {
     );
   },
 
+  lookupRoles : (user,callback) => {
+    db.query(
+      `SELECT id as role_id, role_name
+              FROM role_management
+               ${
+                 ["kanda", "wilaya"].includes(user.ngazi)
+                   ? "WHERE LOWER(role_name) IN ('user' , 'normal user' , 'normal-user')"
+                   : ""
+               }
+              `,
+      (error, roles) => {
+        if (error) console.log(error);
+        callback(error, roles);
+      }
+    );
+  },
+
   syncRoles: (roles, callback) => {
     try {
       var success = false;

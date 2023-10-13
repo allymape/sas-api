@@ -5,17 +5,34 @@ module.exports = {
   getAllZones: (offset, per_page, is_paginated, callback) => {
     //  console.log(is_paginated);
     db.query(
-      `SELECT * FROM zones  ${is_paginated ? ' ' : ' WHERE status_id = 1 '} ORDER BY zone_name ASC ${
-        is_paginated ? " LIMIT ?,?" : ""
-      }`,
+      `SELECT * FROM zones  ${
+        is_paginated ? " " : " WHERE status_id = 1 "
+      } ORDER BY zone_name ASC ${is_paginated ? " LIMIT ?,?" : ""}`,
       is_paginated ? [offset, per_page] : [],
-      (error, zones, fields) => {
+      (error, zones) => {
         db.query(
           "SELECT COUNT(*) AS num_rows FROM zones",
           (error2, result, fields2) => {
             callback(error, zones, result[0].num_rows);
           }
         );
+      }
+    );
+  },
+  lookupZones: (user , callback) => {
+    //  console.log(is_paginated);
+    db.query(
+      `SELECT * FROM zones  
+        WHERE status_id = 1 
+        ${
+          ["kanda", "wilaya"].includes(user.ngazi)
+            ? 'AND zones.id = ' + user.zone_id
+            : ""
+        }
+        ORDER BY zone_name ASC`,
+      (error, zones) => {
+        if (error) console.log(error);
+        callback(error, zones);
       }
     );
   },
@@ -95,7 +112,7 @@ module.exports = {
             (error2, deletedZone) => {
               if (error2) {
                 console.log(error2);
-                error = error2 
+                error = error2;
               }
               if (deletedZone.affectedRows > 0) {
                 success = true;

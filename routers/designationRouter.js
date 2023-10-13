@@ -38,6 +38,18 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
             });
   });
 });
+
+designationRouter.get("/designations_by_section", isAuth, (req, res, next) => {
+  var hierarchy_id = req.body.hierarchy_id
+  designationModel.lookupDesignations( 1, (error, designations) => {
+            return res.send({
+                error: error ? true : false,
+                statusCode: error ? 306 : 300,
+                designations: error ? null : designations,
+                message: error ? "Something went wrong." : "List of designations.",
+            });
+  });
+});
 // Edit designation
 designationRouter.get("/edit_designation/:id", isAuth, (req, res, next) => {
     var id = req.params.id;

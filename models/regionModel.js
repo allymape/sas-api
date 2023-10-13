@@ -28,6 +28,34 @@ module.exports = {
       }
     );
   },
+  lookupRegions: (user,zone_id, callback) => {
+     console.log(user)
+    db.query(
+      `SELECT r.id AS regionId, r.RegionCode AS regionCode, RegionName AS regionName, 
+              IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, 
+              r.created_at AS createdAt , 
+              r.updated_at AS updatedAt 
+      FROM regions r 
+      LEFT JOIN zones z ON z.id = r.zone_id 
+      ${
+        ["wilaya"].includes(user.ngazi)
+          ? "INNER JOIN districts d ON d.RegionCode = r.RegionCode"
+          : ""
+      }
+      WHERE r.zone_id = ?
+      ${
+        ["wilaya"].includes(user.ngazi)
+          ? "AND  d.LgaCode= '" + user.district_code + "'"
+          : ""
+      }
+      ORDER BY RegionName ASC`,
+      [Number(zone_id)],
+      (error, regions) => {
+        if (error) console.log(error);
+        callback(error, regions);
+      }
+    );
+  },
   //******** STORE REGIONS *******************************
   storeRegions: (regionData , callback) => {
      db.query(`INSERT INTO regions (id, RegionCode, RegionName , created_at, updated_at) VALUES ? ON DUPLICATE KEY UPDATE RegionCode = VALUES(RegionCode), RegionName = VALUES(RegionName), updated_at = VALUES(updated_at)`,

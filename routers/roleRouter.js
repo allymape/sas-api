@@ -39,19 +39,32 @@ roleRouter.get("/allRoles", isAuth, permission('view-roles'), (req, res, next) =
             });
   });
 });
-
-// Create Role
-roleRouter.get("/createRole", isAuth, (req, res, next) => {
-    var id = req.params.id;
-  roleModel.findRole(id, (error , success , permissions  ) => {
+// Lookup
+// List of roles Lookup
+roleRouter.get("/roles", isAuth, (req, res) => {
+  const {user} = req
+  roleModel.lookupRoles(user, (error, roles) => {
             return res.send({
-                success: success ? true : false,
-                statusCode: success ? 300 : 306,
-                data : permissions,
-                message: success ?  "Success" : "Not found",
+                error: error ? true : false,
+                statusCode: error ? 306 : 300,
+                data: error ? "" : roles,
+                message: error ? "Something went wrong." : "List of Roles.",
             });
   });
 });
+
+// Create Role
+// roleRouter.get("/createRole", isAuth, (req, res, next) => {
+//     var id = req.params.id;
+//   roleModel.findRole(id, (error , success , permissions  ) => {
+//             return res.send({
+//                 success: success ? true : false,
+//                 statusCode: success ? 300 : 306,
+//                 data : permissions,
+//                 message: success ?  "Success" : "Not found",
+//             });
+//   });
+// });
 
 // Edit Role
 roleRouter.get("/editRole/:id", isAuth, (req, res, next) => {

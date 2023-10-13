@@ -40,6 +40,26 @@ module.exports = {
       }
     );
   },
+
+  lookupDesignations: (hierarchy_id, callback) => {
+    
+    db.query(
+      `SELECT 
+        r.id as id,
+        r.name as name, 
+        v.rank_name as role, 
+        r.vyeoId AS level,
+        r.status_id AS status
+        FROM roles r
+        LEFT JOIN vyeo v ON v.id = r.vyeoId 
+        WHERE r.status_id = 1 AND r.vyeoId = ?`,
+      [hierarchy_id],
+      (error, designations) => {
+        if(error) console.log(error)
+        callback(error, designations);      
+      }
+    );
+  },
   //******** STORE Designation *******************************
   storeDesignation: (data, callback) => {
     var success = false;

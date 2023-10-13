@@ -28,6 +28,18 @@ rankRouter.get("/allRanks", isAuth, permission('view-ranks'), (req, res, next) =
             });
   });
 });
+// List of ranks lookup
+rankRouter.get("/ranks", isAuth, (req, res, next) => {
+  const {user} = req
+  rankModel.lookupRanks(user , (error, ranks, numRows) => {
+            return res.send({
+                error: error ? true : false,
+                statusCode: error ? 306 : 300,
+                data: error ? error : ranks,
+                message: error ? "Something went wrong." : "List of Ranks.",
+            });
+  });
+});
 // Edit Rank
 rankRouter.get("/editRank/:id", isAuth, (req, res, next) => {
     var id = req.params.id;

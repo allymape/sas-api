@@ -38,10 +38,22 @@ hierarchyRouter.get("/all_hierarchies", isAuth, permission('view-hierarchies'), 
             });
   });
 });
+hierarchyRouter.get("/hierarchies_by_ranks", isAuth, (req, res, next) => {
+  var rank_id = req.body.rank_id;
+     console.log(req.body)
+  hierarchyModel.lookupHierarchies(rank_id , (error, hierarchies) => {
+            return res.send({
+                error: error ? true : false,
+                statusCode: error ? 306 : 300,
+                hierarchies: error ? null : hierarchies,
+                message: error ? "Something went wrong." : "List of Hierarchies.",
+            });
+  });
+});
 // Edit hierarchy
 hierarchyRouter.get("/edit_hierarchy/:id", isAuth, (req, res, next) => {
     var id = req.params.id;
-  hierarchyModel.findhierarchy(id, (error , success, hierarchy) => {
+  hierarchyModel.findHierarchy(id, (error , success, hierarchy) => {
             return res.send({
                 success: success ? true : false,
                 statusCode: success ? 300 : 306,
