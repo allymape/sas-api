@@ -40,8 +40,8 @@ hierarchyRouter.get("/all_hierarchies", isAuth, permission('view-hierarchies'), 
 });
 hierarchyRouter.get("/hierarchies_by_ranks", isAuth, (req, res, next) => {
   var rank_id = req.body.rank_id;
-     console.log(req.body)
-  hierarchyModel.lookupHierarchies(rank_id , (error, hierarchies) => {
+  const {user} = req;
+  hierarchyModel.lookupHierarchies(rank_id , user, (error, hierarchies) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

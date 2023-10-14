@@ -491,7 +491,7 @@ module.exports = {
   },
   tumaMaoni: (req, application_category, callback) => {
     var success = false;
-    const today = new Date();
+    const today = formatDate(new Date() , "YYYY-MM-DD HH:mm:ss");
     const { user } = req;
     const userTo = Number(req.body.staffs);
     const staff_id = userTo == 0 ? null : userTo;

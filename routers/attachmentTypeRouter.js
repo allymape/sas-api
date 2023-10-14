@@ -49,6 +49,7 @@ attachementTypeRouter.post("/add-attachment-type", isAuth, (req, res, next) => {
                req.body.file_format,
                req.body.aina_mwombaji,
                req.body.aina_ombi,
+               req.body.structure,
                1,
                formatDate(new Date()),
              ]);
@@ -73,6 +74,7 @@ attachementTypeRouter.put("/update-attachment-type/:id", isAuth, (req, res, next
                       req.body.file_format,
                       req.body.aina_mwombaji,
                       req.body.aina_ombi,
+                      req.body.structure,
                       req.body.hali,
                       id,
                 ];

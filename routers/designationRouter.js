@@ -41,7 +41,7 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
 
 designationRouter.get("/designations_by_section", isAuth, (req, res, next) => {
   var hierarchy_id = req.body.hierarchy_id
-  designationModel.lookupDesignations( 1, (error, designations) => {
+  designationModel.lookupDesignations( hierarchy_id, (error, designations) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

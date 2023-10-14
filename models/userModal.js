@@ -114,7 +114,7 @@ module.exports = {
     );
   },
   //******** FIND USER *******************************
-  findUser: (userId, callback) => {
+  findUser: (userId, user, callback) => {
     var success = false;
     db.query(
       `SELECT s.id as id, s.name as name, s.username AS username, s.email AS email, s.phone_no AS phone_no,
@@ -123,7 +123,7 @@ module.exports = {
         FROM staffs s
         LEFT JOIN roles r ON r.id = s.user_level
         LEFT JOIN vyeo v ON v.id = r.vyeoId
-        WHERE s.id = ?`,
+        WHERE s.id = ? ${filterByUserOffice(user, "AND", "s.zone_id" , 's.district_code')}`,
       [Number(userId)],
       (error, user) => {
         if (error) {

@@ -6,13 +6,8 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const indexRouter = require("./router.js");
 // var session = require('express-session');
-
+process.env.TZ="Africa/Dar_es_Salaam"
 const app = express();
-// app.use(session({
-// 	secret: 'secret',
-// 	resave: true,
-// 	saveUninitialized: true,
-// }));
 
 app.use(express.json({ limit: "150MB", type: "application/json" }));
 app.use(express.urlencoded({

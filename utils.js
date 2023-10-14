@@ -429,7 +429,7 @@ const ObjectFuctions = {
     // console.log('hapa',user);
     var str = `AND s.id <> ${id} `;
     if (ngazi == "wizara") {
-      if(cheo == "ke"){
+      if (cheo == "ke") {
         str += ` OR LOWER(r.name) IN ('adsa','mus','dsne') `;
       }
       // if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
@@ -437,7 +437,6 @@ const ObjectFuctions = {
       // } else {
       //   str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
       // }
-
     } else if (ngazi == "kanda") {
       //  K1 && Officers
       str += ` AND s.zone_id = ${zone_id} AND s.district_code IS NULL`;
@@ -448,94 +447,116 @@ const ObjectFuctions = {
     }
     return str;
   },
-  getMyNextBoss : (user ,application_category, staff_id) => {
-      const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
-           if(staff_id == 0 || staff_id == '' || staff_id == null){
-                var str = ``;
-                // Business Flow base on application category
-                if ([1,2,7,8].includes(application_category)) { // W1->ADSA->KE
-                      switch (cheo) {
-                        case "w1":
-                          str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
-                          break;
-                        case "adsa":
-                          str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
-                          break;
-                        default:
-                          str = ` AND s.id < -1`;
-                          break;
-                      }
-                }
-                if ([4,5,6,12,13,14].includes(application_category)) {  // W1->K1->MUS->KE
-                        switch (cheo) {
-                          case "w1":
-                            str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
-                            break;
-                          case "k1":
-                            str = ` AND LOWER(r.name) =  'mus' AND s.zone_id IS NULL `;
-                            break;
-                          case "mus":
-                            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
-                            break;
-                          case "adsa":
-                            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
-                            break;
-                          default:
-                            str = ` AND s.id < -1`;
-                            break;
-                        }
-                }
-                if ([9,10,11].includes(application_category)) {  //W1->K1->ADSA->KE   
-                      switch (cheo) {
-                        case "w1":
-                          str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
-                          break;
-                        case "k1":
-                          str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
-                          break;
-                        case "adsa":
-                          str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
-                          break;
-                        default:
-                          str = ` AND s.id < -1`;
-                          break;
-                      }
-                }
-              return str;
-           }
-          return ` AND s.id < -1`;
+  getMyNextBoss: (user, application_category, staff_id) => {
+    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+    if (staff_id == 0 || staff_id == "" || staff_id == null) {
+      var str = ``;
+      // Business Flow base on application category
+      if ([1, 2, 7, 8].includes(application_category)) {
+        // W1->ADSA->KE
+        switch (cheo) {
+          case "w1":
+            str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
+            break;
+          case "adsa":
+            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
+            break;
+          default:
+            str = ` AND s.id < -1`;
+            break;
+        }
+      }
+      if ([4, 5, 6, 12, 13, 14].includes(application_category)) {
+        // W1->K1->MUS->KE
+        switch (cheo) {
+          case "w1":
+            str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
+            break;
+          case "k1":
+            str = ` AND LOWER(r.name) =  'mus' AND s.zone_id IS NULL `;
+            break;
+          case "mus":
+            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
+            break;
+          case "adsa":
+            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
+            break;
+          default:
+            str = ` AND s.id < -1`;
+            break;
+        }
+      }
+      if ([9, 10, 11].includes(application_category)) {
+        //W1->K1->ADSA->KE
+        switch (cheo) {
+          case "w1":
+            str = ` AND LOWER(r.name) =  'k1' AND s.zone_id = ${zone_id} `;
+            break;
+          case "k1":
+            str = ` AND LOWER(r.name) =  'adsa' AND s.zone_id IS NULL `;
+            break;
+          case "adsa":
+            str = ` AND LOWER(r.name) =  'ke' AND s.zone_id IS NULL `;
+            break;
+          default:
+            str = ` AND s.id < -1`;
+            break;
+        }
+      }
+      return str;
+    }
+    return ` AND s.id < -1`;
   },
-  selectConditionByTitle: (user , useAlias = false) => {
-    const { cheo, ngazi, id, sehemu, district_code, zone_id , jukumu} = user;
+  selectConditionByTitle: (user, useAlias = false) => {
+    const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
     // console.log(user);
     var str = ``;
     if (ngazi == "wizara") {
-      if ( ObjectFuctions.lowerCase(jukumu) == "super admin" && !['w1','k1','adsa','masjala','mus','dlsu','dsne','ke'].includes(sehemu)) {
-      return `AND is_approved <> 2`;
+      if (
+        ObjectFuctions.lowerCase(jukumu) == "super admin" &&
+        !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(
+          sehemu
+        )
+      ) {
+        return `AND is_approved <> 2`;
       }
 
       if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
         str += ` AND is_approved = 2`;
       } else {
         // console.log(cheo , id)
-        str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id} AND is_approved <> 2`;
+        str += ` AND ${
+          useAlias ? "a.staff_id" : "applications.staff_id"
+        } = ${id} AND is_approved <> 2`;
       }
 
       return str;
     } else if (ngazi == "kanda") {
       //  K1 && Officers
-      str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id} AND is_approved <> 2 AND ${useAlias ? 'r.zone_id' : 'regions.zone_id'} = ${zone_id}`;
+      str += ` AND ${
+        useAlias ? "a.staff_id" : "applications.staff_id"
+      } = ${id} AND is_approved <> 2 AND ${
+        useAlias ? "r.zone_id" : "regions.zone_id"
+      } = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
-        console.log("I am w1 "+ user.id);
-        str += ` AND (${ useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} OR  ${useAlias ? "a.staff_id" : "applications.staff_id"} IS NULL)`;
+        console.log("I am w1 " + user.id);
+        str += ` AND (${
+          useAlias ? "a.staff_id" : "applications.staff_id"
+        } = ${id} OR  ${
+          useAlias ? "a.staff_id" : "applications.staff_id"
+        } IS NULL)`;
       } else {
         //Officer W1
         console.log("I am w1 Officer");
-        str += ` AND ${useAlias ? 'a.staff_id' : 'applications.staff_id'} = ${id}`;
+        str += ` AND ${
+          useAlias ? "a.staff_id" : "applications.staff_id"
+        } = ${id}`;
       }
-      str += ` AND ${ useAlias ? 'd.LgaCode' : 'districts.LgaCode'} = "${district_code}" AND is_approved <> 2 `;
+      str += ` AND ${
+        useAlias ? "d.LgaCode" : "districts.LgaCode"
+      } = "${district_code}" AND is_approved <> 2 `;
       return str;
     } else {
       str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = -1`;
@@ -558,7 +579,7 @@ const ObjectFuctions = {
         $where = ``;
         break;
       case 2:
-        $where = `${start_with} ${table_zone_alias} = ${zone_id} ${more_sql_filter}`;
+        $where = `${start_with} ${table_zone_alias} = ${zone_id} AND ${table_lga_alias} IS NULL ${more_sql_filter}`;
         break;
       case 3:
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
@@ -590,165 +611,216 @@ const ObjectFuctions = {
             JOIN  applications a ON a.tracking_number = e.tracking_number`;
   },
 
-
-  InsertAuditTrail : (user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,tableId) => {
-  // console.log(JSON.stringify(new_body));
-  db.query(
-    "INSERT INTO audit_trail (user_id, event_type, new_body, " +
-      "created_at, ip_address, api_router, browser_used, rollId, message, tableName) " +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      user_id,
-      event_type,
-      JSON.stringify(new_body),
-      new Date(),
-      ip_address,
-      api_router,
-      browser_used,
-      rollId,
-      message,
-      tableId,
-    ],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return {
-          error: true,
-          statusCode: 400,
-          message: err,
-        };
+  InsertAuditTrail: (
+    user_id,
+    event_type,
+    new_body,
+    api_router,
+    browser_used,
+    rollId,
+    message,
+    ip_address,
+    tableId
+  ) => {
+    // console.log(JSON.stringify(new_body));
+    db.query(
+      "INSERT INTO audit_trail (user_id, event_type, new_body, " +
+        "created_at, ip_address, api_router, browser_used, rollId, message, tableName) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        user_id,
+        event_type,
+        JSON.stringify(new_body),
+        new Date(),
+        ip_address,
+        api_router,
+        browser_used,
+        rollId,
+        message,
+        tableId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          return {
+            error: true,
+            statusCode: 400,
+            message: err,
+          };
+        }
+        return "sent";
       }
-      return "sent";
+    );
+  },
+  calculcateRemainDays: (fromDate) => {
+    var today = new Date();
+    var diffInSeconds = Math.abs(today - new Date(fromDate)) / 1000;
+    var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+    var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+    var minutes = Math.floor((diffInSeconds / 60) % 60);
+    var seconds = Math.floor(diffInSeconds % 60);
+    var milliseconds = Math.round(
+      (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+    );
+    var remain_days = null;
+    if (days > 7) {
+      remain_days = ObjectFuctions.formatDate(fromDate, "DD-MM-YYYY HH:mm:ss");
+    } else if (days > 0) {
+      remain_days = `Siku ${days} ${days > 1 ? "zilizopita" : "iliyopita"} `;
+    } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+      remain_days = `Sekunde ${seconds} ${
+        seconds > 1 ? "zilizopita" : "iliyopita"
+      }`;
+    } else if (days <= 0 && hours <= 0) {
+      remain_days = `Dakika ${minutes} ${
+        minutes > 1 ? "zilizopita" : "iliyopita"
+      }`;
+    } else if (days <= 0) {
+      remain_days = `Saa ${hours} ${hours > 1 ? "zilizopita" : "iliyopita"}`;
     }
-  );
-},
-calculcateRemainDays : (fromDate) => {
-                var today = new Date();
-                var diffInSeconds = Math.abs(today - new Date(fromDate)) / 1000;
-                var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                var minutes = Math.floor((diffInSeconds / 60) % 60);
-                var seconds = Math.floor(diffInSeconds % 60);
-                var milliseconds = Math.round(
-                  (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                );
-                var remain_days = null;
-                if (days > 0) {
-                  remain_days = "Siku " + days;
-                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                  remain_days = "Sek " + seconds + " zilizopita";
-                } else if (days <= 0 && hours <= 0) {
-                  remain_days = "Dakika " + minutes + " zilizopita";
-                } else if (days <= 0) {
-                  remain_days = "Saa " + hours;
-                }
-                return remain_days;
-},
-notificationUrl : (application_category_id , registry_id) => {
-  let url = `#`;
-     switch (application_category_id) {
+    return remain_days;
+  },
+  notificationUrl: (application_category_id, registry_id, tracking_number) => {
+    let url = `#`;
+    switch (application_category_id) {
       case 1:
-            if(registry_id != 3){
-              url = `/MaombiKuanzishaShule`;
-            }
-            break;
+        if (registry_id != 3) {
+          url = `/TaarifaOmbi/${tracking_number}`;
+        }
+        break;
       case 2:
-            url = `/MaombiMmilikiShule`;
-            break;
+        url = `/ViewOmbi/${tracking_number}`;
+        break;
       case 4:
-            if (registry_id ==3 ){
-                url = `/MaombiKusajiliShuleSerikali`;
-            }else{
-                url = `/MaombiKusajiliShule`;
-            } 
-            break;
+        if (registry_id == 3) {
+          url = `/SajiliOmbiSerikali/${tracking_number}`;
+        } else {
+          url = `/SajiliOmbi/${tracking_number}`;
+        }
+        break;
       case 5:
-            url = `/KuongezaMikondo`;
-            break;
+        url = `/BadiliMkondo/${tracking_number}`;
+        break;
       case 6:
-            url = `/BadiliUsajili`;
-            break;
+        url = `/BadiliAinaUsajili/${tracking_number}`;
+        break;
       case 7:
-            url = `/BadiliMmiliki`;
-            break;
+        url = `/ViewOmbiMmiliki/${tracking_number}`;
+        break;
       case 8:
-            url = `/BadiliMeneja`;
-            break;
+        url = `/ViewOmbiMeneja/${tracking_number}`;
+        break;
       case 9:
-            url = `/BadiliJina`;
-            break;
+        url = `/BadiliShule/${tracking_number}`;
+        break;
       case 10:
-            url = `/Hamisha`;
-            break;
+        url = `/HamishaShuleDetails/${tracking_number}`;
+        break;
       case 11:
-            url = `/FutaShule`;
-            break;
+        url = `/FutaShuleTaarifa/${tracking_number}`;
+        break;
       case 12:
-            url = `/KuongezaTahasusi`;
-            break;
+        url = `/BadiliTahasusi/${tracking_number}`;
+        break;
       case 13:
-            url = `/KuongezaDahalia`;
-            break;
+        url = `/BadiliDahalia/${tracking_number}`;
+        break;
       case 14:
-            url = `/KuongezaBweni`;
-            break;
+        url = `/BadiliBweni/${tracking_number}`;
+        break;
       default:
-            url = `#`;
-            break;
-     }
-     return url;
-},
-notificationArrayData : (results , callback) => {
-       const data = [];
-        results.forEach((item) => {
-          const {
-            tracking_number,
-            task,
-            application_category_id,
-            registry_type_id,
-            school_name,
-          } = item;
-              data.push({
-                tracking_number: tracking_number,
-                task: `Ombi la ${task}`,
-                url: ObjectFuctions.notificationUrl(application_category_id, registry_type_id),
-                school_name: school_name,
-              });
-        });
-        callback(data)
-},
-UpdateAuditTrail :(user_id,event_type,new_body,api_router,browser_used,rollId,message,ip_address,old_body,tableId)  => {
-  // console.log(JSON.stringify(new_body))
-  db.query(
-    "INSERT INTO audit_trail (user_id, event_type, new_body, " +
-      "created_at, ip_address, api_router, browser_used, rollId, message, old_body, tableName) " +
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      user_id,
-      event_type,
-      JSON.stringify(new_body),
-      new Date(),
-      ip_address,
-      api_router,
-      browser_used,
-      rollId,
-      message,
-      JSON.stringify(old_body),
-      tableId,
-    ],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return {
-          error: true,
-          statusCode: 400,
-          message: err,
-        };
-      }
-      return "sent";
+        url = `#`;
+        break;
     }
-  );
-}
+    return url;
+  },
+  notificationArrayData: (results, callback) => {
+    const data = [];
+    results.forEach((item) => {
+      var count = 60;
+      const {
+        tracking_number,
+        task,
+        application_category_id,
+        registry_type_id,
+        school_name,
+        created_at,
+        comments,
+        staff_name,
+        title,
+      } = item;
+      data.push({
+        tracking_number: tracking_number,
+        task: `Ombi la ${task}`,
+        url: ObjectFuctions.notificationUrl(
+          application_category_id,
+          registry_type_id,
+          tracking_number
+        ),
+        school_name: school_name,
+        remain_days: ObjectFuctions.calculcateRemainDays(created_at),
+        created_at: ObjectFuctions.formatDate(
+          created_at,
+          "DD-MM-YYYY HH:mm:ss"
+        ),
+        comments:
+          comments != null && comments.length > count
+            ? comments.slice(0, count) + (comments.length > count ? " ..." : "")
+            : comments,
+        staff_name: staff_name
+          ? ObjectFuctions.capitalCase(ObjectFuctions.lowerCase(staff_name))
+          : "",
+        title: title ? ObjectFuctions.upperCase(title) : "",
+      });
+    });
+
+    console.log(data);
+
+    callback(data);
+  },
+  UpdateAuditTrail: (
+    user_id,
+    event_type,
+    new_body,
+    api_router,
+    browser_used,
+    rollId,
+    message,
+    ip_address,
+    old_body,
+    tableId
+  ) => {
+    // console.log(JSON.stringify(new_body))
+    db.query(
+      "INSERT INTO audit_trail (user_id, event_type, new_body, " +
+        "created_at, ip_address, api_router, browser_used, rollId, message, old_body, tableName) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        user_id,
+        event_type,
+        JSON.stringify(new_body),
+        new Date(),
+        ip_address,
+        api_router,
+        browser_used,
+        rollId,
+        message,
+        JSON.stringify(old_body),
+        tableId,
+      ],
+      (err, result) => {
+        if (err) {
+          console.log(err);
+          return {
+            error: true,
+            statusCode: 400,
+            message: err,
+          };
+        }
+        return "sent";
+      }
+    );
+  },
 };
 
 module.exports = ObjectFuctions;

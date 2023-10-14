@@ -1,10 +1,9 @@
 const db = require("../dbConnection");
 const {
-  selectConditionByRanks,
-  notificationUrl,
   schoolLocationsSqlJoin,
   notificationArrayData,
   selectConditionByTitle,
+  formatDate,
 } = require("../utils");
 const sharedModel = require("./sharedModel");
 
@@ -13,16 +12,22 @@ module.exports = {
   getNotifications: (user, callback) => {
     //    count all my notifications
     const selectSql = `SELECT a.tracking_number AS tracking_number, app_name AS task, registry_type_id , application_category_id , 
-                              e.school_name AS school_name`;
+                              e.school_name AS school_name, IFNULL(m.created_at , a.created_at) AS created_at, 
+                              m.coments AS comments, u.name AS staff_name , rl.name AS title
+                              `;
     const sqlfrom = `FROM applications a`;
     const commonJoin = `JOIN application_categories ac ON ac.id = a.application_category_id
+                        LEFT JOIN (SELECT trackingNo, coments, user_from , created_at
+                                   FROM maoni m2
+                                   WHERE user_to = ${Number(user.id)} 
+                                   ORDER BY id DESC LIMIT 1) AS m
+                              ON a.tracking_number = m.trackingNo
+                        LEFT JOIN staffs u ON u.id = m.user_from 
+                        LEFT JOIN roles rl ON rl.id = u.user_level
                         ${schoolLocationsSqlJoin()}
                         `;
 
-    const sqlWhere = `WHERE  a.payment_status_id = 2   ${selectConditionByTitle(
-      user,
-      true
-    )} `;
+    const sqlWhere = `WHERE  a.payment_status_id = 2  ${selectConditionByTitle(user, true)} `;
 
     let data = [];
     // Kuanzisha
@@ -120,7 +125,28 @@ module.exports = {
                                                 tahasusi,
                                                 (x) => {
                                                   data = data.concat(x);
-                                                  callback(data, data.length);
+                                                  // Sort latest
+                                                  const sortedDataDesc = data.sort(
+                                                    (objA, objB) =>
+                                                      Number(new Date(objB.created_at)) -
+                                                      Number(new Date(objA.created_at))
+                                                  );
+                                                  // find today messages
+                                                  // const today = formatDate(
+                                                  //   new Date()
+                                                  // );
+                                                  
+                                                  // const todayData = data.filter((item) => {
+                                                  //   const itemDate = new Date(item.created_at);
+                                                  //  console.log(today)
+                                                  //   return (
+                                                  //     itemDate.getDay() === today.getDay() && 
+                                                  //     itemDate.getMonth() === today.getMonth() &&
+                                                  //     itemDate.getFullYear() == today.getFullYear
+                                                  //   )
+                                                  // })
+                                                  
+                                                  callback(sortedDataDesc, data.length);
                                                 }
                                               );
                                             }

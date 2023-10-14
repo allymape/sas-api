@@ -26,7 +26,7 @@ module.exports = {
   storeAttachmentTypes: (formData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO attachment_types (attachment_name, file_size , file_format,registry_type_id, application_category_id , status_id, created_at) VALUES ?`,
+      `INSERT INTO attachment_types (attachment_name, file_size , file_format,registry_type_id, application_category_id , registration_structure_id , status_id, created_at) VALUES ?`,
       [formData],
       (error, result) => {
         if (error) {
@@ -62,7 +62,7 @@ module.exports = {
     var success = false;
     db.query(
       `UPDATE attachment_types SET attachment_name = ?, file_size = ?, 
-              file_format = ?, registry_type_id = ?, application_category_id = ? , status_id = ?  
+              file_format = ?, registry_type_id = ?, application_category_id = ? , registration_structure_id = ? , status_id = ?  
        WHERE id = ?`,
       formData,
       (error, AttachmentTypes, fields) => {

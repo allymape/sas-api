@@ -41,15 +41,20 @@ module.exports = {
       }
     );
   },
-  lookupHierarchies: (rank_id , callback) => {
+  lookupHierarchies: (rank_id , user, callback) => {
     db.query(
       `SELECT v.id AS id,
         v.rank_name as name, r.name as rank_name, v.status_id AS status, v.rank_level AS rank_level
         FROM vyeo v
         LEFT JOIN ranks r ON v.rank_level = r.id  
-        WHERE  v.rank_level = ?
-        ORDER BY r.id ASC`, 
-      [rank_id],
+        WHERE  v.rank_level = ? AND v.status_id = 1 AND  r.status_id = 1
+        ${
+          ["kanda", "wilaya"].includes(user.ngazi)
+            ? 'AND LOWER(v.rank_name) = "' + user.sehemu + '"'
+            : ""
+        }
+        ORDER BY r.id ASC`,
+      [Number(rank_id)],
       (error, result) => {
         if (error) {
           console.log("Error", error);
