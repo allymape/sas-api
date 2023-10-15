@@ -42,6 +42,7 @@ attachementTypeRouter.get("/edit-attachment-type/:id", isAuth, (req, res, next) 
 
 // Store attachementType
 attachementTypeRouter.post("/add-attachment-type", isAuth, (req, res, next) => {
+         const structure = req.body.structure;
          var formData = [];
              formData.push([
                req.body.jina_hati,
@@ -49,7 +50,7 @@ attachementTypeRouter.post("/add-attachment-type", isAuth, (req, res, next) => {
                req.body.file_format,
                req.body.aina_mwombaji,
                req.body.aina_ombi,
-               req.body.structure,
+               structure ? structure : null,
                1,
                formatDate(new Date()),
              ]);
@@ -68,16 +69,18 @@ attachementTypeRouter.post("/add-attachment-type", isAuth, (req, res, next) => {
 // Store attachementType
 attachementTypeRouter.put("/update-attachment-type/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
+            const structure = req.body.structure;
             var formData = [
                       req.body.jina_hati,
                       req.body.ukubwa,
                       req.body.file_format,
                       req.body.aina_mwombaji,
                       req.body.aina_ombi,
-                      req.body.structure,
+                      structure ? structure : null,
                       req.body.hali,
                       id,
                 ];
+  
               attachmentTypeModel.updateAttachmentType(id,formData, (error, success, attachementType) => {
                   return res.send({
                     success: success ? true : false,

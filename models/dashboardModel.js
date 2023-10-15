@@ -82,7 +82,6 @@ module.exports = {
                                       console.log(error5);
                                       error = error5;
                                     }
-                                    // console.log('Nafika');
                                     callback(
                                       error,
                                       summaryRegisteredSchools[0],
@@ -104,26 +103,24 @@ module.exports = {
   //******** Schools by Regions and Categories *******************************
   getSchoolByRegionsAndCategories: (user , callback) => {
       // region means label (it can be region_name , lga_name, ward_name and street_name)
-      db.query(
-        `SELECT ${selectConditionByRanks(user)} , 
+      
+      db.query(`SELECT ${selectConditionByRanks(user)} , 
                 sc.id AS category , 
-                #rt.id AS owner, 
                 COUNT(*) AS school_count
                 FROM school_registrations s 
                 JOIN establishing_schools e ON s.establishing_school_id = e.id
                 JOIN applications a ON a.tracking_number = e.tracking_number
                 JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 2
-                ${filterByUserOffice(user , 'AND')}
-                GROUP BY region , sc.id #,rt.id
-                ORDER BY region ASC
-                `,
+                WHERE a.is_approved = 2 AND s.reg_status = 2 ${filterByUserOffice(user , 'AND')}
+                GROUP BY region , sc.id 
+                ORDER BY region ASC`,
         (error, results) => {
           if (error) {
             console.log(error);
           }
-          console.log("data",results);
+          // console.log("data",results);
+           console.log("Nafika");
           //   Start
           // Format the results
           const formattedResults = {};
@@ -166,7 +163,7 @@ module.exports = {
               minValue = initial;
             }
           });
-          // console.log(minValue , maxValue)
+          console.log("Nafika",minValue , maxValue)
           callback(formattedResults, minValue, maxValue);
         }
       );

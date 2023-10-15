@@ -409,7 +409,7 @@ const ObjectFuctions = {
   selectConditionByRanks: (user) => {
     const { office } = user;
     let $select = "";
-    switch (office) {
+    switch (Number(office)) {
       case 1:
         $select = `r.RegionName AS region`;
         break;
@@ -573,10 +573,10 @@ const ObjectFuctions = {
   ) => {
     const { office, zone_id, district_code } = user;
 
-    let $where = "";
-    switch (office) {
+    let $where = '';
+    switch (Number(office)) {
       case 1:
-        $where = ``;
+        $where = "";
         break;
       case 2:
         $where = `${start_with} ${table_zone_alias} = ${zone_id} AND ${table_lga_alias} IS NULL ${more_sql_filter}`;
@@ -585,7 +585,7 @@ const ObjectFuctions = {
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
         break;
       default:
-        $where = ``;
+        // $where = '';
         break;
     }
     return $where;
@@ -774,7 +774,7 @@ const ObjectFuctions = {
       });
     });
 
-    console.log(data);
+    // console.log(data);
 
     callback(data);
   },
