@@ -573,10 +573,9 @@ const ObjectFuctions = {
   ) => {
     const { office, zone_id, district_code } = user;
 
-    let $where = '';
+    let $where = ``;
     switch (Number(office)) {
       case 1:
-        $where = "";
         break;
       case 2:
         $where = `${start_with} ${table_zone_alias} = ${zone_id} AND ${table_lga_alias} IS NULL ${more_sql_filter}`;
@@ -585,10 +584,12 @@ const ObjectFuctions = {
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
         break;
       default:
-        // $where = '';
+        $where = `${start_with} e.school_category_id < -1 `;;
         break;
     }
+    
     return $where;
+    
   },
   schoolLocationsSqlJoin: () => {
     return `JOIN streets   st ON st.StreetCode = e.village_id

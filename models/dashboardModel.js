@@ -64,7 +64,7 @@ module.exports = {
                                 GROUP BY label
                                 ORDER BY label ASC`,
                               (error4, summaryStructures) => {
-                                console.log("structure: ", summaryStructures);
+                                // console.log("structure: ", summaryStructures);
                                 if (error4) {
                                   console.log(error4);
                                   error = error4;
@@ -103,31 +103,30 @@ module.exports = {
   //******** Schools by Regions and Categories *******************************
   getSchoolByRegionsAndCategories: (user , callback) => {
       // region means label (it can be region_name , lga_name, ward_name and street_name)
-      
-      db.query(`SELECT ${selectConditionByRanks(user)} , 
-                sc.id AS category , 
+      db.query(`SELECT ${selectConditionByRanks(user)} , sc.id AS category , 
                 COUNT(*) AS school_count
                 FROM school_registrations s 
                 JOIN establishing_schools e ON s.establishing_school_id = e.id
                 JOIN applications a ON a.tracking_number = e.tracking_number
-                JOIN school_categories sc ON sc.id = e.school_category_id
+                LEFT JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 2 ${filterByUserOffice(user , 'AND')}
+                WHERE a.is_approved = 2 AND s.reg_statu = 2 
+                ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id 
                 ORDER BY region ASC`,
-        (error, results) => {
+        function(error, results){
+          console.log("Nafika");
           if (error) {
             console.log(error);
           }
           // console.log("data",results);
-           console.log("Nafika");
+          //  console.log("Nafika");
           //   Start
           // Format the results
           const formattedResults = {};
           // Iterate over the query results
           results.forEach((row) => {
             const { region, category, school_count } = row;
-
             // Check if the region exists in the formatted results
             if (!formattedResults[region]) {
               formattedResults[region] = {
@@ -163,7 +162,6 @@ module.exports = {
               minValue = initial;
             }
           });
-          console.log("Nafika",minValue , maxValue)
           callback(formattedResults, minValue, maxValue);
         }
       );

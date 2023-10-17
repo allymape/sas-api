@@ -17,4 +17,8 @@ conn.connect((err) => {
   console.info('Database is connected successfully!');
 });
 
+conn.on("error" , (err) => {
+  console.log("Mysql Error: "+ err);
+})
+
 module.exports = conn;

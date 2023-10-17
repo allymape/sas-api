@@ -42,7 +42,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySe
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
               " school_registrations.establishing_school_id = establishing_schools.id AND " +
               " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-              " AND application_category_id = 4 AND applications.registry_type_id = 3 AND payment_status_id = 2 " +
+              " AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) " +
               selectConditionByTitle(user),
             function (error, results) {
               if (error) {
