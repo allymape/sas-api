@@ -6582,10 +6582,10 @@ router.post("/thibitishapassword", shirikishoValidation, (req, res, next) => {
         AND twofa_digit = ${db.escape(req.body.msimbo)};`,
     (err, result) => {
       if (err) {
-        res.send({ err: true, message: "Verification haiyajafanikiwa" });
+        // res.send({ err: true, message: "Verification haiyajafanikiwa" });
       }
       console.log(result);
-      if (result[0].twofa_digit == twfa) {
+      if (result.length > 0 && result[0].twofa_digit == twfa) {
         bcrypt.hash(req.body.password, 10, (err, hash) => {
           if (err) {
             return res.status(500).send({

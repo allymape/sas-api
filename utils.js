@@ -735,6 +735,15 @@ const ObjectFuctions = {
     }
     return url;
   },
+  staffCommonJoins : () => {
+     const commonJoin = `LEFT JOIN roles r ON r.id = s.user_level
+                   LEFT JOIN vyeo v ON v.id = r.vyeoId
+                   LEFT JOIN role_management rm ON rm.id = s.new_role_id
+                   LEFT JOIN zones z ON z.id = s.zone_id
+                   LEFT JOIN regions rg ON rg.RegionCode = s.region_code
+                   LEFT JOIN districts d ON d.LgaCode = s.district_code`;
+          return commonJoin;
+  },
   notificationArrayData: (results, callback) => {
     const data = [];
     results.forEach((item) => {

@@ -202,6 +202,20 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
   });
 });
 
+//Disable User Account
+userRouter.put("/disable-user/:id", isAuth , permission('delete-users'), (req, res) => {
+  const user_id = req.params.id;
+  const {user} = req
+  console.log("kakak")
+  userModal.disableUser(user , user_id , (success , message) => {
+    console.log(success , message)
+      res.send({
+          statusCode : success ? 300 : 306,
+          message : message
+      });
+  })
+});
+
 userRouter.post("/reset-user-password", function (req, res) {
   var email = req.body.email;
   userModal.findUserByEmail(email , (success , user) => {
@@ -216,7 +230,7 @@ userRouter.post("/reset-user-password", function (req, res) {
                   data: error ? null : info,
                   message: error
                     ? "Email haijatumwa kwa muhusika kuna tatizo. "
-                    : "Email imetumwa kwa mtumijia mwenye email ",
+                    : "Email imetumwa kwa mtumiaji mwenye email "+email,
                 });
             });
        }else{

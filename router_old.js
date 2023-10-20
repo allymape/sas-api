@@ -7985,30 +7985,30 @@ router.post("/update-applicant", signupValidation, (req, res, next) => {
   );
 });
 
-//register api
-router.post("/delete-user", signupValidation, (req, res, next) => {
-  // has hashed pw => add to database
-  db.query(
-    `UPDATE users SET user_status = 0 WHERE email = ${db.escape(
-      req.body.email
-    )},`,
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).send({
-          error: true,
-          statusCode: 400,
-          message: err,
-        });
-      }
-      return res.status(200).send({
-        error: false,
-        statusCode: 300,
-        message: "The user has been deleted!",
-      });
-    }
-  );
-});
+// //register api
+// router.post("/delete-user", signupValidation, (req, res, next) => {
+//   // has hashed pw => add to database
+//   db.query(
+//     `UPDATE users SET user_status = 0 WHERE email = ${db.escape(
+//       req.body.email
+//     )},`,
+//     (err, result) => {
+//       if (err) {
+//         console.log(err);
+//         return res.status(400).send({
+//           error: true,
+//           statusCode: 400,
+//           message: err,
+//         });
+//       }
+//       return res.status(200).send({
+//         error: false,
+//         statusCode: 300,
+//         message: "The user has been deleted!",
+//       });
+//     }
+//   );
+// });
 
 
 

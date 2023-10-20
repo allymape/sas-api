@@ -1,7 +1,7 @@
 const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { titleCase, hash, filterByUserOffice } = require("../utils");
+const { titleCase, hash, filterByUserOffice, staffCommonJoins } = require("../utils");
 const { lowerCase } = require("text-case");
 
 module.exports = {
@@ -72,14 +72,7 @@ module.exports = {
                    z.zone_name LIKE '%${tafuta}%'
                   )`
         : "";
-    const commonSql = `FROM staffs s
-                   LEFT JOIN roles r ON r.id = s.user_level
-                   LEFT JOIN vyeo v ON v.id = r.vyeoId
-                   LEFT JOIN role_management rm ON rm.id = s.new_role_id
-                   LEFT JOIN zones z ON z.id = s.zone_id
-                   LEFT JOIN regions rg ON rg.RegionCode = s.region_code
-                   LEFT JOIN districts d ON d.LgaCode = s.district_code
-                   `;
+    const commonSql = `FROM staffs s ${staffCommonJoins()}`;
                   //  console.log(user)
     db.query(
       `SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
@@ -271,7 +264,29 @@ module.exports = {
       }
     );
   },
-
+ 
+  // DISABLE USER ACCOUNT
+  disableUser : (user , id , callback) => {
+       var updated = false;
+       db.query(`SELECT s.id AS staff_id FROM staffs s
+                ${staffCommonJoins()} 
+                WHERE s.id = ?
+                ${filterByUserOffice(user, " AND ", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
+                ` , [id] , (error , staff) =>{
+            if(error) console.log(error);
+            if(staff.length > 0){
+                db.query(`UPDATE staffs s SET s.user_status = 0 WHERE s.id = ?` , [Number(id)] , (error2 , disabledStaff) => {
+                   if(error2) console.log(error2);
+                     if(disabledStaff.affectedRows > 0){
+                        updated = true;
+                     }
+                     callback(updated , updated ? "Umefanikiwa kufuta akaunti hii kwa muda." : "Haujafanikiwa kuna tatizo, Wasiliana na Msimamizi wa Mfumo.")
+                })
+            }else{
+                callback(updated , 'Hakuna mtumiaji mwenye akaunti hiyo.');
+            }
+       })
+  },
   getStaffOfficeName : (office , user , callback) => {
     const {zone_id , district_code} = user;
       switch (office) {
