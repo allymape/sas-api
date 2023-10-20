@@ -564,6 +564,7 @@ const ObjectFuctions = {
     }
     return str;
   },
+  
   filterByUserOffice: (
     user,
     start_with = "",
