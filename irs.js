@@ -62,10 +62,11 @@ const sajiliShuleCommentRouter = require("./routers/maombi/sajiliShuleCommentRou
 const algorithmRouter = require("./routers/algorithmRouter.js");
 const schoolCategoryRouter = require("./routers/schoolCategoryRouter.js");
 const notificationRouter = require("./routers/notificationRouter.js");
+const trackApplicationRouter = require("./routers/TrackApplicationRouter.js");
 
 app.use("/api", indexRouter);
-// Maombi
 app.use("/api" , anzishaShuleRequestRouter);
+app.use("/api", trackApplicationRouter);
 app.use("/api", regionRouter);
 app.use("/api", districtRouter);
 app.use("/api", wardRouter);

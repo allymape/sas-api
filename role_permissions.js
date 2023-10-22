@@ -3,6 +3,7 @@ const rolesPermissions = {
     // Dashboard
     "Dashboard|Dashibodi": "v",
     // Mpangilio
+    "Track Application|Fuatilia Ombi": "v",
     "Users|Watumiaji": "v,c,u,d",
     "Schools|Shule": "v,u",
     "Roles|Jukumu": "v,c,u,d",

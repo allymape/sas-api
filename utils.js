@@ -317,7 +317,7 @@ const ObjectFuctions = {
     }
   },
 
-  formatDate: (date, format = "YYYY-MM-DD hh:mm:ss") => {
+  formatDate: (date, format = "YYYY-MM-DD HH:mm:ss") => {
     return dateAndTime.format(
       typeof date === "string" ? new Date(date) : date,
       format
@@ -564,7 +564,7 @@ const ObjectFuctions = {
     }
     return str;
   },
-  
+
   filterByUserOffice: (
     user,
     start_with = "",
@@ -585,12 +585,11 @@ const ObjectFuctions = {
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
         break;
       default:
-        $where = `${start_with} e.school_category_id < -1 `;;
+        $where = `${start_with} e.school_category_id < -1 `;
         break;
     }
-    
+
     return $where;
-    
   },
   schoolLocationsSqlJoin: () => {
     return `JOIN streets   st ON st.StreetCode = e.village_id
@@ -736,14 +735,14 @@ const ObjectFuctions = {
     }
     return url;
   },
-  staffCommonJoins : () => {
-     const commonJoin = `LEFT JOIN roles r ON r.id = s.user_level
+  staffCommonJoins: () => {
+    const commonJoin = `LEFT JOIN roles r ON r.id = s.user_level
                    LEFT JOIN vyeo v ON v.id = r.vyeoId
                    LEFT JOIN role_management rm ON rm.id = s.new_role_id
                    LEFT JOIN zones z ON z.id = s.zone_id
                    LEFT JOIN regions rg ON rg.RegionCode = s.region_code
                    LEFT JOIN districts d ON d.LgaCode = s.district_code`;
-          return commonJoin;
+    return commonJoin;
   },
   notificationArrayData: (results, callback) => {
     const data = [];
