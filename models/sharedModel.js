@@ -268,7 +268,7 @@ module.exports = {
               if (error1) {
                 console.log(error1);
               }
-              console.log(results1);
+              // console.log(results1);
               if (results1.length > 0) {
                 var first_name = results1[0].first_name;
                 var middle_name = results1[0].middle_name;
@@ -649,10 +649,11 @@ module.exports = {
         );
       }
 
+      console.log("last_number",last_number);
       //  Update registered schools
       const today = new Date();
       db.query(
-        `UPDATE school_registrations SET registration_number = ?, updated_at = ? 
+        `UPDATE school_registrations SET registration_number = ?, registration_date = ? , updated_at = ? , reg_status = ?
                           WHERE ${
                             existing_reg_no
                               ? "registration_number = ?"
@@ -660,8 +661,10 @@ module.exports = {
                           }`,
         [
           code + "." + registration_number,
+          formatDate(today , "YYYY-MM-DD"),
           today,
-          existing_reg_no ? existing_reg_no : tracking_number,
+          1,
+          existing_reg_no ? existing_reg_no : tracking_number
         ],
         function (error, result) {
           if (error) {

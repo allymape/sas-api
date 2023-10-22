@@ -509,7 +509,7 @@ const ObjectFuctions = {
   },
   selectConditionByTitle: (user, useAlias = false) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
-    // console.log(user);
+    // console.log(id);
     var str = ``;
     if (ngazi == "wizara") {
       if (
@@ -592,10 +592,10 @@ const ObjectFuctions = {
     return $where;
   },
   schoolLocationsSqlJoin: () => {
-    return `JOIN streets   st ON st.StreetCode = e.village_id
-            JOIN wards      w ON w.WardCode = e.ward_id
-            JOIN districts  d ON d.LgaCode = w.LgaCode
-            JOIN regions    r ON r.RegionCode = d.RegionCode
+    return `LEFT JOIN streets   st ON st.StreetCode = e.village_id
+            LEFT JOIN wards      w ON w.WardCode = e.ward_id
+            LEFT JOIN districts  d ON d.LgaCode = w.LgaCode
+            LEFT JOIN regions    r ON r.RegionCode = d.RegionCode
             #LEFT JOIN zones z ON  z.id = r.zone_id`;
     // this need  to be reviewed wardCode
   },

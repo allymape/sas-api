@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
-const trackApplicationRouter = express.Router();
+var trackApplicationRouter = express.Router();
 const { isAuth, permission } = require("../utils.js");
 const trackApplicationModel = require("../models/trackApplicationModel.js");
 //
@@ -21,16 +21,17 @@ trackApplicationRouter.get(
           ? false
           : true;
     }
+    const searchQuery = req.body;
     trackApplicationModel.getAllApplications(
       offset,
       per_page,
       is_paginated,
-      (error, applications, numRows) => {
-        console.log(applications);
+      searchQuery,
+      (error, applications, categories, numRows) => {
         return res.send({
           error: error ? true : false,
           statusCode: error ? 306 : 300,
-          data: error ? "" : applications,
+          data:  { applications, categories },
           numRows: numRows,
           is_paginated: is_paginated,
           message: error ? "Something went wrong." : "List of applications.",

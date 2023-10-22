@@ -49,7 +49,8 @@ module.exports = {
                 }
                 db.query(
                   `INSERT INTO algorthm (id , school_type , last_number) 
-                          VALUES ? ON DUPLICATE KEY UPDATE last_number = VALUES(last_number)`,
+                          VALUES ? ON DUPLICATE KEY UPDATE last_number = VALUES(last_number) , 
+                                                           school_type = VALUES(school_type)`,
                   [[values]],
                   (error, result) => {
                     if (error) {
@@ -58,7 +59,7 @@ module.exports = {
                     if (result.affectedRows > 0) {
                       success = true;
                     }
-                    data.push("adjjadjajdajdjjajdjajd")
+                    // data.push("adjjadjajdajdjjajdjajd")
                   }
                 );
               }

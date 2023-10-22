@@ -145,7 +145,7 @@ module.exports = {
                                                   //     itemDate.getFullYear() == today.getFullYear
                                                   //   )
                                                   // })
-                                                  
+                                                  console.log(sortedDataDesc)
                                                   callback(sortedDataDesc, data.length);
                                                 }
                                               );
