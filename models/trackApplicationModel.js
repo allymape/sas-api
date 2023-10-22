@@ -31,7 +31,7 @@ module.exports = {
             if (error) console.log(error);
             db.query(
               `SELECT COUNT(*) AS num_rows 
-                                        FROM Applications a`,
+                                        FROM applications a`,
               (error2, results2) => {
                 if (error2) {
                   error = error2;
