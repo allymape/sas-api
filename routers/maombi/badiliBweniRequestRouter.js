@@ -4,7 +4,6 @@ const db = require('../../dbConnection');
 const request = require("request");
 const badiliBweniRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
-var session = require("express-session"); 
 const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
@@ -279,7 +278,6 @@ badiliBweniRequestRouter.post(
                     subcategory: Oldsubcategory,
                   });
 
-                  console.log(objAttachment1);
                   return res.send({
                     error: false,
                     statusCode: 300,
