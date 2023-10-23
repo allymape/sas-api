@@ -24,6 +24,7 @@ schoolRouter.get("/all-schools", isAuth, (req, res, next) => {
           sign,
           (error, schools, numRows) => {
     // console.log(schools.length);
+    console.log(schools);
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,
