@@ -11,7 +11,7 @@ module.exports = {
                                       ${schoolLocationsSqlJoin()}
                                        WHERE 
                                        a.is_approved=2 AND 
-                                       s.reg_status = 2 
+                                       s.reg_status = 1 
                                        ${filterByUserOffice(user , 'AND')}
                                        GROUP BY category, id
                                        ORDER BY id ASC`; 
@@ -26,7 +26,7 @@ module.exports = {
                        ${establishedApplicationRegisteredSchoolsSqlJoin()}
                        INNER JOIN registry_types rt ON rt.id = a.registry_type_id
                        ${schoolLocationsSqlJoin()}
-                       WHERE a.is_approved = 2 AND s.reg_status = 2
+                       WHERE a.is_approved = 2 AND s.reg_status = 1
                        ${filterByUserOffice(user, "AND")}
                        GROUP BY owner
                        `,
@@ -75,7 +75,7 @@ module.exports = {
                                    FROM  school_registrations s
                                    JOIN establishing_schools e ON s.establishing_school_id = e.id
                                    ${schoolLocationsSqlJoin()}
-                                   WHERE s.reg_status = 2
+                                   WHERE s.reg_status = 1
                                    ${filterByUserOffice(user, "AND")}`,
                                   (error5, summaryRegisteredSchools) => {
                                     if (error5) {
