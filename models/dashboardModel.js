@@ -110,7 +110,7 @@ module.exports = {
                 JOIN applications a ON a.tracking_number = e.tracking_number
                 LEFT JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 2 
+                WHERE a.is_approved = 2 AND s.reg_status = 1 
                 ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id 
                 ORDER BY region ASC`,
