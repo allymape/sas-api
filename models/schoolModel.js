@@ -41,7 +41,12 @@ module.exports = {
               st.StreetName AS street,
               IFNULL(registration_date , '') AS reg_date, 
               s.updated_at AS updated_at, 
-              s.reg_status AS status
+              CASE 
+                  WHEN s.reg_status = 1 THEN 'Imesajiliwa'
+                  WHEN s.reg_status = 2 THEN 'Imefutiwa Usajili'
+                  ELSE 'Unknown'
+              END AS status,
+              reg_status
               ${sqlQuery}
               ${searchByKeywordQuery}
               ${searchByTypeQuery}
@@ -184,6 +189,28 @@ module.exports = {
          }
        }
      );
+  },
+  // find school
+  checkIfExistSchool : (reg_number , callback) =>{
+       var exist = false;
+       db.query(`SELECT FROM school_registrations s WHERE registration_number = ?` , [reg_number] , (error , res) => {
+             if(error) console.log(error)
+              if(res[0].length > 0){
+                  exist = true;
+              }
+              callback(exist)
+       });
+  }, 
+  // find last id
+  lastSchoolId : (callback) => {
+      db.query(`SELECT MAX(id) AS id FROM applications` , (err , res) => {
+         if(err) console.log(err)
+         var id = 0;
+          if(res.length > 0){
+            id = res[0].id;
+          }
+         callback(id);
+      })
   },
   // Edit School
   editSchool : (tracking_number , callback) => {

@@ -69,6 +69,137 @@ schoolRouter.get("/look_for_schools", isAuth, (req, res, next) => {
     });
   });
 });
+// Create School
+schoolRouter.post(`/add-school` , (req , res) => {
+    schoolModel.lastSchoolId( (last_id) => {
+        const data = req.body;
+        // const {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
+        var established_schools = [];
+        var applications = [];
+        var school_registrations = [];
+        var owners = [];
+        var applicants = [];
+        // start
+        var id = last_id + 1;
+        var secure_token = randomString(
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+          20
+        );
+        var school_name = data.school_name;
+        var type_id = data.category;
+        var tracking_number =
+          (type_id == 1
+            ? "EA"
+            : type_id == 2
+            ? "EM"
+            : type_id == 3
+            ? "ES"
+            : type_id == 4
+            ? "EC"
+            : null) +
+          "-20001008-" +
+          id;
+        var registration_number = data.registration_number;
+        var registration_date = data.registration_date
+          ? formatDate(data.registration_date, "YYYY-MM-DD 00:00:00")
+          : null;
+        var phone_number = '';
+        var ward_uid = data.kata;
+        var village_id = data.mtaa;
+        var email = '';
+        var address = data.address;
+        var registration_status = 1;
+        var stage = 3;
+        var user_id = 71;
+        var staff_id = null;
+        var application_category = data.category; // generateRandomInt(0,14 , [3]);
+        var registry_type_id = data.ownership; //generateRandomInt(0,3);//school_content.ownership_id;
+        var is_for_disabled = 0;
+        var is_approved = 2; //generateRandomInt(0,2);
+        var status_id = 1;
+        var is_complete = 1;
+        var is_hostel = 0;
+        var owner_name = data.owner;
+        var applicant_name = school_name;
+        var created_at = formatDate(new Date());
+        var updated_at = formatDate(new Date());
+        applications.push([
+          id,
+          staff_id,
+          secure_token,
+          secure_token,
+          tracking_number,
+          user_id,
+          application_category,
+          registry_type_id,
+          is_approved,
+          status_id,
+          is_complete,
+          2,
+          created_at,
+          updated_at,
+        ]);
+
+        established_schools.push([
+          id,
+          school_name,
+          secure_token,
+          phone_number,
+          tracking_number,
+          is_for_disabled,
+          is_hostel,
+          stage,
+          ward_uid,
+          village_id,
+          email,
+          address,
+          type_id,
+          created_at,
+          updated_at,
+        ]);
+
+        school_registrations.push([
+          id,
+          secure_token,
+          id,
+          tracking_number,
+          registration_date,
+          registration_date,
+          registration_number,
+          registration_status,
+          created_at,
+          registration_date,
+        ]);
+
+        owners.push([id, secure_token, id, owner_name, created_at]);
+
+        applicants.push([
+          id,
+          secure_token,
+          applicant_name,
+          ward_uid,
+          created_at,
+        ]);
+        schoolModel.checkIfExistSchool(registration_number , (exist) => {
+             if(exist){
+                  res.send({
+                      error: true,
+                      statusCode: 306,
+                      message: "Namba ya Usajili imeshasajiliwa."
+                  });
+             }else{
+              schoolModel.storeSchools( established_schools, applications, school_registrations,owners, applicants , (success) => {
+              // console.log(success)
+                res.send({
+                    error: success ? false : true,
+                    statusCode: success ? 300 : 306,
+                    message: success ? "Umefanikiwa kuongeza shule." : "Haujafanikiwa kuna tatizo."
+                });
+        });
+             }
+        })
+    });
+})
 // Edit School
 schoolRouter.get(`/edit-school/:id` , (req , res) => {
      const tracking_number = req.params.id;

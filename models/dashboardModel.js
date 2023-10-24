@@ -113,15 +113,13 @@ module.exports = {
                 WHERE a.is_approved = 2 AND s.reg_status = 1 
                 ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id 
-                ORDER BY region ASC`,
+                ORDER BY region ASC`, 
         function(error, results){
+          console.log(error);
           console.log("Nafika");
           if (error) {
             console.log(error);
           }
-          // console.log("data",results);
-          //  console.log("Nafika");
-          //   Start
           // Format the results
           const formattedResults = {};
           // Iterate over the query results

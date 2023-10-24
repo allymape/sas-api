@@ -26,13 +26,13 @@ module.exports = {
                                             ORDER BY id DESC 
                                             LIMIT 1) AS m
                                         ON a.tracking_number = m.trackingNo
-                            WHERE a.is_complete = 1 ${sqlSearch}`;
+                            WHERE a.is_complete IN (0,1) ${sqlSearch}`;
         db.query(
           `SELECT a.id AS id, a.tracking_number AS tracking_number , ac.app_name AS application_category,  
                          u.name AS applicant_name , a.created_at AS application_created_at,
                          IFNULL(m.maoni_created_at , a.created_at) AS submitted_created_at,
                          c.name AS title, r.RegionName as region_name , d.LgaName AS district_name,
-                         a.is_approved AS status,
+                         a.is_approved AS status, zone_name,
                          p.status AS payment_status, p.id AS payment_status_id,
                          sr.registration_number AS registration_number,
                          sr.reg_status AS reg_status
