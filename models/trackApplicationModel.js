@@ -53,11 +53,7 @@ module.exports = {
                   error = error2;
                   console.log(error);
                 }
-                db.query(`SELECT id, app_name AS name FROM application_categories` , (err , categories) => {
-                    if(err) console.log(err)
-                    callback(error, applications, categories, results2[0].num_rows);
-                })
-                
+                 callback(error, applications, results2[0].num_rows);
               }
             );
           }

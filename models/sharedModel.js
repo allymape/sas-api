@@ -8,6 +8,51 @@ const {
 } = require("../utils");
 
 module.exports = {
+  getApplicationCategories: (callback) => {
+    db.query(
+      `SELECT id, app_name AS name FROM application_categories`,
+      (err, categories) => {
+        if (err) console.log(err);
+        callback(categories);
+      }
+    );
+  },
+  getSchoolCategories: (callback) => {
+    db.query(
+      `SELECT id , category AS name FROM school_categories`,
+      (error, categories) => {
+        if (error) {
+          console.log("Can't get school categories due to ", error);
+        }
+        callback(categories);
+      }
+    );
+  },
+
+  getRegistrationStructures: (callback) => {
+    db.query(
+      `SELECT id, structure AS name FROM registration_structures`,
+      (error, registry_types) => {
+        if (error) {
+          console.log(error);
+        }
+        callback(registry_types);
+      }
+    );
+  },
+  // getRegistryTypes
+  getSchoolOwnerships: (callback) => {
+    db.query(
+      `SELECT id, registry AS name FROM registry_types`,
+      (error2, ownerships) => {
+        if (error2) {
+          console.log("Can't get ownerships due to ", error2);
+        }
+        callback(ownerships);
+      }
+    );
+  },
+
   myStaffs: (user, callback) => {
     // console.log(user)
     const objStaffs = [];
@@ -491,7 +536,7 @@ module.exports = {
   },
   tumaMaoni: (req, application_category, callback) => {
     var success = false;
-    const today = formatDate(new Date() , "YYYY-MM-DD HH:mm:ss");
+    const today = formatDate(new Date(), "YYYY-MM-DD HH:mm:ss");
     const { user } = req;
     const userTo = Number(req.body.staffs);
     const staff_id = userTo == 0 ? null : userTo;
@@ -649,7 +694,7 @@ module.exports = {
         );
       }
 
-      console.log("last_number",last_number);
+      console.log("last_number", last_number);
       //  Update registered schools
       const today = new Date();
       db.query(
@@ -661,10 +706,10 @@ module.exports = {
                           }`,
         [
           code + "." + registration_number,
-          formatDate(today , "YYYY-MM-DD"),
+          formatDate(today, "YYYY-MM-DD"),
           today,
           1,
-          existing_reg_no ? existing_reg_no : tracking_number
+          existing_reg_no ? existing_reg_no : tracking_number,
         ],
         function (error, result) {
           if (error) {
@@ -702,10 +747,14 @@ module.exports = {
     });
   },
 
-  sqlQuerySchoolInfo: (sql  , application_category_id , callback) => {
+  sqlQuerySchoolInfo: (sql, application_category_id, callback) => {
     db.query(
       ` ${sql} AND a.application_category_id 
-        ${application_category_id ? ' = '+application_category_id : ' IN (5,6,9,10,11,13,14)'}`,
+        ${
+          application_category_id
+            ? " = " + application_category_id
+            : " IN (5,6,9,10,11,13,14)"
+        }`,
       (error, result) => {
         if (error) console.log(error);
         callback(result);

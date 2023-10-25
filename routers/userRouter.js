@@ -19,14 +19,6 @@ const {
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
-
-const {
-  signupValidation,
-  loginValidation,
-  makundiValidation,
-  shirikishoValidation,
-  memberValidation,
-} = require("../validation");
 const { resetPassword } = require("../templates/emailTemplate.js");
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes

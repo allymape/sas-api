@@ -8,6 +8,7 @@ module.exports = {
     const  type     = db.escape(Number(typeKeyword));
     const  owner    = db.escape(Number(ownerKeyword));
     const  sign     = db.escape(compare);
+   
     const sqlQuery = `FROM school_registrations s 
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       JOIN applications a ON a.tracking_number = e.tracking_number
@@ -65,29 +66,12 @@ module.exports = {
               console.log(error2);
               error = error2;
             }
+            // console.log(result[0].num_rows);
             callback(error, schools, result[0].num_rows);
           }
         );
       }
     );
-  },
-  // SCHOOLS FILTERS
-  getSchoolsFilters: (callback) => {
-     var success = false;
-      db.query(`SELECT id , category AS name FROM school_categories` , (error , categories) => {
-            if(error){
-                console.log("Can't get school categories due to ", error);
-            }
-            db.query(`SELECT id, registry AS name FROM registry_types` , (error2 , ownerships) => {
-              if(error2){
-                 console.log("Can't get ownerships due to ", error2);
-              }
-              if(ownerships && categories){
-                    success = true;
-              }
-              callback(success , categories , ownerships);
-            })
-      });
   },
   // LOOK FOR SCHOOLS
   lookForSchools : (offset , per_page , search, callback) => {

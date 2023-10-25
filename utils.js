@@ -588,7 +588,6 @@ const ObjectFuctions = {
         $where = `${start_with} e.school_category_id < -1 `;
         break;
     }
-
     return $where;
   },
   schoolLocationsSqlJoin: () => {

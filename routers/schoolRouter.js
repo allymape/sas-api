@@ -5,6 +5,7 @@ const schoolRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
+const sharedModel = require("../models/sharedModel.js");
 
 
 // List of schools
@@ -36,16 +37,23 @@ schoolRouter.get("/all-schools", isAuth, (req, res, next) => {
 });
 // School Filters
 schoolRouter.get("/school-filters", isAuth, function (req, res) {
-  schoolModel.getSchoolsFilters((success, categories, ownerships) => {
-    res.send({
-      statusCode: success ? 300 : 306,
-      data: {
-        categories: success ? categories : [],
-        ownerships: success ? ownerships : [],
-      },
-      message: success ? "Success" : "Failed",
-    });
-  });
+  
+  sharedModel.getSchoolCategories( (categories) => {
+      sharedModel.getSchoolOwnerships((ownerships) => {
+        res.send({
+          statusCode: 300,
+          data: {
+            categories: categories,
+            ownerships: ownerships,
+          }
+        })
+      })
+  })
+
+
+  // schoolModel.getSchoolsFilters((success, categories, ownerships) => {
+   
+  // });
 });
 
 // Look for schools
@@ -69,6 +77,7 @@ schoolRouter.get("/look_for_schools", isAuth, (req, res, next) => {
     });
   });
 });
+
 // Create School
 schoolRouter.post(`/add-school` , (req , res) => {
     schoolModel.lastSchoolId( (last_id) => {

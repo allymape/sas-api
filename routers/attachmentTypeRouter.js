@@ -5,6 +5,7 @@ const attachementTypeRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = require("../utils.js");
 var session = require("express-session");
 const attachmentTypeModel = require("../models/attachmentTypeModel.js");
+const sharedModel = require("../models/sharedModel.js");
 attachementTypeRouter.use(
   session({
     secret: "secret",
@@ -17,15 +18,36 @@ attachementTypeRouter.get("/all-attachment-types", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  attachmentTypeModel.getAllAttachmentTypes(offset, per_page, (error, attachementTypes, numRows) => {
-            return res.send({
-                error: error ? true : false,
-                statusCode: error ? 306 : 300,
-                data: error ? [] : attachementTypes,
-                numRows: numRows,
-                message: error ? "Something went wrong." : "List of Attachment Types.",
-            });
+  var searchParams = req.body
+  attachmentTypeModel.getAllAttachmentTypes(offset, per_page, searchParams, (error, attachementTypes, numRows) => {
+           return res.send({
+             error: error ? true : false,
+             statusCode: error ? 306 : 300,
+             data: attachementTypes,
+             numRows: numRows,
+             message: error
+               ? "Something went wrong."
+               : "List of Attachment Types.",
+           });
   });
+});
+//attachement types filters
+attachementTypeRouter.get("/filter-attachment-types", isAuth, (req, res) => {
+            sharedModel.getApplicationCategories((categories) => {
+               sharedModel.getRegistrationStructures( (structures) => {
+                       sharedModel.getSchoolOwnerships((ownerships) => {
+                            return res.send({
+                              data: {
+                                categories: categories,
+                                structures: structures,
+                                ownerships: ownerships,
+                              }
+                            });
+                       });
+               })
+              
+            })
+
 });
 // Edit AttachmentType
 attachementTypeRouter.get("/edit-attachment-type/:id", isAuth, (req, res, next) => {

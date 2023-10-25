@@ -4,6 +4,7 @@ const request = require("request");
 var trackApplicationRouter = express.Router();
 const { isAuth, permission } = require("../utils.js");
 const trackApplicationModel = require("../models/trackApplicationModel.js");
+const sharedModel = require("../models/sharedModel.js");
 //
 // List of applications
 trackApplicationRouter.get(
@@ -22,22 +23,24 @@ trackApplicationRouter.get(
           : true;
     }
     const searchQuery = req.body;
-    trackApplicationModel.getAllApplications(
-      offset,
-      per_page,
-      is_paginated,
-      searchQuery,
-      (error, applications, categories, numRows) => {
-        return res.send({
-          error: error ? true : false,
-          statusCode: error ? 306 : 300,
-          data:  { applications, categories },
-          numRows: numRows,
-          is_paginated: is_paginated,
-          message: error ? "Something went wrong." : "List of applications.",
-        });
-      }
-    );
+    sharedModel.getApplicationCategories((categories) => {
+            trackApplicationModel.getAllApplications(
+              offset,
+              per_page,
+              is_paginated,
+              searchQuery,
+              (error, applications, numRows) => {
+                return res.send({
+                  error: error ? true : false,
+                  statusCode: error ? 306 : 300,
+                  data: { applications, categories },
+                  numRows: numRows,
+                  is_paginated: is_paginated,
+                  message: error ? "Something went wrong." : "List of applications.",
+                });
+              }
+            );
+    });
   }
 );
 
