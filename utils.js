@@ -652,6 +652,35 @@ const ObjectFuctions = {
       }
     );
   },
+  auditTrail : (req , action , comment , module) => {
+         if(action == 'new'){
+              ObjectFuctions.InsertAuditTrail(
+                req.user.id,
+                "created",
+                req.body,
+                req.url,
+                req.body.browser_used,
+                null,
+                comment,
+                req.body.ip_address,
+                module
+              );
+         }
+         console.log(req)
+         if(action == 'edit'){
+              ObjectFuctions.UpdateAuditTrail(
+                req.user.id,
+                "updated",
+                req.body,
+                req.url,
+                req.body.browser_used,
+                null,
+                comment,
+                req.body.ip_address,
+                module
+              );
+         }
+  },
   calculcateRemainDays: (fromDate) => {
     var today = new Date();
     var diffInSeconds = Math.abs(today - new Date(fromDate)) / 1000;

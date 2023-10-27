@@ -5,6 +5,7 @@ const {
   InsertAuditTrail,
   getMyNextBoss,
   calculcateRemainDays,
+  UpdateAuditTrail,
 } = require("../utils");
 
 module.exports = {
@@ -747,6 +748,18 @@ module.exports = {
     });
   },
 
+  updateApplicationPayment : (tracking_number , callback) => {
+        var success = false;
+        db.query(`UPDATE applications SET payment_status_id = 2 WHERE tracking_number = ?` , [tracking_number] , (error , result) => {
+            if(error) console.log(error)
+            if(result.affectedRows > 0){
+                success = true
+                
+            }
+            callback(success, result);
+        })
+  },
+
   sqlQuerySchoolInfo: (sql, application_category_id, callback) => {
     db.query(
       ` ${sql} AND a.application_category_id 
@@ -761,4 +774,6 @@ module.exports = {
       }
     );
   },
+
+  
 };

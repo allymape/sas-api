@@ -40,19 +40,20 @@ module.exports = {
                   }
                   if (bcrypt.compareSync(password, user[0].password)) {
                     console.log("User found.");
+                    // console.log(permissions)
                     callback(true, user, permissions);
-                    return;
+                    // return;
                   } else {
                     console.log("Wrong username or password.");
-                    callback(false, null, null);
-                    return;
+                    callback(false, [], []);
+                    // return;
                   }
                 }
               );
             } else {
               console.log("Username not found.");
-              callback(false, null, null);
-              return;
+              callback(false, [], []);
+              // return;
             }
           }
         );

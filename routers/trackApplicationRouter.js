@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 var trackApplicationRouter = express.Router();
-const { isAuth, permission } = require("../utils.js");
+const { isAuth, permission, auditTrail } = require("../utils.js");
 const trackApplicationModel = require("../models/trackApplicationModel.js");
 const sharedModel = require("../models/sharedModel.js");
 //
@@ -43,5 +43,18 @@ trackApplicationRouter.get(
     });
   }
 );
+
+trackApplicationRouter.put(`/update_payment` , isAuth , permission('view-track-application') , (req, res) => {
+     const tracking_number = req.body.tracking_number
+      sharedModel.updateApplicationPayment( tracking_number , (success , updatedData) => {
+            if(success){
+              auditTrail(req, 'edit' , 'Badili Malipo' , 'Track Application')
+            }
+            res.send({
+            statusCode : success ? 300 : 306,
+            message : success ? 'Umefanikiwa kubadili' : 'Haujafanikiwa kubadili kuna tatizo.',
+          })
+      })
+});
 
 module.exports = trackApplicationRouter;

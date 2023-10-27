@@ -63,14 +63,14 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
         };
 
         // console.log("User Data", userData);
-        if (permissionData) {
-          for (var i = 0; i < permissions.length; i++) {
-            permissionData.push(permissions[i].permission_name);
-          }
+        
+        for (var i = 0; i < permissions.length; i++) {
+          permissionData.push(permissions[i].permission_name);
         }
+        
         // console.log(permissionData);
         const token = generateToken(userData, permissionData);
-        // console.log(token)
+      
         res.send({
           error: false,
           statusCode: 300,
@@ -79,6 +79,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           RoleManage: permissions,
           user: userData,
         });
+         console.log("rendered data succesfully");
       });
     } else {
       res.status(400).send({

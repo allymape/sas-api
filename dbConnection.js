@@ -7,6 +7,7 @@ var conn = mysql.createConnection({
   database: process.env.DB_DATABASE, // // Replace with your database Name
   timezone: process.env.TIMEZONE || "+03:00",
   multipleStatements: true,
+  debug: false,
 }); 
  
 conn.connect((err) => {
@@ -14,7 +15,7 @@ conn.connect((err) => {
     console.error("Error connecting to database:", err);
     return;
   };
-  console.info('Database is connected successfully!');
+  console.info(`Database is connected successfully! Server: ${process.env.DB_HOST}`);
 });
 
 conn.on("error" , (err) => {
