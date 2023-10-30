@@ -29,7 +29,7 @@ const loginlimiter = rateLimit({
 
 //login api
 userRouter.post("/login", loginlimiter, (req, res, next) => {
-  userModal.loginUser(req, (success , loginUser, permissions) => {
+  userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
       const permissionData = [];
       let user = loginUser[0];
@@ -74,7 +74,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
         res.send({
           error: false,
           statusCode: 300,
-          message: "Logged in!",
+          message: message,
           token,
           RoleManage: permissions,
           user: userData,
@@ -83,9 +83,9 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
       });
     } else {
       res.status(400).send({
-        error: true,
+        error: false,
         statusCode: 302,
-        message: "Username or password is incorrect!",
+        message: message,
       });
     }
   });

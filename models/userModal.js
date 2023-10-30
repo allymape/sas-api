@@ -9,7 +9,7 @@ module.exports = {
   loginUser: (req , callback) => {
       const username = req.body.username;
       const password = req.body.password;
-
+      var message = '';
         //const userData = [];
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
@@ -41,18 +41,20 @@ module.exports = {
                   if (bcrypt.compareSync(password, user[0].password)) {
                     console.log("User found.");
                     // console.log(permissions)
-                    callback(true, user, permissions);
+                    message = "Logged in!";
+                    callback(true, user, permissions , message);
                     // return;
                   } else {
-                    console.log("Wrong username or password.");
-                    callback(false, [], []);
+                    message = "Wrong username or password.";
+                    callback(false, [], [] , message);
                     // return;
                   }
                 }
               );
             } else {
               console.log("Username not found.");
-              callback(false, [], []);
+              message = "Wrong username or password.";
+              callback(false, [], [] , message);
               // return;
             }
           }

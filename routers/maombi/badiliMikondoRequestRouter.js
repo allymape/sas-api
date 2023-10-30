@@ -112,32 +112,35 @@ badiliMkondoRequestRouter.post(
     var objAttachment2 = [];
  
     db.query(
-      "SELECT registration_structures.structure as structure, establishing_schools.id as establishId, " +
-        " school_sub_categories.subcategory as subcategory,application_category_id, former_school_infos.stream as streamOld, " +
-        " establishing_schools.stream as streamNew, establishing_schools.area as area, " +
-        " establishing_schools.school_size as school_size, languages.language as language, " +
-        " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-        " applications.registry_type_id as registry_type_id,applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-        " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName " +
-        " FROM former_school_infos, school_sub_categories, establishing_schools, applications, " +
-        " registration_structures, wards, districts, school_categories, languages, regions " +
-        " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-        " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-        " AND application_category_id = 5 AND applications.tracking_number = ?",
+      `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
+              school_sub_categories.subcategory as subcategory,application_category_id, former_school_infos.stream as streamOld,  
+              establishing_schools.stream as streamNew, establishing_schools.area as area,  
+              establishing_schools.school_size as school_size, languages.language as language,  
+              school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+              applications.tracking_number as tracking_number, applications.created_at as created_at,  
+              applications.registry_type_id as registry_type_id,applications.user_id as user_id,  
+              applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
+              wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName  
+        FROM former_school_infos
+        LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
+        LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+        LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+        LEFT JOIN registration_structures ON establishing_schools.registration_structure_id = registration_structures.id
+        LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+        LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+        LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+        LEFT JOIN languages ON languages.id = establishing_schools.language_id
+        LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode = ?`,
       [trackingNumber],
       function (error, results, fields) {
         if (error) {
           console.log(error);
         }
         // console.log(results)
+        var registry_type_id = ``;
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
-          var registry_type_id = results[0].registry_type_id;
+          registry_type_id = results[0].registry_type_id;
           var application_category_id = results[0].application_category_id;
           var user_id = results[0].user_id;
           var streamOld = results[0].streamOld;
