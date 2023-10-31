@@ -129,26 +129,29 @@ ongezaTahasusiRequestRouter.post(
       var objAttachment1 = [];
       var objAttachment2 = [];
       db.query(
-        "SELECT school_registrations.id as school_id, registration_structures.structure as structure, " +
-          " establishing_schools.id as establishId, " +
-          " school_sub_categories.subcategory as subcategory, combination as streamOld, " +
-          " former_school_combinations.combination_id as streamNew, establishing_schools.area as area, " +
-          " establishing_schools.school_size as school_size, languages.language as language, " +
-          " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-          " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-          " applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id, " +
-          " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-          " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName " +
-          " FROM school_registrations, " +
-          " former_school_combinations, combinations, school_sub_categories, establishing_schools, applications, " +
-          " registration_structures, wards, districts, school_categories, languages, regions " +
-          " WHERE combinations.id = former_school_combinations.combination_id AND " +
-          " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-          " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-          " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-          " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
-          " AND former_school_combinations.establishing_school_id = establishing_schools.id " +
-          " AND application_category_id = 12 AND applications.tracking_number = ?",
+        `SELECT  	school_registrations.id as school_id, registration_structures.structure as structure,  
+                  establishing_schools.id as establishId,  
+                  school_sub_categories.subcategory as subcategory, combination as streamOld,  
+                  former_school_combinations.combination_id as streamNew, establishing_schools.area as area,  
+                  establishing_schools.school_size as school_size, languages.language as language,  
+                  school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+                  applications.tracking_number as tracking_number, applications.created_at as created_at,  
+                  applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
+                  applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
+                  wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName  
+      FROM school_registrations
+       LEFT JOIN establishing_schools ON establishing_schools.id = school_registrations.establishing_school_id
+       LEFT JOIN former_school_combinations  ON former_school_combinations.establishing_school_id = establishing_schools.id   
+		   LEFT JOIN combinations ON combinations.id = former_school_combinations.combination_id
+		   LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+		   LEFT JOIN applications ON former_school_combinations.tracking_number = applications.tracking_number 
+		   LEFT JOIN registration_structures ON  registration_structures.id = establishing_schools.registration_structure_id
+		   LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id 
+       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+		   LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id 
+		   LEFT JOIN languages ON languages.id = establishing_schools.language_id 
+		   LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode
+       WHERE application_category_id = 12 AND applications.tracking_number = ?`,
         [trackingNumber],
         function (error, results) {
           if (error) {
