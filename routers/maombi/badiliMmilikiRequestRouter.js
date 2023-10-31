@@ -131,20 +131,22 @@ badiliMmilikiRequestRouter.post(
     var objRef = [];
   
     db.query(
-      "select authorized_person, title, registry_type_id, application_category_id, " +
-        " establishing_schools.area as area, former_owners.establishing_school_id as establishing_school_id, " +
-        " establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, " +
-        " applications.tracking_number as tracking_number, owner_email, purpose, " +
-        " applications.created_at as created_at, " +
-        " applications.user_id as user_id, applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName, former_owners.owner_name as owner_name, former_owners.phone_number as owner_phone_no" +
-        " FROM former_owners, establishing_schools, applications, wards, districts, regions WHERE " +
-        " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_owners.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND former_owners.establishing_school_id = establishing_schools.id " +
-        " AND applications.tracking_number = ? AND payment_status_id = 2",
-      [7, trackingNumber],
+      `SELECT authorized_person, title, registry_type_id, application_category_id,  
+				 establishing_schools.area as area, former_owners.establishing_school_id as establishing_school_id,  
+				 establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size,  
+				 applications.tracking_number as tracking_number, owner_email, purpose,  
+				 applications.created_at as created_at,  
+				 applications.user_id as user_id, applications.foreign_token as foreign_token,  
+				 establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,  
+				 districts.LgaName as LgaName, former_owners.owner_name as owner_name, former_owners.phone_number as owner_phone_no 
+     FROM former_owners
+     LEFT JOIN applications ON former_owners.tracking_number = applications.tracking_number
+     LEFT JOIN establishing_schools ON former_owners.establishing_school_id = establishing_schools.id
+		 LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+		 LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
+		 LEFT JOIN regions ON regions.RegionCode = districts.RegionCode
+     WHERE application_category_id = 7 AND applications.tracking_number = ?`,
+      [trackingNumber],
       function (error, results, fields) {
         if (error) {
           console.log(error);

@@ -374,20 +374,22 @@ badiliMenejaRequestRouter.post(
     var objRef = [];
 
     db.query(
-      "select manager_first_name, manager_first_name, registry_type_id , application_category_id, " +
-        " establishing_schools.area as area, former_managers.establishing_school_id as establishing_school_id, " +
-        " establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, " +
-        " applications.tracking_number as tracking_number, manager_first_name, " +
-        " applications.created_at as created_at, " +
-        " applications.user_id as user_id, applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, " +
-        " districts.LgaName as LgaName, former_managers.manager_first_name as owner_name, former_managers.manager_phone_number as owner_phone_no" +
-        " FROM former_managers, establishing_schools, applications, wards, districts, regions WHERE " +
-        " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_managers.tracking_number = applications.tracking_number " +
-        " AND application_category_id = ? AND former_managers.establishing_school_id = establishing_schools.id " +
-        " AND applications.tracking_number = ?",
-      [8, trackingNumber],
+      ` SELECT manager_first_name, manager_first_name, registry_type_id , application_category_id,  
+              establishing_schools.area as area, former_managers.establishing_school_id as establishing_school_id,  
+              establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size,  
+              applications.tracking_number as tracking_number, manager_first_name,  
+              applications.created_at as created_at,  
+              applications.user_id as user_id, applications.foreign_token as foreign_token,  
+              establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,  
+              districts.LgaName as LgaName, former_managers.manager_first_name as owner_name, former_managers.manager_phone_number as owner_phone_no 
+       FROM establishing_schools
+       LEFT JOIN former_managers ON former_managers.establishing_school_id = establishing_schools.id
+       LEFT JOIN applications ON  former_managers.tracking_number = applications.tracking_number
+       LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
+       LEFT JOIN regions ON regions.RegionCode = districts.RegionCode
+       WHERE application_category_id = 8   AND applications.tracking_number = ?`,
+      [trackingNumber],
       function (error, results, fields) {
         if (error) {
           console.log(error);
@@ -432,8 +434,6 @@ badiliMenejaRequestRouter.post(
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
         }
-
-      
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -505,10 +505,10 @@ badiliMenejaRequestRouter.post(
         sharedModel.getAttachments(trackingNumber, (attachments) => {
           objAttachment1 = attachments;
         });
-        sharedModel.myStaffs(user , (staffs) => {
-            objStaffs = staffs
-        })
-        var remain_days =  calculcateRemainDays(created_at)
+        sharedModel.myStaffs(user, (staffs) => {
+          objStaffs = staffs;
+        });
+        var remain_days = calculcateRemainDays(created_at);
         db.query(
           "select * from managers " + " WHERE establishing_school_id = ?",
           [establishing_school_id],
@@ -516,17 +516,16 @@ badiliMenejaRequestRouter.post(
             if (error1) {
               console.log(error1);
             }
-
-            var owner_name_old = results1[0].manager_first_name;
-            var authorized_person_old = results1[0].manager_first_name;
-            var owner_email_old = results1[0].manager_first_name;
-            var phone_number_old = results1[0].manager_phone_number;
-            var personal_address = results1[0].id;
-            var personal_phone_number = results1[0].id;
-            var personal_email = results1[0].manager_email;
-            var WardNameMtu = results1[0].id;
-            var LgaNameMtu = results1[0].id;
-            var RegionNameMtu = results1[0].id;
+            var owner_name_old = results1[0] ? results1[0].manager_first_name: '';
+            var authorized_person_old = results1[0] ? results1[0].manager_first_name: '';
+            var owner_email_old = results1[0] ? results1[0].manager_first_name :'';
+            var phone_number_old = results1[0]?results1[0].manager_phone_number:'';
+            var personal_address = results1[0]?results1[0].id:'';
+            var personal_phone_number = results1[0]?results1[0].id : '';
+            var personal_email = results1[0] ? results1[0].manager_email : '';
+            var WardNameMtu = results1[0] ? results1[0].id : '';
+            var LgaNameMtu = results1[0] ? results1[0].id : '';
+            var RegionNameMtu = results1[0] ? results1[0].id : '';
             var fullname = owner_name_old;
             obj.push({
               owner_name_old: owner_name_old,
