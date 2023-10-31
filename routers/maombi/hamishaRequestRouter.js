@@ -100,7 +100,6 @@ hamishaRequestRouter.post(
     var trackingNumber = req.body.TrackingNumber;
     const user = req.user; var userLevel = user.user_level;
     var office = req.body.office;
-
     var obj = [];
     var objMess = [];
     var objStaffs = [];
@@ -110,24 +109,27 @@ hamishaRequestRouter.post(
     var objAttachment1 = [];
     var objAttachment2 = [];
     db.query(
-      "SELECT registration_structures.structure as structure, establishing_schools.id as establishId, " +
-        " school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new, " +
-        " former_school_infos.stream as streamOld, " +
-        " establishing_schools.stream as streamNew, establishing_schools.area as area, " +
-        " establishing_schools.school_size as school_size, languages.language as language, " +
-        " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-        " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-        " applications.registry_type_id as registry_type_id, application_category_id, establishing_schools.ward_id as WardIdOld, applications.user_id as user_id, " +
-        " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-        " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName FROM " +
-        " former_school_infos, school_sub_categories, establishing_schools, applications, " +
-        " registration_structures, wards, districts, school_categories, languages, regions " +
-        " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-        " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-        " AND application_category_id = 10 AND applications.tracking_number = ?",
+      `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
+         school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new,  
+         former_school_infos.stream as streamOld,  
+         establishing_schools.stream as streamNew, establishing_schools.area as area,  
+         establishing_schools.school_size as school_size, languages.language as language,  
+         school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+         applications.tracking_number as tracking_number, applications.created_at as created_at,  
+         applications.registry_type_id as registry_type_id, application_category_id, establishing_schools.ward_id as WardIdOld, applications.user_id as user_id,  
+         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
+         wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName 
+         FROM  former_school_infos 
+         LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
+         LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+         LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+         LEFT JOIN registration_structures ON establishing_schools.registration_structure_id = registration_structures.id
+         LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+         LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+         LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+         LEFT JOIN languages ON languages.id = establishing_schools.language_id
+         LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode 
+         WHERE application_category_id = 10 AND applications.tracking_number = ?`,
       [trackingNumber],
       function (error, results, fields) {
         if (error) {
@@ -150,7 +152,7 @@ hamishaRequestRouter.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-              // created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
+          // created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -162,25 +164,24 @@ hamishaRequestRouter.post(
         }
 
         db.query(
-          "SELECT registration_structures.structure as structure, establishing_schools.id as establishId, " +
-            " school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new, " +
-            " former_school_infos.stream as streamOld, " +
-            " establishing_schools.stream as streamNew, establishing_schools.area as area, " +
-            " establishing_schools.school_size as school_size, languages.language as language, " +
-            " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-            " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-            " applications.registry_type_id as registry_type_id,applications.user_id as user_id, " +
-            " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-            " wards.WardName as WardName, former_school_infos.ward_id as WardIdNew, " +
-            " regions.RegionName as RegionName, districts.LgaName as LgaName FROM " +
-            " former_school_infos, school_sub_categories, establishing_schools, applications, " +
-            " registration_structures, wards, districts, school_categories, languages, regions " +
-            " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-            " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-            " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-            " wards.WardCode = former_school_infos.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-            " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-            " AND application_category_id = 10 AND applications.tracking_number = ?",
+          `SELECT  registration_structures.structure as structure, establishing_schools.id as establishId,  
+                  school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new,  
+                  former_school_infos.stream as streamOld,  establishing_schools.stream as streamNew, establishing_schools.area as area,  
+                  establishing_schools.school_size as school_size, languages.language as language,  school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+                  applications.tracking_number as tracking_number, applications.created_at as created_at,  applications.registry_type_id as registry_type_id,applications.user_id as user_id,  
+                  applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  wards.WardName as WardName, former_school_infos.ward_id as WardIdNew,  
+                  regions.RegionName as RegionName, districts.LgaName as LgaName 
+            FROM  former_school_infos
+            LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
+            LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+            LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+            LEFT JOIN registration_structures ON establishing_schools.registration_structure_id = registration_structures.id
+            LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+            LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+            LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+            LEFT JOIN languages ON languages.id = establishing_schools.language_id
+            LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode 
+            WHERE application_category_id = 10 AND applications.tracking_number = ?`,
           [trackingNumber],
           function (error, results11, fields) {
             if (error) {
@@ -193,8 +194,8 @@ hamishaRequestRouter.post(
               var RegionNameNew = results11[0].RegionName;
               var WardIdNew = results11[0].WardIdNew;
             }
-             var remain_days = calculcateRemainDays(created_at)
-             console.log("",created_at , trackingNumber)
+            var remain_days = calculcateRemainDays(created_at);
+            console.log("", created_at, trackingNumber);
 
             db.query(
               "select * from maoni WHERE trackingNo = ?",
@@ -218,94 +219,92 @@ hamishaRequestRouter.post(
             sharedModel.myStaffs(req.user, (staffs) => {
               objStaffs = staffs;
 
-              sharedModel.myMaoni(trackingNumber ,  (maoni) => {
-                  objMaoni = maoni;
-                  sharedModel.getAttachmentTypes(
-                    registry_type_id,
-                    application_category_id,
-                    "",
-                    (attachement_types) => {
-                      objAttachment = attachement_types;
-                    }
-                  );
-                  sharedModel.getAttachments(trackingNumber,(attachments) => {
-                      objAttachment1 = attachments;
-                      
-                      var first_name = "";
-                      var middle_name = "";
-                      var last_name = "";
-                      var occupation = "";
-                      var personal_address = "";
-                      var personal_phone_number = "";
-                      var personal_email = "";
-                      var WardNameMtu = "";
-                      var LgaNameMtu = "";
-                      var RegionNameMtu = "";
-                      var fullname =
-                        first_name + " " + middle_name + " " + last_name;
+              sharedModel.myMaoni(trackingNumber, (maoni) => {
+                objMaoni = maoni;
+                sharedModel.getAttachmentTypes(
+                  registry_type_id,
+                  application_category_id,
+                  "",
+                  (attachement_types) => {
+                    objAttachment = attachement_types;
+                  }
+                );
+                sharedModel.getAttachments(trackingNumber, (attachments) => {
+                  objAttachment1 = attachments;
 
-                      obj.push({
-                        tracking_number: tracking_number,
-                        school_name: school_name,
-                        LgaName: LgaName,
-                        RegionName: RegionName,
-                        user_id: user_id,
-                        school_name_new: school_name_new,
-                        registry_type_id: registry_type_id,
-                        registry: registry,
-                        establishId: establishId,
-                        created_at: created_at,
-                        remain_days: remain_days,
-                        streamOld: streamOld,
-                        streamNew: streamNew,
-                        fullname: fullname,
-                        schoolCategory: schoolCategory,
-                        occupation: occupation,
-                        WardIdNew: WardIdNew,
-                        WardIdOld: WardIdOld,
-                        mwombajiAddress: personal_address,
-                        mwombajiPhoneNo: personal_phone_number,
-                        WardNameNew: WardNameNew,
-                        baruaPepe: personal_email,
-                        language: language,
-                        school_size: school_size,
-                        LgaNameNew: LgaNameNew,
-                        area: area,
-                        WardName: WardName,
-                        structure: structure,
-                        RegionNameNew: RegionNameNew,
-                        subcategory: subcategory,
-                        WardNameMtu: WardNameMtu,
-                        LgaNameMtu: LgaNameMtu,
-                        RegionNameMtu: RegionNameMtu,
-                      });
-                      objAttachment2.push({
-                        file_format: "",
-                        attachment_name: "",
-                        registry_id: "",
-                        file_size: "",
-                        registry: "",
-                        application_name: "",
-                        created_at: "",
-                        attachment_path: "",
-                      });
-                      return res.send({
-                        error: false,
-                        statusCode: 300,
-                        data: obj,
-                        maoni: objMess,
-                        staffs: objStaffs,
-                        status: objApps,
-                        Maoni: objMaoni,
-                        objAttachment: objAttachment,
-                        objAttachment1: objAttachment1,
-                        objAttachment2: objAttachment2,
-                        message: "Taarifa za ombi kuanzisha shule.",
-                      });
-                    }
-                  );
-                }
-              );
+                  var first_name = "";
+                  var middle_name = "";
+                  var last_name = "";
+                  var occupation = "";
+                  var personal_address = "";
+                  var personal_phone_number = "";
+                  var personal_email = "";
+                  var WardNameMtu = "";
+                  var LgaNameMtu = "";
+                  var RegionNameMtu = "";
+                  var fullname =
+                    first_name + " " + middle_name + " " + last_name;
+
+                  obj.push({
+                    tracking_number: tracking_number,
+                    school_name: school_name,
+                    LgaName: LgaName,
+                    RegionName: RegionName,
+                    user_id: user_id,
+                    school_name_new: school_name_new,
+                    registry_type_id: registry_type_id,
+                    registry: registry,
+                    establishId: establishId,
+                    created_at: created_at,
+                    remain_days: remain_days,
+                    streamOld: streamOld,
+                    streamNew: streamNew,
+                    fullname: fullname,
+                    schoolCategory: schoolCategory,
+                    occupation: occupation,
+                    WardIdNew: WardIdNew,
+                    WardIdOld: WardIdOld,
+                    mwombajiAddress: personal_address,
+                    mwombajiPhoneNo: personal_phone_number,
+                    WardNameNew: WardNameNew,
+                    baruaPepe: personal_email,
+                    language: language,
+                    school_size: school_size,
+                    LgaNameNew: LgaNameNew,
+                    area: area,
+                    WardName: WardName,
+                    structure: structure,
+                    RegionNameNew: RegionNameNew,
+                    subcategory: subcategory,
+                    WardNameMtu: WardNameMtu,
+                    LgaNameMtu: LgaNameMtu,
+                    RegionNameMtu: RegionNameMtu,
+                  });
+                  objAttachment2.push({
+                    file_format: "",
+                    attachment_name: "",
+                    registry_id: "",
+                    file_size: "",
+                    registry: "",
+                    application_name: "",
+                    created_at: "",
+                    attachment_path: "",
+                  });
+                  return res.send({
+                    error: false,
+                    statusCode: 300,
+                    data: obj,
+                    maoni: objMess,
+                    staffs: objStaffs,
+                    status: objApps,
+                    Maoni: objMaoni,
+                    objAttachment: objAttachment,
+                    objAttachment1: objAttachment1,
+                    objAttachment2: objAttachment2,
+                    message: "Taarifa za ombi kuanzisha shule.",
+                  });
+                });
+              });
             });
           }
         );
