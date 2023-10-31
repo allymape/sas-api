@@ -119,24 +119,27 @@ badiliJinaRequestRouter.post(
     var objAttachment2 = [];
 
       db.query(
-        "SELECT registration_structures.structure as structure, establishing_schools.id as establishId, " +
-          " school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new, " +
-          " former_school_infos.stream as streamOld, " +
-          " establishing_schools.stream as streamNew, establishing_schools.area as area, " +
-          " establishing_schools.school_size as school_size, languages.language as language, " +
-          " school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-          " applications.tracking_number as tracking_number, applications.created_at as created_at, " +
-          " applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id, " +
-          " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-          " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName FROM " +
-          " former_school_infos, school_sub_categories, establishing_schools, applications, " +
-          " registration_structures, wards, districts, school_categories, languages, regions " +
-          " WHERE school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-          " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-          " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-          " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-          " AND application_category_id = 9 AND applications.tracking_number = ?",
+        `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
+				   school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new,  
+				   former_school_infos.stream as streamOld,  
+				   establishing_schools.stream as streamNew, establishing_schools.area as area,  
+				   establishing_schools.school_size as school_size, languages.language as language,  
+				   school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+				   applications.tracking_number as tracking_number, applications.created_at as created_at,  
+				   applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
+				   applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
+				   wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName 
+      FROM former_school_infos
+			LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
+			LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+			LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+			LEFT JOIN registration_structures ON establishing_schools.registration_structure_id = registration_structures.id
+			LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+			LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+			LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+			LEFT JOIN languages ON languages.id = establishing_schools.language_id
+			LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode 
+      WHERE application_category_id = 9 AND applications.tracking_number = ?`,
         [trackingNumber],
         function (error, results) {
           if (error) {
@@ -204,7 +207,11 @@ badiliJinaRequestRouter.post(
           sharedModel.myMaoni(trackingNumber, (maoni) => {
             objMaoni = maoni;
           });
-          sharedModel.getAttachmentTypes(registry_type_id,application_category_id,"",(attachments) => {
+          sharedModel.getAttachmentTypes(
+            registry_type_id,
+            application_category_id,
+            "",
+            (attachments) => {
               objAttachment = attachments;
             }
           );
@@ -224,97 +231,96 @@ badiliJinaRequestRouter.post(
             remain_days = "Saa " + hours;
           }
 
-              db.query(
-                "select * from personal_infos, applications, wards, districts, regions " +
-                  " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
-                  " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
-                [trackingNumber],
-                function (error1, results1) {
-                  if (error1) {
-                    console.log(error1);
-                  }
-                  console.log(results1)
-                  if (results1.length > 0) {
-                    var first_name = results1[0].first_name;
-                    var middle_name = results1[0].middle_name;
-                    var last_name = results1[0].last_name;
-                    var occupation = results1[0].occupation;
-                    var personal_address = results1[0].personal_address;
-                    var personal_phone_number = results1[0].personal_phone_number;
-                    var personal_email = results1[0].personal_email;
-                    var WardNameMtu = results1[0].WardName;
-                    var LgaNameMtu = results1[0].LgaName;
-                    var RegionNameMtu = results1[0].RegionName;
-                    var fullname = first_name + " " + middle_name + " " + last_name;
-                  } else {
-                    var first_name = "";
-                    var middle_name = "";
-                    var last_name = "";
-                    var occupation = "";
-                    var personal_address = "";
-                    var personal_phone_number = "";
-                    var personal_email = "";
-                    var WardNameMtu = "";
-                    var LgaNameMtu = "";
-                    var RegionNameMtu = "";
-                    var fullname = first_name + " " + middle_name + " " + last_name;
-                  }
-                  obj.push({
-                    tracking_number: tracking_number,
-                    school_name: school_name,
-                    LgaName: LgaName,
-                    RegionName: RegionName,
-                    user_id: user_id,
-                    school_name_new: school_name_new,
-                    registry_type_id: registry_type_id,
-                    registry: registry,
-                    establishId: establishId,
-                    created_at: created_at,
-                    remain_days: remain_days,
-                    streamOld: streamOld,
-                    streamNew: streamNew,
-                    fullname: fullname,
-                    schoolCategory: schoolCategory,
-                    occupation: occupation,
-                    mwombajiAddress: personal_address,
-                    mwombajiPhoneNo: personal_phone_number,
-                    baruaPepe: personal_email,
-                    language: language,
-                    school_size: school_size,
-                    area: area,
-                    WardName: WardName,
-                    structure: structure,
-                    subcategory: subcategory,
-                    WardNameMtu: WardNameMtu,
-                    LgaNameMtu: LgaNameMtu,
-                    RegionNameMtu: RegionNameMtu,
-                  });
-                  objAttachment2.push({
-                    file_format: "",
-                    attachment_name: "",
-                    registry_id: "",
-                    file_size: "",
-                    registry: "",
-                    application_name: "",
-                    created_at: "",
-                    attachment_path: "",
-                  });
-                  return res.send({
-                    error: false,
-                    statusCode: 300,
-                    data: obj,
-                    maoni: objMess,
-                    staffs: objStaffs,
-                    status: objApps,
-                    Maoni: objMaoni,
-                    objAttachment: objAttachment,
-                    objAttachment1: objAttachment1,
-                    objAttachment2: objAttachment2,
-                    message: "Taarifa za ombi kuanzisha shule.",
-                  });
-                }
-              );
-          
+          db.query(
+            "select * from personal_infos, applications, wards, districts, regions " +
+              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
+              " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
+            [trackingNumber],
+            function (error1, results1) {
+              if (error1) {
+                console.log(error1);
+              }
+              console.log(results1);
+              if (results1.length > 0) {
+                var first_name = results1[0].first_name;
+                var middle_name = results1[0].middle_name;
+                var last_name = results1[0].last_name;
+                var occupation = results1[0].occupation;
+                var personal_address = results1[0].personal_address;
+                var personal_phone_number = results1[0].personal_phone_number;
+                var personal_email = results1[0].personal_email;
+                var WardNameMtu = results1[0].WardName;
+                var LgaNameMtu = results1[0].LgaName;
+                var RegionNameMtu = results1[0].RegionName;
+                var fullname = first_name + " " + middle_name + " " + last_name;
+              } else {
+                var first_name = "";
+                var middle_name = "";
+                var last_name = "";
+                var occupation = "";
+                var personal_address = "";
+                var personal_phone_number = "";
+                var personal_email = "";
+                var WardNameMtu = "";
+                var LgaNameMtu = "";
+                var RegionNameMtu = "";
+                var fullname = first_name + " " + middle_name + " " + last_name;
+              }
+              obj.push({
+                tracking_number: tracking_number,
+                school_name: school_name,
+                LgaName: LgaName,
+                RegionName: RegionName,
+                user_id: user_id,
+                school_name_new: school_name_new,
+                registry_type_id: registry_type_id,
+                registry: registry,
+                establishId: establishId,
+                created_at: created_at,
+                remain_days: remain_days,
+                streamOld: streamOld,
+                streamNew: streamNew,
+                fullname: fullname,
+                schoolCategory: schoolCategory,
+                occupation: occupation,
+                mwombajiAddress: personal_address,
+                mwombajiPhoneNo: personal_phone_number,
+                baruaPepe: personal_email,
+                language: language,
+                school_size: school_size,
+                area: area,
+                WardName: WardName,
+                structure: structure,
+                subcategory: subcategory,
+                WardNameMtu: WardNameMtu,
+                LgaNameMtu: LgaNameMtu,
+                RegionNameMtu: RegionNameMtu,
+              });
+              objAttachment2.push({
+                file_format: "",
+                attachment_name: "",
+                registry_id: "",
+                file_size: "",
+                registry: "",
+                application_name: "",
+                created_at: "",
+                attachment_path: "",
+              });
+              return res.send({
+                error: false,
+                statusCode: 300,
+                data: obj,
+                maoni: objMess,
+                staffs: objStaffs,
+                status: objApps,
+                Maoni: objMaoni,
+                objAttachment: objAttachment,
+                objAttachment1: objAttachment1,
+                objAttachment2: objAttachment2,
+                message: "Taarifa za ombi kuanzisha shule.",
+              });
+            }
+          );
         }
       );
   }
