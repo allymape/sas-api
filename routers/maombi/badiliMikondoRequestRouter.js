@@ -96,7 +96,7 @@ badiliMkondoRequestRouter.post(
     "/view-badili-details", 
     isAuth, 
     permission('view-school-owners-and-managers'), 
-    (req, res, next) => {
+    (req, res) => {
     var trackingNumber = req.body.TrackingNumber;
     const user = req.user;
     var userLevel = user.userLevel;
@@ -110,7 +110,7 @@ badiliMkondoRequestRouter.post(
     var objMaoni = [];
     var objAttachment1 = [];
     var objAttachment2 = [];
- 
+  
     db.query(
       `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
               school_sub_categories.subcategory as subcategory,application_category_id, former_school_infos.stream as streamOld,  
@@ -130,9 +130,10 @@ badiliMkondoRequestRouter.post(
         LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
         LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
         LEFT JOIN languages ON languages.id = establishing_schools.language_id
-        LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode = ?`,
+        LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode
+        WHERE application_category_id = 5 AND applications.tracking_number = ? `,
       [trackingNumber],
-      function (error, results, fields) {
+      function (error, results) {
         if (error) {
           console.log(error);
         }
