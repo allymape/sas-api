@@ -132,34 +132,34 @@ badiliBweniRequestRouter.post(
     var objAttachment2 = [];
 
     db.query(
-      "SELECT establishing_schools.id as establishId, " +
-        " school_sub_categories.subcategory as Newsubcategory, " +
-        " former_school_infos.school_sub_category_id as NewSubCatId, establishing_schools.school_sub_category_id as OldSubCatId, " +
-        " school_sub_categories.subcategory as subcategory, " +
-        " former_school_infos.stream as streamOld, establishing_schools.stream as streamNew, " +
-        " establishing_schools.area as area, establishing_schools.school_size as school_size, " +
-        " languages.language as language, school_categories.category as schoolCategory, " +
-        " applications.tracking_number as tracking_number, applications.tracking_number as tracking_number, " +
-        " applications.created_at as created_at, applications.registry_type_id as registry_type_id, application_category_id, " +
-        " applications.user_id as user_id,  applications.foreign_token as foreign_token, " +
-        " establishing_schools.school_name as school_name, wards.WardName as WardName, " +
-        " regions.RegionName as RegionName, districts.LgaName as LgaName " +
-        " FROM former_school_infos, " +
-        " school_sub_categories, establishing_schools, applications, wards, districts, " +
-        " school_categories, languages, regions " +
-        " WHERE " +
-        " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-        " AND former_school_infos.establishing_school_id = establishing_schools.id " +
-        " AND former_school_infos.school_sub_category_id = school_sub_categories.id" +
-        " AND application_category_id = 14 AND applications.tracking_number = ?",
+      `SELECT  establishing_schools.id as establishId,  
+              school_sub_categories.subcategory as Newsubcategory,  
+              former_school_infos.school_sub_category_id as NewSubCatId, establishing_schools.school_sub_category_id as OldSubCatId,  
+              school_sub_categories.subcategory as subcategory,  
+              former_school_infos.stream as streamOld, establishing_schools.stream as streamNew,  
+              establishing_schools.area as area, establishing_schools.school_size as school_size,  
+              languages.language as language, school_categories.category as schoolCategory,  
+              applications.tracking_number as tracking_number, applications.tracking_number as tracking_number,  
+              applications.created_at as created_at, applications.registry_type_id as registry_type_id, application_category_id,  
+              applications.user_id as user_id,  applications.foreign_token as foreign_token,  
+              establishing_schools.school_name as school_name, wards.WardName as WardName,  
+              regions.RegionName as RegionName, districts.LgaName as LgaName  
+      FROM former_school_infos
+      LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
+      LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+      LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+      LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+      LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
+      LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+      LEFT JOIN languages ON languages.id = establishing_schools.language_id
+      LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode
+			WHERE  application_category_id = 14 AND applications.tracking_number = ?`,
       [trackingNumber],
       function (error, results) {
         if (error) {
           console.log(error);
         }
-       
+
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -187,113 +187,113 @@ badiliBweniRequestRouter.post(
           var Oldsubcategory = results[0].subcategory;
           // var Oldsubcategory = results[0].subcategory;
         }
-            var today = new Date();
+        var today = new Date();
 
-            var diffInSeconds = Math.abs(today - created_at) / 1000;
-            var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            var minutes = Math.floor((diffInSeconds / 60) % 60);
-            var seconds = Math.floor(diffInSeconds % 60);
-            var milliseconds = Math.round(
-              (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            );
+        var diffInSeconds = Math.abs(today - created_at) / 1000;
+        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+        var minutes = Math.floor((diffInSeconds / 60) % 60);
+        var seconds = Math.floor(diffInSeconds % 60);
+        var milliseconds = Math.round(
+          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+        );
 
-            db.query(
-              "select * from maoni WHERE trackingNo = ?",
-              [trackingNumber],
-              function (error, resultsMaoni, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                if (resultsMaoni.length <= 0) {
-                  objMess.push({ count: 0 });
-                } else {
-                  for (var i = 0; i < resultsMaoni.length; i++) {
-                    // console.log(resultsMaoni)
-                    var coments = resultsMaoni[i].coments;
-                    objMess.push({ coments: coments });
-                  }
-                }
+        db.query(
+          "select * from maoni WHERE trackingNo = ?",
+          [trackingNumber],
+          function (error, resultsMaoni, fields) {
+            if (error) {
+              console.log(error);
+            }
+            if (resultsMaoni.length <= 0) {
+              objMess.push({ count: 0 });
+            } else {
+              for (var i = 0; i < resultsMaoni.length; i++) {
+                // console.log(resultsMaoni)
+                var coments = resultsMaoni[i].coments;
+                objMess.push({ coments: coments });
+              }
+            }
+          }
+        );
+        sharedModel.myStaffs(user, (staffs) => {
+          objStaffs = staffs;
+          sharedModel.myMaoni(trackingNumber, (maoni) => {
+            objMaoni = maoni;
+            sharedModel.getAttachmentTypes(
+              registry_type_id,
+              application_category_id,
+              "",
+              (attachment_types) => {
+                objAttachment = attachment_types;
               }
             );
-            sharedModel.myStaffs(user, (staffs) => {
-              objStaffs = staffs;
-              sharedModel.myMaoni(trackingNumber, (maoni) => {
-                objMaoni = maoni;
-                sharedModel.getAttachmentTypes(
-                  registry_type_id,
-                  application_category_id,
-                  "",
-                  (attachment_types) => {
-                    objAttachment = attachment_types;
-                  }
-                );
-                sharedModel.getAttachments(trackingNumber, (attachments) => {
-                  objAttachment1 = attachments;
-                  var remain_days = 0;
-                  if (days > 0) {
-                    remain_days = "Siku " + days;
-                  } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                    remain_days = "Sek " + seconds + " zilizopita";
-                  } else if (days <= 0 && hours <= 0) {
-                    remain_days = "Dakika " + minutes + " zilizopita";
-                  } else if (days <= 0) {
-                    remain_days = "Saa " + hours;
-                  }
-                  objAttachment2.push({
-                    file_format: "",
-                    attachment_name: "",
-                    registry_id: "",
-                    file_size: "",
-                    registry: "",
-                    application_name: "",
-                    created_at: "",
-                    attachment_path: "",
-                  });
-                  obj.push({
-                    tracking_number: tracking_number,
-                    school_name: school_name,
-                    LgaName: LgaName,
-                    RegionName: RegionName,
-                    user_id: user_id,
-                    registry_type_id: registry_type_id,
-                    registry: registry,
-                    created_at: created_at,
-                    remain_days: remain_days,
-                    Newsubcategory: Newsubcategory,
-                    fullname: "",
-                    occupation: "-",
-                    mwombajiAddress: "",
-                    establishId: establishId,
-                    mwombajiPhoneNo: "",
-                    baruaPepe: "",
-                    schoolCategory: schoolCategory,
-                    language: language,
-                    school_size: school_size,
-                    streamOld: streamOld,
-                    streamNew: streamNew,
-                    area: area,
-                    WardName: WardName,
-                    structure: structure,
-                    subcategory: Oldsubcategory,
-                  });
+            sharedModel.getAttachments(trackingNumber, (attachments) => {
+              objAttachment1 = attachments;
+              var remain_days = 0;
+              if (days > 0) {
+                remain_days = "Siku " + days;
+              } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+                remain_days = "Sek " + seconds + " zilizopita";
+              } else if (days <= 0 && hours <= 0) {
+                remain_days = "Dakika " + minutes + " zilizopita";
+              } else if (days <= 0) {
+                remain_days = "Saa " + hours;
+              }
+              objAttachment2.push({
+                file_format: "",
+                attachment_name: "",
+                registry_id: "",
+                file_size: "",
+                registry: "",
+                application_name: "",
+                created_at: "",
+                attachment_path: "",
+              });
+              obj.push({
+                tracking_number: tracking_number,
+                school_name: school_name,
+                LgaName: LgaName,
+                RegionName: RegionName,
+                user_id: user_id,
+                registry_type_id: registry_type_id,
+                registry: registry,
+                created_at: created_at,
+                remain_days: remain_days,
+                Newsubcategory: Newsubcategory,
+                fullname: "",
+                occupation: "-",
+                mwombajiAddress: "",
+                establishId: establishId,
+                mwombajiPhoneNo: "",
+                baruaPepe: "",
+                schoolCategory: schoolCategory,
+                language: language,
+                school_size: school_size,
+                streamOld: streamOld,
+                streamNew: streamNew,
+                area: area,
+                WardName: WardName,
+                structure: structure,
+                subcategory: Oldsubcategory,
+              });
 
-                  return res.send({
-                    error: false,
-                    statusCode: 300,
-                    data: obj,
-                    maoni: objMess,
-                    staffs: objStaffs,
-                    status: objApps,
-                    Maoni: objMaoni,
-                    objAttachment: objAttachment,
-                    objAttachment1: objAttachment1,
-                    objAttachment2: objAttachment2,
-                    message: "Taarifa za ombi kuanzisha shule.",
-                  });
-                });
+              return res.send({
+                error: false,
+                statusCode: 300,
+                data: obj,
+                maoni: objMess,
+                staffs: objStaffs,
+                status: objApps,
+                Maoni: objMaoni,
+                objAttachment: objAttachment,
+                objAttachment1: objAttachment1,
+                objAttachment2: objAttachment2,
+                message: "Taarifa za ombi kuanzisha shule.",
               });
             });
+          });
+        });
       }
     );
   }
