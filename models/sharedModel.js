@@ -558,7 +558,7 @@ module.exports = {
         if (staff.length > 0) {
           user_to = staff[0].id;
         }
-
+        
         if (user.cheo != "ke" && !user_to) {
           console.log("Kuna shida");
           callback(success);

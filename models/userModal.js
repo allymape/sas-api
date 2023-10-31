@@ -17,7 +17,7 @@ module.exports = {
             s.role_id as role_id, s.new_role_id as new_role_id, s.email as email, v.id AS section_id,
             rnk.name as ngazi, v.rank_name as sehemu, rm.role_name as jukumu,
             s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
-            zone_id,region_code,district_code, 
+            zone_id,zone_name,region_code,district_code, 
             v.status_id as status_id, 
             v.rank_level as rank_level, s.twofa as twofa 
             FROM staffs s
@@ -25,6 +25,7 @@ module.exports = {
             INNER JOIN vyeo v ON r.vyeoId = v.id
             INNER JOIN role_management rm ON rm.id = s.new_role_id
             LEFT JOIN ranks rnk ON rnk.id = v.rank_level
+            LEFT JOIN zones z ON z.id = s.zone_id
             WHERE username = ? AND user_status = 1;`,
           [username],
           (error, user) => {

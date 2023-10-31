@@ -40,6 +40,7 @@ const ObjectFuctions = {
         id: user.id,
         office: user.office,
         zone_id: user.zone_id,
+        kanda : user.kanda,
         region_code: user.region_code,
         district_code: user.district_code,
         userPermissions: permissions,

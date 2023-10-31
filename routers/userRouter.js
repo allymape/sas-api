@@ -50,6 +50,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_name: user.rank_name,
           // status_id: user.status_id,
           zone_id: Number(user.zone_id),
+          kanda : user.zone_name,
           region_code: user.region_code,
           district_code: user.district_code,
           rank_level: user.rank_level,
