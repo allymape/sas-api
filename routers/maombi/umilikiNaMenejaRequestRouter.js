@@ -18,28 +18,20 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
 //   var Office = req.body.Office;
   const user = req.user;
 //   const {cheo , sehemu , ngazi} = user;
-db.query(
-  "SELECT count(*) as total_month " +
-    " FROM applications " +
-    " WHERE application_category_id = 2 AND payment_status_id = 2 AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-  
-  function (errorSummary, summary) {
-    if (errorSummary) {
-      console.log(errorSummary);
-    }
+sharedModel.maombiSummaryByCategoryAndStatus( user , 2, (summaries) => {
     db.query(
       `SELECT   applications.tracking_number as tracking_number,
                         applications.created_at as created_at, applications.user_id as user_id, 
                         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
                         regions.RegionName as RegionName, districts.LgaName as LgaName 
-                FROM    establishing_schools
-                INNER JOIN owners ON establishing_schools.id = owners.establishing_school_id 
-                INNER JOIN applications ON  owners.tracking_number = applications.tracking_number
-                INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
-                INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
-                INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-                WHERE application_category_id = 2 AND payment_status_id = 2
-                ${selectConditionByTitle(user)}
+        FROM    establishing_schools
+        INNER JOIN owners ON establishing_schools.id = owners.establishing_school_id 
+        INNER JOIN applications ON  owners.tracking_number = applications.tracking_number
+        INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
+        INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
+        INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
+        WHERE application_category_id = 2 AND payment_status_id = 2
+        ${selectConditionByTitle(user)}
                         `,
       function (error, results) {
         if (error) {
@@ -98,7 +90,7 @@ db.query(
           error: false,
           statusCode: 300,
           dataList: obj,
-          dataSummary: summary[0].total_month,
+          dataSummary: summaries,
           message: "List of maombi kuanzisha shule.",
         });
       }

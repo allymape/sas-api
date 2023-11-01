@@ -6,6 +6,7 @@ const sajiliSerikaliRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
 const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const sharedModel = require("../../models/sharedModel");
 
   sajiliSerikaliRequestRouter.post(
     "/maombi-usajili-ser-shule",
@@ -21,16 +22,8 @@ const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySe
       var Office = req.body.Office;
       // console.log("UserLevel")
       // console.log(UserLevel);
-      db.query(
-        "select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [3],
-        function (error, results, fields) {
-          if (error) {
-            console.log(error);
-          }
-          var total_month = results[0].total_month;
+      sharedModel.maombiSummaryByCategoryAndStatus(user, 4, (summaries) => {
+        
           // if (UserLevel == 33) {
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -101,7 +94,7 @@ const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySe
               return res.send({
                 error: false,
                 statusCode: 300,
-                dataSummary: total_month,
+                dataSummary: summaries,
                 dataList: obj,
                 message: "List of maombi kuanzisha shule.",
               });

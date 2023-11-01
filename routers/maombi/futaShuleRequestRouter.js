@@ -17,97 +17,86 @@ futaShuleRequestRouter.post(
      var obj = [];
      // var districtId = req.body.districtCode;\
      const user = req.user;
-     var UserLevel = req.user.user_level;
-     var Office = req.body.Office;
-     db.query("select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [11],
-        function (error1, summary, fields1) {
-          if (error1) {
-            console.log(error1);
-          }
-          var total_month = summary[0].total_month;
-          //  if (UserLevel == "w1") {
-             db.query(
-               "SELECT establishing_schools.id as schoolId, school_categories.category as schoolCategory, " +
-                 " applications.tracking_number as tracking_number, " +
-                 " applications.created_at as created_at, applications.user_id as user_id, " +
-                 " applications.foreign_token as foreign_token, " +
-                 " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-                 " districts.LgaName as LgaName FROM former_school_infos, establishing_schools, applications, " +
-                 " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-                 " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-                 " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                 " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-                 " AND application_category_id = 11 AND is_approved <> 2 AND payment_status_id = 2 "+ selectConditionByTitle(user),
-             
-               function (error, results, fields) {
-                 if (error) {
-                   console.log(error);
-                 }
-                 for (var i = 0; i < results.length; i++) {
-                   console.log(results);
-                   var tracking_number = results[i].tracking_number;
-                   var registry_type_id = "";
-                   var user_id = results[i].user_id;
-                   var foreign_token = results[i].foreign_token;
-                   var school_name = results[i].school_name;
-                   var LgaName = results[i].LgaName;
-                   var RegionName = results[i].RegionName;
-                   var RegionName = results[i].RegionName;
-                   var registry = results[i].registry;
-                   var schoolId = results[i].schoolId;
-                   var created_at = results[i].created_at;
-                   var schoolCategory = results[i].schoolCategory;
-                   var applicantname;
-                   var today = new Date();
+   sharedModel.maombiSummaryByCategoryAndStatus(user, 11, function (summaries) {
+     db.query(
+       "SELECT establishing_schools.id as schoolId, school_categories.category as schoolCategory, " +
+         " applications.tracking_number as tracking_number, " +
+         " applications.created_at as created_at, applications.user_id as user_id, " +
+         " applications.foreign_token as foreign_token, " +
+         " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
+         " districts.LgaName as LgaName FROM former_school_infos, establishing_schools, applications, " +
+         " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
+         " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+         " former_school_infos.establishing_school_id = establishing_schools.id AND " +
+         " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
+         " AND application_category_id = 11 AND is_approved <> 2 AND payment_status_id = 2 " +
+         selectConditionByTitle(user),
+       function (error, results) {
+         if (error) {
+           console.log(error);
+         }
+         for (var i = 0; i < results.length; i++) {
+           console.log(results);
+           var tracking_number = results[i].tracking_number;
+           var registry_type_id = "";
+           var user_id = results[i].user_id;
+           var foreign_token = results[i].foreign_token;
+           var school_name = results[i].school_name;
+           var LgaName = results[i].LgaName;
+           var RegionName = results[i].RegionName;
+           var RegionName = results[i].RegionName;
+           var registry = results[i].registry;
+           var schoolId = results[i].schoolId;
+           var created_at = results[i].created_at;
+           var schoolCategory = results[i].schoolCategory;
+           var applicantname;
+           var today = new Date();
 
-                   var diffInSeconds = Math.abs(today - created_at) / 1000;
-                   var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                   var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                   var minutes = Math.floor((diffInSeconds / 60) % 60);
-                   var seconds = Math.floor(diffInSeconds % 60);
-                   var milliseconds = Math.round(
-                     (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                   );
+           var diffInSeconds = Math.abs(today - created_at) / 1000;
+           var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+           var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+           var minutes = Math.floor((diffInSeconds / 60) % 60);
+           var seconds = Math.floor(diffInSeconds % 60);
+           var milliseconds = Math.round(
+             (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+           );
 
-                   var remain_days;
-                   if (days > 0) {
-                     remain_days = "Siku " + days;
-                   } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                     remain_days = "Sek " + seconds + " zilizopita";
-                   } else if (days <= 0 && hours <= 0) {
-                     remain_days = "Dakika " + minutes + " zilizopita";
-                   } else if (days <= 0) {
-                     remain_days = "Saa " + hours;
-                   }
+           var remain_days;
+           if (days > 0) {
+             remain_days = "Siku " + days;
+           } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+             remain_days = "Sek " + seconds + " zilizopita";
+           } else if (days <= 0 && hours <= 0) {
+             remain_days = "Dakika " + minutes + " zilizopita";
+           } else if (days <= 0) {
+             remain_days = "Saa " + hours;
+           }
 
-                   obj.push({
-                     tracking_number: tracking_number,
-                     school_name: school_name,
-                     LgaName: LgaName,
-                     RegionName: RegionName,
-                     user_id: user_id,
-                     registry_type_id: registry_type_id,
-                     registry: registry,
-                     schoolId: schoolId,
-                     created_at: created_at,
-                     remain_days: remain_days,
-                     schoolCategory: schoolCategory,
-                   });
-                 }
-                 // console.log(obj)
-                 return res.send({
-                   error: false,
-                   statusCode: 300,
-                   dataList: obj,
-                   dataSummary: total_month,
-                   message: "List of maombi kuanzisha shule.",
-                 });
-               }
-             );
-        });
+           obj.push({
+             tracking_number: tracking_number,
+             school_name: school_name,
+             LgaName: LgaName,
+             RegionName: RegionName,
+             user_id: user_id,
+             registry_type_id: registry_type_id,
+             registry: registry,
+             schoolId: schoolId,
+             created_at: created_at,
+             remain_days: remain_days,
+             schoolCategory: schoolCategory,
+           });
+         }
+         // console.log(obj)
+         return res.send({
+           error: false,
+           statusCode: 300,
+           dataList: obj,
+           dataSummary: summaries,
+           message: "List of maombi kuanzisha shule.",
+         });
+       }
+     );
+   });
   }
 );
 

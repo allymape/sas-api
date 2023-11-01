@@ -21,6 +21,7 @@ anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule", isAuth,(req, res) => {
           ? false
           : true;
     }
+   
     model.anzishaShuleRequestList(req.user , (error, data, numRows) => {
             return res.send({
                     error: error ? true : false,

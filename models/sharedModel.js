@@ -774,6 +774,52 @@ module.exports = {
       }
     );
   },
-
+maombiSummaryByCategoryAndStatus: (user , application_category , callback) => {
+       const sql = `SELECT COUNT(*) AS num_rows 
+                    FROM applications a
+                    WHERE a.application_category_id = ? `
+      //  All
+       db.query(
+         `${sql} AND a.is_approved IN ${
+           application_category == 1 ? "(1,2,3) AND a.is_complete = 1" : "(0, 1, 2, 3)"
+         }`,
+         [application_category],
+         (error, all) => {
+           if (error) console.log(error);
+           // Pending
+           db.query(
+             `${sql} AND a.is_approved IN ${
+               application_category == 1 ? "(1) AND a.is_complete = 1 " : "(0, 1)"
+             }`,
+             [application_category],
+             (error, pending) => {
+               if (error) console.log(error);
+               // Approved
+               db.query(
+                 `${sql} AND a.is_approved = 2`,
+                 [application_category],
+                 (error, approved) => {
+                   if (error) console.log(error);
+                   // Rejected
+                   db.query(
+                     `${sql} AND a.is_approved = 3`,
+                     [application_category],
+                     (error, rejected) => {
+                       if (error) console.log(error);
+                       callback({
+                         all: all[0].num_rows,
+                         pending: pending[0].num_rows,
+                         approved: approved[0].num_rows,
+                         rejected: rejected[0].num_rows,
+                       });
+                     }
+                   );
+                 }
+               );
+             }
+           );
+         }
+       );
+}
   
 };

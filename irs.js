@@ -63,6 +63,7 @@ const algorithmRouter = require("./routers/algorithmRouter.js");
 const schoolCategoryRouter = require("./routers/schoolCategoryRouter.js");
 const notificationRouter = require("./routers/notificationRouter.js");
 const trackApplicationRouter = require("./routers/trackApplicationRouter.js");
+const requestSummaryRouter = require("./routers/maombi/requestSummaryRouter.js");
 
 app.use("/api", indexRouter);
 app.use("/api" , anzishaShuleRequestRouter);
@@ -89,6 +90,9 @@ app.use("/api", feeRouter);
 app.use('/api' , biasRouter);
 app.use('/api' , combinationRouter);
 app.use('/api' , dashboardRouter);
+
+
+app.use("/api", requestSummaryRouter);
 app.use("/api", umilikiNaMenejaRequestRouter);
 app.use("/api", sajiliBinafsiRequestRouter);
 app.use("/api", sajiliSerikaliRequestRouter);

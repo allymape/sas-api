@@ -24,7 +24,7 @@ module.exports = {
             `,
       (error, result) => {
         if (error) console.log(error);
-        callback(error, result, 10);
+        callback(error, result);
       }
     );
   },

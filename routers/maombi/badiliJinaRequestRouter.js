@@ -20,8 +20,7 @@ badiliJinaRequestRouter.post(
     const user = req.user;
     var UserLevel = user.user_level;
     var Office = req.body.Office;
-    // console.log("UserLevel")
-    // if (UserLevel == 33) {
+    sharedModel.maombiSummaryByCategoryAndStatus(user , 9, function (summaries) {
     db.query(
       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
         " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -92,10 +91,12 @@ badiliJinaRequestRouter.post(
           error: false,
           statusCode: 300,
           dataList: obj,
-          message: "List of maombi kuanzisha shule.",
+          dataSummary : summaries,
+          message: "List of maombi kubadili jina la shule.",
         });
       }
     );
+    });
   }
 );
 

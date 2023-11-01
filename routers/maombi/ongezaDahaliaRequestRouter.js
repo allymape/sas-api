@@ -22,17 +22,10 @@ ongezaDahaliaRequestRouter.post(
     var UserLevel = user.user_level;
     var Office = req.body.Office;
 
-    db.query(
-      "select count(*) as total_month " +
-        " from applications " +
-        " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-      [13],
-      function (error1, summary, fields1) {
-        if (error1) {
-          console.log(error1);
-        }
-        var total_month = summary[0].total_month;
-        // if(UserLevel == 33){
+    sharedModel.maombiSummaryByCategoryAndStatus(
+      user,
+      13,
+      function (summaries) {
         db.query(
           "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
             " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -45,7 +38,7 @@ ongezaDahaliaRequestRouter.post(
             " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
             " AND application_category_id = 13 AND payment_status_id = 2 " +
             selectConditionByTitle(user),
-          function (error, results, fields) {
+          function (error, results) {
             if (error) {
               console.log(error);
             }
@@ -102,7 +95,7 @@ ongezaDahaliaRequestRouter.post(
               error: false,
               statusCode: 300,
               dataList: obj,
-              dataSummary: total_month,
+              dataSummary: summaries,
               message: "List of maombi kuanzisha shule.",
             });
           }

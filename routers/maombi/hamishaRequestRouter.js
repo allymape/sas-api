@@ -18,20 +18,8 @@ hamishaRequestRouter.post(
         var obj1 = [];
         var obj2 = [];
         // var districtId = req.body.districtCode;
-        const user = req.user;
-        var UserLevel = user.user_level;
-        var Office = req.body.Office;
-        // console.log("UserLevel")
-       db.query("select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [10],
-        function (error1, summary, ) {
-            if (error1) {
-            console.log(error1);
-          }
-          var total_month = summary[0].total_month;
-        // if (UserLevel == "w1") {
+        const user = req.user;  
+       sharedModel.maombiSummaryByCategoryAndStatus(user, 10 ,function (summaries) {
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
               " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -81,8 +69,8 @@ hamishaRequestRouter.post(
                 error: false,
                 statusCode: 300,
                 dataList: obj,
-                dataSummary : total_month,
-                message: "List of maombi kuanzisha shule.",
+                dataSummary : summaries,
+                message: "List of maombi  kuhamisha shule.",
               });
             }
           );

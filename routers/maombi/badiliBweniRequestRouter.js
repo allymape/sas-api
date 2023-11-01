@@ -19,19 +19,9 @@ badiliBweniRequestRouter.post(
     const user = req.user;
     var UserLevel = user.user_level;
     var Office = req.body.Office;
-    console.log(UserLevel);
     // console.log(req.body);
-    db.query(
-      "select count(*) as total_month " +
-        " from applications " +
-        " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-      [14],
-      function (error1, summary, fields1) {
-        if (error1) {
-          console.log(error1);
-        }
-        var total_month = summary[0].total_month;
-        // if (UserLevel == 33) {
+       sharedModel.maombiSummaryByCategoryAndStatus(user, 14 , function (summaries) {
+     
         db.query(
           "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
             " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -101,7 +91,7 @@ badiliBweniRequestRouter.post(
             return res.send({
               error: false,
               statusCode: 300,
-              dataSummary: total_month,
+              dataSummary: summaries,
               dataList: obj,
               message: "List of maombi kuanzisha shule.",
             });

@@ -21,17 +21,7 @@ badiliUsajiliRequestRouter.post(
            var Office = req.body.Office;
           
          
-        db.query("select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [6],
-        function (error1, summary, fields1) {
-          if (error1) {
-            console.log(error1);
-          }
-          var total_month = summary[0].total_month;
-          //  if (UserLevel == "w1") {
-            //   console.log(UserLevel);
+        sharedModel.maombiSummaryByCategoryAndStatus(user,6,function (summaries) {
              db.query(
                "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
                  " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -103,7 +93,7 @@ badiliUsajiliRequestRouter.post(
                    error: false,
                    statusCode: 300,
                    dataList: obj,
-                   dataSummary: total_month,
+                   dataSummary: summaries,
                    message: "List of maombi kuanzisha shule.",
                  });
                }

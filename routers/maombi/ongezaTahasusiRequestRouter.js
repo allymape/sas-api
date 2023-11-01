@@ -20,19 +20,9 @@ ongezaTahasusiRequestRouter.post(
     const user = req.user;
     var UserLevel = user.user_level;
     var Office = req.body.Office;
-    console.log(UserLevel)
-    // console.log(req.body);
-    db.query(
-        "select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [12],
-        function (error1, summary, fields1) {
-          if (error1) {
-            console.log(error1);
-          }
-          var total_month = summary[0].total_month;
-    // if (UserLevel == 33) {
+   
+    sharedModel.maombiSummaryByCategoryAndStatus(user, 12 , function (summaries) {
+     
       db.query(
         "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
           " applications.created_at as created_at, applications.user_id as user_id, " +
@@ -43,12 +33,13 @@ ongezaTahasusiRequestRouter.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " former_school_combinations.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = 12 AND is_approved <> 2 AND payment_status_id = 2  "+selectConditionByTitle(user),
+          " AND application_category_id = 12 AND is_approved <> 2 AND payment_status_id = 2  " +
+          selectConditionByTitle(user),
         function (error, results) {
           if (error) {
             console.log(error);
           }
-    
+
           for (var i = 0; i < results.length; i++) {
             console.log(results);
             var tracking_number = results[i].tracking_number;
@@ -64,7 +55,7 @@ ongezaTahasusiRequestRouter.post(
             var schoolCategory = results[i].schoolCategory;
             var applicantname;
             var today = new Date();
-  
+
             var diffInSeconds = Math.abs(today - created_at) / 1000;
             var days = Math.floor(diffInSeconds / 60 / 60 / 24);
             var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
@@ -73,7 +64,7 @@ ongezaTahasusiRequestRouter.post(
             var milliseconds = Math.round(
               (diffInSeconds - Math.floor(diffInSeconds)) * 1000
             );
-  
+
             var remain_days;
             if (days > 0) {
               remain_days = "Siku " + days;
@@ -101,13 +92,13 @@ ongezaTahasusiRequestRouter.post(
           return res.send({
             error: false,
             statusCode: 300,
-            dataSummary: total_month,
+            dataSummary: summaries,
             dataList: obj,
             message: "List of maombi kuanzisha shule.",
           });
         }
       );
-    })
+    });
 });
 
 ongezaTahasusiRequestRouter.post(

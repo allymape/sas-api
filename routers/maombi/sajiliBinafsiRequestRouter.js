@@ -22,16 +22,7 @@ sajiliBinafsiRequestRouter.post(
     var Office = req.body.Office;
 
     // console.log(UserLevel); 
-    db.query(
-        "select count(*) as total_month " +
-          " from applications " +
-          " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-        [3],
-        function (error1, summary, fields1) {
-          if (error1) {
-            console.log(error1);
-          }
-          var total_month = summary.length > 0 ? summary[0].total_month : 0;
+    sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , (summary) => {
     // if (UserLevel == 33) {
       db.query(
         "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -101,7 +92,7 @@ sajiliBinafsiRequestRouter.post(
           return res.send({
             error: false,
             statusCode: 300,
-            dataSummary: total_month,
+            dataSummary: summary,
             dataList: obj,
             message: "List of maombi kuanzisha shule.",
           });
