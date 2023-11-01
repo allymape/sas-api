@@ -774,10 +774,11 @@ module.exports = {
       }
     );
   },
-maombiSummaryByCategoryAndStatus: (user , application_category , callback) => {
+maombiSummaryByCategoryAndStatus: (user , application_category , registry_type = null , callback) => {
        const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
-                    WHERE a.application_category_id = ? `
+                    WHERE ${application_category == 4 & registry_type != null ? ' a.registry_type_id IN '+registry_type+' AND' : ''} 
+                          a.application_category_id = ? `
       //  All
        db.query(
          `${sql} AND a.is_approved IN ${

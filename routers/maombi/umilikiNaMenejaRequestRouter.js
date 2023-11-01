@@ -18,7 +18,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
 //   var Office = req.body.Office;
   const user = req.user;
 //   const {cheo , sehemu , ngazi} = user;
-sharedModel.maombiSummaryByCategoryAndStatus( user , 2, (summaries) => {
+sharedModel.maombiSummaryByCategoryAndStatus( user , 2, null, (summaries) => {
     db.query(
       `SELECT   applications.tracking_number as tracking_number,
                         applications.created_at as created_at, applications.user_id as user_id, 

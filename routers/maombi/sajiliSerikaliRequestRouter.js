@@ -14,17 +14,8 @@ const sharedModel = require("../../models/sharedModel");
     permission("view-school-registration-government"),
     (req, res, next) => {
       var obj = [];
-      var obj1 = [];
-      var obj2 = [];
-      // var districtId = req.body.districtCode;
       var user = req.user;
-      var UserLevel = user.user_level;
-      var Office = req.body.Office;
-      // console.log("UserLevel")
-      // console.log(UserLevel);
-      sharedModel.maombiSummaryByCategoryAndStatus(user, 4, (summaries) => {
-        
-          // if (UserLevel == 33) {
+      sharedModel.maombiSummaryByCategoryAndStatus(user, 4, '(3)' , (summaries) => {
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
               " applications.created_at as created_at, applications.user_id as user_id, " +

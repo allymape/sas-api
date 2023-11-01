@@ -15,13 +15,8 @@ badiliMmilikiRequestRouter.post(
   permission("view-change-of-school-owner"),
   (req, res) => {
         var obj = [];
-        var obj1 = [];
-        var obj2 = [];
-        // var districtId = req.body.districtCode;
         const user = req.user;
-      
-       sharedModel.maombiSummaryByCategoryAndStatus(user, 7 ,function (summaries) {
-        // if (UserLevel == "w1" || UserLevel == 3) {
+       sharedModel.maombiSummaryByCategoryAndStatus(user, 7 , null,(summaries)  => {
           db.query(
             "SELECT applications.tracking_number as tracking_number, applications.created_at as created_at, " +
               " former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person, " +

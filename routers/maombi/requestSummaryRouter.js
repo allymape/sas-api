@@ -13,9 +13,9 @@ const sharedModel = require("../../models/sharedModel");
 requestSummaryRouter.get("/request_summaries/:application_category_id", isAuth,(req, res) => {
        const application_category_id = req.params.application_category_id;
        const user = req
-       sharedModel.maombiSummaryByCategoryAndStatus(user , application_category_id , (data) =>{
+       sharedModel.maombiSummaryByCategoryAndStatus(user , application_category_id , null , (data) =>{
            res.send({
-                data : data
+                dataSummary : data
            })
        } )
   });

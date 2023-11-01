@@ -14,13 +14,9 @@ badiliJinaRequestRouter.post(
   permission("view-change-school-name"),
   (req, res) => {
     var obj = [];
-    var obj1 = [];
-    var obj2 = [];
-    // var districtId = req.body.districtCode;
     const user = req.user;
-    var UserLevel = user.user_level;
-    var Office = req.body.Office;
-    sharedModel.maombiSummaryByCategoryAndStatus(user , 9, function (summaries) {
+    
+    sharedModel.maombiSummaryByCategoryAndStatus(user , 9 , null, (summaries)  => {
     db.query(
       "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
         " applications.created_at as created_at, applications.user_id as user_id, " +

@@ -15,12 +15,9 @@ badiliMenejaRequestRouter.post(
   permission("view-change-of-school-manager"),
   (req, res) => {
     var obj = [];
-    var obj1 = [];
-    var obj2 = [];
-    // var districtId = req.body.districtCode;
     const user = req.user;
    
- sharedModel.maombiSummaryByCategoryAndStatus(user, 8, function (summaries) {
+ sharedModel.maombiSummaryByCategoryAndStatus(user, 8 , null, (summaries)  => {
    db.query(
      "SELECT applications.tracking_number as tracking_number, applications.created_at as created_at, " +
        " former_managers.manager_first_name as owner_name, wards.WardName as WardName, LgaName, former_managers.manager_last_name as authorized_person, " +

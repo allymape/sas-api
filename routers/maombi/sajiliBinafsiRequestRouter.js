@@ -14,16 +14,8 @@ sajiliBinafsiRequestRouter.post(
     permission('view-school-owners-and-managers'), 
 (req, res) => {
     var obj = [];
-    var obj1 = [];
-    var obj2 = [];
-    // var districtId = req.body.districtCode;
     const user = req.user;
-    var UserLevel = user.user_level;
-    var Office = req.body.Office;
-
-    // console.log(UserLevel); 
-    sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , (summary) => {
-    // if (UserLevel == 33) {
+    sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , '(1,2)' , (summary) => {
       db.query(
         "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
           " applications.created_at as created_at, applications.user_id as user_id, " +

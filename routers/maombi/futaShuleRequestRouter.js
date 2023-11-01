@@ -15,9 +15,8 @@ futaShuleRequestRouter.post(
   (req, res) => {
 
      var obj = [];
-     // var districtId = req.body.districtCode;\
      const user = req.user;
-   sharedModel.maombiSummaryByCategoryAndStatus(user, 11, function (summaries) {
+   sharedModel.maombiSummaryByCategoryAndStatus(user, 11 , null, (summaries)  => {
      db.query(
        "SELECT establishing_schools.id as schoolId, school_categories.category as schoolCategory, " +
          " applications.tracking_number as tracking_number, " +
