@@ -600,12 +600,12 @@ const ObjectFuctions = {
     // this need  to be reviewed wardCode
   },
   establishedApplicationRegisteredSchoolsSqlJoin: () => {
-    return `LEFT JOIN applications a ON a.tracking_number = e.tracking_number
-            LEFT JOIN school_registrations s ON s.establishing_school_id = e.id`;
+    return `JOIN applications a ON a.tracking_number = e.tracking_number
+            JOIN school_registrations s ON s.establishing_school_id = e.id`;
   },
   applicationEstablishedRegisteredSchoolsSqlJoin: () => {
-    return `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number
-            LEFT JOIN school_registrations s ON s.establishing_school_id = e.id`;
+    return `JOIN establishing_schools e ON a.tracking_number = e.tracking_number
+            JOIN school_registrations s ON s.establishing_school_id = e.id`;
   },
   registeredSchoolsEstablishedApplicationSqlJoin: () => {
     return `JOIN establishing_schools e ON s.establishing_school_id = e.id

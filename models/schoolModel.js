@@ -79,7 +79,6 @@ module.exports = {
         const searchSql = search
           ? ` WHERE (e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword}) `
           : "";
-          
         const sql = `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
                     r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
                             FROM applications a
@@ -96,6 +95,7 @@ module.exports = {
           if (error) {
             console.log(error);
           }
+          console.log(schools)
           callback(error, schools);
         }
       );
