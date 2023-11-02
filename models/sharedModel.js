@@ -6,6 +6,9 @@ const {
   getMyNextBoss,
   calculcateRemainDays,
   UpdateAuditTrail,
+  joinsByApplicationCategory,
+  filterByUserOffice,
+  schoolLocationsSqlJoin
 } = require("../utils");
 
 module.exports = {
@@ -296,9 +299,8 @@ module.exports = {
               objMess.push({ count: 0 });
             } else {
               for (var i = 0; i < resultsMaoni.length; i++) {
-                // console.log(resultsMaoni)
-                var coments = resultsMaoni[i].coments;
-                objMess.push({ coments: coments });
+                    var coments = resultsMaoni[i].coments;
+                    objMess.push({ coments: coments });
               }
             }
           }
@@ -775,10 +777,17 @@ module.exports = {
     );
   },
 maombiSummaryByCategoryAndStatus: (user , application_category , registry_type = null , callback) => {
-       const sql = `SELECT COUNT(*) AS num_rows 
+       var sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
-                    WHERE ${application_category == 4 & registry_type != null ? ' a.registry_type_id IN '+registry_type+' AND' : ''} 
-                          a.application_category_id = ? `
+                    ${joinsByApplicationCategory(application_category)}
+                    ${schoolLocationsSqlJoin()}
+                    WHERE ${(application_category == 4) & (registry_type != null)
+                        ? " a.registry_type_id IN " + registry_type + " AND"
+                        : ""
+                    } 
+                    a.application_category_id = ? 
+                    ${filterByUserOffice(user , 'AND')}
+                    `;
       //  All
        db.query(
          `${sql} AND a.is_approved IN ${

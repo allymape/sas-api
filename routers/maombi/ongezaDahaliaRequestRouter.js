@@ -45,7 +45,6 @@ ongezaDahaliaRequestRouter.post(
               var registry = results[i].registry;
               var created_at = results[i].created_at;
               var schoolCategory = results[i].schoolCategory;
-              var applicantname;
               var today = new Date();
 
               var diffInSeconds = Math.abs(today - created_at) / 1000;

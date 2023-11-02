@@ -574,7 +574,6 @@ const ObjectFuctions = {
     more_sql_filter = ""
   ) => {
     const { office, zone_id, district_code } = user;
-
     let $where = ``;
     switch (Number(office)) {
       case 1:
@@ -596,7 +595,7 @@ const ObjectFuctions = {
             LEFT JOIN wards      w ON w.WardCode = e.ward_id
             LEFT JOIN districts  d ON d.LgaCode = w.LgaCode
             LEFT JOIN regions    r ON r.RegionCode = d.RegionCode
-            #LEFT JOIN zones z ON  z.id = r.zone_id`;
+            LEFT JOIN zones z ON  z.id = r.zone_id`;
     // this need  to be reviewed wardCode
   },
   establishedApplicationRegisteredSchoolsSqlJoin: () => {
@@ -611,7 +610,38 @@ const ObjectFuctions = {
     return `JOIN establishing_schools e ON s.establishing_school_id = e.id
             JOIN  applications a ON a.tracking_number = e.tracking_number`;
   },
-
+  joinsByApplicationCategory : (category) => {
+       var sqlJoin = ``;
+       if(category == 1){
+          sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number`;
+       }
+       if(category == 2) {
+         sqlJoin = `LEFT JOIN owners o ON o.tracking_number = a.tracking_number 
+                    LEFT JOIN establishing_schools e ON o.establishing_school_id = e.id`;
+       }
+       if(category == 4) {
+          sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number
+                    LEFT JOIN school_registrations s ON s.establishing_school_id = e.id `;
+       }
+        if (category == 7) {
+          sqlJoin = `LEFT JOIN former_owners fo ON fo.tracking_number = a.tracking_number 
+                     LEFT JOIN establishing_schools e ON fo.establishing_school_id = e.id`;
+        }
+        if (category == 8) {
+          sqlJoin = `LEFT JOIN former_managers fm ON fm.tracking_number = a.tracking_number 
+                     LEFT JOIN establishing_schools e ON fm.establishing_school_id = e.id`;
+        }
+        if (category == 12) {
+          sqlJoin = `LEFT JOIN former_school_combinations fsc ON fsc.tracking_number = a.tracking_number 
+                     LEFT JOIN establishing_schools e ON fsc.establishing_school_id = e.id`;
+        }
+       if([5, 6, 9, 10, 11, 13, 14].includes(category)) {
+           sqlJoin = `LEFT JOIN former_school_infos fsi ON fsi.tracking_number = a.tracking_number 
+                      LEFT JOIN establishing_schools e ON fsi.establishing_school_id = e.id`; 
+       }
+       console.log(category)
+       return sqlJoin;
+  },
   InsertAuditTrail: (
     user_id,
     event_type,
