@@ -177,9 +177,9 @@ module.exports = {
   // find school
   checkIfExistSchool : (reg_number , callback) =>{
        var exist = false;
-       db.query(`SELECT FROM school_registrations s WHERE registration_number = ?` , [reg_number] , (error , res) => {
+       db.query(`SELECT * FROM school_registrations s WHERE registration_number = ?` , [reg_number] , (error , res) => {
              if(error) console.log(error)
-              if(res[0].length > 0){
+              if(res.length > 0){
                   exist = true;
               }
               callback(exist)
