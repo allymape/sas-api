@@ -42,17 +42,17 @@ biasRouter.get("/editCombination/:id", isAuth, (req, res, next) => {
 });
 
 // Store bias
-biasRouter.post("/addCombination", isAuth, (req, res, next) => {
+biasRouter.post("/addBias", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.biasname;
-            var code = req.body.biascode;
+            var name = req.body.name;
             formData.push([
                     name,
+                    1,
                     formatDate(new Date()),
                     formatDate(new Date())
             ]);
     
-            biasModel.storeCombination(formData , (error , success , result) => {
+            biasModel.storeBias(formData , (error , success , result) => {
                      return res.send({
                        success: success ? true : false,
                        statusCode: success ? 300 : 306,
@@ -65,15 +65,13 @@ biasRouter.post("/addCombination", isAuth, (req, res, next) => {
 });
 
 // Store bias
-biasRouter.put("/updateCombination/:id", isAuth, (req, res, next) => {
+biasRouter.put("/updateBias/:id", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.biasname;
-            var bias_code = req.body.biascode;
-            var status = req.body.statusid == "on" || Number(req.body.statusid) == 1 ? true : false ;
+            var name = req.body.name;
             var id = Number(req.params.id);
-            formData.push(name,status,id);
+            formData.push(name,id);
     
-            biasModel.updateCombination( formData , (error , success , bias) => {
+            biasModel.updateBias( formData , (error , success , bias) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,

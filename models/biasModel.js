@@ -22,16 +22,16 @@ module.exports = {
     );
   },
   //******** STORE BIAS *******************************
-  storeBias: (rankData, callback) => {
+  storeBias: (formData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO ranks (name , created_at , updated_at) VALUES ?`,
-      [rankData],
+      `INSERT INTO school_specializations  (specialization , status_id , created_at , updated_at) VALUES ?`,
+      [formData],
       (error, result) => {
         if (error) {
           console.log("Error", error);
         }
-        if (result) {
+        if (result.affectedRows > 0) {
           success = true;
         }
         callback(error, success, result);
@@ -57,19 +57,19 @@ module.exports = {
   },
 
   //******** UPDATE BIAS *******************************
-  updateBias: (rankData, callback) => {
+  updateBias: (formData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  ranks SET name = ?  , status_id = ?  WHERE id = ?`,
-      rankData,
-      (error, role, fields) => {
+      `UPDATE  school_specializations SET specialization = ?   WHERE id = ?`,
+      formData,
+      (error, results) => {
         if (error) {
           console.log("Error", error);
         }
-        if (role) {
+        if (results.affectedRows > 0) {
           success = true;
         }
-        callback(error, success, role);
+        callback(error, success, results);
       }
     );
   },

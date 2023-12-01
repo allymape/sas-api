@@ -5,14 +5,14 @@ module.exports = {
   getAllCombinations: (offset, per_page, is_paginated, callback) => {
     //  console.log(is_paginated);
     db.query(
-      `SELECT specialization, combination, c.id as comb_id 
+      `SELECT specialization, school_specialization_id, combination, c.id as comb_id 
       FROM combinations c 
       JOIN school_specializations s ON s.id = c.school_specialization_id
         ${is_paginated ? " " : " WHERE c.status_id = 1 "} 
         ${is_paginated ? " LIMIT ?,?" : ""}`,
       is_paginated ? [offset, per_page] : [],
       (error, biases, fields) => {
-        if(error){
+        if (error) {
           console.log(error);
         }
         db.query(
@@ -34,16 +34,16 @@ module.exports = {
     );
   },
   //******** STORE COMBINATION *******************************
-  storeCombination: (rankData, callback) => {
+  storeCombination: (formData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO ranks (name , created_at , updated_at) VALUES ?`,
-      [rankData],
+      `INSERT INTO combinations (combination, school_specialization_id , created_at , updated_at) VALUES ?`,
+      [formData],
       (error, result) => {
         if (error) {
           console.log("Error", error);
         }
-        if (result) {
+        if (result.affectedRows > 0) {
           success = true;
         }
         callback(error, success, result);
@@ -69,19 +69,19 @@ module.exports = {
   },
 
   //******** UPDATE COMBINATION *******************************
-  updateCombination: (rankData, callback) => {
+  updateCombination: (formData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  ranks SET name = ?  , status_id = ?  WHERE id = ?`,
-      rankData,
-      (error, role, fields) => {
+      `UPDATE  combinations SET combination = ? , school_specialization_id = ?   WHERE id = ?`,
+      formData,
+      (error, combination) => {
         if (error) {
           console.log("Error", error);
         }
-        if (role) {
+        if (combination.affectedRows > 0) {
           success = true;
         }
-        callback(error, success, role);
+        callback(error, success, combination);
       }
     );
   },

@@ -45,10 +45,11 @@ combinationRouter.get("/editCombination/:id", isAuth, (req, res, next) => {
 // Store combination
 combinationRouter.post("/addCombination", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.combinationname;
-            var code = req.body.combinationcode;
+            var combination = req.body.name;
+            var school_specialization_id = req.body.school_specialization_id;
             formData.push([
-                    name,
+                    combination,
+                    school_specialization_id,
                     formatDate(new Date()),
                     formatDate(new Date())
             ]);
@@ -68,18 +69,18 @@ combinationRouter.post("/addCombination", isAuth, (req, res, next) => {
 // Store combination
 combinationRouter.put("/updateCombination/:id", isAuth, (req, res, next) => {
             var formData = [];
-            var name = req.body.combinationname;
-            var combination_code = req.body.combinationcode;
-            var status = req.body.statusid == "on" || Number(req.body.statusid) == 1 ? true : false ;
+            var name = req.body.name;
+            var school_specialization_id = Number(req.body.school_specialization_id);
+            // var status = req.body.statusid == "on" || Number(req.body.statusid) == 1 ? true : false ;
             var id = Number(req.params.id);
-            formData.push(name,status,id);
+            formData.push(name, school_specialization_id, id);
     
             combinationModel.updateCombination( formData , (error , success , combination) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? combination : error,
-                        message: success ? "Umefanikiwa kubadili Ngazi." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+                        message: success ? "Umefanikiwa kubadili Tahasusi" : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
                      });
                     
             });
