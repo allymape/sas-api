@@ -433,7 +433,7 @@ const ObjectFuctions = {
       if (cheo == "ke") {
         str += ` OR LOWER(r.name) IN ('adsa','mus','dsne') `;
       }
-      // if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
+      // if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
       //   str += ` AND is_approved = 2`;
       // } else {
       //   str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
@@ -510,7 +510,7 @@ const ObjectFuctions = {
   },
   selectConditionByTitle: (user, useAlias = false) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
-    // console.log(id);
+    // console.log(sehemu);
     var str = ``;
     if (ngazi == "wizara") {
       if (
@@ -522,8 +522,9 @@ const ObjectFuctions = {
         return `AND is_approved <> 2`;
       }
 
-      if (sehemu == "dahrm" || sehemu == "masijala" || sehemu == "registry") {
+      if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
         str += ` AND is_approved = 2`;
+        console.log('heeeee');
       } else {
         // console.log(cheo , id)
         str += ` AND ${
