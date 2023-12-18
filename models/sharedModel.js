@@ -543,7 +543,7 @@ module.exports = {
     const { user } = req;
     const userTo = Number(req.body.staffs);
     const staff_id = userTo == 0 ? null : userTo;
-
+   
     db.query(
       `SELECT s.id AS id 
                   FROM staffs s 
@@ -556,7 +556,7 @@ module.exports = {
       (err, staff) => {
         if (err) console.log(err);
         var user_to = staff_id;
-
+          
         if (staff.length > 0) {
           user_to = staff[0].id;
         }

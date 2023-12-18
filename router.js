@@ -20662,7 +20662,8 @@ router.post(
     var UserLevel = req.body.UserLevel;
     var Office = req.body.Office;
     // console.log("UserLevel")
-    console.log(req.body);
+    // console.log(req.body);
+    // console.log("hiiiii" , obj)
     if (
       !req.headers.authorization ||
       !req.headers.authorization.startsWith("Bearer") ||
@@ -20982,7 +20983,7 @@ router.post(
               schoolCategory: schoolCategory,
             });
           }
-          // console.log(obj)
+          // console.log("hiiiii" , obj)
           return res.send({
             error: false,
             statusCode: 300,
@@ -60324,52 +60325,52 @@ function sendMail(staff_id) {
 // });
 
 //total application of the month
-// router.get(
-//   "/jumla-maombi-mmiliki-shule",
-//   makundiValidation,
-//   (req, res, next) => {
-//     var obj = [];
-//     var obj1 = [];
-//     var obj2 = [];
-//     var date = new Date();
-//     var month = date.getMonth();
-//     // var UserLevel = req.params.UserLevel;
-//     // console.log(UserLevel)
-//     if (
-//       !req.headers.authorization ||
-//       !req.headers.authorization.startsWith("Bearer") ||
-//       !req.headers.authorization.split(" ")[1]
-//     ) {
-//       return res.status(200).json({
-//         error: true,
-//         statusCode: 422,
-//         message: "No access to end point",
-//       });
-//     }
-//     const theToken = req.headers.authorization.split(" ")[1];
-//     const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//     // console.log(month)
-//     db.query(
-//       "select count(*) as total_month " +
-//         " from applications " +
-//         " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-//       [2],
-//       function (error, results, fields) {
-//         if (error) {
-//           console.log(error);
-//         }
-//         var total_month = results[0].total_month;
-//         obj.push({ total_month: total_month });
-//         return res.send({
-//           error: false,
-//           statusCode: 300,
-//           data: total_month,
-//           message: "Jumla ya maombi ya mwezi ya kuanzisha shule.",
-//         });
-//       }
-//     );
-//   }
-// );
+router.get(
+  "/jumla-maombi-mmiliki-shule",
+  makundiValidation,
+  (req, res, next) => {
+    var obj = [];
+    var obj1 = [];
+    var obj2 = [];
+    var date = new Date();
+    var month = date.getMonth();
+    // var UserLevel = req.params.UserLevel;
+    // console.log(UserLevel)
+    if (
+      !req.headers.authorization ||
+      !req.headers.authorization.startsWith("Bearer") ||
+      !req.headers.authorization.split(" ")[1]
+    ) {
+      return res.status(200).json({
+        error: true,
+        statusCode: 422,
+        message: "No access to end point",
+      });
+    }
+    const theToken = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+    // console.log(month)
+    db.query(
+      "select count(*) as total_month " +
+        " from applications " +
+        " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
+      [2],
+      function (error, results, fields) {
+        if (error) {
+          console.log(error);
+        }
+        var total_month = results[0].total_month;
+        obj.push({ total_month: total_month });
+        return res.send({
+          error: false,
+          statusCode: 300,
+          data: total_month,
+          message: "Jumla ya maombi ya mwezi ya kuanzisha shule.",
+        });
+      }
+    );
+  }
+);
 
 router.get(
   "/jumla-thibitisha-mmiliki-shule",
@@ -60419,51 +60420,51 @@ router.get(
 );
 
 //total application of the month
-// router.get(
-//   "/jumla-maombi-kusajili-shule",
-//   makundiValidation,
-//   (req, res, next) => {
-//     var obj = [];
-//     var obj1 = [];
-//     var obj2 = [];
-//     var date = new Date();
-//     var month = date.getMonth();
-//     // var UserLevel = req.params.UserLevel;
-//     // console.log(UserLevel)
-//     if (
-//       !req.headers.authorization ||
-//       !req.headers.authorization.startsWith("Bearer") ||
-//       !req.headers.authorization.split(" ")[1]
-//     ) {
-//       return res.status(200).json({
-//         error: true,
-//         statusCode: 422,
-//         message: "No access to end point",
-//       });
-//     }
-//     const theToken = req.headers.authorization.split(" ")[1];
-//     const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-//     db.query(
-//       "select count(*) as total_month " +
-//         " from applications " +
-//         " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
-//       [3],
-//       function (error, results, fields) {
-//         if (error) {
-//           console.log(error);
-//         }
-//         var total_month = results[0].total_month;
-//         obj.push({ total_month: total_month });
-//         return res.send({
-//           error: false,
-//           statusCode: 300,
-//           data: total_month,
-//           message: "Jumla ya maombi ya mwezi ya kuanzisha shule.",
-//         });
-//       }
-//     );
-//   }
-// );
+router.get(
+  "/jumla-maombi-kusajili-shule",
+  makundiValidation,
+  (req, res, next) => {
+    var obj = [];
+    var obj1 = [];
+    var obj2 = [];
+    var date = new Date();
+    var month = date.getMonth();
+    // var UserLevel = req.params.UserLevel;
+    // console.log(UserLevel)
+    if (
+      !req.headers.authorization ||
+      !req.headers.authorization.startsWith("Bearer") ||
+      !req.headers.authorization.split(" ")[1]
+    ) {
+      return res.status(200).json({
+        error: true,
+        statusCode: 422,
+        message: "No access to end point",
+      });
+    }
+    const theToken = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+    db.query(
+      "select count(*) as total_month " +
+        " from applications " +
+        " WHERE application_category_id = ? AND MONTH(applications.created_at) = MONTH(CURRENT_DATE())",
+      [3],
+      function (error, results, fields) {
+        if (error) {
+          console.log(error);
+        }
+        var total_month = results[0].total_month;
+        obj.push({ total_month: total_month });
+        return res.send({
+          error: false,
+          statusCode: 300,
+          data: total_month,
+          message: "Jumla ya maombi ya mwezi ya kuanzisha shule.",
+        });
+      }
+    );
+  }
+);
 
 //total application of the month
 router.post("/jumla-kuanzisha-shule", makundiValidation, (req, res, next) => {
@@ -61235,6 +61236,7 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
               statusCode: 300,
               data: obj,
               list: objList,
+              numRows : 10,
               message: "Jumla ya shule zilizosajiliwa kwa mwezi.",
             });
           }
@@ -61250,7 +61252,8 @@ router.post("/jumla-sajili-shule-kat", makundiValidation, (req, res, next) => {
         " school_gender_types.id = establishing_schools.school_gender_type_id AND " +
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " school_categories.id = establishing_schools.school_category_id AND " +
-        " school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ?",
+        " school_registrations.establishing_school_id = establishing_schools.id AND reg_status = ?" +
+        " GROUP BY school_name , category",
       [1],
       function (error, results, fields) {
         if (error) {

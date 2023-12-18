@@ -64,6 +64,7 @@ const schoolCategoryRouter = require("./routers/schoolCategoryRouter.js");
 const notificationRouter = require("./routers/notificationRouter.js");
 const trackApplicationRouter = require("./routers/trackApplicationRouter.js");
 const requestSummaryRouter = require("./routers/maombi/requestSummaryRouter.js");
+const ripotiRequestRouter = require("./routers/ripoti/ripotiRequestRouter.js");
 
 app.use("/api", indexRouter);
 app.use("/api" , anzishaShuleRequestRouter);
@@ -111,6 +112,7 @@ app.use("/api", futaShuleRequestRouter);
 app.use("/api", ongezaDahaliaRequestRouter);
 
 app.use("/api", notificationRouter); 
+app.use("/api", ripotiRequestRouter); 
 
 
 // Handling Errors

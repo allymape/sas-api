@@ -450,6 +450,7 @@ const ObjectFuctions = {
   },
   getMyNextBoss: (user, application_category, staff_id) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+   
     if (staff_id == 0 || staff_id == "" || staff_id == null) {
       var str = ``;
       // Business Flow base on application category
