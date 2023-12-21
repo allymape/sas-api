@@ -151,8 +151,8 @@ module.exports = {
                          (err4) => {
                            if (err4) console.log(err4);
                            db.query(
-                             `INSERT INTO owners (id, secure_token , establishing_school_id , owner_name ,created_at) 
-                                                VALUES ? ON DUPLICATE KEY UPDATE secure_token=VALUES(secure_token), owner_name = VALUES(owner_name)`,
+                             `INSERT INTO owners (id, secure_token , establishing_school_id , tracking_number , owner_name ,created_at) 
+                                                VALUES ? ON DUPLICATE KEY UPDATE secure_token=VALUES(secure_token), owner_name = VALUES(owner_name) , tracking_number = VALUES(tracking_number)`,
                              [owners],
                              (err5, owners) => {
                                if (err5) console.log(err5);

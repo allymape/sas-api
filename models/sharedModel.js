@@ -14,7 +14,7 @@ const {
 module.exports = {
   getApplicationCategories: (callback) => {
     db.query(
-      `SELECT id, app_name AS name FROM application_categories`,
+      `SELECT id, app_name AS name FROM application_categories ORDER BY id ASC`,
       (err, categories) => {
         if (err) console.log(err);
         callback(categories);
@@ -23,7 +23,7 @@ module.exports = {
   },
   getSchoolCategories: (callback) => {
     db.query(
-      `SELECT id , category AS name FROM school_categories`,
+      `SELECT id , category AS name FROM school_categories ORDER BY id ASC`,
       (error, categories) => {
         if (error) {
           console.log("Can't get school categories due to ", error);
@@ -299,8 +299,8 @@ module.exports = {
               objMess.push({ count: 0 });
             } else {
               for (var i = 0; i < resultsMaoni.length; i++) {
-                    var coments = resultsMaoni[i].coments;
-                    objMess.push({ coments: coments });
+                var coments = resultsMaoni[i].coments;
+                objMess.push({ coments: coments });
               }
             }
           }
@@ -543,7 +543,7 @@ module.exports = {
     const { user } = req;
     const userTo = Number(req.body.staffs);
     const staff_id = userTo == 0 ? null : userTo;
-   
+
     db.query(
       `SELECT s.id AS id 
                   FROM staffs s 
@@ -556,11 +556,11 @@ module.exports = {
       (err, staff) => {
         if (err) console.log(err);
         var user_to = staff_id;
-          
+
         if (staff.length > 0) {
           user_to = staff[0].id;
         }
-        
+
         if (user.cheo != "ke" && !user_to) {
           console.log("Kuna shida");
           callback(success);
@@ -750,16 +750,19 @@ module.exports = {
     });
   },
 
-  updateApplicationPayment : (tracking_number , callback) => {
-        var success = false;
-        db.query(`UPDATE applications SET payment_status_id = 2 WHERE tracking_number = ?` , [tracking_number] , (error , result) => {
-            if(error) console.log(error)
-            if(result.affectedRows > 0){
-                success = true
-                
-            }
-            callback(success, result);
-        })
+  updateApplicationPayment: (tracking_number, callback) => {
+    var success = false;
+    db.query(
+      `UPDATE applications SET payment_status_id = 2 WHERE tracking_number = ?`,
+      [tracking_number],
+      (error, result) => {
+        if (error) console.log(error);
+        if (result.affectedRows > 0) {
+          success = true;
+        }
+        callback(success, result);
+      }
+    );
   },
 
   sqlQuerySchoolInfo: (sql, application_category_id, callback) => {
@@ -776,60 +779,91 @@ module.exports = {
       }
     );
   },
-maombiSummaryByCategoryAndStatus: (user , application_category , registry_type = null , callback) => {
-       var sql = `SELECT COUNT(*) AS num_rows 
+  maombiSummaryByCategoryAndStatus: (
+    user,
+    application_category,
+    registry_type = null,
+    callback
+  ) => {
+    var sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
                     ${joinsByApplicationCategory(application_category)}
                     ${schoolLocationsSqlJoin()}
-                    WHERE ${(application_category == 4) & (registry_type != null)
+                    WHERE ${
+                      (application_category == 4) & (registry_type != null)
                         ? " a.registry_type_id IN " + registry_type + " AND"
                         : ""
                     } 
                     a.application_category_id = ? 
-                    ${filterByUserOffice(user , 'AND')}
+                    ${filterByUserOffice(user, "AND")}
                     `;
-      //  All
-       db.query(
-         `${sql} AND a.is_approved IN ${
-           application_category == 1 ? "(1,2,3) AND a.is_complete = 1" : "(0, 1, 2, 3)"
-         }`,
-         [application_category],
-         (error, all) => {
-           if (error) console.log(error);
-           // Pending
-           db.query(
-             `${sql} AND a.is_approved IN ${
-               application_category == 1 ? "(1) AND a.is_complete = 1 " : "(0, 1)"
-             }`,
-             [application_category],
-             (error, pending) => {
-               if (error) console.log(error);
-               // Approved
-               db.query(
-                 `${sql} AND a.is_approved = 2`,
-                 [application_category],
-                 (error, approved) => {
-                   if (error) console.log(error);
-                   // Rejected
-                   db.query(
-                     `${sql} AND a.is_approved = 3`,
-                     [application_category],
-                     (error, rejected) => {
-                       if (error) console.log(error);
-                       callback({
-                         all: all[0].num_rows,
-                         pending: pending[0].num_rows,
-                         approved: approved[0].num_rows,
-                         rejected: rejected[0].num_rows,
-                       });
-                     }
-                   );
-                 }
-               );
-             }
-           );
-         }
-       );
-}
-  
+    //  All
+    db.query(
+      `${sql} AND a.is_approved IN ${
+        application_category == 1
+          ? "(1,2,3) AND a.is_complete = 1"
+          : "(0, 1, 2, 3)"
+      }`,
+      [application_category],
+      (error, all) => {
+        if (error) console.log(error);
+        // Pending
+        db.query(
+          `${sql} AND a.is_approved IN ${
+            application_category == 1 ? "(1) AND a.is_complete = 1 " : "(0, 1)"
+          }`,
+          [application_category],
+          (error, pending) => {
+            if (error) console.log(error);
+            // Approved
+            db.query(
+              `${sql} AND a.is_approved = 2`,
+              [application_category],
+              (error, approved) => {
+                if (error) console.log(error);
+                // Rejected
+                db.query(
+                  `${sql} AND a.is_approved = 3`,
+                  [application_category],
+                  (error, rejected) => {
+                    if (error) console.log(error);
+                    callback({
+                      all: all[0].num_rows,
+                      pending: pending[0].num_rows,
+                      approved: approved[0].num_rows,
+                      rejected: rejected[0].num_rows,
+                    });
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  },
+  getRegions : (user, callback) => {
+      const {sehemu , zone_id , region_code} = user;
+     db.query(
+       `SELECT RegionCode AS id , RegionName AS name 
+               FROM regions 
+               ${sehemu == "k1" ? "WHERE zone_id = " + zone_id : ""}
+               ${sehemu == "w1" ? "WHERE RegionCode = '" + region_code+"'" : ""}
+               ORDER BY RegionName ASC`,
+       (error, regions) => {
+         if (error) console.log(error);
+         callback(regions);
+       }
+     );
+  },
+  paginate: (sql_rows, sql_count, callback, parameters = []) => {
+    //  console.log(is_paginated);
+    db.query(`${sql_rows}`, parameters, (error, data) => {
+      if (error) console.log(error);
+      db.query(`${sql_count}`, (error2, result) => {
+        if (error2) error = error2;
+        callback(error, data, result[0].num_rows);
+      });
+    });
+  },
 };

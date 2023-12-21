@@ -179,8 +179,8 @@ schoolRouter.post(`/add-school` , (req , res) => {
           created_at,
           registration_date,
         ]);
-
-        owners.push([id, secure_token, id, owner_name, created_at]);
+        
+        owners.push([id, secure_token ,id, owner_name, created_at]);
 
         applicants.push([
           id,
@@ -341,6 +341,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         id,
                         secure_token,
                         id,
+                        tracking_number,
                         owner_name,
                         created_at
                       ]);
