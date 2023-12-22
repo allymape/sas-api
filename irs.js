@@ -68,6 +68,16 @@ const ripotiKuanzishaRequestRouter = require("./routers/ripoti/ripotiKuanzishaRe
 const ripotiWamilikiRequestRouter = require("./routers/ripoti/ripotiWamilikiRequestRouter.js");
 const ripotiMenejaRequestRouter = require("./routers/ripoti/ripotiMenejaRequestRouter.js");
 const ripotiUsajiliRequestRouter = require("./routers/ripoti/ripotiUsajiliRequestRouter.js");
+const ripotiMikondoChangeRequestRouter = require("./routers/ripoti/ripotiMikondoChangeRequestRouter.js");
+const ripotiUhamishoChangeRequestRouter = require("./routers/ripoti/ripotiUhamishoChangeRequestRouter.js");
+const ripotiWamilikiChangeRequestRouter = require("./routers/ripoti/ripotiWamilikiChangeRequestRouter.js");
+const ripotiMenejaChangeRequestRouter = require("./routers/ripoti/ripotiMenejaChangeRequestRouter.js");
+const ripotiJinaChangeRequestRouter = require("./routers/ripoti/ripotiJinaChangeRequestRouter.js");
+const ripotiKufutaChangeRequestRouter = require("./routers/ripoti/ripotiKufutaChangeRequestRouter.js");
+const ripotiTahasusiChangeRequestRouter = require("./routers/ripoti/ripotiTahasusiChangeRequestRouter.js");
+const ripotiBweniChangeRequestRouter = require("./routers/ripoti/ripotiBweniChangeRequestRouter.js");
+const ripotiUsajiliChangeRequestRouter = require("./routers/ripoti/ripotiUsajiliChangeRequestRouter.js");
+const ripotiDahaliaChangeRequestRouter = require("./routers/ripoti/ripotiDahaliaChangeRequestRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -120,6 +130,17 @@ app.use("/api", ripotiKuanzishaRequestRouter);
 app.use("/api", ripotiWamilikiRequestRouter); 
 app.use("/api", ripotiMenejaRequestRouter); 
 app.use("/api", ripotiUsajiliRequestRouter); 
+app.use("/api", ripotiMikondoChangeRequestRouter); 
+app.use("/api", ripotiUsajiliRequestRouter); 
+app.use("/api", ripotiUhamishoChangeRequestRouter); 
+app.use("/api", ripotiWamilikiChangeRequestRouter); 
+app.use("/api", ripotiMenejaChangeRequestRouter); 
+app.use("/api", ripotiJinaChangeRequestRouter); 
+app.use("/api", ripotiKufutaChangeRequestRouter); 
+app.use("/api", ripotiTahasusiChangeRequestRouter); 
+app.use("/api", ripotiBweniChangeRequestRouter); 
+app.use("/api", ripotiUsajiliChangeRequestRouter); 
+app.use("/api", ripotiDahaliaChangeRequestRouter); 
 
 
 // Handling Errors
