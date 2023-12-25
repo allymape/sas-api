@@ -45,7 +45,7 @@ ripotiMenejaChangeRequestRouter.get("/ripoti-badili-meneja", isAuth, (req, res) 
             end_date = formatDate(date_range.split("to")[1], "YYYY-MM-DD");
           }
 
-          const from = `FROM school_managers_view
+          const from = `FROM managers_change_view
                         WHERE is_approved ${status ? "=" + status : " IN (2,3) "}
                         ${ sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
                         ${ sehemu == "w1" ? "AND district_code = '" + district_code+"'" : ""}
@@ -76,7 +76,7 @@ ripotiMenejaChangeRequestRouter.get("/ripoti-badili-meneja", isAuth, (req, res) 
                         ${ street ? " AND street_code = '" + street + "'" : ""} 
                   `;
 
-          const sqlRows = `SELECT tracking_number AS tracking_number ,manager_name, school_name , category, structure, 
+          const sqlRows = `SELECT tracking_number AS tracking_number , manager_name, school_name , category, structure, 
                             registry , region, district , ward , street , is_approved AS status, 
                             CASE WHEN is_approved=2 THEN 'Ndio'
                                  WHEN is_approved=3 THEN 'Hapana'

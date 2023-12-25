@@ -76,7 +76,7 @@ ripotiBweniChangeRequestRouter.get("/ripoti-badili-bweni", isAuth, (req, res) =>
                         ${ street ? " AND street_code = '" + street + "'" : ""} 
                   `;
 
-          const sqlRows = `SELECT tracking_number AS tracking_number , school_name , category, subcategory, old_sub_category, structure, 
+          const sqlRows = `SELECT tracking_number AS tracking_number , school_name , category, subcategory, old_subcategory, structure, 
                             registry , region, district , ward , street , is_approved AS status, 
                             CASE WHEN is_approved=2 THEN 'Ndio'
                                  WHEN is_approved=3 THEN 'Hapana'
