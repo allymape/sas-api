@@ -32,30 +32,24 @@ const rolesPermissions = {
     "Change School Name|Kubadili jina la shule ": "v,c,u",
     "Change of Bias|Kuongeza Tahasusi ": "v,c,u",
     "Addition of Domitory|Kuongeza Bweni ": "v,c,u",
-    "Change of Combinations|Kuongeza Dahalia ": "v,c,u",
+    "Change of Hostel|Kuongeza Dahalia ": "v,c,u",
     "Change Registration Type|Kubadili Aina ya Usajili ": "v,c,u",
     "Change School Location|Kuhamisha Shule ": "v,c,u",
     "Change of School Owner|Kubadili Mmiliki wa Shule": "v,c,u",
     "Change of School Manager|Kubadili Meneja wa Shule ": "v,c,u",
     "Deregistration of Schools|Kufuta Usajili wa Shule ": "v,c,u",
     // Report
-    "Registered School Reports|Ripoti ya Usajili wa Shule": "v",
-    "Rejected Application reports|Ripoti ya Sajiliwa Zilizokataliwa": "v",
-    "Initiate School Without Buildings Report|Ripoti ya Vibali Bila Majengo":
-      "v",
-    "Initiate School Without Buildings Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo Kataliwa":
-      "v",
-    "Initiate School With Building Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo ":
-      "v",
-    "Initiate School With Building Rejected Report|Ripoti ya Vibali vya Kuanzisha Shule Bila Majengo VilivyoKataliwa ":
-      "v",
-    "Owner Manager Approval Report|Ripoti ya Uthibitisho wa Umiliki na Meneja":
-      "v",
+    "Established Schools Report|Ripoti ya Shule zilizoanzishwa": "v",
+    "Registered School Report|Ripoti ya Usajili wa Shule": "v",
+    "School Owners Report|Ripoti ya Uthibitisho wa Umiliki": "v",
+    "School Managers Report|Ripoti ya Uthibitisho wa Umeneja": "v",
     "Change School Name Report|Ripoti ya Kubadili Jina la Shule": "v",
+    "Change School Registration Type |Ripoti ya Kubadili Aina ya Usajili": "v",
     "Addition Of Domitory Report|Ripoti ya Kibali cha Kuongeza Bweni": "v",
-    "Addition of Combinations Report|Ripoti Kibali cha Kuongeza Daharia": "v",
+    "Addition of Hostel Report|Ripoti Kibali cha Kuongeza Daharia": "v",
     "Change School Owners Report|Ripoti ya Kubadili Umiliki": "v",
     "Change School Managers Report|Ripoti ya Kubadili Umeneja": "v",
+    "Change School Location Report|Ripoti ya Uhamisho wa Shule": "v",
     "Deregistration Report|Ripoti ya Kufuta Usajili": "v",
     "Addition of Streams Report|Ripoti ya Kuongeza Mikondo": "v",
     "Addition of Bias Report|Ripoti ya Kuongeza Tahasusi": "v",

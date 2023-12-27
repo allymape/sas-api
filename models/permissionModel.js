@@ -2,18 +2,25 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF PERMISSIONS *******************************
-  getAllPermission: (offset, per_page, is_paginated, callback , status = false) => {
+  getAllPermission: (offset, per_page, is_paginated, search , callback , status = false) => {
+    let filter = search
+      ? ` AND ( display_name LIKE '%${search}%' 
+                          OR permission_name LIKE '%${search}%'
+                 )`
+      : ``;
+    const commonSql = ` FROM permissions
+                         WHERE 1=1 ${status ? " AND status_id = " + status : ""}
+                        ${filter}`;
     db.query(
-      `SELECT * FROM permissions 
-      ${status ? " WHERE status_id = " + status : ""}
+      `SELECT *  
+       ${commonSql}
       ORDER BY permission_name ASC 
       ${is_paginated ? "LIMIT ?,?" : ""} `,
       is_paginated ? [offset, per_page] : [],
       (error, permissions, fields) => {
         db.query(
           `SELECT COUNT(*) AS num_rows 
-          FROM permissions
-          ${status ? " WHERE status_id = " + status : ""}
+          ${commonSql}
           `,
           (error2, result, fields2) => {
             callback(error, permissions, result[0].num_rows);
