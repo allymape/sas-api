@@ -8,7 +8,7 @@ const sharedModel = require("../models/sharedModel.js");
 //
 // List of applications
 trackApplicationRouter.get(
-  "/track_applications",
+  "/track_applications/:application",
   isAuth,
   permission("view-track-application"),
   (req, res) => {
@@ -16,6 +16,7 @@ trackApplicationRouter.get(
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
     var is_paginated = true;
+    const application_categroy_id = req.params.application;
     if (typeof req.body.is_paginated !== "undefined") {
       is_paginated =
         req.body.is_paginated == "false" || !req.body.is_paginated
@@ -23,23 +24,26 @@ trackApplicationRouter.get(
           : true;
     }
     const searchQuery = req.body;
+    const user = req.user;
     sharedModel.getApplicationCategories((categories) => {
-            trackApplicationModel.getAllApplications(
-              offset,
-              per_page,
-              is_paginated,
-              searchQuery,
-              (error, applications, numRows) => {
-                return res.send({
-                  error: error ? true : false,
-                  statusCode: error ? 306 : 300,
-                  data: { applications, categories },
-                  numRows: numRows,
-                  is_paginated: is_paginated,
-                  message: error ? "Something went wrong." : "List of applications.",
-                });
-              }
-            );
+      trackApplicationModel.getAllApplications(
+        offset,
+        per_page,
+        is_paginated,
+        searchQuery,
+        application_categroy_id,
+        user,
+        (error, applications, numRows) => {
+          return res.send({
+            error: error ? true : false,
+            statusCode: error ? 306 : 300,
+            data: { applications, categories },
+            numRows: numRows,
+            is_paginated: is_paginated,
+            message: error ? "Something went wrong." : "List of applications.",
+          });
+        }
+      );
     });
   }
 );

@@ -892,6 +892,53 @@ const ObjectFuctions = {
       }
     );
   },
+  applicationView : (application_category_id) => {
+          var table_view = '';
+          switch (Number(application_category_id)) {
+            case 1:
+              table_view = "established_schools_view";
+              break;
+            case 2:
+              table_view = "school_owners_view";
+              break;
+            case 4:
+              table_view = "registered_schools_view";
+              break;
+            case 5:
+              table_view = "streams_change_view";
+              break;
+            case 6:
+              table_view = "registration_change_view";
+              break;
+            case 7:
+              table_view = "owners_change_view";
+              break;
+            case 8:
+              table_view = "managers_change_view";
+              break;
+            case 9:
+              table_view = "name_change_view";
+              break;
+            case 10:
+              table_view = "transfer_change_view";
+              break;
+            case 11:
+              table_view = "deregistration_change_view";
+              break;
+            case 12:
+              table_view = "tahasusi_change_view";
+              break;
+            case 13:
+              table_view = "dahalia_change_view";
+              break;
+            case 14:
+              table_view = "bweni_change_view";
+              break;
+            default:
+              break;
+          }
+          return table_view;
+  }
 };
 
 module.exports = ObjectFuctions;
