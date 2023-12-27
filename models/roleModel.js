@@ -22,7 +22,7 @@ module.exports = {
         }
         const rolePromises = roleResults.map((roleRow) => {
           const { role_id, role_name, status_id } = roleRow;
-          const permissionQuery = `SELECT display_name 
+          const permissionQuery = `SELECT display_name, permission_name
                                     FROM permissions p
                                     JOIN permission_role pr ON pr.permission_id = p.id
                                     AND pr.role_id = ${role_id}`;
@@ -35,11 +35,16 @@ module.exports = {
               const permissions = permissionResults.map(
                 (permissionRow) => permissionRow.display_name
               );
+              const permission_names = permissionResults.map(
+                   (permissionRow) => permissionRow.permission_name
+              );
+              // console.log(permissions);
               resolvePermissions({
-                id: role_id,
-                role_name: role_name,
-                status: status_id,
-                permissions: permissions,
+                id : role_id,
+                role_name : role_name,
+                status : status_id,
+                permissions : permissions,
+                permission_names: permission_names,
               });
             });
           });
@@ -51,6 +56,7 @@ module.exports = {
             db.query(
               `select COUNT(*) AS num_rows FROM role_management`,
               (error, result) => {
+                // console.log(results)
                 callback(null, results, result[0].num_rows);
               }
             );

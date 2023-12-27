@@ -19,6 +19,7 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
   var offset = (page - 1) * per_page;
   var is_paginated = true;
   var status = false;
+  var search = req.body.tafuta;
   if (typeof req.body.is_paginated !== "undefined") {
     is_paginated =
       req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
@@ -27,7 +28,7 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
      status = req.body.status == "false" ? false : true;
   }
 
-  permissionModel.getAllPermission(offset, per_page, is_paginated,(error, permissions, numRows) => {
+  permissionModel.getAllPermission(offset, per_page, is_paginated , search ,(error, permissions, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

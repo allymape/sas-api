@@ -9,7 +9,8 @@ module.exports = {
       }
       db.query(
         `INSERT INTO permission_role (role_id , permission_id , status_id , created_at, created_by) 
-         VALUES ?`,
+         VALUES ? 
+         `,
         [permission_role],
         (error2, result2) => {
           if (error2) {
@@ -19,7 +20,7 @@ module.exports = {
           if (result2.affectedRows > 0) {
             success = true;
           }
-          callback(error, success , result);
+          callback(error, success, result);
         }
       );
     });
