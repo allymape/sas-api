@@ -2,8 +2,8 @@ const db = require(`../../dbConnection`);
 const { selectConditionByTitle } = require("../../utils");
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
-  anzishaShuleRequestList: (user , callback) => {
-    // console.log(user.id)
+  anzishaShuleRequestList: (user , sqlStatus,callback) => {
+    // console.log(selectConditionByTitle(user), sqlStatus);
     db.query(
       `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
                     applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
@@ -12,15 +12,15 @@ module.exports = {
                     districts.LgaName as LgaName, registry_types.registry as registry  
             FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
-            JOIN wards ON wards.wardCode = establishing_schools.ward_id  
-            JOIN districts ON districts.LgaCode = wards.LgaCode 
-            JOIN streets ON streets.StreetCode = establishing_schools.village_id  
-            JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
-            JOIN registry_types ON registry_types.id = applications.registry_type_id 
-            JOIN regions ON regions.RegionCode = districts.RegionCode 
+            LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  
+            LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
+            LEFT JOIN streets ON streets.StreetCode = establishing_schools.village_id  
+            LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+            LEFT JOIN registry_types ON registry_types.id = applications.registry_type_id 
+            LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
             LEFT JOIN staffs ON applications.staff_id = staffs.id
-            WHERE  application_category_id = 1 AND applications.registry_type_id <> 3 AND payment_status_id = 2
-            ${selectConditionByTitle(user)}
+            WHERE  application_category_id = 1  AND payment_status_id = 2
+            ${selectConditionByTitle(user)} ${sqlStatus}
             `,
       (error, result) => {
         if (error) console.log(error);

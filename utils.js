@@ -509,42 +509,47 @@ const ObjectFuctions = {
     }
     return ` AND s.id < -1`;
   },
-  selectConditionByTitle: (user, useAlias = false) => {
+  selectConditionByTitle: (user, useAlias = false , notification = false) => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
     // console.log(sehemu);
     var str = ``;
+    // console.log(jukumu)
     if (ngazi == "wizara") {
       if (
-        ObjectFuctions.lowerCase(jukumu) == "super admin" &&
+        ObjectFuctions.lowerCase(jukumu) == "super-admin" &&
         !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(
           sehemu
         )
       ) {
-        return `AND is_approved <> 2`;
+        // return `AND is_approved <> 2`;
+        if(notification){
+          return ` AND 1 < 0`
+        }
+        return ``;
       }
 
       if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
-        str += ` AND is_approved = 2`;
-        console.log('heeeee');
+          if (notification) {
+            return ` AND 1 < 0`;
+          }
+        str += ``;
+        // str += ` AND is_approved = 2`;
       } else {
         // console.log(cheo , id)
-        str += ` AND ${
-          useAlias ? "a.staff_id" : "applications.staff_id"
-        } = ${id} AND is_approved <> 2`;
+        str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}`;
+        // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} 
+        // AND is_approved <> 2`;
       }
 
       return str;
     } else if (ngazi == "kanda") {
       //  K1 && Officers
-      str += ` AND ${
-        useAlias ? "a.staff_id" : "applications.staff_id"
-      } = ${id} AND is_approved <> 2 AND ${
-        useAlias ? "r.zone_id" : "regions.zone_id"
-      } = ${zone_id}`;
+      // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} AND is_approved <> 2 AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
+      str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
-        console.log("I am w1 " + user.id);
+        // console.log("I am w1 " + user.id);
         str += ` AND (${
           useAlias ? "a.staff_id" : "applications.staff_id"
         } = ${id} OR  ${
@@ -559,7 +564,7 @@ const ObjectFuctions = {
       }
       str += ` AND ${
         useAlias ? "d.LgaCode" : "districts.LgaCode"
-      } = "${district_code}" AND is_approved <> 2 `;
+      } = "${district_code}"`;
       return str;
     } else {
       str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = -1`;
@@ -587,9 +592,10 @@ const ObjectFuctions = {
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;
         break;
       default:
-        $where = `${start_with} e.school_category_id < -1 `;
+        $where = `${start_with} 1 < 1 `;
         break;
     }
+   
     return $where;
   },
   schoolLocationsSqlJoin: () => {
@@ -938,6 +944,24 @@ const ObjectFuctions = {
               break;
           }
           return table_view;
+  },
+  approvalStatuses : (status) => {
+       var status_id = '';
+        switch (status) {
+          case "pending":
+            status_id = "(0,1)";
+            break;
+          case "approved":
+            status_id =  "(2)";
+            break;
+          case "rejected":
+            status_id =  "(3)";
+            break;
+          default:
+            status_id = null;
+            break;
+        }
+        return status_id;
   }
 };
 

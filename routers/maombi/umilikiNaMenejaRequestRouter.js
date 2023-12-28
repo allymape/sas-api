@@ -5,7 +5,7 @@ const request = require("request");
 const umilikiNaMenejaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('view-school-owners-and-managers'), (req, res) => {
@@ -13,7 +13,9 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
   var date = new Date();
   var month = date.getMonth();
   const user = req.user;
-
+  const status = approvalStatuses(req.body.status);
+  const sqlStatus = ` AND is_approved IN ${status ? status : '(0,1)'}`;
+  // console.log(status);
   sharedModel.maombiSummaryByCategoryAndStatus(user, 2, null, (summaries) => {
     let appQuery = `SELECT   applications.tracking_number as tracking_number,
           applications.created_at as created_at, applications.user_id as user_id, 
@@ -25,11 +27,11 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
       INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
       INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-      WHERE application_category_id = 2 AND payment_status_id = 2`;
+      WHERE application_category_id = 2 AND payment_status_id = 2 ${selectConditionByTitle(user)} ${sqlStatus}`;
 
-    if (false) {
-      appQuery += `${selectConditionByTitle(user)}`
-    }
+    // if (false) {
+    //   appQuery += `${selectConditionByTitle(user)}`
+    // }
 
     db.query(
       appQuery,

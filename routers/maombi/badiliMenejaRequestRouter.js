@@ -6,7 +6,7 @@ const badiliMenejaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 
-const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliMenejaRequestRouter.post(
@@ -16,6 +16,8 @@ badiliMenejaRequestRouter.post(
   (req, res) => {
     var obj = [];
     const user = req.user;
+    const status = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
    
  sharedModel.maombiSummaryByCategoryAndStatus(user, 8 , null, (summaries)  => {
    db.query(
@@ -26,15 +28,15 @@ badiliMenejaRequestRouter.post(
        " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
        " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
        " AND regions.RegionCode = districts.RegionCode AND application_category_id = 8 AND is_approved <> 2 AND  payment_status_id = 2 " +
-       selectConditionByTitle(user),
+       selectConditionByTitle(user) + " "+ sqlStatus,
 
      function (error, results) {
        if (error) {
          console.log(error);
        }
-       console.log(results);
+      //  console.log(results);
        for (var i = 0; i < results.length; i++) {
-         console.log(results);
+        //  console.log(results);
          var tracking_number = results[i].tracking_number;
          var owner_name = results[i].owner_name;
          var WardName = results[i].WardName;

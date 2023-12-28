@@ -5,7 +5,7 @@ const request = require("request");
 const sajiliBinafsiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 sajiliBinafsiRequestRouter.post(
@@ -15,6 +15,8 @@ sajiliBinafsiRequestRouter.post(
 (req, res) => {
     var obj = [];
     const user = req.user;
+    const status = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
     sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , '(1,2)' , (summary) => {
       db.query(
         "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -26,14 +28,14 @@ sajiliBinafsiRequestRouter.post(
           " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
           " school_registrations.establishing_school_id = establishing_schools.id AND " +
           " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = 4 AND applications.registry_type_id <> 3"+
-            selectConditionByTitle(user)
+          " AND application_category_id = 4 AND applications.registry_type_id <> 3 "+
+            selectConditionByTitle(user) + " "+ sqlStatus
         ,function (error, results) {
           if (error) {
             console.log(error);
           }
           for (var i = 0; i < results.length; i++) {
-            console.log(results);
+            // console.log(results);
             var tracking_number = results[i].tracking_number;
             var registry_type_id = "";
             var user_id = results[i].user_id;

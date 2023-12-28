@@ -5,7 +5,7 @@ const request = require("request");
 const hamishaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, calculcateRemainDays, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 hamishaRequestRouter.post(
@@ -16,6 +16,9 @@ hamishaRequestRouter.post(
    
         var obj = [];
         const user = req.user;  
+        const status = approvalStatuses(req.body.status);
+        const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+        
        sharedModel.maombiSummaryByCategoryAndStatus(user, 10 , null,(summaries)  => {
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -27,13 +30,15 @@ hamishaRequestRouter.post(
               " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
               " former_school_infos.establishing_school_id = establishing_schools.id AND " +
               " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-              " AND application_category_id = 10 AND is_approved <> 2 AND payment_status_id = 2  "+selectConditionByTitle(user),
+              " AND application_category_id = 10 AND is_approved <> 2 AND payment_status_id = 2  " +
+              selectConditionByTitle(user) +
+              " " +
+              sqlStatus,
             function (error, results) {
               if (error) {
                 console.log(error);
               }
               for (var i = 0; i < results.length; i++) {
-                
                 var tracking_number = results[i].tracking_number;
                 var registry_type_id = "";
                 var user_id = results[i].user_id;
@@ -47,7 +52,6 @@ hamishaRequestRouter.post(
                 var schoolCategory = results[i].schoolCategory;
                 var applicantname;
                 var remain_days = calculcateRemainDays(created_at);
-             ;
                 obj.push({
                   tracking_number: tracking_number,
                   school_name: school_name,
@@ -66,7 +70,7 @@ hamishaRequestRouter.post(
                 error: false,
                 statusCode: 300,
                 dataList: obj,
-                dataSummary : summaries,
+                dataSummary: summaries,
                 message: "List of maombi  kuhamisha shule.",
               });
             }
@@ -83,7 +87,10 @@ hamishaRequestRouter.post(
   permission("view-change-school-location"),
   (req, res) => {
     var trackingNumber = req.body.TrackingNumber;
-    const user = req.user; var userLevel = user.user_level;
+    const user = req.user; 
+    var userLevel = user.user_level;
+    const status = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
     var office = req.body.office;
     var obj = [];
     var objMess = [];
@@ -114,7 +121,7 @@ hamishaRequestRouter.post(
          LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
          LEFT JOIN languages ON languages.id = establishing_schools.language_id
          LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode 
-         WHERE application_category_id = 10 AND applications.tracking_number = ?`,
+         WHERE application_category_id = 10 AND applications.tracking_number = ? `,
       [trackingNumber],
       function (error, results, fields) {
         if (error) {
@@ -180,7 +187,7 @@ hamishaRequestRouter.post(
               var WardIdNew = results11[0].WardIdNew;
             }
             var remain_days = calculcateRemainDays(created_at);
-            console.log("", created_at, trackingNumber);
+            // console.log("", created_at, trackingNumber);
 
             db.query(
               "select * from maoni WHERE trackingNo = ?",

@@ -6,7 +6,7 @@ const anzishaShuleRequestRouter = express.Router();
 const model = require("../../models/maombi/anzishaShuleRequestModel")
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate } = require("../../utils");
+const { isAuth, formatDate, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 // List of 
@@ -15,13 +15,16 @@ anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule", isAuth,(req, res) => {
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
     var is_paginated = true;
+    const status = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
     if (typeof req.body.is_paginated !== "undefined") {
       is_paginated =
         req.body.is_paginated == "false" || !req.body.is_paginated
           ? false
           : true;
     }
-    model.anzishaShuleRequestList(req.user , (error, data, numRows) => {
+    model.anzishaShuleRequestList(req.user , sqlStatus, (error, data, numRows) => {
+      
             return res.send({
                     error: error ? true : false,
                     statusCode: error ? 306 : 300,
@@ -64,7 +67,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
 
 anzishaShuleRequestRouter.post("/tuma-ombi-majibu", isAuth , (req, res) => {
       const tracking_number = req.body.trackerId;
-      console.log("maoni "+req.bpdy)
+      // console.log("maoni "+req.bpdy)
       sharedModel.findOneApplication( tracking_number, (app) => {
         const app_category = app["application_category_id"];
              if(app_category){

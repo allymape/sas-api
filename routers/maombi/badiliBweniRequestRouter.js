@@ -4,7 +4,7 @@ const db = require('../../dbConnection');
 const request = require("request");
 const badiliBweniRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliBweniRequestRouter.post(
@@ -14,6 +14,8 @@ badiliBweniRequestRouter.post(
   (req, res) => {
     var obj = [];
     const user = req.user;
+    const status = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
        sharedModel.maombiSummaryByCategoryAndStatus(user, 14  , null, (summaries)  => {
         db.query(
           "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -26,14 +28,14 @@ badiliBweniRequestRouter.post(
             " former_school_infos.establishing_school_id = establishing_schools.id AND " +
             " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
             " AND application_category_id = 14 AND is_approved <> 2 AND payment_status_id = 2 " +
-            selectConditionByTitle(user),
+            selectConditionByTitle(user) + " "+ sqlStatus,
           function (error, results) {
             if (error) {
               console.log(error);
             }
-            console.log(results);
+            // console.log(results);
             for (var i = 0; i < results.length; i++) {
-              console.log(results);
+              // console.log(results);
               var tracking_number = results[i].tracking_number;
               var registry_type_id = "";
               var user_id = results[i].user_id;

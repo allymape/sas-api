@@ -5,7 +5,7 @@ const request = require("request");
 const badiliUsajiliRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliUsajiliRequestRouter.post(
@@ -13,8 +13,10 @@ badiliUsajiliRequestRouter.post(
   isAuth,
   permission("view-change-registration-type"),
   (req, res) => {
-           var obj = [];
-           const user = req.user;
+            var obj = [];
+            const user = req.user;
+            const status = approvalStatuses(req.body.status);
+            const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
         sharedModel.maombiSummaryByCategoryAndStatus(user,6 , null,(summaries)  => {
              db.query(
                "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -28,14 +30,14 @@ badiliUsajiliRequestRouter.post(
                  " former_school_infos.establishing_school_id = establishing_schools.id AND " +
                  " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = 1 AND " +
                  " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-                 " AND application_category_id = 6 AND payment_status_id = 2  "+ selectConditionByTitle(user),
+                 " AND application_category_id = 6 AND payment_status_id = 2  "+ selectConditionByTitle(user) + " "+ sqlStatus,
                function (error, results, fields) {
                  if (error) {
                    console.log(error);
                  }
                 //  console.log(results);
                  for (var i = 0; i < results.length; i++) {
-                   console.log(results);
+                  //  console.log(results);
                    var tracking_number = results[i].tracking_number;
                    var registry_type_id = "";
                    var user_id = results[i].user_id;

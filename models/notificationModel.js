@@ -19,15 +19,15 @@ module.exports = {
     const commonJoin = `JOIN application_categories ac ON ac.id = a.application_category_id
                         LEFT JOIN (SELECT trackingNo, coments, user_from , created_at
                                    FROM maoni m2
-                                   WHERE user_to = ${Number(user.id)} 
+                                   WHERE user_to = ${ Number(user.id) } 
                                    ORDER BY id DESC LIMIT 1) AS m
                               ON a.tracking_number = m.trackingNo
                         LEFT JOIN staffs u ON u.id = m.user_from 
                         LEFT JOIN roles rl ON rl.id = u.user_level
-                        ${schoolLocationsSqlJoin()}
+                        ${ schoolLocationsSqlJoin() }
                         `;
 
-    const sqlWhere = `WHERE  a.payment_status_id = 2  ${selectConditionByTitle(user, true)} `;
+    const sqlWhere = `WHERE  a.payment_status_id = 2 AND is_approved IN (1)  ${selectConditionByTitle(user, true , true)} `;
 
     let data = [];
     // Kuanzisha
@@ -145,7 +145,7 @@ module.exports = {
                                                   //     itemDate.getFullYear() == today.getFullYear
                                                   //   )
                                                   // })
-                                                  console.log(sortedDataDesc)
+                                                  // console.log(sortedDataDesc)
                                                   callback(sortedDataDesc, data.length);
                                                 }
                                               );

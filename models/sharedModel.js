@@ -785,7 +785,8 @@ module.exports = {
     registry_type = null,
     callback
   ) => {
-    var sql = `SELECT COUNT(*) AS num_rows 
+    const is_complete = `${application_category == 1 ? "AND a.is_complete IN (1)" : ""}`;
+    const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
                     ${joinsByApplicationCategory(application_category)}
                     ${schoolLocationsSqlJoin()}
@@ -798,32 +799,27 @@ module.exports = {
                     ${filterByUserOffice(user, "AND")}
                     `;
     //  All
+    //  console.log(sql)
     db.query(
-      `${sql} AND a.is_approved IN ${
-        application_category == 1
-          ? "(1,2,3) AND a.is_complete = 1"
-          : "(0, 1, 2, 3)"
-      }`,
+      `${sql} AND a.is_approved IN (0,1,2,3)  ${is_complete}`,
       [application_category],
       (error, all) => {
         if (error) console.log(error);
         // Pending
         db.query(
-          `${sql} AND a.is_approved IN ${
-            application_category == 1 ? "(1) AND a.is_complete = 1 " : "(0, 1)"
-          }`,
+          `${sql} AND a.is_approved IN (0,1)  ${is_complete}`,
           [application_category],
           (error, pending) => {
             if (error) console.log(error);
             // Approved
             db.query(
-              `${sql} AND a.is_approved = 2`,
+              `${sql} AND a.is_approved = 2 ${is_complete} `,
               [application_category],
               (error, approved) => {
                 if (error) console.log(error);
                 // Rejected
                 db.query(
-                  `${sql} AND a.is_approved = 3`,
+                  `${sql} AND a.is_approved = 3 ${is_complete}`,
                   [application_category],
                   (error, rejected) => {
                     if (error) console.log(error);

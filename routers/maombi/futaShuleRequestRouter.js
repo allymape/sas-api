@@ -5,7 +5,7 @@ const request = require("request");
 const futaShuleRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 futaShuleRequestRouter.post(
@@ -14,8 +14,11 @@ futaShuleRequestRouter.post(
   permission("view-deregistration-of-schools"),
   (req, res) => {
 
-     var obj = [];
-     const user = req.user;
+  const obj = [];
+  const user = req.user;
+  const status = approvalStatuses(req.body.status);
+  const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+
    sharedModel.maombiSummaryByCategoryAndStatus(user, 11 , null, (summaries)  => {
      db.query(
        "SELECT establishing_schools.id as schoolId, school_categories.category as schoolCategory, " +
@@ -29,13 +32,15 @@ futaShuleRequestRouter.post(
          " former_school_infos.establishing_school_id = establishing_schools.id AND " +
          " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
          " AND application_category_id = 11 AND is_approved <> 2 AND payment_status_id = 2 " +
-         selectConditionByTitle(user),
+         selectConditionByTitle(user) +
+         " " +
+         sqlStatus,
        function (error, results) {
          if (error) {
            console.log(error);
          }
          for (var i = 0; i < results.length; i++) {
-           console.log(results);
+           //  console.log(results);
            var tracking_number = results[i].tracking_number;
            var registry_type_id = "";
            var user_id = results[i].user_id;

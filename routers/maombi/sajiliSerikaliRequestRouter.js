@@ -5,7 +5,7 @@ const request = require("request");
 const sajiliSerikaliRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
   sajiliSerikaliRequestRouter.post(
@@ -14,7 +14,10 @@ const sharedModel = require("../../models/sharedModel");
     permission("view-school-registration-government"),
     (req, res, next) => {
       var obj = [];
-      var user = req.user;
+      const user = req.user;
+      const status = approvalStatuses(req.body.status);
+      const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+
       sharedModel.maombiSummaryByCategoryAndStatus(user, 4, '(3)' , (summaries) => {
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
@@ -27,14 +30,14 @@ const sharedModel = require("../../models/sharedModel");
               " school_registrations.establishing_school_id = establishing_schools.id AND " +
               " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
               " AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) " +
-              selectConditionByTitle(user),
+              selectConditionByTitle(user) + " "+ sqlStatus,
             function (error, results) {
               if (error) {
                 console.log(error);
               }
               console.log(results);
               for (var i = 0; i < results.length; i++) {
-                console.log(results);
+                // console.log(results);
                 var tracking_number = results[i].tracking_number;
                 var registry_type_id = "";
                 var user_id = results[i].user_id;
@@ -103,9 +106,11 @@ const sharedModel = require("../../models/sharedModel");
     (req, res, next) => {
       var trackingNumber = req.body.TrackingNumber;
       const user = req.user; 
+      const status = approvalStatuses(req.body.status);
+      const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
       var userLevel = user.user_level;
       var office = req.body.office;
-      console.log(req.body);
+      // console.log(req.body);
       var obj = [];
       var objMess = [];
       var objStaffs = [];
