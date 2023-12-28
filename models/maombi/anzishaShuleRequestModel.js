@@ -20,7 +20,8 @@ module.exports = {
             LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2
-            ${selectConditionByTitle(user)} ${sqlStatus}
+            ${selectConditionByTitle(user)} 
+            ${sqlStatus}
             `,
       (error, result) => {
         if (error) console.log(error);

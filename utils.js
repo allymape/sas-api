@@ -516,14 +516,15 @@ const ObjectFuctions = {
     // console.log(jukumu)
     if (ngazi == "wizara") {
       if (
-        ObjectFuctions.lowerCase(jukumu) == "super-admin" &&
+        (ObjectFuctions.lowerCase(jukumu) == "super-admin" ||
+          ObjectFuctions.lowerCase(jukumu) == "super admin") &&
         !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(
           sehemu
         )
       ) {
         // return `AND is_approved <> 2`;
-        if(notification){
-          return ` AND 1 < 0`
+        if (notification) {
+          return ` AND 1 < 0`;
         }
         return ``;
       }
@@ -595,7 +596,6 @@ const ObjectFuctions = {
         $where = `${start_with} 1 < 1 `;
         break;
     }
-   
     return $where;
   },
   schoolLocationsSqlJoin: () => {
