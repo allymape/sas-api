@@ -530,7 +530,7 @@ const ObjectFuctions = {
 
       if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
           if (notification) {
-            return ` AND 1 < 0`;
+            return ` AND 1 < 0`; 
           }
         str += ``;
         // str += ` AND is_approved = 2`;
