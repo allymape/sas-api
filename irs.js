@@ -78,6 +78,7 @@ const ripotiTahasusiChangeRequestRouter = require("./routers/ripoti/ripotiTahasu
 const ripotiBweniChangeRequestRouter = require("./routers/ripoti/ripotiBweniChangeRequestRouter.js");
 const ripotiUsajiliChangeRequestRouter = require("./routers/ripoti/ripotiUsajiliChangeRequestRouter.js");
 const ripotiDahaliaChangeRequestRouter = require("./routers/ripoti/ripotiDahaliaChangeRequestRouter.js");
+const baruaRouter = require("./routers/barua/baruaRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -141,6 +142,7 @@ app.use("/api", ripotiTahasusiChangeRequestRouter);
 app.use("/api", ripotiBweniChangeRequestRouter); 
 app.use("/api", ripotiUsajiliChangeRequestRouter); 
 app.use("/api", ripotiDahaliaChangeRequestRouter); 
+app.use("/api", baruaRouter); 
 
 
 // Handling Errors
