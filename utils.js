@@ -907,6 +907,9 @@ const ObjectFuctions = {
             case 2:
               table_view = "school_owners_view";
               break;
+            case 3:
+              table_view = "school_managers_view";
+              break;
             case 4:
               table_view = "registered_schools_view";
               break;
