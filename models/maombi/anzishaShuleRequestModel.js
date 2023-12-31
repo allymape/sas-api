@@ -9,7 +9,7 @@ module.exports = {
                     applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
                     applications.user_id as user_id, applications.foreign_token as foreign_token,  
                     establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
-                    districts.LgaName as LgaName, registry_types.registry as registry  
+                    districts.LgaName as LgaName, registry_types.registry as registry, folio
             FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  

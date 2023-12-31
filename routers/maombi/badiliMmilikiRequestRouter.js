@@ -20,7 +20,7 @@ badiliMmilikiRequestRouter.post(
         const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
        sharedModel.maombiSummaryByCategoryAndStatus(user, 7 , null,(summaries)  => {
           db.query(
-            "SELECT applications.tracking_number as tracking_number, applications.created_at as created_at, " +
+            "SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at, " +
               " former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person, " +
               " RegionName, establishing_schools.school_name as school_name FROM " +
               " regions, applications, former_owners, establishing_schools, wards, " +
@@ -48,6 +48,7 @@ badiliMmilikiRequestRouter.post(
                 var created_at = results[i].created_at;
                 var schoolCategory = results[i].schoolCategory;
                 var applicantname;
+                var folio = results[i].folio;
                 var today = new Date();
 
                 var diffInSeconds = Math.abs(today - created_at) / 1000;
@@ -83,6 +84,7 @@ badiliMmilikiRequestRouter.post(
                   created_at: created_at,
                   remain_days: remain_days,
                   schoolCategory: schoolCategory,
+                  folio
                 });
               }
               // console.log(obj)

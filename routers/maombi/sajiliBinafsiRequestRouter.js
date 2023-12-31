@@ -21,7 +21,7 @@ sajiliBinafsiRequestRouter.post(
       db.query(
         "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
           " applications.created_at as created_at, applications.user_id as user_id, " +
-          " applications.foreign_token as foreign_token, " +
+          " applications.foreign_token as foreign_token, folio, " +
           " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
           " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
           " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
@@ -37,6 +37,7 @@ sajiliBinafsiRequestRouter.post(
           for (var i = 0; i < results.length; i++) {
             // console.log(results);
             var tracking_number = results[i].tracking_number;
+            var folio = results[i].folio;
             var registry_type_id = "";
             var user_id = results[i].user_id;
             var foreign_token = results[i].foreign_token;
@@ -80,6 +81,7 @@ sajiliBinafsiRequestRouter.post(
               created_at: created_at,
               remain_days: remain_days,
               schoolCategory: schoolCategory,
+              folio
             });
           }
           // console.log(obj)

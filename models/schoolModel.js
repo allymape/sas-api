@@ -114,12 +114,13 @@ module.exports = {
          if (established) {
            db.query(
              `INSERT INTO applications (id,staff_id,secure_token,foreign_token,tracking_number,user_id,application_category_id,
-                                        registry_type_id,is_approved,status_id,is_complete,payment_status_id , created_at,updated_at) 
+                                        registry_type_id,is_approved,status_id,is_complete,payment_status_id , approved_at, created_at,updated_at) 
                                         VALUES ? 
               ON DUPLICATE KEY UPDATE 
                           secure_token=VALUES(secure_token),foreign_token=VALUES(foreign_token),user_id=VALUES(user_id), staff_id=VALUES(staff_id), tracking_number=VALUES(tracking_number), 
                           is_approved=VALUES(is_approved), application_category_id=VALUES(application_category_id), 
                           registry_type_id=VALUES(registry_type_id), payment_status_id=VALUES(payment_status_id), 
+                          approved_at = VALUES(approved_at),
                           updated_at=VALUES(updated_at)`,
              [applications],
              (err2, application) => {

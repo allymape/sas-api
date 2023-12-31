@@ -19,7 +19,10 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                        console.log(registry_type)
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
                          db.query(
-                           `SELECT v.* , application_category_id, file_number, school_folio, folio
+                           `SELECT v.* , application_category_id, file_number, school_folio, folio , 
+                                         s.registration_number AS registration_number , 
+                                         s.registration_date AS registration_date,
+                                         c.level AS level
                                    ${
                                      registry_type == 1
                                        ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, personal_address AS address_box "
@@ -30,6 +33,8 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
                                    JOIN establishing_schools e ON  e.id = v.school_id
+                                   LEFT JOIN school_registrations s ON s.establishing_school_id = e.id
+                                   LEFT JOIN certificate_types c on c.id = e.certificate_type_id
                                    ${
                                      registry_type == 1
                                        ? "LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token"
@@ -37,7 +42,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                        ? "LEFT JOIN institute_infos i ON i.secure_token = a.foreign_token"
                                        : ""
                                    }
-                                   WHERE v.tracking_number = ?`,
+                                   WHERE v.tracking_number = ? #AND a.folio IS NOT NULL`,
                            [tracking_number],
                            (error2, results) => {
                              if (error2) console.log(error2);

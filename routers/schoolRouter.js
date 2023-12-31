@@ -320,6 +320,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                         status_id,
                         is_complete,
                         2,
+                        registration_date,
                         created_at,
                         updated_at,
                       ]);

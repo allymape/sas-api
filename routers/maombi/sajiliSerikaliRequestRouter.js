@@ -22,7 +22,7 @@ const sharedModel = require("../../models/sharedModel");
           db.query(
             "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
               " applications.created_at as created_at, applications.user_id as user_id, " +
-              " applications.foreign_token as foreign_token, " +
+              " applications.foreign_token as foreign_token, folio, " +
               " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
               " districts.LgaName as LgaName FROM school_registrations, establishing_schools, applications, " +
               " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
@@ -49,6 +49,7 @@ const sharedModel = require("../../models/sharedModel");
                 var registry = results[i].registry;
                 var created_at = results[i].created_at;
                 var schoolCategory = results[i].schoolCategory;
+                var folio = results[i].folio;
                 var applicantname;
                 var today = new Date();
 
@@ -82,6 +83,7 @@ const sharedModel = require("../../models/sharedModel");
                   created_at: created_at,
                   remain_days: remain_days,
                   schoolCategory: schoolCategory,
+                  folio
                 });
               }
               // console.log(obj)

@@ -18,7 +18,7 @@ badiliBweniRequestRouter.post(
     const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
        sharedModel.maombiSummaryByCategoryAndStatus(user, 14  , null, (summaries)  => {
         db.query(
-          "select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
+          "select school_categories.category as schoolCategory, folio, applications.tracking_number as tracking_number, " +
             " applications.created_at as created_at, applications.user_id as user_id, " +
             " applications.foreign_token as foreign_token, " +
             " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
@@ -48,6 +48,7 @@ badiliBweniRequestRouter.post(
               var created_at = results[i].created_at;
               var schoolCategory = results[i].schoolCategory;
               var applicantname;
+              var folio = results[i].folio;
               var today = new Date();
 
               var diffInSeconds = Math.abs(today - created_at) / 1000;
@@ -80,6 +81,7 @@ badiliBweniRequestRouter.post(
                 created_at: created_at,
                 remain_days: remain_days,
                 schoolCategory: schoolCategory,
+                folio
               });
             }
             // console.log(obj)

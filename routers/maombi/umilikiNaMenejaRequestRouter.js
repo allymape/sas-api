@@ -20,7 +20,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
     let appQuery = `SELECT   applications.tracking_number as tracking_number,
           applications.created_at as created_at, applications.user_id as user_id, 
           applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
-          regions.RegionName as RegionName, districts.LgaName as LgaName, is_approved
+          regions.RegionName as RegionName, districts.LgaName as LgaName, is_approved , folio
       FROM establishing_schools
       INNER JOIN owners ON establishing_schools.id = owners.establishing_school_id 
       INNER JOIN applications ON  owners.tracking_number = applications.tracking_number
@@ -60,6 +60,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
           var created_at = results[i].created_at;
           var schoolCategory = results[i].schoolCategory;
           var is_approved = results[i].is_approved;
+          var folio = results[i].folio;
           var today = new Date();
 
           var diffInSeconds = Math.abs(today - created_at) / 1000;
@@ -93,6 +94,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
             remain_days: remain_days,
             schoolCategory: schoolCategory,
             is_approved: is_approved,
+            folio
           });
         }
         return res.send({
