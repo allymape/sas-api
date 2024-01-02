@@ -16,19 +16,22 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                         const type = req.body.type;
                         const application_category = application[0].application_category_id
                        const registry_type = application[0].registry_type_id
-                       console.log(registry_type)
+                      //  console.log(registry_type)
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
                          db.query(
                            `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
                                          s.registration_date AS registration_date,
-                                         c.level AS level
+                                         c.level AS level, e.stream AS stream
                                    ${
                                      registry_type == 1
                                        ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, personal_address AS address_box "
                                        : registry_type == 2
                                        ? ",i.name AS address_name , institute_address AS address_box"
                                        : ""
+                                   }
+                                   ${
+                                    application_category == 5 ? ', v.old_stream AS old_stream' : ''
                                    }
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
