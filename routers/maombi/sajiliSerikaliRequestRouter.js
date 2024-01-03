@@ -171,8 +171,8 @@ sajiliSerikaliRequestRouter.post(
         " AND school_registrations.establishing_school_id = establishing_schools.id AND " +
         " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
         " languages.id = establishing_schools.language_id AND " +
-        " school_categories.id = establishing_schools.school_category_id " +
-        " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
+        " school_categories.id = establishing_schools.school_category_id AND" +
+        " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
         " wards.WardCode = establishing_schools.ward_id AND " +
         " school_registrations.tracking_number = applications.tracking_number " +
         " AND application_category_id = 4 AND applications.tracking_number = ?",
@@ -182,7 +182,7 @@ sajiliSerikaliRequestRouter.post(
           console.log(error);
         }
         // console.log("results");
-        // console.log(results);
+     
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -361,7 +361,8 @@ sajiliSerikaliRequestRouter.post(
             }
           }
         );
-        // console.log(application_category_id , registry_type_id)
+        console.log(application_category_id , registry_type_id)
+        return;
         db.query(
           `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
@@ -371,6 +372,7 @@ sajiliSerikaliRequestRouter.post(
             if (error) {
               console.log(error);
             }
+          
             for (var i = 0; i < results.length; i++) {
               var file_format = results[i].file_format;
               var app_id = results[i].id;

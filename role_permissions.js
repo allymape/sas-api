@@ -61,7 +61,7 @@ const rolesPermissions = {
     "Roles|Jukumu": "v,c",
   },
   User: {
-    "Regions|Mikoa": "v",
+    "Comments|Maoni" : "v,c"
   },
 };
 const translations = {
