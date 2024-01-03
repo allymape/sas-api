@@ -11,31 +11,32 @@ const sharedModel = require("../../models/sharedModel");
 umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('view-school-owners-and-managers'), (req, res) => {
   var obj = [];
   var date = new Date();
-  var month = date.getMonth();
+  const per_page = parseInt(req.body.per_page);
+  const page = parseInt(req.body.page);
+  const offset = (page - 1) * per_page;
   const user = req.user;
   const status = approvalStatuses(req.body.status);
   const sqlStatus = ` AND is_approved IN ${status ? status : '(0,1)'}`;
   // console.log(status);
   sharedModel.maombiSummaryByCategoryAndStatus(user, 2, null, (summaries) => {
-    let appQuery = `SELECT   applications.tracking_number as tracking_number,
+    const sqlSelect = `SELECT   applications.tracking_number as tracking_number,
           applications.created_at as created_at, applications.user_id as user_id, 
           applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
           regions.RegionName as RegionName, districts.LgaName as LgaName, is_approved , folio, owners.is_manager
-      FROM establishing_schools
+      `;
+    const sqlFrom = `FROM establishing_schools
       INNER JOIN owners ON establishing_schools.id = owners.establishing_school_id 
       INNER JOIN applications ON  owners.tracking_number = applications.tracking_number
       INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
       INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-      WHERE application_category_id = 2 AND payment_status_id = 2 ${selectConditionByTitle(user)} ${sqlStatus}`;
+      WHERE application_category_id = 2 AND payment_status_id = 2 ${selectConditionByTitle(
+        user
+      )} ${sqlStatus}`;
+    const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
+    const sqlCount = `SELECT count(*) AS num_rows ${sqlFrom}`
 
-    // if (false) {
-    //   appQuery += `${selectConditionByTitle(user)}`
-    // }
-
-    db.query(
-      appQuery,
-      function (error, results) {
+    sharedModel.paginate(sqlRows , sqlCount , function (error, results , numRows) {
         if (error) {
           console.log(error);
           return res.send({
@@ -103,9 +104,11 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
           statusCode: 300,
           dataList: obj,
           dataSummary: summaries,
+          numRows: numRows,
           message: "List of maombi kuanzisha shule.",
         });
-      }
+      },
+      [offset , per_page]
     );
   }
   );

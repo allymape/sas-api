@@ -1,16 +1,15 @@
 const db = require(`../../dbConnection`);
 const { selectConditionByTitle } = require("../../utils");
+const sharedModel = require("../sharedModel");
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
-  anzishaShuleRequestList: (user , sqlStatus,callback) => {
+  anzishaShuleRequestList: (req , sqlStatus,callback) => {
     // console.log(selectConditionByTitle(user), sqlStatus);
-    db.query(
-      `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
-                    applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
-                    applications.user_id as user_id, applications.foreign_token as foreign_token,  
-                    establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
-                    districts.LgaName as LgaName, registry_types.registry as registry, folio
-            FROM establishing_schools
+    const per_page = parseInt(req.body.per_page);
+    const page = parseInt(req.body.page);
+    const offset = (page - 1) * per_page;
+    console.log(page , per_page)
+    const sqlFrom = `FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  
             LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
@@ -20,13 +19,22 @@ module.exports = {
             LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2
-            ${selectConditionByTitle(user)} 
+            ${selectConditionByTitle(req.user)} 
             ${sqlStatus}
-            `,
-      (error, result) => {
+            `;
+    const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
+                    applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
+                    applications.user_id as user_id, applications.foreign_token as foreign_token,  
+                    establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
+                    districts.LgaName as LgaName, registry_types.registry as registry, folio`;
+    const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
+    const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`
+    sharedModel.paginate(sqlRows , sqlCount,(error, results , numRows) => {
         if (error) console.log(error);
-        callback(error, result);
+        callback(error, results , numRows);
       }
+      ,
+      [offset , per_page]
     );
   },
 

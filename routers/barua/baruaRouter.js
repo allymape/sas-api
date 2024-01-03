@@ -24,14 +24,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                          s.registration_date AS registration_date,
                                          c.level AS level, e.stream AS stream
                                    ${
-                                     registry_type == 1
-                                       ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, personal_address AS address_box "
-                                       : registry_type == 2
-                                       ? ",i.name AS address_name , institute_address AS address_box"
-                                       : ""
-                                   }
-                                   ${
-                                    application_category == 5 ? ', v.old_stream AS old_stream' : ''
+                                    getExtraColumns(application_category , registry_type)
                                    }
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
@@ -70,5 +63,53 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                 })
   }
 );
+
+const getExtraColumns  = (application_category_id) => {
+  let columns = ``;
+  switch (application_category_id) {
+    case 2:
+      columns =
+        registry_type == 1
+          ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, personal_address AS address_box "
+          : registry_type == 2
+          ? ",i.name AS address_name , institute_address AS address_box"
+          : "";
+      break;
+    case 5:
+      columns = ", v.old_stream AS old_stream";
+      break;
+    case 6:
+      columns = ",v.old_category AS old_category";
+      break;
+    case 7:
+      columns = ",owner_name";
+      break;
+    case 8:
+      columns = ",manager_name";
+      break;
+    case 9:
+      columns = ", v.old_school_name AS old_school_name";
+      break;
+    case 10:
+      columns = ", v.old_region, old_district, old_ward, old_street";
+      break;
+    case 11:
+      columns = "";
+      break;
+    case 12:
+      columns = ", v.old_combinations AS old_combinations";
+      break;
+    case 13:
+      columns = ", v.is_hostel AS is_hostel, v.was_hostel AS was_hostel";
+      break;
+    case 14:
+      columns =
+        ", v.subcategory AS subcategory, v.old_subcategory AS old_subcategory";
+      break;
+    default:
+      break;
+  }
+  return columns;
+}
 
 module.exports = baruaRouter;

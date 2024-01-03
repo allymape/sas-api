@@ -18,16 +18,25 @@ badiliMmilikiRequestRouter.post(
         const user = req.user;
         const status = approvalStatuses(req.body.status);
         const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+        const per_page = parseInt(req.body.per_page);
+        const page = parseInt(req.body.page);
+        const offset = (page - 1) * per_page;
+        const sqlSelect = `SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at,
+        former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person,
+        RegionName, establishing_schools.school_name as school_name 
+            `;
+
+        const sqlFrom = `FROM regions, applications, former_owners, establishing_schools, wards, 
+        districts WHERE districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number
+        AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode
+        AND regions.RegionCode = districts.RegionCode AND application_category_id = 7 AND payment_status_id = 2
+        ${selectConditionByTitle(user)} ${sqlStatus}`;
+
+        const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
+        const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
        sharedModel.maombiSummaryByCategoryAndStatus(user, 7 , null,(summaries)  => {
-          db.query(
-            "SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at, " +
-              " former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person, " +
-              " RegionName, establishing_schools.school_name as school_name FROM " +
-              " regions, applications, former_owners, establishing_schools, wards, " +
-              " districts WHERE districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_owners.tracking_number " +
-              " AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
-              " AND regions.RegionCode = districts.RegionCode AND application_category_id = 7 AND payment_status_id = 2 "+selectConditionByTitle(user) + " "+ sqlStatus,
-            function (error, results) {
+          sharedModel.paginate(sqlRows , sqlCount,
+            function (error, results , numRows) {
               if (error) {
                 console.log(error);
               }
@@ -93,9 +102,11 @@ badiliMmilikiRequestRouter.post(
                 statusCode: 300,
                 dataList: obj,
                 dataSummary : summaries,
+                numRows: numRows,
                 message: "List of maombi kuanzisha shule.",
               });
-            }
+            },
+            [offset , per_page]
           );
     });
   }

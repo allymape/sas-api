@@ -17,20 +17,29 @@ sajiliBinafsiRequestRouter.post(
     const user = req.user;
     const status = approvalStatuses(req.body.status);
     const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+    const per_page = parseInt(req.body.per_page);
+    const page = parseInt(req.body.page);
+    const offset = (page - 1) * per_page;
+    const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
+                          applications.created_at as created_at, applications.user_id as user_id,
+                          applications.foreign_token as foreign_token, folio, 
+                          establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
+                          districts.LgaName as LgaName`;
+
+    const sqlFrom = `FROM school_registrations, establishing_schools, applications,
+                        wards, districts, school_categories, regions 
+                        WHERE school_categories.id = establishing_schools.school_category_id 
+                        AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND 
+                        school_registrations.establishing_school_id = establishing_schools.id AND 
+                        wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number 
+                        AND application_category_id = 4 AND applications.registry_type_id <> 3 
+                        ${selectConditionByTitle(user)} ${sqlStatus}`;
+    const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
+    const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
+    
     sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , '(1,2)' , (summary) => {
-      db.query(
-        "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-          " applications.created_at as created_at, applications.user_id as user_id, " +
-          " applications.foreign_token as foreign_token, folio, " +
-          " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-          " districts.LgaName as LgaName from school_registrations, establishing_schools, applications, " +
-          " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-          " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-          " school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = 4 AND applications.registry_type_id <> 3 "+
-            selectConditionByTitle(user) + " "+ sqlStatus
-        ,function (error, results) {
+      
+      sharedModel.paginate(sqlRows , sqlCount, function (error, results , numRows) {
           if (error) {
             console.log(error);
           }
@@ -90,9 +99,11 @@ sajiliBinafsiRequestRouter.post(
             statusCode: 300,
             dataSummary: summary,
             dataList: obj,
+            numRows : numRows,
             message: "List of maombi kuanzisha shule.",
           });
-        }
+        },
+        [offset , per_page]
       );
     });
 });

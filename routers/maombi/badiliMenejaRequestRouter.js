@@ -18,19 +18,27 @@ badiliMenejaRequestRouter.post(
     const user = req.user;
     const status = approvalStatuses(req.body.status);
     const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
-   
- sharedModel.maombiSummaryByCategoryAndStatus(user, 8 , null, (summaries)  => {
-   db.query(
-     "SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at, " +
-       " former_managers.manager_first_name as owner_name, wards.WardName as WardName, LgaName, former_managers.manager_last_name as authorized_person, " +
-       " RegionName, establishing_schools.school_name as school_name FROM " +
-       " regions, applications, former_managers, establishing_schools, wards, " +
-       " districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number " +
-       " AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode " +
-       " AND regions.RegionCode = districts.RegionCode AND application_category_id = 8 AND is_approved <> 2 AND  payment_status_id = 2 " +
-       selectConditionByTitle(user) + " "+ sqlStatus,
+    const per_page = parseInt(req.body.per_page);
+    const page = parseInt(req.body.page);
+    const offset = (page - 1) * per_page;
+    // console.log(page , per_page , offset)
+    const sqlSelect = `SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at, 
+                      former_managers.manager_first_name as owner_name, wards.WardName as WardName, LgaName, former_managers.manager_last_name as authorized_person, 
+                      RegionName, establishing_schools.school_name as school_name 
+                      `;
 
-     function (error, results) {
+    const sqlFrom = `FROM 
+                      regions, applications, former_managers, establishing_schools, wards, 
+                      districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number 
+                      AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode
+                      AND regions.RegionCode = districts.RegionCode AND application_category_id = 8 AND is_approved <> 2 AND  payment_status_id = 2
+                      ${selectConditionByTitle(user)} ${sqlStatus}`;
+
+    const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
+    const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
+ sharedModel.maombiSummaryByCategoryAndStatus(user, 8 , null, (summaries)  => {
+   sharedModel.paginate(sqlRows , sqlCount,
+     function (error, results , numRows) {
        if (error) {
          console.log(error);
        }
@@ -96,9 +104,11 @@ badiliMenejaRequestRouter.post(
          statusCode: 300,
          dataList: obj,
          dataSummary: summaries,
+         numRows : numRows,
          message: "List of maombi kubadili meneja.",
        });
-     }
+     },
+     [offset , per_page]
    );
    // } else if (UserLevel == "k1" || UserLevel == 4) {
    //   db.query(

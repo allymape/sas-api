@@ -17,21 +17,30 @@ badiliUsajiliRequestRouter.post(
             const user = req.user;
             const status = approvalStatuses(req.body.status);
             const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+            const per_page = parseInt(req.body.per_page);
+            const page = parseInt(req.body.page);
+            const offset = (page - 1) * per_page;
+            const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
+                applications.created_at as created_at, applications.user_id as user_id, 
+                applications.foreign_token as foreign_token, folio,
+                establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
+                districts.LgaName as LgaName
+                `;
+
+            const sqlFrom = `FROM school_registrations, former_school_infos, establishing_schools, applications, 
+                wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id
+                AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND
+                former_school_infos.establishing_school_id = establishing_schools.id AND
+                school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = 1 AND
+                wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
+                AND application_category_id = 6 AND payment_status_id = 2
+                ${selectConditionByTitle(user)} ${sqlStatus}`;
+
+            const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
+            const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
         sharedModel.maombiSummaryByCategoryAndStatus(user,6 , null,(summaries)  => {
-             db.query(
-               "SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, " +
-                 " applications.created_at as created_at, applications.user_id as user_id, " +
-                 " applications.foreign_token as foreign_token, folio," +
-                 " establishing_schools.school_name as school_name, regions.RegionName as RegionName, " +
-                 " districts.LgaName as LgaName"+
-                 " FROM school_registrations, former_school_infos, establishing_schools, applications, " +
-                 " wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id " +
-                 " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-                 " former_school_infos.establishing_school_id = establishing_schools.id AND " +
-                 " school_registrations.establishing_school_id = establishing_schools.id AND school_registrations.reg_status = 1 AND " +
-                 " wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number " +
-                 " AND application_category_id = 6 AND payment_status_id = 2  "+ selectConditionByTitle(user) + " "+ sqlStatus,
-               function (error, results, fields) {
+             sharedModel.paginate(sqlRows , sqlCount,
+               function (error, results, numRows) {
                  if (error) {
                    console.log(error);
                  }
@@ -92,9 +101,11 @@ badiliUsajiliRequestRouter.post(
                    statusCode: 300,
                    dataList: obj,
                    dataSummary: summaries,
+                   numRows: numRows,
                    message: "List of maombi kuanzisha shule.",
                  });
-               }
+               },
+               [offset , per_page]
              );
           });
   }
