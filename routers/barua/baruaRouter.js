@@ -22,7 +22,10 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                            `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
                                          s.registration_date AS registration_date,
-                                         c.level AS level, e.stream AS stream
+                                         c.level AS level, e.stream AS stream,
+                                         u.name AS signatory,
+                                         u.signature AS base64signature,
+                                         r.name AS cheo
                                    ${
                                     getExtraColumns(application_category , registry_type)
                                    }
@@ -31,6 +34,8 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                    JOIN establishing_schools e ON  e.id = v.school_id
                                    LEFT JOIN school_registrations s ON s.establishing_school_id = e.id
                                    LEFT JOIN certificate_types c on c.id = e.certificate_type_id
+                                   JOIN staffs u ON a.approved_by = u.id 
+                                   JOIN roles r ON r.id = u.user_level
                                    ${
                                      registry_type == 1
                                        ? "LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token"
