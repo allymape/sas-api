@@ -18,6 +18,7 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var hierarchy_id = null;
+  var search = req.body.tafuta;
   var is_paginated = true;
         if (typeof req.body.is_paginated !== "undefined") {
             is_paginated =
@@ -26,7 +27,7 @@ designationRouter.get("/all_designations", isAuth, permission('view-designations
                 : true;
             hierarchy_id = req.body.hierarchy_id
         }
-  designationModel.getAllDesignations(offset, per_page, is_paginated , hierarchy_id, (error, designations,levels, numRows) => {
+  designationModel.getAllDesignations(offset, per_page, is_paginated , hierarchy_id, search, (error, designations,levels, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
@@ -67,8 +68,9 @@ designationRouter.get("/edit_designation/:id", isAuth, (req, res, next) => {
 designationRouter.post("/add_designation", isAuth, (req, res) => {
             var data = [];
             var name = req.body.name;
+            var description = req.body.description
             var level = req.body.level;
-            data.push(name,level,1,formatDate(new Date()));
+            data.push(name, description,level, 1, formatDate(new Date()));
             designationModel.storeDesignation(data, (error, success, result, duplicate = false) => {
                 return res.send({
                   success: success ? true : false,
@@ -87,11 +89,10 @@ designationRouter.post("/add_designation", isAuth, (req, res) => {
 // Store designation
 designationRouter.put("/update_designation/:id", isAuth, (req, res, next) => {
             var data = [];
-            var name = req.body.name;
-            var level = req.body.level
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
             var id = Number(req.params.id);
-            data.push(name,level,status, formatDate(new Date()), id);
+            const {name ,description, level} = req.body
+            data.push(name, description , level,status, formatDate(new Date()), id);
             designationModel.updateDesignation(data, (error , success , designation , duplicate = false) => {
                      return res.send({
                         success: success ? true : false,

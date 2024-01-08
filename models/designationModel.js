@@ -3,22 +3,24 @@ const { lowerCase } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF DesignationS *******************************
-  getAllDesignations: (offset, per_page, is_paginated, hierarchy_id, callback) => {
+  getAllDesignations: (offset, per_page, is_paginated, hierarchy_id, search, callback) => {
     //  console.log(is_paginated);
     const vyeoQuery = `SELECT 
       r.id as id,
       r.name as name, 
+      r.description AS description,
       v.rank_name as role, 
       r.vyeoId AS level,
       r.status_id AS status
       FROM roles r
       LEFT JOIN vyeo v ON v.id = r.vyeoId 
-      ${is_paginated ? "" : " WHERE r.status_id = 1 AND r.vyeoId = ?"}
+      ${is_paginated ? (search ? 'WHERE name LIKE ?' : '') : " WHERE r.status_id = 1 AND r.vyeoId = ?"}
       ${is_paginated ? ' LIMIT ?,?' : ''}`;
     db.query(
       vyeoQuery,
-      is_paginated ? [offset, per_page] : [hierarchy_id],
+      is_paginated ? (search ?  ['%'+search+'%' , offset, per_page] : [offset, per_page]) : [hierarchy_id],
       (error, designations, fields) => {
+        if(error) console.log(error)
         db.query(
           `SELECT vyeo.id as id, vyeo.rank_name as name 
           FROM vyeo where status_id = 1`, 
@@ -71,7 +73,7 @@ module.exports = {
            if(err) console.log(err)
             if(result.length == 0){
                db.query(
-                 `INSERT INTO roles (name , vyeoId , status_id, created_at) VALUES ?`,
+                 `INSERT INTO roles (name , description , vyeoId , status_id, created_at) VALUES ?`,
                  [[data]],
                  (error, result) => {
                    if (error) {
@@ -93,7 +95,7 @@ module.exports = {
   findDesignation: (id, callback) => {
     var success = false;
     db.query(
-      `SELECT id , Designation_name , display_name , status_id FROM Designations WHERE id = ?`,
+      `SELECT id , name , description , status_id FROM roles WHERE id = ?`,
       [id],
       (error, designation) => {
         if (error) {
@@ -110,14 +112,16 @@ module.exports = {
   //******** UPDATE Designation *******************************
   updateDesignation: ( data, callback) => {
     var success = false;
+    // console.log(data)
        db.query(
          `SELECT * FROM roles WHERE name =  ?  AND id <> ?`,
-         [lowerCase(data[0].trim()), data[4]],
+         [lowerCase(data[0].trim()), data[5]],
          (err, result) => {
             if(err) console.log(err)
+            // console.log(result)
             if(result.length == 0){
                db.query(
-                 `UPDATE  roles SET name = ? , vyeoId = ? , status_id = ? , updated_at = ?  WHERE id = ?`,
+                 `UPDATE  roles SET name = ? , description = ? , vyeoId = ? , status_id = ? , updated_at = ?  WHERE id = ?`,
                  data,
                  (error, designation) => {
                    if (error) {

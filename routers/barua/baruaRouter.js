@@ -18,17 +18,19 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                        const registry_type = application[0].registry_type_id
                       //  console.log(registry_type)
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
-                         db.query(
-                           `SELECT v.* , application_category_id, file_number, school_folio, folio , 
+                     
+                        db.query(
+                          `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
                                          s.registration_date AS registration_date,
                                          c.level AS level, e.stream AS stream,
                                          u.name AS signatory,
-                                         u.signature AS base64signature,
-                                         r.name AS cheo
-                                   ${
-                                    getExtraColumns(application_category , registry_type)
-                                   }
+                                         r.description AS cheo
+                                   ${getExtraColumns(
+                                     application_category,
+                                     registry_type
+                                   )}
+                                   ,u.signature AS base64signature
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
                                    JOIN establishing_schools e ON  e.id = v.school_id
@@ -38,25 +40,28 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                    JOIN roles r ON r.id = u.user_level
                                    ${
                                      registry_type == 1
-                                       ? "LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token"
+                                       ? `LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token
+                                          LEFT JOIN administration_areas_view aav ON aav.ward_code = p.ward_id`
                                        : registry_type == 2
-                                       ? "LEFT JOIN institute_infos i ON i.secure_token = a.foreign_token"
+                                       ? `LEFT JOIN institute_infos i ON i.secure_token = a.foreign_token
+                                          LEFT JOIN administration_areas_view aav ON aav.ward_code = i.ward_id`
                                        : ""
                                    }
                                    WHERE v.tracking_number = ? #AND a.folio IS NOT NULL`,
-                           [tracking_number],
-                           (error2, results) => {
-                             if (error2) console.log(error2);
-                             const data =
-                               results.length > 0 ? results[0] : null;
-                             res.send({
-                               error: false,
-                               statusCode: data ? 300 : 306,
-                               data: data,
-                               message: "Success",
-                             });
-                           }
-                         );
+                          [tracking_number],
+                          (error2, results) => {
+                            if (error2) console.log(error2);
+                            const data = results.length > 0 ? results[0] : null;
+
+                            console.log(data);
+                            res.send({
+                              error: false,
+                              statusCode: data ? 300 : 306,
+                              data: data,
+                              message: "Success",
+                            });
+                          }
+                        );
                     }else{
                         res.send({
                             error : false,
@@ -69,47 +74,47 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
   }
 );
 
-const getExtraColumns  = (application_category_id) => {
-  let columns = ``;
+const getExtraColumns  = (application_category_id , registry_type) => {
+  // address
+  let columns =
+    registry_type == 1
+      ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, p.personal_address AS address_box , aav.region AS address_region "
+      : registry_type == 2
+      ? ",i.name AS address_name , i.box AS address_box , aav.region AS address_region"
+      : "";
+
   switch (application_category_id) {
-    case 2:
-      columns =
-        registry_type == 1
-          ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, personal_address AS address_box "
-          : registry_type == 2
-          ? ",i.name AS address_name , institute_address AS address_box"
-          : "";
-      break;
+    case 4:
+       columns += `, 'Mkurugenzi' AS address_name , v.region AS address_region`;
     case 5:
-      columns = ", v.old_stream AS old_stream";
+      columns += ", v.old_stream AS old_stream";
       break;
     case 6:
-      columns = ",v.old_category AS old_category";
+      columns += ",v.old_category AS old_category";
       break;
     case 7:
-      columns = ",owner_name";
+      columns += ",owner_name";
       break;
     case 8:
-      columns = ",manager_name";
+      columns += ",manager_name";
       break;
     case 9:
-      columns = ", v.old_school_name AS old_school_name";
+      columns += ", v.old_school_name AS old_school_name";
       break;
     case 10:
-      columns = ", v.old_region, old_district, old_ward, old_street";
+      columns += ", v.old_region, old_district, old_ward, old_street";
       break;
     case 11:
-      columns = "";
+      columns += "";
       break;
     case 12:
-      columns = ", v.old_combinations AS old_combinations";
+      columns += ", v.old_combinations AS old_combinations";
       break;
     case 13:
-      columns = ", v.is_hostel AS is_hostel, v.was_hostel AS was_hostel";
+      columns += ", v.is_hostel AS is_hostel, v.was_hostel AS was_hostel";
       break;
     case 14:
-      columns =
-        ", v.subcategory AS subcategory, v.old_subcategory AS old_subcategory";
+      columns +=", v.subcategory AS subcategory, v.old_subcategory AS old_subcategory";
       break;
     default:
       break;

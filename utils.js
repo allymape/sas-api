@@ -53,7 +53,7 @@ const ObjectFuctions = {
       },
       process.env.JWT_SECRET || "the-super-strong-secrect",
       {
-        expiresIn: process.env.EXPIRED_IN || "30d",
+        expiresIn: process.env.EXPIRED_IN || "1800s",
       }
     );
   },
@@ -90,7 +90,7 @@ const ObjectFuctions = {
         }
       );
     } else {
-      res.status(401).send({ message: "No Token" });
+      res.status(401).send({ message: `You are not authenticated.` });
     }
   },
 
