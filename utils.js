@@ -32,30 +32,12 @@ const dateAndTime = require("date-and-time");
 
 
 const ObjectFuctions = {
-  generateToken: (user, permissions) => {
-    // console.log(permissions);
-    // console.log(user)
-    return jwt.sign(
-      {
-        id: user.id,
-        office: user.office,
-        zone_id: user.zone_id,
-        kanda : user.kanda,
-        region_code: user.region_code,
-        district_code: user.district_code,
-        userPermissions: permissions,
-        user_level: Number(user.user_level),
-        section_id: Number(user.section_id),
-        ngazi: user.ngazi, //wizara,kanda au wilaya
-        sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-        cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-        jukumu: user.jukumu,
-      },
-      process.env.JWT_SECRET || "the-super-strong-secrect",
-      {
-        expiresIn: process.env.EXPIRED_IN || "1800s",
-      }
-    );
+  generateAccessToken : (user) => {
+    console.log(user)
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect", { expiresIn: '15m' });
+  },
+  generateRefreshToken : (user) => {
+    return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
   },
   getUserOffice: (user) => {
     if (!user.zone_id && !user.district_code) {
@@ -79,7 +61,7 @@ const ObjectFuctions = {
       //  console.log(token);
       jwt.verify(
         token,
-        process.env.JWT_SECRET || "the-super-strong-secrect",
+        process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect",
         (err, decode) => {
           if (err) {
             res.status(401).send({ message: "Invalid Token" });

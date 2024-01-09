@@ -1,12 +1,8 @@
 require("dotenv").config();
 const express = require("express");
-const request = require("request");
 const userRouter = express.Router();
 const {
   isAuth,
-  isAdmin,
-  formatDate,
-  generateToken,
   sendEmail,
   setMailOptions,
   hash,
@@ -14,8 +10,8 @@ const {
   getUserOffice,
   permission,
   lowerCase,
-  generateRandomInt,
   upperCase,
+  generateAccessToken,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -28,7 +24,7 @@ const loginlimiter = rateLimit({
 });
 
 //login api
-userRouter.post("/login", loginlimiter, (req, res, next) => {
+userRouter.post("/login/:status/:id", loginlimiter, (req, res, next) => {
   userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
       const permissionData = [];
@@ -62,16 +58,26 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           cheo: user.rank_name ? lowerCase(user.rank_name) : "",
           jukumu: user.jukumu ? upperCase(user.jukumu) : "",
         };
-
         // console.log("User Data", userData);
-        
         for (var i = 0; i < permissions.length; i++) {
           permissionData.push(permissions[i].permission_name);
         }
-        
         // console.log(permissionData);
-        const token = generateToken(userData, permissionData);
-      
+        const token = generateAccessToken({
+              id: userData.id,
+              office: userData.office,
+              zone_id: userData.zone_id,
+              kanda: userData.kanda,
+              region_code: userData.region_code,
+              district_code: userData.district_code,
+              userPermissions: permissionData,
+              user_level: Number(userData.user_level),
+              section_id: Number(userData.section_id),
+              ngazi: userData.ngazi, //wizara,kanda au wilaya
+              sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+              cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+              jukumu: userData.jukumu,
+        });
         res.send({
           error: false,
           statusCode: 300,
