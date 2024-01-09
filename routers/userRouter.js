@@ -24,7 +24,7 @@ const loginlimiter = rateLimit({
 });
 
 //login api
-userRouter.post("/login/:status/:id", loginlimiter, (req, res, next) => {
+userRouter.post("/login", loginlimiter, (req, res, next) => {
   userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
       const permissionData = [];
