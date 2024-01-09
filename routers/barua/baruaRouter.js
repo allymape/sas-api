@@ -117,7 +117,7 @@ const getExtraColumns  = (application_category_id , registry_type) => {
     default:
       break;
   }
-  return columns;
+  return columns; 
 }
 
 module.exports = baruaRouter;
