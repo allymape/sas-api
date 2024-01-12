@@ -25,6 +25,11 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                          s.registration_date AS registration_date,
                                          c.level AS level, e.stream AS stream,
                                          u.name AS signatory,
+                                         aav_.zone_box AS zone_box,
+                                         aav_.region_box AS region_box,
+                                         aav_.has_zone_office AS has_zone_office,
+                                         aav_.district_box AS district_box,
+                                         aav_.district_sqa_box AS district_sqa_box,
                                          r.description AS cheo
                                    ${getExtraColumns(
                                      application_category,
@@ -34,6 +39,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
                                    JOIN establishing_schools e ON  e.id = v.school_id
+                                   JOIN administration_areas_view aav_ ON aav_.street_code = v.street_code
                                    LEFT JOIN school_registrations s ON s.establishing_school_id = e.id
                                    LEFT JOIN certificate_types c on c.id = e.certificate_type_id
                                    JOIN staffs u ON a.approved_by = u.id 
@@ -52,14 +58,27 @@ baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
                           (error2, results) => {
                             if (error2) console.log(error2);
                             const data = results.length > 0 ? results[0] : null;
-
-                            console.log(data);
-                            res.send({
-                              error: false,
-                              statusCode: data ? 300 : 306,
-                              data: data,
-                              message: "Success",
-                            });
+                            db.query(
+                              `SELECT r.RegionName AS sqa_zone_region 
+                                      FROM regions r
+                                      WHERE r.zone_id = ${
+                                        data ? data.zone_id : -1
+                                      } AND sqa_zone = 1`,
+                              (error, result) => {
+                                if (error) console.log(error);
+                                const sqa_zone_region =
+                                  result.length > 0
+                                    ? result[0].sqa_zone_region
+                                    : null;
+                                res.send({
+                                  error: false,
+                                  statusCode: data ? 300 : 306,
+                                  data: data,
+                                  sqa_zone_region: sqa_zone_region,
+                                  message: "Success",
+                                });
+                              }
+                            );
                           }
                         );
                     }else{

@@ -98,7 +98,12 @@ regionRouter.post("/usajiliMikoa", isAuth, async (req, res, next) => {
 
 // Update Region Zone
 regionRouter.post("/assign-region-zone", isAuth, shirikishoValidation, (req, res, next) => {
-  regionModel.updateRegionZone(req.body.regionId, req.body.kanda, (error, success, result) => {
+  const { regionId, kanda, box, has_sqa_zone } = req.body;
+  const has_zone_office =
+    has_sqa_zone == "on" || has_sqa_zone == 'true' || has_sqa_zone ? 1 : 0;
+  
+  const formData = [kanda, box, has_zone_office, regionId];
+  regionModel.updateRegionZone(formData, (error, success, result) => {
       return res.send({
         success: success ? true : false,
         statusCode: success ? 300 : 306,

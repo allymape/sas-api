@@ -75,7 +75,7 @@ module.exports = {
   updateZone: (zoneData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  zones SET zone_name = ? , zone_code = ? , status_id = ?  WHERE id = ?`,
+      `UPDATE  zones SET zone_name = ? , zone_code = ? , box = ? , status_id = ?  WHERE id = ?`,
       zoneData,
       (error, zone, fields) => {
         if (error) {

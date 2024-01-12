@@ -56,7 +56,7 @@ districtRouter.get("/lookup-districts", isAuth, (req, res, next) => {
   });
 });
 // Fetch all councils from councils API and store
-districtRouter.post("/usajiliWilaya", isAuth, async (req, res, next) => {
+districtRouter.post("/usajiliWilaya", isAuth, async (req, res) => {
        var apiData = [];
        var results = await promiseRequest(admin_area_url , 'councils' , 200);
              //iterate through all datas received and store  to apiData array  
@@ -92,4 +92,16 @@ districtRouter.post("/usajiliWilaya", isAuth, async (req, res, next) => {
             }
 });
 
+districtRouter.put(`/update-district/:id` , isAuth , (req , res) => {
+       const {sqa_address , lga_address} = req.body;
+       const {id} = req.params;
+       const formData = [Number(sqa_address) , Number(lga_address) , Number(id)];
+       districtModel.updateDistrict(formData , (updated) => {
+              res.send({
+                success :updated,
+                statusCode : updated ? 300 : 306,
+                message : updated ? `District updated successfully` : 'Unable to update District.'
+              })
+       })
+})
 module.exports = districtRouter;

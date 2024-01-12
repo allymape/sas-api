@@ -91,7 +91,8 @@ zoneRouter.put("/updateZone/:id", isAuth, (req, res, next) => {
             var zone_code = req.body.zonecode;
             var status = req.body.statusid == "on" || Number(req.body.statusid) == 1 ? true : false ;
             var id = Number(req.params.id);
-            formData.push(name,zone_code,status,id);
+            var box = req.body.box;
+            formData.push(name,zone_code , box,status,id);
     
             zoneModel.updateZone( formData , (error , success , zone) => {
                      return res.send({
