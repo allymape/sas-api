@@ -116,7 +116,7 @@ module.exports = {
                          a.district AS district_name,
                          a.ward AS ward_name,
                          a.street AS street_name,
-                         zone_name,
+                         a.zone_name AS zone_name,
                          a.is_approved AS status, 
                          p.status AS payment_status, p.id AS payment_status_id
                          #sr.registration_number AS registration_number,

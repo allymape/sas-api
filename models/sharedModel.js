@@ -12,6 +12,18 @@ const {
 } = require("../utils");
 
 module.exports = {
+  getHierarchies: (callback) => {
+    db.query(
+      `SELECT id, rank_name AS name 
+      FROM vyeo 
+      WHERE status_id = 1
+      ORDER BY id ASC`,
+      (err, hierarchies) => {
+        if (err) console.log(err);
+        callback(hierarchies);
+      }
+    );
+  },
   getApplicationCategories: (callback) => {
     db.query(
       `SELECT id, app_name AS name FROM application_categories ORDER BY id ASC`,
@@ -541,7 +553,8 @@ module.exports = {
     var success = false;
     const today = formatDate(new Date(), "YYYY-MM-DD HH:mm:ss");
     const { user } = req;
-    const userTo = Number(req.body.staffs);
+    const {haliombi , department , trackerId , staffs, replyType , from_user , coments} = req.body;
+    const userTo = Number(staffs);
     const staff_id = userTo == 0 ? null : userTo;
 
     db.query(
@@ -569,9 +582,9 @@ module.exports = {
           db.query(
             `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
         type_of_comment, created_at) VALUES 
-        (${db.escape(req.body.trackerId)}, ${db.escape(req.body.from_user)}, 
-        ${db.escape(req.body.staffs)}, ${db.escape(req.body.coments)}, 
-        ${db.escape(req.body.replyType)}, ${db.escape(today)})`,
+        (${db.escape(trackerId)}, ${db.escape(from_user)}, 
+        ${db.escape(staffs)}, ${db.escape(coments)}, 
+        ${db.escape(replyType)}, ${db.escape(today)})`,
             function (error, results) {
               if (error) {
                 console.log(error);
@@ -580,14 +593,16 @@ module.exports = {
                   success = true;
                 }
               }
+              
               db.query(
-                "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ?, approved_at = ? WHERE tracking_number = ?",
+                "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
                 [
                   user_to,
-                  req.body.department,
-                  req.body.haliombi,
+                  department,
+                  haliombi,
+                  haliombi > 1 ? user.id : null, 
                   today,
-                  req.body.trackerId,
+                  trackerId,
                 ],
                 function (error) {
                   if (error) {
@@ -785,7 +800,9 @@ module.exports = {
     registry_type = null,
     callback
   ) => {
-    const is_complete = `${application_category == 1 ? "AND a.is_complete IN (1)" : ""}`;
+    const is_complete = `${
+      application_category == 1 ? "AND a.is_complete IN (1)" : ""
+    }`;
     const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
                     ${joinsByApplicationCategory(application_category)}
@@ -838,19 +855,23 @@ module.exports = {
       }
     );
   },
-  getRegions : (user, callback) => {
-      const {sehemu , zone_id , region_code} = user;
-     db.query(
-       `SELECT RegionCode AS id , RegionName AS name 
+  getRegions: (user, callback) => {
+    const { sehemu, zone_id, region_code } = user;
+    db.query(
+      `SELECT RegionCode AS id , RegionName AS name 
                FROM regions 
                ${sehemu == "k1" ? "WHERE zone_id = " + zone_id : ""}
-               ${sehemu == "w1" ? "WHERE RegionCode = '" + region_code+"'" : ""}
+               ${
+                 sehemu == "w1"
+                   ? "WHERE RegionCode = '" + region_code + "'"
+                   : ""
+               }
                ORDER BY RegionName ASC`,
-       (error, regions) => {
-         if (error) console.log(error);
-         callback(regions);
-       }
-     );
+      (error, regions) => {
+        if (error) console.log(error);
+        callback(regions);
+      }
+    );
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     //  console.log(is_paginated);

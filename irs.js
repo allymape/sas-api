@@ -79,6 +79,7 @@ const ripotiBweniChangeRequestRouter = require("./routers/ripoti/ripotiBweniChan
 const ripotiUsajiliChangeRequestRouter = require("./routers/ripoti/ripotiUsajiliChangeRequestRouter.js");
 const ripotiDahaliaChangeRequestRouter = require("./routers/ripoti/ripotiDahaliaChangeRequestRouter.js");
 const baruaRouter = require("./routers/barua/baruaRouter.js");
+const workflowRouter = require("./routers/workflowRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -97,6 +98,7 @@ app.use("/api", rankRouter);
 app.use("/api", designationRouter);
 app.use("/api", zoneRouter);
 app.use("/api", algorithmRouter);
+app.use("/api", workflowRouter);
 app.use("/api", schoolCategoryRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);

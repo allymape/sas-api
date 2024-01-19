@@ -23,6 +23,7 @@ const rolesPermissions = {
     "Salaries|Mishahara": "v,c",
     "Applicants|Waombaji": "v,c,u,d",
     "Algorithm|Namba za Usajili": "v,c,u,d",
+    "Workflow|Mpangilio wa utendaji kazi": "v,c,u,d",
     // Maombi
     "Initiate Schools|Kuanzisha Shule": "v,c,u",
     "School Owners and Managers|Wamiliki na Meneja wa Shule": "v,c,u",

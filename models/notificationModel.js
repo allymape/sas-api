@@ -27,7 +27,7 @@ module.exports = {
                         ${ schoolLocationsSqlJoin() }
                         `;
 
-    const sqlWhere = `WHERE  a.payment_status_id = 2 AND is_approved IN (1)  ${selectConditionByTitle(user, true , true)} `;
+    const sqlWhere = `WHERE  a.payment_status_id = 2 AND is_approved IN (1,0)  ${selectConditionByTitle(user, true , true)} `;
 
     let data = [];
     // Kuanzisha
