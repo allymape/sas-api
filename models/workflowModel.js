@@ -2,13 +2,16 @@ const db = require("../dbConnection");
 const { formatDate } = require("../utils");
 
 module.exports = {
-  //******** GET A LIST OF ZONES *******************************
-  getAllWorkflows: (offset, per_page, is_paginated, callback) => {
+  //******** GET A LIST OF WORKFLOWS *******************************
+  getAllWorkflows: (offset, per_page, is_paginated, application_category_id, callback) => {
+    const filter = application_category_id ? `WHERE w.application_category_id = ${db.escape(application_category_id)} ` : ''
     const sql_from = `FROM work_flow w
           INNER JOIN application_categories ac ON ac.id = w.application_category_id
           INNER JOIN vyeo v ON v.id = w.start_from
           INNER JOIN vyeo v2 ON v2.id = w.end_to
+          ${filter}
           ORDER BY application_category_id ASC, _order ASC`;
+    
     db.query(
       `SELECT w.id AS id, application_category_id, ac.app_name AS app_name, v.rank_name AS start_from, v2.rank_name AS end_to , _order
        ${sql_from} 
@@ -26,7 +29,7 @@ module.exports = {
       }
     );
   },
-  //******** STORE ZONE *******************************
+  //******** STORE WORKFLOW *******************************
   storeWorkflow: (data , callback) => {
     db.query(
       `INSERT INTO work_flow(application_category_id , start_from , end_to , _order , created_at) VALUES (?)`,[
@@ -56,7 +59,7 @@ module.exports = {
     );
     
   },
-  //******** FIND ZONE *******************************
+  //******** FIND WORKFLOW *******************************
   findWorkflow: (id, callback) => {
     var success = false;
     db.query(
@@ -74,35 +77,39 @@ module.exports = {
     );
   },
 
-  //******** UPDATE ZONE *******************************
-  updateWorkflow: (id , last_number, callback) => {
-    var success = false;
-    db.query(`SELECT last_number FROM algorthm WHERE id = ?` , [id] , (err , res) => {
-        if(err) console.log(err)
-        if(res.length > 0){
-            if (Number(last_number) >= res[0].last_number) {
-                db.query(
-                  `UPDATE  algorthm SET  last_number = ?  WHERE id = ?`,
-                  [last_number , id],
-                  (error, algorthm) => {
-                    if (error) {
-                      console.log("Error", error);
-                    }
-                    if (algorthm) {
-                      success = true;
-                    }
-                    callback(error, success, algorthm);
-                  }
-                );
-            }else{
-                callback(false , false , null , true)
-            }
+  //******** UPDATE WORKFLOW *******************************
+  updateWorkflow: (id , data, callback) => {
+       db.query(
+      `UPDATE work_flow 
+       SET application_category_id = ? , start_from = ? , end_to = ? , _order = ? , updated_at = ? 
+       WHERE id = ?`,
+        [
+          Number(data.application_category_id),
+          Number(data.from),
+          Number(data.to),
+          Number(data.order),
+          formatDate(new Date()),
+          id
+        ],
+      (error, results) => {
+        if (error) {
+          console.log(error);
+          callback(
+            false,
+            "Haujafanikiwa Kubadili Utendaji Kazi (Workflow) " +
+              error.code
+          );
+        } else {
+          callback(
+            results.affectedRows > 0 ? true : false,
+            "Umefanikiwa Kubadili Utendaji Kazi (Workflow)"
+          );
         }
-    })
-    
+      }
+    );
   },
 
-  //******** DELETE ZONE *******************************
+  //******** DELETE WORKFLOW *******************************
   deleteWorkflow: (id, callback) => {
     var success = false;
           db.query(

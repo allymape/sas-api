@@ -32,13 +32,15 @@ workflowRouter.get("/all-workflows", isAuth, permission('view-workflow'), (req, 
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var is_paginated = true;
-        if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated =
-              req.body.is_paginated == "false" || !req.body.is_paginated
-                ? false
-                : true;
-        }
-  workflowModel.getAllWorkflows(offset, per_page, is_paginated , (error, workflow, numRows) => {
+  var application_category_id = req.body.application_category_id;
+  if (typeof req.body.is_paginated !== "undefined") {
+      is_paginated =
+        req.body.is_paginated == "false" || !req.body.is_paginated
+          ? false
+          : true;
+  }
+  
+  workflowModel.getAllWorkflows(offset, per_page, is_paginated , application_category_id, (error, workflow, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
@@ -49,7 +51,7 @@ workflowRouter.get("/all-workflows", isAuth, permission('view-workflow'), (req, 
   });
 });
 // Edit workflow
-workflowRouter.get("/editworkflow/:id", isAuth, (req, res, next) => {
+workflowRouter.get("/editworkflow/:id", isAuth, (req, res) => {
     var id = req.params.id;
   workflowModel.findWorkflow(id, (error , success, workflow) => {
             return res.send({
@@ -74,24 +76,21 @@ workflowRouter.post("/createworkflow", isAuth, (req, res, next) => {
 });
 
 // Store workflow
-workflowRouter.put("/updateworkflow/:id", isAuth, (req, res, next) => {
-           
-            var last_number = req.body.last_number;
-            var id = Number(req.params.id);
-           
-            workflowModel.updateworkflow( id , last_number , (error , success , workflow , invalid = false) => {
-                     return res.send({
-                        success: success ? true : false,
-                        statusCode: success ? 300 : 306,
-                        data: success ? workflow : [],
-                        message: success ?  "Umefanikiwa kubadili namba ya usajili." : (invalid ? 'Namba ya usajili haipaswi kuwa ndogo ya inayobadilishwa.' :"Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. "),
-                     });
-                    
+workflowRouter.put("/updateworkflow/:id", isAuth, (req, res) => {
+            const formData = req.body;
+            const id = req.params.id;
+            workflowModel.updateWorkflow(id , formData, (success, message) => {
+              return res.send({
+                success: success,
+                statusCode: success ? 300 : 306,
+                message: message,
+              });
             });
+            
 });
 
 // Store workflow
-workflowRouter.put("/deleteworkflow/:id", isAuth, (req, res, next) => {
+workflowRouter.put("/deleteworkflow/:id", isAuth, (req, res) => {
             var id = Number(req.params.id);
             workflowModel.deleteworkflow(id , (error , success , workflow) => {
                      return res.send({
