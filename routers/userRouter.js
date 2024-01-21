@@ -119,9 +119,10 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
 //Profile
 userRouter.post("/my-profile", isAuth, (req, res) => {
   const {id} = req.user
-  userModal.getMyProfile(id, (user) => {
+  userModal.getMyProfile(id, (user , activities) => {
     return res.send({
-      user : user
+      user: user,
+      activities : activities
     });
   });
 });

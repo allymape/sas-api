@@ -2,15 +2,15 @@ const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate } = require("../utils");
-const { lowerCase } = require("text-case");
+const { lowerCase, upperCaseFirst } = require("text-case");
 
 module.exports = {
   //******** USER LOGIN *******************************
   loginUser: (req , callback) => {
-      const username = req.body.username;
-      const password = req.body.password;
+      const {username , password , clientIp , browser , device} = req.body;
       var message = '';
         //const userData = [];
+        console.log(req.body)
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
@@ -43,11 +43,27 @@ module.exports = {
                     console.log("User found.");
                     // console.log(permissions)
                     message = "Logged in!";
+                    const login_datetime = formatDate(new Date());
+                    const user_id = user[0].id;
                     db.query(
                       `UPDATE staffs SET last_login = ? WHERE id = ?`,
-                      [formatDate(new Date()), user[0].id],
+                      [login_datetime, user_id],
                       (err) => {
                         if (err) console.log(err);
+                        // insert login activity
+                        db.query(
+                          `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
+                          [
+                            [
+                              user_id,
+                              clientIp,
+                              upperCaseFirst(device),
+                              browser,
+                              login_datetime,
+                              login_datetime,
+                            ],
+                          ]
+                        );
                         callback(true, user, permissions, message);
                       }
                     );
@@ -125,7 +141,14 @@ module.exports = {
                 WHERE s.id = ?` , [id] , 
       (error , user) => {
           if(error) console.log(error)
-          callback(user[0]);
+          db.query(`SELECT browser , ip , device , created_at 
+                    FROM login_activity
+                    WHERE staff_id = ? 
+                    ORDER BY created_at DESC 
+                    LIMIT 10` , [id] , (erro2 , loginActivities) => {
+                      if(erro2) console.log(erro2);
+                      callback(user[0] , loginActivities);
+                    })
        })
   },
   //******** FIND USER *******************************
