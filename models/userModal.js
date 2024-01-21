@@ -1,7 +1,7 @@
 const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { titleCase, hash, filterByUserOffice, staffCommonJoins } = require("../utils");
+const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate } = require("../utils");
 const { lowerCase } = require("text-case");
 
 module.exports = {
@@ -43,10 +43,18 @@ module.exports = {
                     console.log("User found.");
                     // console.log(permissions)
                     message = "Logged in!";
-                    callback(true, user, permissions , message);
+                    db.query(
+                      `UPDATE staffs SET last_login = ? WHERE id = ?`,
+                      [formatDate(new Date()), user[0].id],
+                      (err) => {
+                        if (err) console.log(err);
+                        callback(true, user, permissions, message);
+                      }
+                    );
                     // return;
                   } else {
                     message = "Wrong username or password.";
+                    
                     callback(false, [], [] , message);
                     // return;
                   }
@@ -110,6 +118,16 @@ module.exports = {
       }
     );
   },
+  // ********** USER PROFILE *************
+  getMyProfile : (id , callback) =>{
+       db.query(`SELECT name,username,email , email_notify,phone_no,created_at,updated_at
+                FROM staffs s 
+                WHERE s.id = ?` , [id] , 
+      (error , user) => {
+          if(error) console.log(error)
+          callback(user[0]);
+       })
+  },
   //******** FIND USER *******************************
   findUser: (userId, user, callback) => {
     var success = false;
@@ -152,7 +170,8 @@ module.exports = {
               user.zone ? user.zone : null,
               user.region ? user.region : null,
               user.lgas ? user.lgas : null,
-              1
+              1,
+              formatDate(new Date())
             ];
             // Set signature if uploaded
             if(user.sign){ 
@@ -170,7 +189,7 @@ module.exports = {
           if(result.length == 0){
             db.query(
               `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
-                    new_role_id, password , zone_id, region_code, district_code, user_status 
+                    new_role_id, password , zone_id, region_code, district_code, user_status , created_at
                     ${user.sign ? ",signature" : ""}) VALUES ?`,
               [[userData]],
               (error, createdUser) => {
@@ -215,6 +234,7 @@ module.exports = {
               user.zone ? user.zone : null,
               user.region ? user.region : null,
               user.lgas ? user.lgas : null,
+              formatDate(new Date())
             ];
             // Set signature if uploaded
             if(user.sign){ 
@@ -231,7 +251,7 @@ module.exports = {
         if (result.length == 0) {
           db.query(
             `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
-              new_role_id = ?, zone_id=?, region_code=?, district_code=? 
+              new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
               ${user.sign ? ", signature = ?" : ""}
               WHERE id = ?`,
             userData,
@@ -320,6 +340,53 @@ module.exports = {
           break;
       }
      
-  }
+  },
+  // Update my profile
+  updateMyProfile : (formData , callback) => {
+      db.query(`UPDATE staffs SET phone_no = ? , email_notify = ? 
+                WHERE id = ?` , formData , (error , result) => {
+                  if(error) console.log(error)
+                  callback(result.affectedRows > 0)
+                })
+  },
+  // change my password
+  changeMyPassword : (oldpassword , newpassword , user_id , callback) => {
+       db.query(`SELECT password 
+                 FROM staffs
+                 WHERE id = ? `, [user_id] , (error , staff) => {
+                    if(error) console.log(error)
+                    // check for valid password
+                    if(bcrypt.compareSync(oldpassword , staff[0].password)){
+                      // update password
+                        hash(newpassword , (hashed , hash) => {
+                              if(hashed){
+                                db.query(
+                                  `UPDATE staffs SET password = ?
+                                  WHERE id = ?`,
+                                  [hash, user_id],
+                                  (error2, result) => {
+                                    if (error2) console.log(error2);
+                                    const success = result.affectedRows > 0;
+                                    callback(
+                                      success,
+                                      success
+                                        ? "Umefanikiwa kubadili nywila."
+                                        : "Haujafanikiwa kubadili nywila kuna tatizo."
+                                    );
+                                  }
+                                );
+                              }else{
+                                callback(
+                                  false,
+                                  "Haujafanikiwa kubadili nywila kuna tatizo."
+                                );
+                              }
+                        })
+                    }else{
+                      callback( false , `Neno la siri la sasa sio sahihi.`)
+                    }
+                 })
+     
+       }
 };
 

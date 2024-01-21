@@ -116,7 +116,15 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
     });
   });
 });
-
+//Profile
+userRouter.post("/my-profile", isAuth, (req, res) => {
+  const {id} = req.user
+  userModal.getMyProfile(id, (user) => {
+    return res.send({
+      user : user
+    });
+  });
+});
 //find a user
 userRouter.get("/users/:id", isAuth, (req, res, next) => {
   var userId = req.params.id;
@@ -134,10 +142,10 @@ userRouter.get("/users/:id", isAuth, (req, res, next) => {
 userRouter.post("/create-user", isAuth, (req, res, next) => {
   var password = req.body.password;
       password = password ? password : generateRandomText(10); 
-      console.log(password);
+      // console.log(password);
   hash(password, (isHashed , hashedPassword) => {
           if (isHashed){
-            console.log(hashedPassword)
+            // console.log(hashedPassword)
               var userData = {
                 fullname: req.body.name,
                 username: req.body.username,
@@ -242,4 +250,29 @@ userRouter.post("/reset-user-password", function (req, res) {
   });
   
 });
+
+userRouter.put("/update-my-profile", isAuth, (req, res) => {
+  const { phone_number, email_notify } = req.body;
+  const user = req.user;
+  const formData = [phone_number, email_notify, user.id];
+  userModal.updateMyProfile(formData, (success) => {
+    res.send({
+      statusCode: success ? 300 : 306,
+      message: success
+        ? "Umefanikiwa kurekebisha taarifa zako."
+        : "Haujafanikiwa kurekebisha taarifa zako.",
+    });
+  });
+});
+userRouter.put("/change-my-password", isAuth, (req, res) => {
+  const { oldpassword, newpassword } = req.body;
+  const user = req.user;
+  userModal.changeMyPassword(oldpassword,newpassword,user.id, (success , message) => {
+    res.send({
+      statusCode: success ? 300 : 306,
+      message: message
+    });
+  });
+});
+
 module.exports = userRouter;

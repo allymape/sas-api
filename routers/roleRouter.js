@@ -54,20 +54,18 @@ roleRouter.get("/roles", isAuth, (req, res) => {
 });
 
 // Create Role
-// roleRouter.get("/createRole", isAuth, (req, res, next) => {
-//     var id = req.params.id;
-//   roleModel.findRole(id, (error , success , permissions  ) => {
-//             return res.send({
-//                 success: success ? true : false,
-//                 statusCode: success ? 300 : 306,
-//                 data : permissions,
-//                 message: success ?  "Success" : "Not found",
-//             });
-//   });
-// });
+roleRouter.get("/roles/create", isAuth, (req, res, next) => {
+    var id = req.params.id;
+  permissionModel.getAllPermission(0,0,false , null, (error , permissions , numRows) => {
+            return res.send({
+                statusCode: error ? 306 : 300,
+                data : permissions,
+            });
+  } , true);
+});
 
 // Edit Role
-roleRouter.get("/editRole/:id", isAuth, (req, res, next) => {
+roleRouter.get("/roles/:id", isAuth, (req, res, next) => {
     var id = req.params.id;
   roleModel.findRole(id, (error , success, role , permissions , role_permissions ) => {
             return res.send({
@@ -82,7 +80,7 @@ roleRouter.get("/editRole/:id", isAuth, (req, res, next) => {
 });
 
 // Store role
-roleRouter.post("/addRole", isAuth, (req, res, next) => {
+roleRouter.post("/roles", isAuth, (req, res, next) => {
             var roleData = [];
             var name = titleCase(req.body.roleName);
             var permissions = req.body.permissions;
@@ -105,9 +103,7 @@ roleRouter.post("/addRole", isAuth, (req, res, next) => {
                      });
             });
 });
-
-// Store role
-roleRouter.put("/updateRole/:id", isAuth, (req, res, next) => {
+roleRouter.put("/roles/:id", isAuth, (req, res, next) => {
              var roleData = [];
              var name = headerCase(req.body.roleName);
              var permissions = req.body.permissions;
@@ -127,7 +123,7 @@ roleRouter.put("/updateRole/:id", isAuth, (req, res, next) => {
 });
 
 // Store role
-roleRouter.delete("/deleteRole/:id", isAuth, (req, res, next) => {
+roleRouter.delete("/roles/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
             roleModel.deleteRole(id , (error , success , role) => {
                      return res.send({
@@ -144,7 +140,8 @@ roleRouter.delete("/deleteRole/:id", isAuth, (req, res, next) => {
 roleRouter.post("/generate_roles_permissions" , isAuth, (req , res, next) => {
       try {
         console.log("Start Syncing Data ...");
-        initiliazeRolesAndPermissions((roles, permissions, permission_role) => {
+        const user_id = req.user.id;
+        initiliazeRolesAndPermissions(user_id, (roles, permissions, permission_role) => {
           console.log("Found " + roles.length + " roles");
           if (roles.length > 0) {
             roleModel.syncRoles(roles, (error, success, result) => {

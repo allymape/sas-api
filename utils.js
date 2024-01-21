@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 var nodeMailer = require("nodemailer");
 const { default: axios } = require("axios");
-const { rolesPermissions, translations } = require("./role_permissions");
+const { rolesPermissions, translations, defaultPermissions } = require("./role_permissions");
 const db = require('./dbConnection');
 
 const {
@@ -306,13 +306,21 @@ const ObjectFuctions = {
       format
     );
   },
-  initiliazeRolesAndPermissions: (callback, userId = 1) => {
+  initiliazeRolesAndPermissions: (userId , callback) => {
     let roles = [];
     let permissions = [];
     let permission_role = [];
     let all_permission_names = [];
     let all_display_names = [];
     let role_with_permissions = [];
+    let default_permissions = [];
+    Object.entries(defaultPermissions).forEach(([name , values]) => {
+         values.split(",").forEach(value => {
+              default_permissions.push(
+                lowerCase(paramCase(translations["en"][value] + " " + name))
+              );
+         })
+    });
     // build all role , all permissions names and display names
     Object.entries(rolesPermissions).forEach(([roleName, values], i) => {
       let permission_names = [];
@@ -368,6 +376,7 @@ const ObjectFuctions = {
                   permissionId,
                   permission_name,
                   unique_display_names[permissionIndex],
+                  default_permissions.includes(permission_name) ? 1 : 0,
                   1,
                   ObjectFuctions.formatDate(new Date()),
                   userId,

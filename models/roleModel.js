@@ -94,7 +94,7 @@ module.exports = {
       db.query(
         `INSERT INTO role_management (id , role_name , status_id, created_at , created_by) 
           VALUES ? ON DUPLICATE KEY 
-          UPDATE role_name = VALUES(role_name) , status_id = VALUES(status_id), created_by = VALUES(created_by)`,
+          UPDATE role_name = VALUES(role_name) , status_id = VALUES(status_id), created_by = VALUES(created_by) , created_at=VALUES(created_at)`,
         [roles],
         (error, result) => {
           if (error) {

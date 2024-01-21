@@ -17,12 +17,17 @@ module.exports = {
       ORDER BY permission_name ASC 
       ${is_paginated ? "LIMIT ?,?" : ""} `,
       is_paginated ? [offset, per_page] : [],
-      (error, permissions, fields) => {
+      (error, permissions) => {
+        if(error) console.log(error)
         db.query(
           `SELECT COUNT(*) AS num_rows 
           ${commonSql}
           `,
-          (error2, result, fields2) => {
+          (error2 , result) => {
+            if(error) {
+              console.log(error);
+              error = error2;
+            }
             callback(error, permissions, result[0].num_rows);
           }
         );
@@ -33,9 +38,9 @@ module.exports = {
     try {
        var success = false;
        db.query(
-         `INSERT INTO permissions (id , permission_name , display_name , status_id, created_at , created_by) 
+         `INSERT INTO permissions (id , permission_name , display_name , is_default, status_id, created_at , created_by) 
           VALUES ? ON DUPLICATE KEY 
-          UPDATE permission_name = VALUES(permission_name) , display_name = VALUES(display_name) , created_at = VALUES(created_at) , created_by = VALUES(created_by) `,
+          UPDATE permission_name = VALUES(permission_name) , is_default=VALUES(is_default) , display_name = VALUES(display_name) , created_at = VALUES(created_at) , created_by = VALUES(created_by) `,
          [permissions],
          (error, result) => {
            if (error) {

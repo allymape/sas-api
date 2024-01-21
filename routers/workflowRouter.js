@@ -79,6 +79,7 @@ workflowRouter.post("/createworkflow", isAuth, (req, res, next) => {
 workflowRouter.put("/updateworkflow/:id", isAuth, (req, res) => {
             const formData = req.body;
             const id = req.params.id;
+            console.log(formData)
             workflowModel.updateWorkflow(id , formData, (success, message) => {
               return res.send({
                 success: success,

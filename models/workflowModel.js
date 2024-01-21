@@ -4,7 +4,15 @@ const { formatDate } = require("../utils");
 module.exports = {
   //******** GET A LIST OF WORKFLOWS *******************************
   getAllWorkflows: (offset, per_page, is_paginated, application_category_id, callback) => {
-    const filter = application_category_id ? `WHERE w.application_category_id = ${db.escape(application_category_id)} ` : ''
+   
+    const filter =
+      application_category_id && application_category_id.length > 0
+        ? `WHERE w.application_category_id IN (${db.escape(
+            application_category_id.length == 1
+              ? application_category_id
+              : application_category_id.map(Number)
+          )}) `
+        : "";
     const sql_from = `FROM work_flow w
           INNER JOIN application_categories ac ON ac.id = w.application_category_id
           INNER JOIN vyeo v ON v.id = w.start_from
