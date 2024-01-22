@@ -58,6 +58,8 @@ const rolesPermissions = {
     // Audit Trail
     "Audit|Kaguzi": "v,c,u,d",
     "Profile|Profaili": "v,u",
+    // Login Activity
+    "Login Activity|Waliongia" : "v",
   },
   Admin: {
     "Users|Watumiaji": "v,c,u,d",

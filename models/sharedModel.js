@@ -878,7 +878,10 @@ module.exports = {
     db.query(`${sql_rows}`, parameters, (error, data) => {
       if (error) console.log(error);
       db.query(`${sql_count}`, (error2, result) => {
-        if (error2) error = error2;
+        if (error2) {
+          console.log(error2)
+          error = error2;
+        }
         callback(error, data, result[0].num_rows);
       });
     });
