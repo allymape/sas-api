@@ -361,8 +361,7 @@ sajiliSerikaliRequestRouter.post(
             }
           }
         );
-        console.log(application_category_id , registry_type_id)
-        return;
+        // console.log(application_category_id , registry_type_id)
         db.query(
           `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
@@ -532,7 +531,6 @@ sajiliSerikaliRequestRouter.post(
               });
 
               // console.log(obj)
-
               return res.send({
                 error: false,
                 statusCode: 300,
