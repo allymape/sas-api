@@ -215,9 +215,9 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
 userRouter.put("/disable-user/:id", isAuth , permission('delete-users'), (req, res) => {
   const user_id = req.params.id;
   const {user} = req
-  console.log("kakak")
+  // console.log("kakak")
   userModal.disableUser(user , user_id , (success , message) => {
-    console.log(success , message)
+    // console.log(success , message)
       res.send({
           statusCode : success ? 300 : 306,
           message : message

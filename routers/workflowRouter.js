@@ -65,7 +65,29 @@ workflowRouter.get("/editworkflow/:id", isAuth, (req, res) => {
 
 // Store workflow
 workflowRouter.post("/createworkflow", isAuth, (req, res, next) => {
-            const formData = req.body
+            const formData = [];
+            const { application_categories, from, to, order } = req.body;
+            const applicationCategories =
+              typeof application_categories === "object"
+                ? application_categories
+                : [application_categories];
+            const _from = typeof from === 'object' ? from : [from]
+            const _to = typeof to === 'object' ? to : [to]
+            const _order = typeof order === "object" ? order : [order];
+            applicationCategories.forEach((app_id) => {
+                 _from.forEach( (value , index) => {
+                         formData.push([
+                           Number(app_id),
+                           Number(value),
+                           Number(_to[index]),
+                           Number(_order[index]),
+                           formatDate(new Date())
+                         ]);
+                 })
+
+            });
+            console.log(formData)
+            // return;
             workflowModel.storeWorkflow(formData, (success , message) => {
               return res.send({
                 success: success,

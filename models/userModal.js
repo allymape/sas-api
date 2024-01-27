@@ -10,7 +10,6 @@ module.exports = {
       const {username , password , clientIp , browser , device} = req.body;
       var message = '';
         //const userData = [];
-        console.log(req.body)
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 

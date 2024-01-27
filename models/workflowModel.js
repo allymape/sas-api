@@ -40,22 +40,15 @@ module.exports = {
   //******** STORE WORKFLOW *******************************
   storeWorkflow: (data , callback) => {
     db.query(
-      `INSERT INTO work_flow(application_category_id , start_from , end_to , _order , created_at) VALUES (?)`,[
-        [
-          Number(data.application_category_id),
-          Number(data.from),
-          Number(data.to),
-          Number(data.order),
-          formatDate(new Date()),
-        ]
-      ],
+      `INSERT INTO work_flow(application_category_id , start_from , end_to , _order , created_at) VALUES ? 
+      ON DUPLICATE KEY UPDATE application_category_id = VALUES(application_category_id) , start_from = VALUES(start_from), end_to = VALUES(end_to) , _order = VALUES(_order) , updated_at = VALUES(updated_at)`,
+      [data],
       (error, results) => {
         if (error) {
           console.log(error);
           callback(
             false,
-            "Haujafanikiwa Kuongeza Utendaji Kazi (Workflow) " +
-              error.code
+            "Haujafanikiwa Kuongeza Utendaji Kazi (Workflow) " + error.code
           );
         } else {
           callback(
