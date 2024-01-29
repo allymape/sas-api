@@ -15,8 +15,11 @@ ongezaTahasusiRequestRouter.post(
     (req, res) => {
     var obj = [];
     const user = req.user;
-    const status = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+     const status = req.body.status ? req.body.status : "";
+     const approvedStatus = approvalStatuses(req.body.status);
+     const sqlStatus = ` AND is_approved IN ${
+       approvedStatus ? approvedStatus : "(0,1)"
+     }`;
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -33,7 +36,11 @@ ongezaTahasusiRequestRouter.post(
                       former_school_combinations.establishing_school_id = establishing_schools.id AND
                       wards.WardCode = establishing_schools.ward_id AND former_school_combinations.tracking_number = applications.tracking_number
                       AND application_category_id = 12 AND payment_status_id = 2 
-                      ${selectConditionByTitle(user)} ${sqlStatus}`;
+                      ${
+                        ["pending", ""].includes(status)
+                          ? selectConditionByTitle(user)
+                          : ""
+                      } ${sqlStatus}`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     sharedModel.maombiSummaryByCategoryAndStatus(user, 12 , null , (summaries)  => {

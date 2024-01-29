@@ -15,8 +15,11 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
   const page = parseInt(req.body.page);
   const offset = (page - 1) * per_page;
   const user = req.user;
-  const status = approvalStatuses(req.body.status);
-  const sqlStatus = ` AND is_approved IN ${status ? status : '(0,1)'}`;
+  const status = req.body.status ? req.body.status : "";
+  const approvedStatus = approvalStatuses(req.body.status);
+  const sqlStatus = ` AND is_approved IN ${
+    approvedStatus ? approvedStatus : "(0,1)"
+  }`;
   // console.log(status);
   sharedModel.maombiSummaryByCategoryAndStatus(user, 2, null, (summaries) => {
     const sqlSelect = `SELECT   applications.tracking_number as tracking_number,
@@ -30,9 +33,9 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
       INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
       INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-      WHERE application_category_id = 2 AND payment_status_id = 2 ${selectConditionByTitle(
-        user
-      )} ${sqlStatus}`;
+      WHERE application_category_id = 2 AND payment_status_id = 2 ${
+        ["pending", ""].includes(status) ? selectConditionByTitle(user) : ""
+      }  ${sqlStatus}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     const sqlCount = `SELECT count(*) AS num_rows ${sqlFrom}`
 

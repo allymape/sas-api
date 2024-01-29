@@ -22,8 +22,11 @@ sajiliSerikaliRequestRouter.post(
   (req, res, next) => {
     var obj = [];
     const user = req.user;
-    const status = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+    const status = req.body.status ? req.body.status : "";
+    const approvedStatus = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${
+      approvedStatus ? approvedStatus : "(0,1)"
+    }`;
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -40,7 +43,11 @@ sajiliSerikaliRequestRouter.post(
               school_registrations.establishing_school_id = establishing_schools.id AND 
               wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number
               AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) 
-              ${selectConditionByTitle(user)}  ${sqlStatus}
+             ${
+               ["pending", ""].includes(status)
+                 ? selectConditionByTitle(user)
+                 : ""
+             }  ${sqlStatus}
               `;
 
         sharedModel.paginate(

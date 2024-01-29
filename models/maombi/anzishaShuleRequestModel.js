@@ -23,24 +23,22 @@ module.exports = {
             WHERE  application_category_id = 1  AND payment_status_id = 2
             ${
               ["pending", ""].includes(status)
-                ? selectConditionByTitle(req.user)
+                ? selectConditionByTitle(user)
                 : ""
             } 
-            ${sqlStatus}
-            `;
+            ${sqlStatus}`;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
-                    applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
-                    applications.user_id as user_id, applications.foreign_token as foreign_token,  
-                    establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
-                    districts.LgaName as LgaName, registry_types.registry as registry, folio`;
+                        applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
+                        applications.user_id as user_id, applications.foreign_token as foreign_token,  
+                        establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
+                        districts.LgaName as LgaName, registry_types.registry as registry, folio`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`
     // console.log(status);
     sharedModel.paginate(sqlRows , sqlCount,(error, results , numRows) => {
-        if (error) console.log(error);
+           if (error) console.log(error);
            callback(error, results , numRows);
-      }
-      ,
+      },
       [offset , per_page]
     );
   },
@@ -74,8 +72,8 @@ module.exports = {
             db.query(
               `SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login,
                       staffs.name as name, phone_no, vyeo.rank_name as role_name 
-               FROM staffs,
-                      vyeo where user_status = ? AND vyeo.id = staffs.user_level
+               FROM staffs, vyeo
+               WHERE user_status = ? AND vyeo.id = staffs.user_level
                       AND staffs.user_level IN (?, ?) #AND staffs.office = ?`,
               [1, 3, 5],
               function (error, objStaffs) {

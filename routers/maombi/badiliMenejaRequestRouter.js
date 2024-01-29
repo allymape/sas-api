@@ -16,8 +16,11 @@ badiliMenejaRequestRouter.post(
   (req, res) => {
     var obj = [];
     const user = req.user;
-    const status = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+    const status = req.body.status ? req.body.status : "";
+    const approvedStatus = approvalStatuses(req.body.status);
+    const sqlStatus = ` AND is_approved IN ${
+      approvedStatus ? approvedStatus : "(0,1)"
+    }`;
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -32,7 +35,11 @@ badiliMenejaRequestRouter.post(
                       districts where districts.LgaCode = wards.LgaCode AND applications.tracking_number = former_managers.tracking_number 
                       AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode
                       AND regions.RegionCode = districts.RegionCode AND application_category_id = 8 AND is_approved <> 2 AND  payment_status_id = 2
-                      ${selectConditionByTitle(user)} ${sqlStatus}`;
+                      ${
+                        ["pending", ""].includes(status)
+                          ? selectConditionByTitle(user)
+                          : ""
+                      } ${sqlStatus}`;
 
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
