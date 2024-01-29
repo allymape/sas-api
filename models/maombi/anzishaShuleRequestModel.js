@@ -5,10 +5,12 @@ module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
   anzishaShuleRequestList: (req , sqlStatus,callback) => {
     // console.log(selectConditionByTitle(user), sqlStatus);
+    const user = req.user;
+    const status = req.body.status ?  req.body.status : ""
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
-    console.log(req.body.status)
+  
     const sqlFrom = `FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  
@@ -20,7 +22,7 @@ module.exports = {
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2
             ${
-              ["pending", ""].includes(req.body.status)
+              ["pending", ""].includes(status)
                 ? selectConditionByTitle(req.user)
                 : ""
             } 
@@ -33,10 +35,10 @@ module.exports = {
                     districts.LgaName as LgaName, registry_types.registry as registry, folio`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`
-    // console.log(sqlRows)
+    // console.log(status);
     sharedModel.paginate(sqlRows , sqlCount,(error, results , numRows) => {
         if (error) console.log(error);
-        callback(error, results , numRows);
+           callback(error, results , numRows);
       }
       ,
       [offset , per_page]
