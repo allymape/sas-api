@@ -37,7 +37,7 @@ sajiliBinafsiRequestRouter.post(
                         wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number 
                         AND application_category_id = 4 AND applications.registry_type_id <> 3 
                         ${
-                          ["pending", ""].includes(status)
+                          ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
                             ? selectConditionByTitle(user)
                             : ""
                         } ${sqlStatus}`;

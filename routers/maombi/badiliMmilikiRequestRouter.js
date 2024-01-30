@@ -34,7 +34,7 @@ badiliMmilikiRequestRouter.post(
         AND establishing_schools.id = former_owners.establishing_school_id AND establishing_schools.ward_id = wards.WardCode
         AND regions.RegionCode = districts.RegionCode AND application_category_id = 7 AND payment_status_id = 2
           ${
-            ["pending", ""].includes(status) ? selectConditionByTitle(user) : ""
+            ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara" ? selectConditionByTitle(user) : ""
           } ${sqlStatus}`;
 
         const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;

@@ -8,7 +8,8 @@ const {
   UpdateAuditTrail,
   joinsByApplicationCategory,
   filterByUserOffice,
-  schoolLocationsSqlJoin
+  schoolLocationsSqlJoin,
+  notifyUser
 } = require("../utils");
 
 module.exports = {
@@ -257,7 +258,6 @@ module.exports = {
         if (error) {
           console.log(error);
         }
-        //  console.log(results);
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -549,99 +549,146 @@ module.exports = {
       }
     );
   },
+  // Business Flow base on application category
+  getMyNextBoss: (user, application_category, staff_id, callback) => {
+    var str = (str = ` AND s.id < -1`);
+    const { cheo_office , zone_id, ngazi } = user;
+    if (staff_id == 0 || staff_id == "" || staff_id == null) {
+      db.query(
+        `SELECT LOWER(rank_name) AS rank_name , rank_level
+          FROM work_flow w
+          JOIN vyeo v ON v.id = w.end_to
+          WHERE w.application_category_id = ? AND w.start_from = ? 
+          LIMIT 1`,
+        [application_category, cheo_office],
+        (error, result) => {
+          if (error) console.log(error);
+          if (result.length == 1) {
+            const { rank_name, rank_level } = result[0];
+            str = ` AND LOWER(r.name) =  '${rank_name}' AND 
+                                s.zone_id ${
+                                  rank_level == 1 ? " IS NULL" : " = " + zone_id
+                                }`;
+          }
+          callback(str);
+        }
+      );
+    } else {
+      callback(str);
+    }
+  },
   tumaMaoni: (req, application_category, callback) => {
     var success = false;
     const today = formatDate(new Date(), "YYYY-MM-DD HH:mm:ss");
     const { user } = req;
-    const {haliombi , department , trackerId , staffs, replyType , from_user , coments} = req.body;
+    const {
+      haliombi,
+      department,
+      trackerId,
+      staffs,
+      replyType,
+      from_user,
+      coments,
+    } = req.body;
     const userTo = Number(staffs);
     const staff_id = userTo == 0 ? null : userTo;
-
-    db.query(
-      `SELECT s.id AS id 
+    module.exports.getMyNextBoss(user , application_category, staff_id , (nextBossSql) => {
+      // console.log(nextBossSql);
+       db.query(
+         `SELECT s.id AS id 
                   FROM staffs s 
                   JOIN roles r ON r.id = s.user_level
                   JOIN vyeo v ON v.id = r.vyeoId
                   WHERE s.user_status = 1  
-                  ${getMyNextBoss(user, application_category, staff_id)}
+                  ${nextBossSql}
                   LIMIT 1
                   `,
-      (err, staff) => {
-        if (err) console.log(err);
-        var user_to = staff_id;
+         (err, staff) => {
+           if (err) console.log(err);
+           var user_to = staff_id;
+           if (staff.length > 0) {
+             user_to = staff[0].id;
+           }
 
-        if (staff.length > 0) {
-          user_to = staff[0].id;
-        }
-
-        if (user.cheo != "ke" && !user_to) {
-          console.log("Kuna shida");
-          callback(success);
-        } else {
-          console.log("inatumwa kwa ", staff);
-          db.query(
-            `INSERT INTO maoni (trackingNo, user_from, user_to, coments, 
-        type_of_comment, created_at) VALUES 
-        (${db.escape(trackerId)}, ${db.escape(from_user)}, 
-        ${db.escape(staffs)}, ${db.escape(coments)}, 
-        ${db.escape(replyType)}, ${db.escape(today)})`,
-            function (error, results) {
-              if (error) {
-                console.log(error);
-              } else {
-                if (results.affectedRows > 0) {
-                  success = true;
-                }
-              }
-              
-              db.query(
-                "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
-                [
-                  user_to,
-                  department,
-                  haliombi,
-                  haliombi > 1 ? user.id : null, 
-                  today,
-                  trackerId,
-                ],
-                function (error) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  //sendMail(req.body.staffs)
-                  db.query(
-                    `SELECT id FROM maoni where 
-                        trackingNo = ${db.escape(req.body.trackerId)} AND 
-                        user_from = ${db.escape(req.body.from_user)} AND 
-                        user_to = ${db.escape(
-                          req.body.staffs
-                        )} AND coments = ${db.escape(req.body.coments)}`,
-                    function (error, results) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      var rollId = results[0].id;
-                      InsertAuditTrail(
-                        req.user.id,
-                        "created",
-                        req.body,
-                        req.url,
-                        req.body.browser_used,
-                        rollId,
-                        "Maoni umiliki yameongezwa!",
-                        req.body.ip_address,
-                        "maoni"
-                      );
-                      callback(success);
-                    }
-                  );
-                }
-              );
-            }
-          );
-        }
-      }
-    );
+           if (user.cheo != "ke" && !user_to) {
+             console.log("Kuna shida");
+             callback(success);
+           } else {
+             console.log("inatumwa kwa ", staff);
+             db.query(
+               `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+                (
+                  ${db.escape(trackerId)}, 
+                  ${db.escape(from_user)}, 
+                  ${db.escape(staffs)}, 
+                  ${db.escape(coments)}, 
+                  ${db.escape(replyType)}, 
+                  ${db.escape(today)}
+                )`,
+               function (error, results) {
+                 if (error) {
+                   console.log(error);
+                 } else {
+                   if (results.affectedRows > 0) {
+                     success = true;
+                     //sendMail notify
+                       notifyUser(
+                         user_to,
+                         application_category,
+                         user.name,
+                         trackerId
+                       );
+                   }
+                   db.query(
+                     "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
+                     [
+                       user_to,
+                       department,
+                       haliombi,
+                       haliombi > 1 ? user.id : null,
+                       today,
+                       trackerId,
+                     ],
+                     function (error) {
+                       if (error) {
+                         console.log(error);
+                       }
+                      
+                       db.query(
+                         `SELECT id FROM maoni where 
+                          trackingNo = ${db.escape(req.body.trackerId)} AND 
+                          user_from = ${db.escape(req.body.from_user)} AND 
+                          user_to = ${db.escape(
+                            req.body.staffs
+                          )} AND coments = ${db.escape(req.body.coments)}`,
+                         function (error, results) {
+                           if (error) {
+                             console.log(error);
+                           }
+                           var rollId = results[0].id;
+                           InsertAuditTrail(
+                             req.user.id,
+                             "created",
+                             req.body,
+                             req.url,
+                             req.body.browser_used,
+                             rollId,
+                             "Maoni umiliki yameongezwa!",
+                             req.body.ip_address,
+                             "maoni"
+                           );
+                           callback(success);
+                         }
+                       );
+                     }
+                   );
+                 }
+               }
+             );
+           }
+         }
+       );
+    });
   },
 
   findOneApplication: (tracking_number, callback) => {
@@ -879,7 +926,7 @@ module.exports = {
       if (error) console.log(error);
       db.query(`${sql_count}`, (error2, result) => {
         if (error2) {
-          console.log(error2)
+          console.log(error2);
           error = error2;
         }
         callback(error, data, result[0].num_rows);

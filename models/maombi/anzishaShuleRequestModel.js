@@ -10,7 +10,7 @@ module.exports = {
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
-  
+ 
     const sqlFrom = `FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  
@@ -22,7 +22,7 @@ module.exports = {
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2
             ${
-              ["pending", ""].includes(status)
+              ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
                 ? selectConditionByTitle(user)
                 : ""
             } 

@@ -15,9 +15,11 @@ module.exports = {
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
             s.role_id as role_id, s.new_role_id as new_role_id, s.email as email, v.id AS section_id,
             rnk.name as ngazi, v.rank_name as sehemu, rm.role_name as jukumu,
-            s.station_level as station_level, user_level, s.office as office, r.name as rank_name,
+            s.station_level as station_level, user_level, s.office as office, 
+            r.id AS rank_id , r.name as rank_name,
             zone_id,zone_name,region_code,district_code, 
             v.status_id as status_id, 
+            v.id as cheo_office ,
             v.rank_level as rank_level, s.twofa as twofa 
             FROM staffs s
             INNER JOIN roles r  ON r.id = s.user_level

@@ -46,7 +46,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           rank_name: user.rank_name,
           // status_id: user.status_id,
           zone_id: Number(user.zone_id),
-          kanda : user.zone_name,
+          kanda: user.zone_name,
           region_code: user.region_code,
           district_code: user.district_code,
           rank_level: user.rank_level,
@@ -56,6 +56,7 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
           ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
           sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
           cheo: user.rank_name ? lowerCase(user.rank_name) : "",
+          cheo_office: user.cheo_office,
           jukumu: user.jukumu ? upperCase(user.jukumu) : "",
         };
         // console.log("User Data", userData);
@@ -64,19 +65,21 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
         }
         // console.log(permissionData);
         const token = generateAccessToken({
-              id: userData.id,
-              office: userData.office,
-              zone_id: userData.zone_id,
-              kanda: userData.kanda,
-              region_code: userData.region_code,
-              district_code: userData.district_code,
-              userPermissions: permissionData,
-              user_level: Number(userData.user_level),
-              section_id: Number(userData.section_id),
-              ngazi: userData.ngazi, //wizara,kanda au wilaya
-              sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-              cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-              jukumu: userData.jukumu,
+          id: userData.id,
+          name : userData.name,
+          office: userData.office,
+          zone_id: userData.zone_id,
+          kanda: userData.kanda,
+          region_code: userData.region_code,
+          district_code: userData.district_code,
+          userPermissions: permissionData,
+          user_level: Number(userData.user_level),
+          section_id: Number(userData.section_id),
+          ngazi: userData.ngazi, //wizara,kanda au wilaya
+          sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+          cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+          cheo_office: Number(userData.cheo_office),
+          jukumu: userData.jukumu,
         });
         res.send({
           error: false,

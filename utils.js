@@ -29,6 +29,7 @@ const {
   localeLowerCase,
 } = require("text-case");
 const dateAndTime = require("date-and-time");
+const { notifyUserOnComment } = require("./templates/emailTemplate");
 
 
 const ObjectFuctions = {
@@ -152,6 +153,51 @@ const ObjectFuctions = {
     }
     return i;
   },
+  // notify
+  notifyUser : (userTo , application_category , sender , tracking_number) => {
+         console.log(`Start Email Notification`)
+         db.query(
+           `SELECT app_name FROM application_categories ac WHERE ac.id = ?`,
+           [application_category],
+           (error2, app_category) => {
+             if (error2) console.log(error2);
+             db.query(
+               `SELECT name, email FROM staffs s WHERE s.id = ? AND email_notify = 1`,
+               [userTo],
+               (error, staff) => {
+                 if (error) console.log(error);
+                 if (app_category.length > 0) {
+                   const app_name = app_category[0].app_name;
+                  
+                   if (staff.length > 0) {
+                     let { name, email } = staff[0];
+                     let link = `${
+                       process.env.APP_URL ||
+                       "http:localhost:" + process.env.HTTP_PORT
+                     }`;
+                     let htmlContent = notifyUserOnComment(
+                       name,
+                       app_name,
+                       sender,
+                       link,
+                       tracking_number
+                     );
+                     let mailOptions = ObjectFuctions.setMailOptions(
+                       email,
+                       "Notify",
+                       htmlContent
+                     );
+                    ObjectFuctions.sendEmail(mailOptions, (error, info) => {
+                       console.log("Message %s sent: %s", info, error);
+                     });
+                   }
+                 }
+               }
+             );
+           }
+         );
+     
+  },
   //Send Email
   sendEmail: (mailOptions, callback) => {
     let transporter = nodeMailer.createTransport({
@@ -164,6 +210,7 @@ const ObjectFuctions = {
       },
     });
     transporter.sendMail(mailOptions, (error, info) => {
+      if(error) console.log(error)
       callback(error, info);
     });
   },
@@ -440,7 +487,7 @@ const ObjectFuctions = {
     return str;
   },
   getMyNextBoss: (user, application_category, staff_id) => {
-    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+    const { cheo, zone_id } = user;
    
     if (staff_id == 0 || staff_id == "" || staff_id == null) {
       var str = ``;

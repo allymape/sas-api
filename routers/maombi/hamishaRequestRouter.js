@@ -39,7 +39,7 @@ hamishaRequestRouter.post(
               wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
               AND application_category_id = 10 AND is_approved <> 2 AND payment_status_id = 2 
                 ${
-                  ["pending", ""].includes(status)
+                  ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
                     ? selectConditionByTitle(user)
                     : ""
                 } ${sqlStatus}`;

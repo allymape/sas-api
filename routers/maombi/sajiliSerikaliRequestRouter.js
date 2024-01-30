@@ -44,7 +44,7 @@ sajiliSerikaliRequestRouter.post(
               wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number
               AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) 
              ${
-               ["pending", ""].includes(status)
+               ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
                  ? selectConditionByTitle(user)
                  : ""
              }  ${sqlStatus}
@@ -136,11 +136,6 @@ sajiliSerikaliRequestRouter.post(
   (req, res, next) => {
     var trackingNumber = req.body.TrackingNumber;
     const user = req.user;
-    const status = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
-    var userLevel = user.user_level;
-    var office = req.body.office;
-    // console.log(req.body);
     var obj = [];
     var objMess = [];
     var objStaffs = [];
@@ -154,42 +149,42 @@ sajiliSerikaliRequestRouter.post(
     var DisabledTitle;
 
     db.query(
-      "SELECT manager_first_name, owner_name, number_of_teachers, gender_type," +
-        " is_for_disabled, building, teacher_student_ratio_recommendation, " +
-        " registration_structures.structure as structure, school_opening_date, number_of_students, " +
-        " school_sub_categories.subcategory as subcategory, " +
-        " establishing_schools.tracking_number as tracking_number_old, " +
-        " establishing_schools.area as area, school_phone, " +
-        " establishing_schools.school_size as school_size, " +
-        " languages.language as language, school_email, po_box, website, " +
-        " school_categories.id as schoolCategoryID, school_categories.category as schoolCategory, " +
-        " applications.tracking_number as tracking_number, is_seminary, " +
-        " applications.created_at as created_at, teacher_information, " +
-        " applications.registry_type_id as registry_type_id, application_category_id, applications.user_id as user_id, stream, " +
-        " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-        " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName " +
-        " FROM managers, owners, building_structures, school_gender_types, " +
-        " school_registrations, school_sub_categories, establishing_schools, applications, " +
-        " registration_structures, wards, districts, school_categories, languages, regions " +
-        " WHERE managers.establishing_school_id = establishing_schools.id " +
-        " AND owners.establishing_school_id = establishing_schools.id AND " +
-        " building_structures.id = establishing_schools.building_structure_id " +
-        " AND school_gender_types.id = establishing_schools.school_gender_type_id " +
-        " AND school_registrations.establishing_school_id = establishing_schools.id AND " +
-        " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-        " languages.id = establishing_schools.language_id AND " +
-        " school_categories.id = establishing_schools.school_category_id AND" +
-        " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-        " wards.WardCode = establishing_schools.ward_id AND " +
-        " school_registrations.tracking_number = applications.tracking_number " +
-        " AND application_category_id = 4 AND applications.tracking_number = ?",
+      `SELECT manager_first_name, owner_name, number_of_teachers, gender_type,
+        is_for_disabled, building, teacher_student_ratio_recommendation,
+        registration_structures.structure as structure, school_opening_date, number_of_students,
+        school_sub_categories.subcategory as subcategory,
+        establishing_schools.tracking_number as tracking_number_old,
+        establishing_schools.area as area, school_phone,
+        establishing_schools.school_size as school_size,
+        languages.language as language, school_email, po_box, website,
+        school_categories.id as schoolCategoryID, school_categories.category as schoolCategory,
+        applications.tracking_number as tracking_number, is_seminary,
+        applications.created_at as created_at, teacher_information,
+        applications.registry_type_id as registry_type_id, application_category_id, applications.user_id as user_id, stream,
+        applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
+        wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName
+        FROM managers
+        JOIN establishing_schools ON managers.establishing_school_id = establishing_schools.id 
+        JOIN  owners ON owners.establishing_school_id = establishing_schools.id 
+        JOIN building_structures ON building_structures.id = establishing_schools.building_structure_id 
+        JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+        JOIN school_gender_types ON school_gender_types.id = establishing_schools.school_gender_type_id
+        JOIN school_registrations ON school_registrations.establishing_school_id = establishing_schools.id
+        JOIN applications ON  school_registrations.tracking_number = applications.tracking_number 
+        JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
+        JOIN wards ON wards.WardCode = establishing_schools.ward_id 
+        JOIN districts  ON districts.LgaCode = wards.LgaCode 
+        JOIN school_categories ON school_categories.id = establishing_schools.school_category_id  
+        LEFT JOIN languages ON languages.id = establishing_schools.language_id  
+        JOIN regions ON regions.RegionCode = districts.RegionCode 
+        WHERE application_category_id = 4 AND applications.tracking_number = ?`,
       [trackingNumber],
-      function (error, results, fields) {
+      function (error, results) {
         if (error) {
           console.log(error);
         }
-        // console.log("results");
-     
+        // console.log(results);
+
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -368,7 +363,7 @@ sajiliSerikaliRequestRouter.post(
             }
           }
         );
-        // console.log(application_category_id , registry_type_id)
+        console.log(application_category_id, registry_type_id);
         db.query(
           `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
@@ -378,7 +373,7 @@ sajiliSerikaliRequestRouter.post(
             if (error) {
               console.log(error);
             }
-          
+
             for (var i = 0; i < results.length; i++) {
               var file_format = results[i].file_format;
               var app_id = results[i].id;

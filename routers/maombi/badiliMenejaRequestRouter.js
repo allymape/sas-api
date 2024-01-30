@@ -36,7 +36,7 @@ badiliMenejaRequestRouter.post(
                       AND establishing_schools.id = former_managers.establishing_school_id AND establishing_schools.ward_id = wards.WardCode
                       AND regions.RegionCode = districts.RegionCode AND application_category_id = 8 AND is_approved <> 2 AND  payment_status_id = 2
                       ${
-                        ["pending", ""].includes(status)
+                        ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
                           ? selectConditionByTitle(user)
                           : ""
                       } ${sqlStatus}`;
