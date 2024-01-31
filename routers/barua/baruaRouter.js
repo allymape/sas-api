@@ -2,11 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const db = require("../../dbConnection");
 const baruaRouter = express.Router();
-const { isAuth, formatDate, applicationView } = require("../../utils");
+const { isAuth, formatDate, applicationView, permission } = require("../../utils");
 
 
 // List of
-baruaRouter.post("/barua/:tracking_number",isAuth, (req, res) => {
+baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (req, res) => {
       const tracking_number = req.params.tracking_number;
       db.query(`SELECT application_category_id, registry_type_id
                 FROM applications a

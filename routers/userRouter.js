@@ -16,6 +16,7 @@ const {
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
 const { resetPassword } = require("../templates/emailTemplate.js");
+const baruaSecret = process.env.BARUA_SECRET_KEY || 'MY-SECRET-KEY'
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes
   max: 20, // Limit each IP to 5 requests per `window` (here, per 10 minutes)
@@ -24,7 +25,7 @@ const loginlimiter = rateLimit({
 });
 
 //login api
-userRouter.post("/login", loginlimiter, (req, res, next) => {
+userRouter.post("/login", loginlimiter, (req, res) => {
   userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
       const permissionData = [];
@@ -99,6 +100,42 @@ userRouter.post("/login", loginlimiter, (req, res, next) => {
       });
     }
   });
+});
+
+// barua authentication
+userRouter.post(`/authenticate-barua` , (req , res) => {
+        const {secret_key , tracking_number , name} = req.body;
+        console.log(secret_key , tracking_number , name)
+        console.log([secret_key, tracking_number, name].includes(""));
+        if(![secret_key , tracking_number , name].includes("")){
+          if(secret_key === baruaSecret){
+             const user = {
+               name: name,
+               tracking_number: tracking_number,
+               userPermissions: ["view-letters"],
+             };
+             const token = generateAccessToken(user);
+             res.status(201).send({
+               success: true,
+               statusCode: 201,
+               token,
+               message: `Token successfully`,
+             });
+          }else{
+             return res.status(401).send({
+               success: false,
+               statusCode: 401,
+               message: `Invalid secret key`,
+             });
+          }
+         
+        }else{
+          return res.status(422).send({
+            success : false,
+            statusCode : 422,
+            message: `Key is required.`
+          })
+        }
 });
 
 //get list of users

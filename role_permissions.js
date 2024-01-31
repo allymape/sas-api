@@ -59,7 +59,8 @@ const rolesPermissions = {
     "Audit|Kaguzi": "v,c,u,d",
     "Profile|Profaili": "v,u",
     // Login Activity
-    "Login Activity|Waliongia" : "v",
+    "Login Activity|Waliongia": "v",
+    "Letters|Barua": "v",
   },
   Admin: {
     "Users|Watumiaji": "v,c,u,d",
@@ -97,11 +98,13 @@ const rolesPermissions = {
     "Addition of Bias Report|Ripoti ya Kuongeza Tahasusi": "v",
     "Comments|Maoni": "v,c",
     "Profile|Profaili": "v,u",
+    "Letters|Barua": "v",
   },
 };
 const defaultPermissions = {
   Dashboard: "v",
   Profile : "v,u",
+  Letters : "v",
 };
 const translations = {
   en: {
