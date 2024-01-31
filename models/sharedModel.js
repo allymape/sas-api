@@ -609,18 +609,19 @@ module.exports = {
            if (staff.length > 0) {
              user_to = staff[0].id;
            }
-
+           
            if (user.cheo != "ke" && !user_to) {
              console.log("Kuna shida");
              callback(success);
            } else {
              console.log("inatumwa kwa ", staff);
+             
              db.query(
                `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
                 (
                   ${db.escape(trackerId)}, 
                   ${db.escape(from_user)}, 
-                  ${db.escape(staffs)}, 
+                  ${db.escape(Number(staffs))}, 
                   ${db.escape(coments)}, 
                   ${db.escape(replyType)}, 
                   ${db.escape(today)}

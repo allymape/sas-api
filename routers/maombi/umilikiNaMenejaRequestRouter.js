@@ -534,84 +534,39 @@ umilikiNaMenejaRequestRouter.post("/tuma-mmiliki-majibu", isAuth, (req, res) => 
   var owner_name = req.body.owner_name;
   var authorized_person = req.body.authorized_person;
   var today = new Date();
+
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
       sharedModel.tumaMaoni(req, app_category, (success) => {
-        //  if (req.body.haliombi == 1) {
-        //    db.query(
-        //      "select email from staffs where id = ?",
-        //      [req.body.staffs],
-        //      function (error, results, fields) {
-        //        if (error) {
-        //          console.log(error);
-        //        }
-        //        var email = results[0].email;
-        //        let transporter = nodeMailer.createTransport({
-        //          host: process.env.MAIL_HOST,
-        //          port: 465,
-        //          secure: true,
-        //          auth: {
-        //            user: process.env.MAIL_USER,
-        //            pass: process.env.MAIL_PASS,
-        //          },
-        //        });
-        //        let mailOptions = {
-        //          from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-        //          to: email, // list of receivers
-        //          subject: "Taarifa ya Ombi", // Subject line
-        //          html:
-        //            "Ombi la Kituhibitisha Umiliki na Umeneja lenye namba " +
-        //            req.body.trackerId +
-        //            " limetumwa kwako. Asante", // plain text body
-        //          text: "<b>EA.20220920-220</b>", // html body
-        //        };
-
-        //        transporter.sendMail(mailOptions, (error, info) => {
-        //          if (error) {
-        //            return console.log(error);
-        //          }
-        //          console.log(
-        //            "Message %s sent: %s",
-        //            info.messageId,
-        //            info.response
-        //          );
-        //          // res.render('index');
-        //          return res.status(200).send({
-        //            error: true,
-        //            statusCode: 300,
-        //            msg: "Mail imetumwa!!!",
-        //          });
-        //        });
-        //      }
-        //    );
-        //  }
-        if (req.body.haliombi == 2) {
-          db.query(
-            "UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?",
-            [today, req.body.establishId],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
-              }
-              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                console.log("yes we can do it");
-              }
-              db.query(
-                "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
-                [owner_name, authorized_person, req.body.establishId],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                    console.log("yes we can do it");
-                  }
-                }
-              );
-            }
-          );
-        }
+       
+        // if (req.body.haliombi == 2) {
+        //   db.query(
+        //     "UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?",
+        //     [today, req.body.establishId],
+        //     function (error, results, fields) {
+        //       if (error) {
+        //         console.log(error);
+        //       }
+        //       if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+        //         console.log("yes we can do it");
+        //       }
+        //       db.query(
+        //         "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
+        //         [owner_name, authorized_person, req.body.establishId],
+        //         function (error, results, fields) {
+        //           if (error) {
+        //             console.log(error);
+        //           }
+        //           if (req.body.ombitype == 1 && req.body.haliombi == 0) {
+        //             console.log("yes we can do it");
+        //           }
+        //         }
+        //       );
+        //     }
+        //   );
+        // }
+        
         return res.send({
           error: success ? true : false,
           statusCode: success ? 300 : 306,
