@@ -235,6 +235,17 @@ schoolRouter.put(`/update-school/:id` , (req , res) => {
     });
 })
 
+// change school name
+schoolRouter.post("/change-shule", isAuth, (req, res) => {
+  schoolModel.changeSchoolName(req , (success) => {
+      res.send({
+                success: success,
+                statusCode: success ? 300 : 306,
+                message: success ? "Umefanikiwa Kubadili jina la shule" : "Haujafanikiwa kubadili jina",
+          });
+  })
+});
+
 // Fetch all schools from Schools API and store
 schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
       var established_schools = [];
@@ -396,5 +407,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
               });
            }
 });
+
+
 
 module.exports = schoolRouter;

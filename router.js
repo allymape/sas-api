@@ -4969,39 +4969,39 @@ router.post("/deleteMchepuo", (req, res, next) => {
 //   }
 // );
 
-//kusajili shirikisho
-router.post("/change-shule", shirikishoValidation, (req, res, next) => {
-  console.log(req.body);
-  var today = new Date();
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    "UPDATE establishing_schools SET school_name = ? WHERE tracking_number = ?",
-    [req.body.newName, req.body.trackingId],
-    function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      }
-      return res.send({
-        error: false,
-        statusCode: 300,
-        data: "success",
-        message: "Change Successfully Recorded.",
-      });
-    }
-  );
-});
+// //kusajili shirikisho
+// router.post("/change-shule", shirikishoValidation, (req, res, next) => {
+//   console.log(req.body);
+//   var today = new Date();
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     "UPDATE establishing_schools SET school_name = ? WHERE tracking_number = ?",
+//     [req.body.newName, req.body.trackingId],
+//     function (error, results, fields) {
+//       if (error) {
+//         console.log(error);
+//       }
+//       return res.send({
+//         error: false,
+//         statusCode: 300,
+//         data: "success",
+//         message: "Change Successfully Recorded.",
+//       });
+//     }
+//   );
+// });
 
 //kusajili shirikisho
 // router.post("/tuma-sajili-majibu", shirikishoValidation, (req, res, next) => {

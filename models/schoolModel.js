@@ -252,5 +252,19 @@ module.exports = {
           }
           callback(error);
         })
+  },
+
+  changeSchoolName : (req , callback) => {
+    db.query(
+            "UPDATE establishing_schools SET school_name = ? WHERE tracking_number = ?",
+            [req.body.newName, req.body.trackingId],
+            function (error, results, fields) {
+              if (error) {
+                console.log(error);
+              }
+              const success = results.affectedRows > 0
+              callback(success);
+            }
+          );
   }
 };
