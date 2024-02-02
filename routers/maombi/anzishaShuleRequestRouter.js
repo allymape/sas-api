@@ -65,7 +65,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
 
 anzishaShuleRequestRouter.post("/tuma-ombi-majibu", isAuth , (req, res) => {
       const tracking_number = req.body.trackerId;
-      // console.log("maoni "+req.bpdy)
+      console.log(JSON.stringify(req.body));
       sharedModel.findOneApplication( tracking_number, (app) => {
         const app_category = app["application_category_id"];
              if(app_category){

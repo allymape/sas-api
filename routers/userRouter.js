@@ -103,10 +103,10 @@ userRouter.post("/login", loginlimiter, (req, res) => {
 });
 
 // barua authentication
-userRouter.post(`/authenticate-barua` , (req , res) => {
+userRouter.post(`/authenticate-barua` , (req , res) => {   
         const {secret_key , tracking_number , name} = req.body;
-        console.log(secret_key , tracking_number , name)
-        console.log([secret_key, tracking_number, name].includes(""));
+        // console.log(secret_key , tracking_number , name)
+        // console.log([secret_key, tracking_number, name].includes(""));
         if(![secret_key , tracking_number , name].includes("")){
           if(secret_key === baruaSecret){
              const user = {

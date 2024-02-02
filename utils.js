@@ -34,7 +34,7 @@ const { notifyUserOnComment } = require("./templates/emailTemplate");
 
 const ObjectFuctions = {
   generateAccessToken : (user) => {
-    console.log(user)
+    // console.log(user)
     return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect", { expiresIn: '15m' });
   },
   generateRefreshToken : (user) => {
@@ -369,6 +369,7 @@ const ObjectFuctions = {
          })
     });
     // build all role , all permissions names and display names
+    // console.log(default_permissions);
     Object.entries(rolesPermissions).forEach(([roleName, values], i) => {
       let permission_names = [];
       let display_names = [];
@@ -390,7 +391,10 @@ const ObjectFuctions = {
           all_permission_names.push(permission_name);
         });
       });
-      role_with_permissions.push([roleName, permission_names]);
+      role_with_permissions.push([
+        roleName,
+        permission_names + default_permissions,
+      ]);
     });
     // find unique permissions and set to all roles and assign appropriate permission to role
     if (all_permission_names.length > 0) {

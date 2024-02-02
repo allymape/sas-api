@@ -34,8 +34,11 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
       INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
       WHERE application_category_id = 2 AND payment_status_id = 2 ${
-        ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara" ? selectConditionByTitle(user) : ""
-      }  ${sqlStatus}`;
+        ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
+          ? selectConditionByTitle(user)
+          : ""
+      }  ${sqlStatus}
+      ORDER BY applications.created_at DESC`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     const sqlCount = `SELECT count(*) AS num_rows ${sqlFrom}`
 

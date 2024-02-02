@@ -37,10 +37,12 @@ badiliJinaRequestRouter.post(
                     wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
                     AND application_category_id = 9 AND payment_status_id = 2 
                      ${
-                       ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
+                       ["pending", ""].includes(status) ||
+                       user.ngazi.toLowerCase() != "wizara"
                          ? selectConditionByTitle(user)
                          : ""
-                     }  ${sqlStatus}`;
+                     }  ${sqlStatus}
+                     ORDER BY applications.created_at DESC`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     

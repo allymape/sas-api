@@ -590,7 +590,7 @@ module.exports = {
       from_user,
       coments,
     } = req.body;
-    const userTo = Number(staffs);
+    const userTo = staffs == '#' || staffs == "" ? 0 : Number(staffs);
     const staff_id = userTo == 0 ? null : userTo;
     module.exports.getMyNextBoss(user , application_category, staff_id , (nextBossSql) => {
       // console.log(nextBossSql);
@@ -621,7 +621,7 @@ module.exports = {
                 (
                   ${db.escape(trackerId)}, 
                   ${db.escape(from_user)}, 
-                  ${db.escape(Number(staffs))}, 
+                  ${db.escape(user_to)}, 
                   ${db.escape(coments)}, 
                   ${db.escape(replyType)}, 
                   ${db.escape(today)}
@@ -644,7 +644,7 @@ module.exports = {
                      "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
                      [
                        user_to,
-                       department,
+                       0,
                        haliombi,
                        haliombi > 1 ? user.id : null,
                        today,
@@ -656,28 +656,34 @@ module.exports = {
                        }
                       
                        db.query(
-                         `SELECT id FROM maoni where 
-                          trackingNo = ${db.escape(req.body.trackerId)} AND 
-                          user_from = ${db.escape(req.body.from_user)} AND 
+                         `SELECT id 
+                          FROM maoni 
+                          WHERE 
+                          trackingNo = ${db.escape(trackerId)} AND 
+                          user_from = ${db.escape(from_user)} AND 
                           user_to = ${db.escape(
-                            req.body.staffs
-                          )} AND coments = ${db.escape(req.body.coments)}`,
+                            user_to
+                          )}
+                          ORDER BY id DESC
+                          LIMIT 1`,
                          function (error, results) {
                            if (error) {
                              console.log(error);
                            }
-                           var rollId = results[0].id;
-                           InsertAuditTrail(
-                             req.user.id,
-                             "created",
-                             req.body,
-                             req.url,
-                             req.body.browser_used,
-                             rollId,
-                             "Maoni umiliki yameongezwa!",
-                             req.body.ip_address,
-                             "maoni"
-                           );
+                           if(results.length > 0){
+                            var rollId = results[0].id;
+                            InsertAuditTrail(
+                              req.user.id,
+                              "created",
+                              req.body,
+                              req.url,
+                              req.body.browser_used,
+                              rollId,
+                              "Maoni yameongezwa!",
+                              req.body.ip_address,
+                              "maoni"
+                            );
+                           }
                            callback(success);
                          }
                        );

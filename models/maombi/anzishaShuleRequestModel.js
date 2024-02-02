@@ -22,11 +22,13 @@ module.exports = {
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2
             ${
-              ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
+              ["pending", ""].includes(status) ||
+              user.ngazi.toLowerCase() != "wizara"
                 ? selectConditionByTitle(user)
                 : ""
             } 
-            ${sqlStatus}`;
+            ${sqlStatus}
+            ORDER BY applications.created_at DESC`;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
                         applications.created_at as created_at, applications.registry_type_id as registry_type_id,  
                         applications.user_id as user_id, applications.foreign_token as foreign_token,  

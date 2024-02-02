@@ -37,10 +37,12 @@ ongezaDahaliaRequestRouter.post(
                     wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
                     AND application_category_id = 13 AND payment_status_id = 2
                     ${
-                      ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
+                      ["pending", ""].includes(status) ||
+                      user.ngazi.toLowerCase() != "wizara"
                         ? selectConditionByTitle(user)
                         : ""
-                    } ${sqlStatus}`;
+                    } ${sqlStatus}
+                    ORDER BY applications.created_at DESC`;
 
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
@@ -119,7 +121,7 @@ ongezaDahaliaRequestRouter.post(
 ongezaDahaliaRequestRouter.post(
   "/view-badili-dahalia",
   isAuth,
-  permission("view-change-of-combinations"),
+  permission("view-change-of-hostel"),
   (req, res) => {
     var trackingNumber = req.body.TrackingNumber;
     const user = req.user;
@@ -134,7 +136,7 @@ ongezaDahaliaRequestRouter.post(
     var objMaoni = [];
     var objAttachment1 = [];
     var objAttachment2 = [];
-  
+
     db.query(
       `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
          school_sub_categories.subcategory as subcategory, former_school_infos.stream as streamOld,  

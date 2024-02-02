@@ -44,11 +44,12 @@ sajiliSerikaliRequestRouter.post(
               wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number
               AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) 
              ${
-               ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
+               ["pending", ""].includes(status) ||
+               user.ngazi.toLowerCase() != "wizara"
                  ? selectConditionByTitle(user)
                  : ""
              }  ${sqlStatus}
-              `;
+             ORDER BY applications.created_at DESC `;
 
         sharedModel.paginate(
           ` SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
@@ -164,14 +165,14 @@ sajiliSerikaliRequestRouter.post(
         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
         wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName
         FROM managers
-        JOIN establishing_schools ON managers.establishing_school_id = establishing_schools.id 
-        JOIN  owners ON owners.establishing_school_id = establishing_schools.id 
-        JOIN building_structures ON building_structures.id = establishing_schools.building_structure_id 
-        JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
-        JOIN school_gender_types ON school_gender_types.id = establishing_schools.school_gender_type_id
-        JOIN school_registrations ON school_registrations.establishing_school_id = establishing_schools.id
-        JOIN applications ON  school_registrations.tracking_number = applications.tracking_number 
-        JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
+        LEFT JOIN establishing_schools ON managers.establishing_school_id = establishing_schools.id 
+        LEFT JOIN  owners ON owners.establishing_school_id = establishing_schools.id 
+        LEFT JOIN building_structures ON building_structures.id = establishing_schools.building_structure_id 
+        LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+        LEFT JOIN school_gender_types ON school_gender_types.id = establishing_schools.school_gender_type_id
+        LEFT JOIN school_registrations ON school_registrations.establishing_school_id = establishing_schools.id
+        LEFT JOIN applications ON  school_registrations.tracking_number = applications.tracking_number 
+        LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
         JOIN wards ON wards.WardCode = establishing_schools.ward_id 
         JOIN districts  ON districts.LgaCode = wards.LgaCode 
         JOIN school_categories ON school_categories.id = establishing_schools.school_category_id  
@@ -183,7 +184,7 @@ sajiliSerikaliRequestRouter.post(
         if (error) {
           console.log(error);
         }
-        // console.log(results);
+        console.log(results);
 
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
@@ -369,25 +370,26 @@ sajiliSerikaliRequestRouter.post(
               FROM attachment_types
               WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
                     AND application_category_id = ${application_category_id}`,
-          function (error, results, fields) {
+          function (error, results) {
             if (error) {
               console.log(error);
             }
-
-            for (var i = 0; i < results.length; i++) {
-              var file_format = results[i].file_format;
-              var app_id = results[i].id;
-              var attachment_name = results[i].attachment_name;
-              var registry = results[i].registry;
-              var application_name = results[i].app_name;
-              objAttachment.push({
-                file_format: file_format,
-                attachment_name: attachment_name,
-                registry_id: app_id,
-                registry: registry,
-                application_name: application_name,
-              });
-            }
+           if(results){
+             for (var i = 0; i < results.length; i++) {
+               var file_format = results[i].file_format;
+               var app_id = results[i].id;
+               var attachment_name = results[i].attachment_name;
+               var registry = results[i].registry;
+               var application_name = results[i].app_name;
+               objAttachment.push({
+                 file_format: file_format,
+                 attachment_name: attachment_name,
+                 registry_id: app_id,
+                 registry: registry,
+                 application_name: application_name,
+               });
+             }
+           }
           }
         );
 
