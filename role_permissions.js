@@ -99,6 +99,7 @@ const rolesPermissions = {
     "Comments|Maoni": "v,c",
     "Profile|Profaili": "v,u",
     "Letters|Barua": "v",
+    "School Name|Jina la Shule" : "u",
   },
 };
 const defaultPermissions = {

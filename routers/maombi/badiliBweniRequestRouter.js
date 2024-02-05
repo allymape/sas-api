@@ -140,9 +140,10 @@ badiliBweniRequestRouter.post(
 
     db.query(
       `SELECT  establishing_schools.id as establishId,  
-              school_sub_categories.subcategory as Newsubcategory,  
-              former_school_infos.school_sub_category_id as NewSubCatId, establishing_schools.school_sub_category_id as OldSubCatId,  
-              school_sub_categories.subcategory as subcategory,  
+              essc.subcategory as Newsubcategory,  
+              former_school_infos.school_sub_category_id as NewSubCatId, 
+              establishing_schools.school_sub_category_id as OldSubCatId,  
+              fssc.subcategory as subcategory,  
               former_school_infos.stream as streamOld, establishing_schools.stream as streamNew,  
               establishing_schools.area as area, establishing_schools.school_size as school_size,  
               languages.language as language, school_categories.category as schoolCategory,  
@@ -153,7 +154,8 @@ badiliBweniRequestRouter.post(
               regions.RegionName as RegionName, districts.LgaName as LgaName  
       FROM former_school_infos
       LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
-      LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+      LEFT JOIN school_sub_categories essc ON essc.id = establishing_schools.school_sub_category_id 
+      LEFT JOIN school_sub_categories fssc ON fssc.id = former_school_infos.school_sub_category_id 
       LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
       LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
@@ -314,42 +316,42 @@ badiliBweniRequestRouter.post(
             sharedModel.findOneApplication(tracking_number, (app) => {
               const app_category = app["application_category_id"];
             if (app_category) {
-            sharedModel.tumaMaoni(req, app_category, (success) => {
-                  if (req.body.haliombi == 2) {
-                    db.query(
-                      "UPDATE establishing_schools SET school_sub_category_id = ? WHERE id = ?",
-                      [req.body.newstream, req.body.establishId],
-                      function (error, results, fields) {
-                        if (error) {
-                          console.log(error);
-                        }
-                        if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                          console.log("yes we can do it");
-                        }
-                        db.query(
-                          "UPDATE former_school_infos SET school_sub_category_id = ? WHERE tracking_number = ?",
-                          [req.body.oldstream, req.body.trackerId],
-                          function (error, results, fields) {
-                            if (error) {
-                              console.log(error);
-                            }
-                            if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                              console.log("yes we can do it");
-                            }
-                          }
-                        );
-                      }
-                    );
-                  }
-            return res.send({
-                    error: success ? false : true,
-                    statusCode: success ? 300 : 306,
-                    data: success ? "success" : "fail",
-                    message: success
-                      ? "Majibu Successfully Recorded."
-                      : "Kuna tatizo",
-                  });
-                });
+                 sharedModel.getFormerSchoolInfos(
+                   tracking_number,
+                   (found, school) => {
+                     if (found) {
+                       sharedModel.tumaMaoni(req, app_category, (success) => {
+                         const { former_id, school_id, old_bweni, new_bweni } =
+                           school;
+                         sharedModel.changeSchoolInfos(
+                                req,
+                                `school_sub_category_id = ?`,
+                                [new_bweni, school_id],
+                                "school_sub_category_id = ?",
+                                [old_bweni, former_id],
+                                (updated) => {
+                                  if (updated) console.log("school bweni updated");
+                                }
+                         );
+                         return res.send({
+                           error: success ? false : true,
+                           statusCode: success ? 300 : 306,
+                           data: success ? "success" : "fail",
+                           message: success
+                             ? `Ombi la kubadili bweni limethibitishwa.`
+                             : "Kuna tatizo",
+                         });
+                       });
+                     } else {
+                       return res.send({
+                         error: false,
+                         statusCode: 306,
+                         data: "fail",
+                         message: "Kuna tatizo error 404",
+                       });
+                     }
+                   }
+                 );
             }
       }
     );

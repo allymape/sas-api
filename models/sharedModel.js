@@ -552,7 +552,7 @@ module.exports = {
   // Business Flow base on application category
   getMyNextBoss: (user, application_category, staff_id, callback) => {
     var str = (str = ` AND s.id < -1`);
-    const { cheo_office , zone_id, ngazi } = user;
+    const { cheo_office, zone_id, ngazi } = user;
     if (staff_id == 0 || staff_id == "" || staff_id == null) {
       db.query(
         `SELECT LOWER(rank_name) AS rank_name , rank_level
@@ -590,12 +590,16 @@ module.exports = {
       from_user,
       coments,
     } = req.body;
-    const userTo = staffs == '#' || staffs == "" ? 0 : Number(staffs);
+    const userTo = staffs == "#" || staffs == "" ? 0 : Number(staffs);
     const staff_id = userTo == 0 ? null : userTo;
-    module.exports.getMyNextBoss(user , application_category, staff_id , (nextBossSql) => {
-      // console.log(nextBossSql);
-       db.query(
-         `SELECT s.id AS id 
+    module.exports.getMyNextBoss(
+      user,
+      application_category,
+      staff_id,
+      (nextBossSql) => {
+        // console.log(nextBossSql);
+        db.query(
+          `SELECT s.id AS id 
                   FROM staffs s 
                   JOIN roles r ON r.id = s.user_level
                   JOIN vyeo v ON v.id = r.vyeoId
@@ -603,21 +607,21 @@ module.exports = {
                   ${nextBossSql}
                   LIMIT 1
                   `,
-         (err, staff) => {
-           if (err) console.log(err);
-           var user_to = staff_id;
-           if (staff.length > 0) {
-             user_to = staff[0].id;
-           }
-           
-           if (user.cheo != "ke" && !user_to) {
-             console.log("Kuna shida");
-             callback(success);
-           } else {
-             console.log("inatumwa kwa ", staff);
-             
-             db.query(
-               `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+          (err, staff) => {
+            if (err) console.log(err);
+            var user_to = staff_id;
+            if (staff.length > 0) {
+              user_to = staff[0].id;
+            }
+
+            if (user.cheo != "ke" && !user_to) {
+              console.log("Kuna shida");
+              callback(success);
+            } else {
+              console.log("inatumwa kwa ", staff);
+
+              db.query(
+                `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
                 (
                   ${db.escape(trackerId)}, 
                   ${db.escape(from_user)}, 
@@ -626,76 +630,75 @@ module.exports = {
                   ${db.escape(replyType)}, 
                   ${db.escape(today)}
                 )`,
-               function (error, results) {
-                 if (error) {
-                   console.log(error);
-                 } else {
-                   if (results.affectedRows > 0) {
-                     success = true;
-                     //sendMail notify
-                       notifyUser(
-                         user_to,
-                         application_category,
-                         user.name,
-                         trackerId
-                       );
-                   }
-                   db.query(
-                     "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
-                     [
-                       user_to,
-                       0,
-                       haliombi,
-                       haliombi > 1 ? user.id : null,
-                       today,
-                       trackerId,
-                     ],
-                     function (error) {
-                       if (error) {
-                         console.log(error);
-                       }
-                      
-                       db.query(
-                         `SELECT id 
+                function (error, results) {
+                  if (error) {
+                    console.log(error);
+                  } else {
+                    if (results.affectedRows > 0) {
+                      success = true;
+                      //sendMail notify
+                      notifyUser(
+                        user_to,
+                        application_category,
+                        user.name,
+                        trackerId
+                      );
+                    }
+                    db.query(
+                      "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
+                      [
+                        user_to,
+                        0,
+                        haliombi,
+                        haliombi > 1 ? user.id : null,
+                        today,
+                        trackerId,
+                      ],
+                      function (error) {
+                        if (error) {
+                          console.log(error);
+                        }
+
+                        db.query(
+                          `SELECT id 
                           FROM maoni 
                           WHERE 
                           trackingNo = ${db.escape(trackerId)} AND 
                           user_from = ${db.escape(from_user)} AND 
-                          user_to = ${db.escape(
-                            user_to
-                          )}
+                          user_to = ${db.escape(user_to)}
                           ORDER BY id DESC
                           LIMIT 1`,
-                         function (error, results) {
-                           if (error) {
-                             console.log(error);
-                           }
-                           if(results.length > 0){
-                            var rollId = results[0].id;
-                            InsertAuditTrail(
-                              req.user.id,
-                              "created",
-                              req.body,
-                              req.url,
-                              req.body.browser_used,
-                              rollId,
-                              "Maoni yameongezwa!",
-                              req.body.ip_address,
-                              "maoni"
-                            );
-                           }
-                           callback(success);
-                         }
-                       );
-                     }
-                   );
-                 }
-               }
-             );
-           }
-         }
-       );
-    });
+                          function (error, results) {
+                            if (error) {
+                              console.log(error);
+                            }
+                            if (results.length > 0) {
+                              var rollId = results[0].id;
+                              InsertAuditTrail(
+                                req.user.id,
+                                "created",
+                                req.body,
+                                req.url,
+                                req.body.browser_used,
+                                rollId,
+                                "Maoni yameongezwa!",
+                                req.body.ip_address,
+                                "maoni"
+                              );
+                            }
+                            callback(success);
+                          }
+                        );
+                      }
+                    );
+                  }
+                }
+              );
+            }
+          }
+        );
+      }
+    );
   },
 
   findOneApplication: (tracking_number, callback) => {
@@ -707,6 +710,152 @@ module.exports = {
         callback(applications[0]);
       }
     );
+  },
+  getFormerSchoolInfos: (tracking_number, callback) => {
+    db.query(
+      `SELECT f.id AS former_id , e.id AS school_id,
+                     f.school_name AS new_name , e.school_name AS old_name,
+                     f.stream AS new_stream, e.stream AS old_stream,
+                     f.school_sub_category_id AS new_bweni , e.school_sub_category_id AS old_bweni,
+                     f.is_hostel AS new_is_hostel, e.is_hostel AS old_is_hostel,
+                     f.school_category_id  AS new_school_category_id , e.school_category_id AS old_school_category_id,
+                     registration_number
+              FROM applications a
+              JOIN former_school_infos f on f.tracking_number = a.tracking_number
+              JOIN establishing_schools e on e.id = f.establishing_school_id
+              JOIN school_registrations s ON s.establishing_school_id = e.id
+              WHERE a.tracking_number = ?`,
+      [tracking_number],
+      (error, results) => {
+        if (error) console.log(error);
+        const success = results.length > 0;
+        callback(success, success ? results[0] : []);
+      }
+    );
+  },
+  changeSchoolInfos: (
+    req,
+    newFieldsSql,
+    newValues = [],
+    oldFieldsSql,
+    oldValues = [],
+    callback
+  ) => {
+    const { haliombi } = req.body;
+    if (haliombi == 2) {
+      db.query(
+        `UPDATE establishing_schools  SET ${newFieldsSql}
+                WHERE id = ?`,
+        newValues,
+        function (error) {
+          if (error) console.log(error);
+          db.query(
+            `UPDATE former_school_infos SET ${oldFieldsSql} 
+                    WHERE id = ?`,
+            oldValues,
+            function (error, updated) {
+              if (error) console.log(error);
+              const success = updated.affectedRows > 0;
+              callback(success);
+            }
+          );
+        }
+      );
+    }
+  },
+  getFormerOwners: (tracking_number, callback) => {
+    db.query(
+      `SELECT f.id AS former_owner_id , o.id AS owner_id, 
+              f.owner_name AS new_owner_name, o.owner_name AS former_owner_name
+              FROM applications a
+              JOIN former_owners f on f.tracking_number = a.tracking_number
+              JOIN establishing_schools e ON e.id = f.establishing_school_id
+              JOIN owners o ON o.establishing_school_id = e.id
+              WHERE a.tracking_number = ?`,
+      [tracking_number],
+      (error, results) => {
+        if (error) console.log(error);
+        const success = results.length > 0;
+        callback(success, success ? results[0] : []);
+      }
+    );
+  },
+  changeOwner: (
+    req,
+    newFieldsSql,
+    newValues = [],
+    oldFieldsSql,
+    oldValues = [],
+    callback
+  ) => {
+    const { haliombi } = req.body;
+    if (haliombi == 2) {
+      db.query(
+        `UPDATE owners  SET ${newFieldsSql}
+                WHERE id = ?`,
+        newValues,
+        function (error) {
+          if (error) console.log(error);
+          db.query(
+            `UPDATE former_owners SET ${oldFieldsSql} 
+                    WHERE id = ?`,
+            oldValues,
+            function (error, updated) {
+              if (error) console.log(error);
+              const success = updated.affectedRows > 0;
+              callback(success);
+            }
+          );
+        }
+      );
+    }
+  },
+  getSchoolCombinations: (tracking_number, callback) => {
+    db.query(
+      `SELECT e.id AS school_id , s.id AS school_registration_id  , f.combination_id  AS combination_id 
+        FROM applications a
+        JOIN former_school_combinations f on f.tracking_number = a.tracking_number
+        JOIN establishing_schools e ON e.id = f.establishing_school_id
+        JOIN school_registrations s ON s.establishing_school_id = e.id
+        WHERE a.tracking_number = ?`,
+      [tracking_number],
+      (error, results) => {
+        if (error) console.log(error);
+        const success = results.length > 0;
+        callback(success, success ? results : []);
+      }
+    );
+  },
+  changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
+    const { haliombi } = req.body;
+    if (haliombi == 2) {
+      db.query(
+        `INSERT school_combinations(combination_id , school_registration_id) VALUES ?`,
+        [newCombs],
+        function (error, updated1) {
+          if (error) console.log(error);
+          const successNewComb = updated1.affectedRows > 0;
+          // insert old school combination if exists
+          if (oldCombs.length > 0) {
+            db.query(
+              `INSERT former_school_combinations(combination_id , establishing_school_id) VALUES ?`,
+              [oldCombs],
+              function (error, updated2) {
+                if (error) console.log(error);
+                const successOldComb = updated2.affectedRows > 0;
+              }
+            );
+          }
+          // if(successNewComb){
+          //   // Delete former combinations
+          //    newCombs.forEach(item => {
+          //         db.query(`DELETE FROM former_school_combinations WHERE establishing_school_id = ? AND combination_id = ?` , [item[1] , item[0]])
+          //    })
+          // }
+          callback(successNewComb);
+        }
+      );
+    }
   },
   updateOrCreateRegistrationNumber: (
     tracking_number,

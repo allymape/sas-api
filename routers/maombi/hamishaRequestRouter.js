@@ -29,24 +29,23 @@ hamishaRequestRouter.post(
               applications.created_at as created_at, applications.user_id as user_id, 
               applications.foreign_token as foreign_token, folio,
               establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
-              districts.LgaName as LgaName  
-                              `;
+              districts.LgaName as LgaName`;
 
         const sqlFrom = `FROM former_school_infos, establishing_schools, applications, 
               wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id
               AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND
               former_school_infos.establishing_school_id = establishing_schools.id AND 
               wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
-              AND application_category_id = 10 AND is_approved <> 2 AND payment_status_id = 2 
+              AND application_category_id = 10  AND payment_status_id = 2 
                 ${
                   ["pending", ""].includes(status) ||
                   user.ngazi.toLowerCase() != "wizara"
                     ? selectConditionByTitle(user)
                     : ""
                 } ${sqlStatus} ORDER BY applications.created_at DESC`;
-
         const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
         const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
+        // console.log(sqlRows)
        sharedModel.maombiSummaryByCategoryAndStatus(user, 10 , null,(summaries)  => {
           sharedModel.paginate(sqlRows , sqlCount,
             function (error, results , numRows) {
@@ -94,9 +93,7 @@ hamishaRequestRouter.post(
             },
             [offset , per_page]
           );
-       
     });
-    
   }
 );
 

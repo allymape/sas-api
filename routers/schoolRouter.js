@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const schoolRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString } = require("../utils.js");
+const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
 const sharedModel = require("../models/sharedModel.js");
 
@@ -236,7 +236,7 @@ schoolRouter.put(`/update-school/:id` , (req , res) => {
 })
 
 // change school name
-schoolRouter.post("/change-shule", isAuth, (req, res) => {
+schoolRouter.post("/change-shule", isAuth, permission('update-school-name'), (req, res) => {
   schoolModel.changeSchoolName(req , (success) => {
       res.send({
                 success: success,

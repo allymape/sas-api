@@ -317,33 +317,45 @@ ongezaTahasusiRequestRouter.post(
       );
 });
 
-ongezaTahasusiRequestRouter.post("/tuma-ongeza-majibu", isAuth, (req, res) => {
+ongezaTahasusiRequestRouter.post("/tuma-ongeza-tahasusi", isAuth, (req, res) => {
   const tracking_number = req.body.trackerId;
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-      sharedModel.tumaMaoni(req, app_category, (success) => {
-        if (req.body.haliombi == 2) {
-          db.query(
-            "INSERT INTO school_combinations (school_registration_id, combination_id) VALUES (? , ?)",
-            [req.body.establishId, req.body.newstream],
-            function (error) {
-              if (error) {
-                console.log(error);
-              }
-              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                console.log("yes we can do it");
-              }
-            }
-          );
-        }
-        return res.send({
-          error: success ? false : true,
-          statusCode: success ? 300 : 306,
-          data: success ? "success" : "fail",
-          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
-        });
-      });
+       sharedModel.getSchoolCombinations(tracking_number , (found , schoolCombinations) => {
+                if(found){
+                  sharedModel.tumaMaoni(req, app_category, (success) => {
+                    const new_combinations = [];
+                    const old_combinations = [];
+                    schoolCombinations.forEach((comb) =>
+                      new_combinations.push([
+                        comb.combination_id,
+                        comb.school_registration_id,
+                      ])
+                    );
+                    // console.log(new_combinations);
+                    sharedModel.changeSchoolCombinations(req , new_combinations, old_combinations, 
+                    (updated) => {
+                        if(updated) console.log('school combinations updated')
+                    })
+                    return res.send({
+                      error: success ? false : true,
+                      statusCode: success ? 300 : 306,
+                      data: success ? "success" : "fail",
+                      message: success
+                        ? `Umethibitisha kubadili tahasusi .`
+                        : "Kuna tatizo",
+                    });
+                  });
+                }else{
+                  return res.send({
+                      error: false,
+                      statusCode: 306,
+                      data: "fail",
+                      message: "Kuna tatizo error 404",
+                    });
+                }
+              })
     }
   });
 });

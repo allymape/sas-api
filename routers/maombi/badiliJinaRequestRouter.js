@@ -354,42 +354,32 @@ badiliJinaRequestRouter.post(
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-            sharedModel.tumaMaoni(req, app_category, (success) => {
-            if (req.body.haliombi == 2) {
-              db.query(
-                "UPDATE establishing_schools SET school_name = ? WHERE id = ?",
-                [req.body.school_name_new, req.body.establishId],
-                function (error, results, fields) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                    console.log("yes we can do it");
-                  }
-                  db.query(
-                    "UPDATE former_school_infos SET school_name = ? WHERE tracking_number = ?",
-                    [req.body.school_name_old, req.body.trackerId],
-                    function (error, results, fields) {
-                      if (error) {
-                        console.log(error);
-                      }
-                      if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                        console.log("yes we can do it");
-                      }
-                    }
-                  );
+              sharedModel.getFormerSchoolInfos(tracking_number , (found , school) => {
+                if(found){
+                  sharedModel.tumaMaoni(req, app_category, (success) => {
+                    const {former_id , school_id , old_name , new_name} = school;
+                    sharedModel.changeSchoolInfos(req , ` school_name = ?`  , [new_name , school_id], 'school_name = ?' , [old_name , former_id] , 
+                    (updated) => {
+                        if(updated) console.log('school infos updated')
+                    })
+                    return res.send({
+                      error: success ? false : true,
+                      statusCode: success ? 300 : 306,
+                      data: success ? "success" : "fail",
+                      message: success
+                        ? `Umethibitisha kubadili jina la shule kutoka ${old_name} kuwa ${new_name} .`
+                        : "Kuna tatizo",
+                    });
+                  });
+                }else{
+                  return res.send({
+                      error: false,
+                      statusCode: 306,
+                      data: "fail",
+                      message: "Kuna tatizo error 404",
+                    });
                 }
-              );
-            }
-            return res.send({
-              error: success ? false : true,
-              statusCode: success ? 300 : 306,
-              data: success ? "success" : "fail",
-              message: success
-                ? "Majibu Successfully Recorded."
-                : "Kuna tatizo",
-            });
-          });
+              })
       }
       })
 });

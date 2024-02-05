@@ -24,23 +24,19 @@ ongezaDahaliaRequestRouter.post(
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT  school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
-                        applications.created_at as created_at, applications.user_id as user_id, 
-                        applications.foreign_token as foreign_token, folio,
-                        establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
-                        districts.LgaName as LgaName`;
-
+                      applications.created_at as created_at, applications.user_id as user_id, 
+                      applications.foreign_token as foreign_token, folio,
+                      establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
+                      districts.LgaName AS LgaName`;
     const sqlFrom = `FROM former_school_infos, establishing_schools, applications,
-                    wards, districts, school_categories, regions 
-                    WHERE school_categories.id = establishing_schools.school_category_id
-                    AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND
-                    former_school_infos.establishing_school_id = establishing_schools.id AND 
-                    wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
-                    AND application_category_id = 13 AND payment_status_id = 2
+                      wards, districts, school_categories, regions 
+                      WHERE school_categories.id = establishing_schools.school_category_id
+                      AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND
+                      former_school_infos.establishing_school_id = establishing_schools.id AND 
+                      wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
+                      AND application_category_id = 13 AND payment_status_id = 2
                     ${
-                      ["pending", ""].includes(status) ||
-                      user.ngazi.toLowerCase() != "wizara"
-                        ? selectConditionByTitle(user)
-                        : ""
+                      ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara" ? selectConditionByTitle(user) : ""
                     } ${sqlStatus}
                     ORDER BY applications.created_at DESC`;
 
@@ -138,19 +134,21 @@ ongezaDahaliaRequestRouter.post(
     var objAttachment2 = [];
 
     db.query(
-      `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
-         school_sub_categories.subcategory as subcategory, former_school_infos.stream as streamOld,  
-         establishing_schools.stream as streamNew, establishing_schools.area as area,  
-         establishing_schools.school_size as school_size, languages.language as language,  
-         school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
-         applications.tracking_number as tracking_number, applications.created_at as created_at,  
-         applications.registry_type_id as registry_type_id,applications.user_id as user_id,  
-         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
-         wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName  
+      `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,
+         school_sub_categories.subcategory as subcategory, former_school_infos.stream as streamOld,
+         establishing_schools.stream as streamNew, establishing_schools.area as area,
+         establishing_schools.school_size as school_size, languages.language as language,
+         school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
+         applications.tracking_number as tracking_number, applications.created_at as created_at,
+         applications.registry_type_id as registry_type_id,applications.user_id as user_id,
+         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
+         wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName,
+         establishing_schools.is_hostel AS oldIsHostel,
+         former_school_infos.is_hostel AS newIsHostel
         FROM former_school_infos
-        LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id 
-        LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
-        LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number  
+        LEFT JOIN establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id
+        LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id
+        LEFT JOIN applications ON former_school_infos.tracking_number = applications.tracking_number
         LEFT JOIN registration_structures ON establishing_schools.registration_structure_id = registration_structures.id
         LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
         LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
@@ -170,6 +168,8 @@ ongezaDahaliaRequestRouter.post(
           var user_id = results[0].user_id;
           var streamOld = results[0].streamOld;
           var streamNew = results[0].streamNew;
+          var oldIsHostel = results[0].oldIsHostel;
+          var newIsHostel = results[0].newIsHostel;
           var foreign_token = results[0].foreign_token;
           var school_name = results[0].school_name;
           var LgaName = results[0].LgaName;
@@ -268,6 +268,8 @@ ongezaDahaliaRequestRouter.post(
               remain_days: remain_days,
               streamOld: streamOld,
               streamNew: streamNew,
+              oldIsHostel : oldIsHostel,
+              newIsHostel : newIsHostel,
               fullname: fullname,
               schoolCategory: schoolCategory,
               occupation: occupation,
@@ -312,5 +314,47 @@ ongezaDahaliaRequestRouter.post(
     );
   }
 );
+
+ongezaDahaliaRequestRouter.post("/tuma-ongeza-dahalia", isAuth, (req, res) => {
+  const tracking_number = req.body.trackerId;
+  sharedModel.findOneApplication(tracking_number, (app) => {
+    const app_category = app["application_category_id"];
+    if (app_category) {
+      sharedModel.getFormerSchoolInfos(tracking_number, (found, school) => {
+        if (found) {
+          sharedModel.tumaMaoni(req, app_category, (success) => {
+            const { former_id, school_id, old_is_hostel, new_is_hostel } =
+              school;
+            sharedModel.changeSchoolInfos(
+              req,
+              ` is_hostel = ?`,
+              [new_is_hostel, school_id],
+              "is_hostel = ?",
+              [old_is_hostel, former_id],
+              (updated) => {
+                if (updated) console.log("school infos updated");
+              }
+            );
+            return res.send({
+              error: success ? false : true,
+              statusCode: success ? 300 : 306,
+              data: success ? "success" : "fail",
+              message: success
+                ? `Umethibitisha kubadili dahalia.`
+                : "Kuna tatizo",
+            });
+          });
+        } else {
+          return res.send({
+            error: false,
+            statusCode: 306,
+            data: "fail",
+            message: "Kuna tatizo error 404",
+          });
+        }
+      });
+    }
+  });
+});
 
 module.exports = ongezaDahaliaRequestRouter;

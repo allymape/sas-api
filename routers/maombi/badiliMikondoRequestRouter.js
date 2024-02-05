@@ -180,7 +180,7 @@ badiliMkondoRequestRouter.post(
         var milliseconds = Math.round(
           (diffInSeconds - Math.floor(diffInSeconds)) * 1000
         );
-
+  
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [trackingNumber],
@@ -247,41 +247,9 @@ badiliMkondoRequestRouter.post(
                 }
               }
             );
-
-            db.query(
-              "SELECT name, user_from, user_to, coments, maoni.created_at as created_at, rank_name " +
-                " from maoni, staffs, vyeo WHERE staffs.id = maoni.user_from AND vyeo.id = staffs.user_level " +
-                " AND trackingNo = ? ORDER BY maoni.id DESC",
-              [trackingNumber],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-
-                for (var i = 0; i < results.length; i++) {
-                  var name = results[i].name;
-                  var user_from = results[i].user_from;
-                  var user_to = results[i].user_to;
-                  var coments = results[i].coments;
-                  var maoniTime = results[i].created_at;
-                  var rank_name = results[i].rank_name;
-                  if (maoniTime == null) {
-                    maoniTime = new Date();
-                  }
-                  // console.log(maoniTime)
-                  maoniTime = formatDate(maoniTime, "DD/MM/YYYY hh:mm:ss");
-                  objMaoni.push({
-                    user_from: user_from,
-                    name: name,
-                    user_to: user_to,
-                    coments: coments,
-                    created_at: maoniTime,
-                    rank_name: rank_name,
-                  });
-                }
-              }
-            );
-
+            sharedModel.myMaoni(trackingNumber, (maoni) => {
+              objMaoni = maoni;
+            });
             db.query(
               `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
@@ -421,94 +389,37 @@ badiliMkondoRequestRouter.post(
 });
 
 
-badiliMkondoRequestRouter.post("/tuma-badili-majibu", isAuth, (req, res) => {
+badiliMkondoRequestRouter.post("/tuma-badili-mikondo", isAuth, (req, res) => {
         const tracking_number = req.body.trackerId;
         sharedModel.findOneApplication(tracking_number, (app) => {
         const app_category = app["application_category_id"];
         if (app_category) {
-        sharedModel.tumaMaoni(req, app_category, (success) => {
-          // if (req.body.haliombi == 1) {
-          //   db.query(
-          //     "select email from staffs where id = ?",
-          //     [req.body.staffs],
-          //     function (error, results, fields) {
-          //       if (error) {
-          //         console.log(error);
-          //       }
-          //       var email = results[0].email;
-          //       let transporter = nodeMailer.createTransport({
-          //         host: process.env.MAIL_HOST,
-          //         port: 465,
-          //         secure: true,
-          //         auth: {
-          //           user: process.env.MAIL_USER,
-          //           pass: process.env.MAIL_PASS,
-          //         },
-          //       });
-          //       let mailOptions = {
-          //         from: '"Ithibati ya Usajili" <noreply@codebiz.co.tz>', // sender address
-          //         to: email, // list of receivers
-          //         subject: "Taarifa ya Ombi", // Subject line
-          //         text:
-          //           "Ombi la Kubadili Mkondo shule lenye namba " +
-          //           req.body.trackerId +
-          //           " limetumwa kwako. Asante", // plain text body
-          //         html: "<b>EA.20220920-220</b>", // html body
-          //       };
-
-          //       transporter.sendMail(mailOptions, (error, info) => {
-          //         if (error) {
-          //           return console.log(error);
-          //         }
-          //         console.log(
-          //           "Message %s sent: %s",
-          //           info.messageId,
-          //           info.response
-          //         );
-          //         // res.render('index');
-          //         return res.status(200).send({
-          //           error: true,
-          //           statusCode: 300,
-          //           msg: "Mail imetumwa!!!",
-          //         });
-          //       });
-          //     }
-          //   );
-          // }
-          if (req.body.haliombi == 2) {
-            db.query(
-              "UPDATE establishing_schools SET stream = ? WHERE id = ?",
-              [req.body.newstream, req.body.establishId],
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
+              sharedModel.getFormerSchoolInfos(tracking_number , (found , school) => {
+                if(found){
+                  sharedModel.tumaMaoni(req, app_category, (success) => {
+                    const {former_id , school_id , old_stream , new_stream} = school;
+                    sharedModel.changeSchoolInfos(req , ` stream = ?`  , [new_stream , school_id], 'stream = ?' , [old_stream , former_id] , 
+                    (updated) => {
+                        if(updated) console.log('school infos updated')
+                    })
+                    return res.send({
+                      error: success ? false : true,
+                      statusCode: success ? 300 : 306,
+                      data: success ? "success" : "fail",
+                      message: success
+                        ? `Umethibitisha kubadili mikondo kutoka ${old_stream} kuwa ${new_stream} .`
+                        : "Kuna tatizo",
+                    });
+                  });
+                }else{
+                  return res.send({
+                      error: false,
+                      statusCode: 306,
+                      data: "fail",
+                      message: "Kuna tatizo error 404",
+                    });
                 }
-                if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                  console.log("yes we can do it");
-                }
-                db.query(
-                  "UPDATE former_school_infos SET stream = ? WHERE tracking_number = ?",
-                  [req.body.oldstream, req.body.trackerId],
-                  function (error, results, fields) {
-                    if (error) {
-                      console.log(error);
-                    }
-                    if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                      console.log("yes we can do it");
-                    }
-                  }
-                );
-              }
-            );
-          }
-          return res.send({
-            error: success ? false : true,
-            statusCode: success ? 300 : 306,
-            data: success ? "success" : "Fail",
-            message: success ? "Majibu Successfully Recorded." : "Error",
-          });
-          // });
-        });
+              })
         }
     })
   

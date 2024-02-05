@@ -389,40 +389,39 @@ badiliMmilikiRequestRouter.post("/tuma-mmiliki-badili-majibu", isAuth, (req, res
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-      sharedModel.tumaMaoni(req, app_category, (success) => {
-        if (req.body.haliombi == 2) {
-          db.query(
-            "UPDATE owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
-            [owner_name_old, authorized_person_old, req.body.establishId],
-            function (error) {
-              if (error) {
-                console.log(error);
-              }
-              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                console.log("yes we can do it");
-              }
-              db.query(
-                "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
-                [owner_name, authorized_person, req.body.establishId],
-                function (error) {
-                  if (error) {
-                    console.log(error);
-                  }
-                  if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                    console.log("yes we can do it");
-                  }
-                }
-              );
-            }
-          );
-        }
-        return res.send({
-          error: success ? false : true,
-          statusCode: success ? 300 : 306,
-          data: success ? "success" : "fail",
-          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
-        });
-      });
+ sharedModel.getFormerOwners(tracking_number, (found, owner) => {
+   console.log(owner);
+   if (found) {
+     sharedModel.tumaMaoni(req, app_category, (success) => {
+       const { former_owner_id, owner_id , former_owner_name , new_owner_name } = owner;
+       sharedModel.changeOwner(
+         req,
+         ` owner_name = ?`,
+         [new_owner_name, owner_id],
+         "owner_name = ?",
+         [former_owner_name, former_owner_id],
+         (updated) => {
+           if (updated) console.log("school infos updated");
+         }
+       );
+       return res.send({
+         error: success ? false : true,
+         statusCode: success ? 300 : 306,
+         data: success ? "success" : "fail",
+         message: success
+           ? `Umethibitisha kubadili jina la shule kutoka ${former_owner_name} kuwa ${new_owner_name} .`
+           : "Kuna tatizo",
+       });
+     });
+   } else {
+     return res.send({
+       error: false,
+       statusCode: 306,
+       data: "fail",
+       message: "Kuna tatizo error 404",
+     });
+   }
+ });
     }
   });
 });

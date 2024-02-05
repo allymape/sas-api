@@ -387,55 +387,107 @@ badiliUsajiliRequestRouter.post(
     sharedModel.findOneApplication(tracking_number, (app) => {
       const app_category = app["application_category_id"];
       if (app_category) {
-        sharedModel.tumaMaoni(req, app_category, (success) => {
-          if (req.body.haliombi == 2) {
-             sharedModel.updateOrCreateRegistrationNumber(tracking_number, school_category_id_new, registration_number , (created_registration_number) => {
-                console.log("Created registration number is "+ created_registration_number)
-                db.query(
-                  "UPDATE establishing_schools SET school_category_id = ? WHERE id = ?",
-                  [
-                    req.body.school_category_id_new,
-                    req.body.establishId,
-                  ],
-                  function (error, results, fields) {
-                    if (error) {
-                      console.log(error);
-                    }
-                    if (
-                      req.body.ombitype == 1 &&
-                      req.body.haliombi == 0
-                    ) {
-                      console.log("yes we can do it");
-                    }
-                    db.query(
-                      "UPDATE former_school_infos SET school_name = ? WHERE tracking_number = ?",
-                      [
-                        req.body.school_category_id_old,
-                        req.body.trackerId,
-                      ],
-                      function (error, results, fields) {
-                        if (error) {
-                          console.log(error);
-                        }
-                        if (
-                          req.body.ombitype == 1 &&
-                          req.body.haliombi == 0
-                        ) {
-                          console.log("yes we can do it");
-                        }
-                      }
-                    );
-                  }
-                );
+         sharedModel.getFormerSchoolInfos(tracking_number, (found, school) => {
+           if (found) {
+             sharedModel.tumaMaoni(req, app_category, (success) => {
+               const {
+                 former_id,
+                 school_id,
+                 old_school_category_id,
+                 new_school_category_id,
+                 registration_number,
+               } = school;
+               console.log(school)
+               sharedModel.changeSchoolInfos(
+                 req,
+                 ` school_category_id = ?`,
+                 [new_school_category_id, school_id],
+                 "school_category_id = ?",
+                 [old_school_category_id, former_id],
+                 (updated) => {
+                   if (updated) console.log("school category updated");
+                   if (updated) {
+                     sharedModel.updateOrCreateRegistrationNumber(
+                       tracking_number,
+                       new_school_category_id,
+                       registration_number,
+                       (created_registration_number) => {
+                         console.log(
+                           "Created registration number is " +
+                             created_registration_number
+                         );
+                       }
+                     );
+                   }
+                 }
+               );
+               return res.send({
+                 error: success ? false : true,
+                 statusCode: success ? 300 : 306,
+                 data: success ? "success" : "fail",
+                 message: success
+                   ? `Umethibitisha kubadili aina ya usajili.`
+                   : "Kuna tatizo",
+               });
              });
-          }
-          return res.send({
-            error: success ? false : true,
-            statusCode: success ? 300 : 306,
-            data: success ? "success" : "fail",
-            message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
-          });
-        });
+           } else {
+             return res.send({
+               error: false,
+               statusCode: 306,
+               data: "fail",
+               message: "Kuna tatizo error 404",
+             });
+           }
+         });
+        // sharedModel.tumaMaoni(req, app_category, (success) => {
+        //   if (req.body.haliombi == 2) {
+        //      sharedModel.updateOrCreateRegistrationNumber(tracking_number, school_category_id_new, registration_number , (created_registration_number) => {
+        //         console.log("Created registration number is "+ created_registration_number)
+        //         db.query(
+        //           "UPDATE establishing_schools SET school_category_id = ? WHERE id = ?",
+        //           [
+        //             req.body.school_category_id_new,
+        //             req.body.establishId,
+        //           ],
+        //           function (error, results, fields) {
+        //             if (error) {
+        //               console.log(error);
+        //             }
+        //             if (
+        //               req.body.ombitype == 1 &&
+        //               req.body.haliombi == 0
+        //             ) {
+        //               console.log("yes we can do it");
+        //             }
+        //             db.query(
+        //               "UPDATE former_school_infos SET school_name = ? WHERE tracking_number = ?",
+        //               [
+        //                 req.body.school_category_id_old,
+        //                 req.body.trackerId,
+        //               ],
+        //               function (error, results, fields) {
+        //                 if (error) {
+        //                   console.log(error);
+        //                 }
+        //                 if (
+        //                   req.body.ombitype == 1 &&
+        //                   req.body.haliombi == 0
+        //                 ) {
+        //                   console.log("yes we can do it");
+        //                 }
+        //               }
+        //             );
+        //           }
+        //         );
+        //      });
+        //   }
+        //   return res.send({
+        //     error: success ? false : true,
+        //     statusCode: success ? 300 : 306,
+        //     data: success ? "success" : "fail",
+        //     message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
+        //   });
+        // });
       }
     });
   }
