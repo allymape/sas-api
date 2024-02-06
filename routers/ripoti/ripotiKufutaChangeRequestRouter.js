@@ -45,8 +45,7 @@ ripotiKufutaChangeRequestRouter.get("/ripoti-kufuta-shule", isAuth, (req, res) =
             end_date = formatDate(date_range.split("to")[1], "YYYY-MM-DD");
           }
 
-          const from = `FROM deregistration_change_view
-                        WHERE is_approved ${status ? "=" + status : " IN (2,3) "}
+          const from = `FROM deregistration_change_view WHERE is_approved ${status ? "=" + status : " IN (2,3) "}
                         ${ sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
                         ${ sehemu == "w1" ? "AND district_code = '" + district_code+"'" : ""}
                         ${
@@ -83,10 +82,10 @@ ripotiKufutaChangeRequestRouter.get("/ripoti-kufuta-shule", isAuth, (req, res) =
                                  ELSE ''
                             END AS approved,
                             approved_at
-                     ${from} 
-                     ORDER BY approved_at DESC
+                     ${from} ORDER BY approved_at DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
+          console.log(sqlRows)
           sharedModel.paginate(
             sqlRows,
             sqlCount,

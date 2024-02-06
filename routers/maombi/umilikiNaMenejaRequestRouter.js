@@ -542,34 +542,6 @@ umilikiNaMenejaRequestRouter.post("/tuma-mmiliki-majibu", isAuth, (req, res) => 
     const app_category = app["application_category_id"];
     if (app_category) {
       sharedModel.tumaMaoni(req, app_category, (success) => {
-       
-        // if (req.body.haliombi == 2) {
-        //   db.query(
-        //     "UPDATE owners SET updated_at = ? WHERE establishing_school_id = ?",
-        //     [today, req.body.establishId],
-        //     function (error, results, fields) {
-        //       if (error) {
-        //         console.log(error);
-        //       }
-        //       if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-        //         console.log("yes we can do it");
-        //       }
-        //       db.query(
-        //         "UPDATE former_owners SET owner_name = ?, authorized_person = ? WHERE establishing_school_id = ?",
-        //         [owner_name, authorized_person, req.body.establishId],
-        //         function (error, results, fields) {
-        //           if (error) {
-        //             console.log(error);
-        //           }
-        //           if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-        //             console.log("yes we can do it");
-        //           }
-        //         }
-        //       );
-        //     }
-        //   );
-        // }
-        
         return res.send({
           error: success ? true : false,
           statusCode: success ? 300 : 306,

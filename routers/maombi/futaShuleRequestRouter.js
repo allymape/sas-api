@@ -26,20 +26,22 @@ futaShuleRequestRouter.post(
   const offset = (page - 1) * per_page;
   // console.log(page , per_page , offset)
   const sqlSelect = `SELECT establishing_schools.id as schoolId, school_categories.category as schoolCategory, 
-        applications.tracking_number as tracking_number,
-        applications.created_at as created_at, applications.user_id as user_id, 
-        applications.foreign_token as foreign_token, folio,
-        establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
-        districts.LgaName as LgaName 
-        `;
+                    applications.tracking_number as tracking_number,
+                    applications.created_at as created_at, applications.user_id as user_id, 
+                    applications.foreign_token as foreign_token, folio,
+                    establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
+                    districts.LgaName as LgaName 
+                     `;
 
   const sqlFrom = `
-        FROM former_school_infos, establishing_schools, applications, 
-        wards, districts, school_categories, regions WHERE school_categories.id = establishing_schools.school_category_id 
-        AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND 
-        former_school_infos.establishing_school_id = establishing_schools.id AND
-        wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number
-        AND application_category_id = 11 AND is_approved <> 2 AND payment_status_id = 2
+        FROM former_school_infos
+        JOIN  establishing_schools ON former_school_infos.establishing_school_id = establishing_schools.id
+        JOIN applications ON former_school_infos.tracking_number = applications.tracking_number
+        JOIN wards ON wards.WardCode = establishing_schools.ward_id 
+        JOIN districts ON districts.LgaCode = wards.LgaCode
+        JOIN school_categories ON school_categories.id = establishing_schools.school_category_id 
+        JOIN regions ON regions.RegionCode = districts.RegionCode
+        WHERE  application_category_id = 11 AND payment_status_id = 2
         ${
           ["pending", ""].includes(status) ||
           user.ngazi.toLowerCase() != "wizara"
@@ -308,36 +310,38 @@ futaShuleRequestRouter.post("/futa-sajili", isAuth, (req, res) => {
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-      sharedModel.tumaMaoni(req, app_category, (success) => {
-         if (req.body.haliombi == 2) {
-           db.query(
-             "UPDATE school_registrations SET reg_status = ?, deleted_at = ? WHERE establishing_school_id = ?",
-             [0, today, req.body.schoolId],
-             function (error, results, fields) {
-               if (error) {
-                 console.log(error);
+       sharedModel.getFormerSchoolInfos(tracking_number, (found, school) => {
+         if (found) {
+           sharedModel.tumaMaoni(req, app_category, (success) => {
+             const { former_id, registration_id } = school;
+             sharedModel.futaShule(
+               req,
+               `reg_status = ? , deleted_at = ?`,
+               [0, today, registration_id],
+               "updated_at = ?",
+               [today, former_id],
+               (updated) => {
+                 if (updated) console.log("school deregistered successfully");
                }
-               db.query(
-                 "UPDATE former_school_infos SET updated_at = ? WHERE tracking_number = ?",
-                 [today, req.body.trackerId],
-                 function (error, results, fields) {
-                   if (error) {
-                     console.log(error);
-                   }
-                   // res.send("success")
-                 }
-               );
-               //     })
-             }
-           );
+             );
+             return res.send({
+               error: success ? false : true,
+               statusCode: success ? 300 : 306,
+               data: success ? "success" : "fail",
+               message: success
+                 ? `Ombi la kubadili bweni limethibitishwa.`
+                 : "Kuna tatizo",
+             });
+           });
+         } else {
+           return res.send({
+             error: false,
+             statusCode: 306,
+             data: "fail",
+             message: "Kuna tatizo error 404",
+           });
          }
-        return res.send({
-          error: success ? false : true,
-          statusCode: success ? 300 : 306,
-          data: success ? "success" : "fail",
-          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
-        });
-      });
+       });
     }
   });
 });

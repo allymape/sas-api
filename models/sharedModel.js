@@ -164,7 +164,7 @@ module.exports = {
           FROM attachment_types
           WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
           AND application_category_id = ${application_category_id}`,
-      function (error, results, fields) {
+      function (error, results) {
         if (error) {
           console.log(error);
         }
@@ -719,7 +719,9 @@ module.exports = {
                      f.school_sub_category_id AS new_bweni , e.school_sub_category_id AS old_bweni,
                      f.is_hostel AS new_is_hostel, e.is_hostel AS old_is_hostel,
                      f.school_category_id  AS new_school_category_id , e.school_category_id AS old_school_category_id,
-                     registration_number
+                     f.village_id as new_village_id , f.ward_id AS new_ward_id, e.ward_id AS old_ward_id , e.village_id AS old_village_id,
+                     s.registration_number AS registration_number,
+                     s.id AS registration_id
               FROM applications a
               JOIN former_school_infos f on f.tracking_number = a.tracking_number
               JOIN establishing_schools e on e.id = f.establishing_school_id
@@ -746,6 +748,36 @@ module.exports = {
       db.query(
         `UPDATE establishing_schools  SET ${newFieldsSql}
                 WHERE id = ?`,
+        newValues,
+        function (error) {
+          if (error) console.log(error);
+          db.query(
+            `UPDATE former_school_infos SET ${oldFieldsSql} 
+                    WHERE id = ?`,
+            oldValues,
+            function (error, updated) {
+              if (error) console.log(error);
+              const success = updated.affectedRows > 0;
+              callback(success);
+            }
+          );
+        }
+      );
+    }
+  },
+  futaShule: (
+    req,
+    newFieldsSql,
+    newValues = [],
+    oldFieldsSql,
+    oldValues = [],
+    callback
+  ) => {
+    const { haliombi } = req.body;
+    if (haliombi == 2) {
+      db.query(
+        `UPDATE school_registrations  SET ${newFieldsSql}
+         WHERE id = ?`,
         newValues,
         function (error) {
           if (error) console.log(error);
@@ -798,6 +830,56 @@ module.exports = {
           if (error) console.log(error);
           db.query(
             `UPDATE former_owners SET ${oldFieldsSql} 
+                    WHERE id = ?`,
+            oldValues,
+            function (error, updated) {
+              if (error) console.log(error);
+              const success = updated.affectedRows > 0;
+              callback(success);
+            }
+          );
+        }
+      );
+    }
+  },
+  getFormerManagers: (tracking_number, callback) => {
+    db.query(
+      `SELECT f.id AS former_manager_id , m.id AS manager_id, 
+              f.manager_first_name AS new_first_name, f.manager_middle_name AS new_middle_name,f.manager_last_name AS new_last_name, 
+              f.manager_phone_number AS new_phone_number , f.manager_email AS new_email,
+              m.manager_first_name AS old_first_name, m.manager_middle_name AS old_middle_name,m.manager_last_name AS old_last_name,
+              m.manager_phone_number AS old_phone_number , m.manager_email AS old_email
+              FROM applications a
+              JOIN former_managers f on f.tracking_number = a.tracking_number
+              JOIN establishing_schools e ON e.id = f.establishing_school_id
+              JOIN managers m ON m.establishing_school_id = e.id
+              WHERE a.tracking_number = ?`,
+      [tracking_number],
+      (error, results) => {
+        if (error) console.log(error);
+        const success = results.length > 0;
+        callback(success, success ? results[0] : []);
+      }
+    );
+  },
+  changeManager: (
+    req,
+    newFieldsSql,
+    newValues = [],
+    oldFieldsSql,
+    oldValues = [],
+    callback
+  ) => {
+    const { haliombi } = req.body;
+    if (haliombi == 2) {
+      db.query(
+        `UPDATE managers  SET ${newFieldsSql}
+                WHERE id = ?`,
+        newValues,
+        function (error) {
+          if (error) console.log(error);
+          db.query(
+            `UPDATE former_managers SET ${oldFieldsSql} 
                     WHERE id = ?`,
             oldValues,
             function (error, updated) {

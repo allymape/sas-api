@@ -26,13 +26,16 @@ badiliMenejaRequestRouter.post(
     const offset = (page - 1) * per_page;
     // console.log(page , per_page , offset)
     const sqlSelect = `SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at, 
-                      former_managers.manager_first_name as owner_name, wards.WardName as WardName, LgaName, former_managers.manager_last_name as authorized_person, 
+                      CONCAT(former_managers.manager_first_name , ' ' , former_managers.manager_middle_name , ' ' , former_managers.manager_last_name  ) AS former_manager_name, 
+                      CONCAT(managers.manager_first_name , ' ' , managers.manager_middle_name , ' ' , managers.manager_last_name  ) AS new_manager_name, 
+                      wards.WardName as WardName, LgaName, former_managers.manager_last_name as authorized_person, 
                       RegionName, establishing_schools.school_name as school_name 
                       `;
 
     const sqlFrom = `FROM applications  
                       JOIN former_managers ON applications.tracking_number = former_managers.tracking_number
                       JOIN establishing_schools ON establishing_schools.id = former_managers.establishing_school_id 
+                      JOIN managers ON managers.establishing_school_id = establishing_schools.id
                       JOIN wards ON establishing_schools.ward_id = wards.WardCode
                       JOIN districts ON districts.LgaCode = wards.LgaCode
                       JOIN regions ON regions.RegionCode = districts.RegionCode 
@@ -52,67 +55,69 @@ badiliMenejaRequestRouter.post(
           if (error) {
             console.log(error);
           }
-          //  console.log(results);
-          for (var i = 0; i < results.length; i++) {
-            //  console.log(results);
-            var tracking_number = results[i].tracking_number;
-            var owner_name = results[i].owner_name;
-            var WardName = results[i].WardName;
-            var LgaName = results[i].LgaName;
-            var RegionName = results[i].RegionName;
-            var registry_type_id = results[i].registry_type_id;
-            var user_id = results[i].user_id;
-            var foreign_token = results[i].foreign_token;
-            var school_name = results[i].school_name;
-            var registry = results[i].registry;
-            var authorized_person = results[i].authorized_person;
-            var created_at = results[i].created_at;
-            var schoolCategory = results[i].schoolCategory;
-            var applicantname;
-            var folio = results[i].folio;
-            var today = new Date();
+          // //  console.log(results);
+          // for (var i = 0; i < results.length; i++) {
+          //   //  console.log(results);
+          //   var tracking_number = results[i].tracking_number;
+          //   var former_manager_name = results[i].former_manager_name;
+          //   var new_manager_name = results[i].new_manager_name;
+          //   var WardName = results[i].WardName;
+          //   var LgaName = results[i].LgaName;
+          //   var RegionName = results[i].RegionName;
+          //   var registry_type_id = results[i].registry_type_id;
+          //   var user_id = results[i].user_id;
+          //   var foreign_token = results[i].foreign_token;
+          //   var school_name = results[i].school_name;
+          //   var registry = results[i].registry;
+          //   var authorized_person = results[i].authorized_person;
+          //   var created_at = results[i].created_at;
+          //   var schoolCategory = results[i].schoolCategory;
+          //   var applicantname;
+          //   var folio = results[i].folio;
+          //   var today = new Date();
 
-            var diffInSeconds = Math.abs(today - created_at) / 1000;
-            var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            var minutes = Math.floor((diffInSeconds / 60) % 60);
-            var seconds = Math.floor(diffInSeconds % 60);
-            var milliseconds = Math.round(
-              (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            );
+          //   var diffInSeconds = Math.abs(today - created_at) / 1000;
+          //   var days = Math.floor(diffInSeconds / 60 / 60 / 24);
+          //   var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
+          //   var minutes = Math.floor((diffInSeconds / 60) % 60);
+          //   var seconds = Math.floor(diffInSeconds % 60);
+          //   var milliseconds = Math.round(
+          //     (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+          //   );
 
-            var remain_days;
-            if (days > 0) {
-              remain_days = "Siku " + days;
-            } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-              remain_days = "Sek " + seconds + " zilizopita";
-            } else if (days <= 0 && hours <= 0) {
-              remain_days = "Dakika " + minutes + " zilizopita";
-            } else if (days <= 0) {
-              remain_days = "Saa " + hours;
-            }
-            obj.push({
-              tracking_number: tracking_number,
-              school_name: school_name,
-              authorized_person: authorized_person,
-              LgaName: LgaName,
-              RegionName: RegionName,
-              user_id: user_id,
-              WardName: WardName,
-              registry_type_id: registry_type_id,
-              registry: registry,
-              owner_name: owner_name,
-              created_at: created_at,
-              remain_days: remain_days,
-              schoolCategory: schoolCategory,
-              folio
-            });
-          }
+          //   var remain_days;
+          //   if (days > 0) {
+          //     remain_days = "Siku " + days;
+          //   } else if (days <= 0 && hours <= 0 && minutes <= 0) {
+          //     remain_days = "Sek " + seconds + " zilizopita";
+          //   } else if (days <= 0 && hours <= 0) {
+          //     remain_days = "Dakika " + minutes + " zilizopita";
+          //   } else if (days <= 0) {
+          //     remain_days = "Saa " + hours;
+          //   }
+          //   obj.push({
+          //     tracking_number: tracking_number,
+          //     school_name: school_name,
+          //     new_manager_name: new_manager_name,
+          //     former_manager_name: former_manager_name,
+          //     authorized_person: authorized_person,
+          //     LgaName: LgaName,
+          //     RegionName: RegionName,
+          //     user_id: user_id,
+          //     WardName: WardName,
+          //     registry_type_id: registry_type_id,
+          //     registry: registry,
+          //     created_at: created_at,
+          //     remain_days: remain_days,
+          //     schoolCategory: schoolCategory,
+          //     folio
+          //   });
+          // }
           // console.log(obj)
           return res.send({
             error: false,
             statusCode: 300,
-            dataList: obj,
+            dataList: results,
             dataSummary: summaries,
             numRows : numRows,
             message: "List of maombi kubadili meneja.",
@@ -132,10 +137,7 @@ badiliMenejaRequestRouter.post(
   (req, res, ) => {
     var trackingNumber = req.body.TrackingNumber;
     const user = req.user; 
-    var userLevel = user.user_level;
-    var office = req.body.office;
-    console.log(req.body);
-
+    // console.log(req.body);
     var obj = [];
     var objMess = [];
     var objStaffs = [];
@@ -146,23 +148,29 @@ badiliMenejaRequestRouter.post(
     var objRef = [];
 
     db.query(
-      ` SELECT manager_first_name, manager_first_name, registry_type_id , application_category_id,  
-              establishing_schools.area as area, former_managers.establishing_school_id as establishing_school_id,  
-              establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size,  
-              applications.tracking_number as tracking_number, manager_first_name,  
+      ` SELECT fm.manager_first_name AS manager_first_name, fm.manager_middle_name AS manager_middle_name , fm.manager_last_name AS manager_last_name, 
+               fm.manager_phone_number as manager_phone_no , fm.manager_email as manager_email, fm.manager_cv AS manager_cv,
+               m.manager_first_name AS old_manager_first_name, m.manager_middle_name AS old_manager_middle_name , m.manager_last_name AS old_manager_last_name,
+               m.manager_phone_number as old_manager_phone_no , m.manager_email as old_manager_email, m.manager_cv as old_manager_cv,
+              fm.manager_first_name AS manager_first_name, fm.manager_middle_name AS manager_middle_name , fm.manager_last_name AS manager_last_name,
+              registry_type_id , application_category_id,  
+              e.area as area, fm.establishing_school_id as establishing_school_id,  
+              e.tracking_number as old_tracking_number, e.school_size as school_size,  
+              applications.tracking_number as tracking_number,  
               applications.created_at as created_at,  
               applications.user_id as user_id, applications.foreign_token as foreign_token,  
-              establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,  
-              districts.LgaName as LgaName, former_managers.manager_first_name as owner_name, former_managers.manager_phone_number as owner_phone_no 
-       FROM establishing_schools
-       LEFT JOIN former_managers ON former_managers.establishing_school_id = establishing_schools.id
-       LEFT JOIN applications ON  former_managers.tracking_number = applications.tracking_number
-       LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+              e.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,  
+              districts.LgaName as LgaName
+       FROM establishing_schools e
+       LEFT JOIN former_managers fm ON fm.establishing_school_id = e.id
+       LEFT JOIN applications ON  fm.tracking_number = applications.tracking_number
+       LEFT JOIN managers  m ON  m.establishing_school_id = e.id
+       LEFT JOIN wards ON wards.WardCode = e.ward_id
        LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
        LEFT JOIN regions ON regions.RegionCode = districts.RegionCode
        WHERE application_category_id = 8   AND applications.tracking_number = ?`,
       [trackingNumber],
-      function (error, results, fields) {
+      function (error, results) {
         if (error) {
           console.log(error);
         }
@@ -178,31 +186,33 @@ badiliMenejaRequestRouter.post(
           var created_at = results[0].created_at;
           var user_id = results[0].user_id;
           var establishing_school_id = results[0].establishing_school_id;
-          var owner_phone_no = results[0].owner_phone_no;
+          var manager_phone_no = results[0].manager_phone_no;
+          var manager_email = results[0].manager_email;
           var school_name = results[0].school_name;
           var WardName = results[0].WardName;
           var managerRegionName = results[0].RegionName;
           var purpose = "";
-          var owner_email = results[0].owner_email;
-          var manager_phone_number = "";
           var manager_email = "";
           var manager_street = "";
           var LgaName = results[0].LgaName;
-          var owner_name = results[0].owner_name;
+          var manager_first_name = results[0].manager_first_name;
+          var manager_middle_name = results[0].manager_middle_name;
+          var manager_last_name = results[0].manager_last_name;
+          var manager_email = results[0].manager_email;
+          var manager_cv = results[0].manager_cv;
+          var manager_phone_no = results[0].manager_phone_no;
+          var former_manager_first_name = results[0].old_manager_first_name;
+          var former_manager_middle_name = results[0].old_manager_middle_name;
+          var former_manager_last_name = results[0].old_manager_last_name;
+          var former_manager_email = results[0].old_manager_email;
+          var former_manager_cv = results[0].old_manager_cv;
+          var former_manager_phone_no = results[0].old_manager_phone_no;
           var occupationManager = "";
           var WardName = results[0].WardName;
-          var manager_first_name = "";
-          var manager_middle_name = "";
           var authorized_person = results[0].authorized_person;
-          var manager_last_name = "";
           var old_tracking_number = results[0].old_tracking_number;
-          var manager_name =
-            manager_first_name +
-            " " +
-            manager_middle_name +
-            " " +
-            manager_last_name;
-
+          var manager_full_name = `${manager_first_name} ${manager_middle_name} ${manager_last_name}`;
+          var former_manager_full_name = `${former_manager_first_name} ${former_manager_middle_name} ${former_manager_last_name}`;
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
         }
@@ -288,19 +298,23 @@ badiliMenejaRequestRouter.post(
             if (error1) {
               console.log(error1);
             }
-            var owner_name_old = results1[0] ? results1[0].manager_first_name: '';
-            var authorized_person_old = results1[0] ? results1[0].manager_first_name: '';
-            var owner_email_old = results1[0] ? results1[0].manager_first_name :'';
-            var phone_number_old = results1[0]?results1[0].manager_phone_number:'';
-            var personal_address = results1[0]?results1[0].id:'';
-            var personal_phone_number = results1[0]?results1[0].id : '';
-            var personal_email = results1[0] ? results1[0].manager_email : '';
-            var WardNameMtu = results1[0] ? results1[0].id : '';
-            var LgaNameMtu = results1[0] ? results1[0].id : '';
-            var RegionNameMtu = results1[0] ? results1[0].id : '';
-            var fullname = owner_name_old;
+            var personal_address = results1[0] ? results1[0].id : "";
+            var personal_phone_number = results1[0] ? results1[0].id : "";
+            var personal_email = results1[0] ? results1[0].manager_email : "";
+            var WardNameMtu = results1[0] ? results1[0].id : "";
+            var LgaNameMtu = results1[0] ? results1[0].id : "";
+            var RegionNameMtu = results1[0] ? results1[0].id : "";
             obj.push({
-              owner_name_old: owner_name_old,
+              manager_full_name: manager_full_name,
+              former_manager_full_name: former_manager_full_name,
+              manager_phone_no: manager_phone_no,
+              manager_email: manager_email,
+              manager_cv: manager_cv,
+              former_manager_phone_no: former_manager_phone_no,
+              former_manager_email: former_manager_email,
+              former_manager_cv: former_manager_cv,
+              manager_cv : manager_cv,
+              former_manager_cv : former_manager_cv,
               tracking_number: tracking_number,
               school_name: school_name,
               authorized_person: authorized_person,
@@ -308,25 +322,20 @@ badiliMenejaRequestRouter.post(
               LgaName: LgaName,
               RegionName: "",
               user_id: user_id,
-              owner_email_old: owner_email_old,
-              owner_email: owner_email,
+              manager_email: manager_email,
               purpose: purpose,
               expertise_level: expertise_level,
               registry_type_id: "",
               registry: "",
-              owner_name: owner_name,
-              manager_name: manager_name,
+              manager_first_name: manager_first_name,
+              manager_first_name: manager_first_name,
               education_level: education_level,
               created_at: created_at,
               remain_days: remain_days,
-              manager_phone_number: manager_phone_number,
               manager_email: manager_email,
-              fullname: fullname,
               schoolCategory: "",
               occupation: "",
-              phone_number_old: phone_number_old,
               occupationManager: occupationManager,
-              owner_email_old: owner_email_old,
               mwombajiAddress: personal_address,
               mwombajiPhoneNo: personal_phone_number,
               old_tracking_number: old_tracking_number,
@@ -338,15 +347,14 @@ badiliMenejaRequestRouter.post(
               WardName: WardName,
               structure: structure,
               manager_street: manager_street,
-              authorized_person_old: authorized_person_old,
               subcategory: subcategory,
               WardNameMtu: WardNameMtu,
               LgaNameMtu: LgaNameMtu,
               RegionNameMtu: RegionNameMtu,
-              owner_phone_no: owner_phone_no,
+              manager_phone_no: manager_phone_no,
             });
 
-            console.log(obj);
+            // console.log(obj);
             return res.send({
               error: false,
               statusCode: 300,
@@ -356,6 +364,7 @@ badiliMenejaRequestRouter.post(
               status: objApps,
               Maoni: objMaoni,
               objAttachment: objAttachment,
+              objAttachment1 : objAttachment1,
               Refferes: objRef,
               message: "Taarifa za ombi kuanzisha shule.",
             });
@@ -373,27 +382,51 @@ badiliMenejaRequestRouter.post("/tuma-meneja-majibu", isAuth, (req, res) => {
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-      sharedModel.tumaMaoni(req, app_category, (success) => {
-        if (req.body.haliombi == 2) {
-          db.query(
-            "UPDATE managers SET updated_at = ? WHERE establishing_school_id = ?",
-            [today, req.body.establishId],
-            function (error, results, fields) {
-              if (error) {
-                console.log(error);
+      sharedModel.getFormerManagers(tracking_number, (found, manager) => {
+        //  console.log(manager);
+        if (found) {
+          sharedModel.tumaMaoni(req, app_category, (success) => {
+            const {
+              former_manager_id,
+              manager_id,
+              old_first_name,
+              new_first_name,
+              old_middle_name,
+              new_middle_name,
+              old_last_name,
+              new_last_name,
+              old_phone_number,
+              new_phone_number,
+              old_email,
+              new_email
+            } = manager;
+            sharedModel.changeManager(
+              req,
+              ` manager_first_name = ? , manager_middle_name = ?, manager_last_name = ? , manager_phone_number = ? , manager_email = ?`,
+              [new_first_name, new_middle_name, new_last_name, new_phone_number , new_email, manager_id],
+              ` manager_first_name = ? , manager_middle_name = ?, manager_last_name = ? , manager_phone_number = ? , manager_email = ?`,
+              [old_first_name, old_last_name, old_last_name,old_phone_number , old_email, former_manager_id],
+              (updated) => {
+                if (updated) console.log("school manager changed");
               }
-              if (req.body.ombitype == 1 && req.body.haliombi == 0) {
-                console.log("yes we can do it");
-              }
-            }
-          );
+            );
+            return res.send({
+              error: success ? false : true,
+              statusCode: success ? 300 : 306,
+              data: success ? "success" : "fail",
+              message: success
+                ? `Umethibitisha kubadili meneja kutoka kwa ${old_first_name}${old_middle_name}${old_last_name} kwenda kwa ${new_first_name}${new_middle_name}${new_last_name} .`
+                : "Kuna tatizo",
+            });
+          });
+        } else {
+          return res.send({
+            error: false,
+            statusCode: 306,
+            data: "fail",
+            message: "Kuna tatizo error 404",
+          });
         }
-        return res.send({
-          error: success ? false : true,
-          statusCode: success ? 300 : 306,
-          data: success ? "success" : "fail",
-          message: success ? "Majibu Successfully Recorded." : "Kuna tatizo",
-        });
       });
     }
   });
