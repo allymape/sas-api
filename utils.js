@@ -468,18 +468,13 @@ const ObjectFuctions = {
     return $select;
   },
   selectStaffsBySection: (user) => {
-    const { cheo, ngazi, id, sehemu, district_code, zone_id } = user;
+    const { cheo, ngazi, id, district_code, zone_id } = user;
     // console.log('hapa',user);
     var str = `AND s.id <> ${id} `;
     if (ngazi == "wizara") {
       if (cheo == "ke") {
         str += ` OR LOWER(r.name) IN ('adsa','mus','dsne') `;
       }
-      // if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
-      //   str += ` AND is_approved = 2`;
-      // } else {
-      //   str += ` AND applications.staff_id = ${id} AND is_approved <> 2`;
-      // }
     } else if (ngazi == "kanda") {
       //  K1 && Officers
       str += ` AND s.zone_id = ${zone_id} AND s.district_code IS NULL`;
@@ -551,7 +546,7 @@ const ObjectFuctions = {
     }
     return ` AND s.id < -1`;
   },
-  selectConditionByTitle: (user, useAlias = false , notification = false) => {
+  selectConditionByTitle: (user, useAlias = false , notification = false , status = 'pending') => {
     const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
     // console.log(sehemu);
     var str = ``;
@@ -586,21 +581,21 @@ const ObjectFuctions = {
 
       return str;
     } else if (ngazi == "kanda") {
-      //  K1 && Officers
-      // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} AND is_approved <> 2 AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
-      str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
+      str += (status == 'pending' ? ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}` : '')+
+               ` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
-        // console.log("I am w1 " + user.id);
-        str += ` AND (${
-          useAlias ? "a.staff_id" : "applications.staff_id"
-        } = ${id} OR  ${
-          useAlias ? "a.staff_id" : "applications.staff_id"
-        } IS NULL)`;
+        str +=
+          status == "pending" 
+          ? ` AND (${
+            useAlias ? "a.staff_id" : "applications.staff_id"
+          } = ${id} OR  ${
+            useAlias ? "a.staff_id" : "applications.staff_id"
+          } IS NULL)` 
+          : '';
       } else {
         //Officer W1
-        console.log("I am w1 Officer");
         str += ` AND ${
           useAlias ? "a.staff_id" : "applications.staff_id"
         } = ${id}`;
@@ -629,7 +624,11 @@ const ObjectFuctions = {
       case 1:
         break;
       case 2:
-        $where = `${start_with} ${table_zone_alias} = ${zone_id} AND ${table_lga_alias} IS NULL ${more_sql_filter}`;
+        $where = `${start_with} ${table_zone_alias} = ${zone_id}  ${
+          ["s.district_code", "staffs.district_code"].includes(table_lga_alias)
+            ? 'AND '+table_lga_alias+ ' IS NULL'
+            : ''
+        }  ${more_sql_filter}`;
         break;
       case 3:
         $where = `${start_with} ${table_lga_alias} = "${district_code}" ${more_sql_filter} `;

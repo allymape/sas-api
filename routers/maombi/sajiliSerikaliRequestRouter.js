@@ -148,7 +148,7 @@ sajiliSerikaliRequestRouter.post(
     var SeminaryTitle;
     var DisabledValue;
     var DisabledTitle;
-
+    // console.log(trackingNumber);
     db.query(
       `SELECT manager_first_name, owner_name, number_of_teachers, gender_type,
         is_for_disabled, building, teacher_student_ratio_recommendation,
@@ -173,18 +173,18 @@ sajiliSerikaliRequestRouter.post(
         LEFT JOIN school_registrations ON school_registrations.establishing_school_id = establishing_schools.id
         LEFT JOIN applications ON  school_registrations.tracking_number = applications.tracking_number 
         LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
-        JOIN wards ON wards.WardCode = establishing_schools.ward_id 
-        JOIN districts  ON districts.LgaCode = wards.LgaCode 
-        JOIN school_categories ON school_categories.id = establishing_schools.school_category_id  
+        LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id 
+        LEFT JOIN districts  ON districts.LgaCode = wards.LgaCode 
+        LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id  
         LEFT JOIN languages ON languages.id = establishing_schools.language_id  
-        JOIN regions ON regions.RegionCode = districts.RegionCode 
+        LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
         WHERE application_category_id = 4 AND applications.tracking_number = ?`,
       [trackingNumber],
       function (error, results) {
         if (error) {
           console.log(error);
         }
-        console.log(results);
+        // console.log("results");
 
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
@@ -278,166 +278,177 @@ sajiliSerikaliRequestRouter.post(
             }
           }
         );
+        sharedModel.myStaffs(user , (staffs) => {
+          objStaffs = staffs;
+        })
+        // db.query(
+        //   `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
+        //                 s.name as name, phone_no, r.name as role_name 
+        //         FROM staffs s
+        //         JOIN roles r ON r.id = s.user_level
+        //         JOIN vyeo v ON v.id = r.vyeoId
+        //         WHERE s.user_status = 1 AND v.id = ${
+        //           user.section_id
+        //         } ${selectStaffsBySection(user)}
+        //         ORDER BY name ASC`,
+        //   function (error, results) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //     for (var i = 0; i < results.length; i++) {
+        //       var userId = results[i].userId;
+        //       var email = results[i].email;
+        //       var user_level = results[i].user_level;
+        //       var last_login = results[i].last_login;
+        //       var name = results[i].name;
+        //       var phone_no = results[i].phone_no;
+        //       var role_name = results[i].role_name;
+        //       var vyeoId = results[i].vyeoId;
+        //       objStaffs.push({
+        //         userId: userId,
+        //         name: name,
+        //         email: email,
+        //         phoneNumber: phone_no,
+        //         roleId: user_level,
+        //         role: role_name,
+        //         last_login: last_login,
+        //         vyeoId: vyeoId,
+        //       });
+        //     }
+        //   }
+        // );
 
-        db.query(
-          `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
-                        s.name as name, phone_no, r.name as role_name 
-                FROM staffs s
-                JOIN roles r ON r.id = s.user_level
-                JOIN vyeo v ON v.id = r.vyeoId
-                WHERE s.user_status = 1 AND v.id = ${
-                  user.section_id
-                } ${selectStaffsBySection(user)}
-                ORDER BY name ASC`,
-          function (error, results) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var userId = results[i].userId;
-              var email = results[i].email;
-              var user_level = results[i].user_level;
-              var last_login = results[i].last_login;
-              var name = results[i].name;
-              var phone_no = results[i].phone_no;
-              var role_name = results[i].role_name;
-              var vyeoId = results[i].vyeoId;
-              objStaffs.push({
-                userId: userId,
-                name: name,
-                email: email,
-                phoneNumber: phone_no,
-                roleId: user_level,
-                role: role_name,
-                last_login: last_login,
-                vyeoId: vyeoId,
-              });
-            }
-          }
-        );
+        // db.query(
+        //   "SELECT * from application_statuses",
+        //   function (error, results, fields) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //     for (var i = 0; i < results.length; i++) {
+        //       var id = results[i].id;
+        //       var statusName = results[i].status;
+        //       objApps.push({ statusName: statusName, statusId: id });
+        //     }
+        //   }
+        // );
+      
+        // db.query(
+        //   `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
+        //             roles.name AS cheo 
+        //     FROM maoni, staffs, roles 
+        //     WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
+        //     AND trackingNo = ? 
+        //     ORDER BY maoni.id DESC`,
+        //   [trackingNumber],
+        //   function (error, results, fields) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //     for (var i = 0; i < results.length; i++) {
+        //       var name = results[i].name;
+        //       var user_from = results[i].user_from;
+        //       var user_to = results[i].user_to;
+        //       var coments = results[i].coments;
+        //       var rank_name = results[i].cheo;
+        //       var created_at = results[i].created_at;
+        //       created_at = dateandtime.format(
+        //         new Date(created_at),
+        //         "DD/MM/YYYY"
+        //       );
+        //       objMaoni.push({
+        //         user_from: user_from,
+        //         name: name,
+        //         user_to: user_to,
+        //         coments: coments,
+        //         created_at: created_at,
+        //         rank_name: rank_name,
+        //       });
+        //     }
+        //   }
+        // );
+        // console.log(application_category_id, registry_type_id);
+        // db.query(
+        //   `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
+        //       FROM attachment_types
+        //       WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+        //             AND application_category_id = ${application_category_id}`,
+        //   function (error, results) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //    if(results){
+        //      for (var i = 0; i < results.length; i++) {
+        //        var file_format = results[i].file_format;
+        //        var app_id = results[i].id;
+        //        var attachment_name = results[i].attachment_name;
+        //        var registry = results[i].registry;
+        //        var application_name = results[i].app_name;
+        //        objAttachment.push({
+        //          file_format: file_format,
+        //          attachment_name: attachment_name,
+        //          registry_id: app_id,
+        //          registry: registry,
+        //          application_name: application_name,
+        //        });
+        //      }
+        //    }
+        //   }
+        // );
+        sharedModel.myMaoni(trackingNumber, (maoni) => {
+          objMaoni = maoni;
+        });
+        sharedModel.getAttachmentTypes(registry_type_id , application_category_id , null , (attachment_types) => {
+          objAttachment =  attachment_types;
+        })
+        sharedModel.getAttachments(trackingNumber , (attachments) => {
+          objAttachment1 = attachments;
+        })
 
-        db.query(
-          "SELECT * from application_statuses",
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var id = results[i].id;
-              var statusName = results[i].status;
-              objApps.push({ statusName: statusName, statusId: id });
-            }
-          }
-        );
-
-        db.query(
-          `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
-                    roles.name AS cheo 
-            FROM maoni, staffs, roles 
-            WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
-            AND trackingNo = ? 
-            ORDER BY maoni.id DESC`,
-          [trackingNumber],
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var name = results[i].name;
-              var user_from = results[i].user_from;
-              var user_to = results[i].user_to;
-              var coments = results[i].coments;
-              var rank_name = results[i].cheo;
-              var created_at = results[i].created_at;
-              created_at = dateandtime.format(
-                new Date(created_at),
-                "DD/MM/YYYY"
-              );
-              objMaoni.push({
-                user_from: user_from,
-                name: name,
-                user_to: user_to,
-                coments: coments,
-                created_at: created_at,
-                rank_name: rank_name,
-              });
-            }
-          }
-        );
-        console.log(application_category_id, registry_type_id);
-        db.query(
-          `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
-              FROM attachment_types
-              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
-                    AND application_category_id = ${application_category_id}`,
-          function (error, results) {
-            if (error) {
-              console.log(error);
-            }
-           if(results){
-             for (var i = 0; i < results.length; i++) {
-               var file_format = results[i].file_format;
-               var app_id = results[i].id;
-               var attachment_name = results[i].attachment_name;
-               var registry = results[i].registry;
-               var application_name = results[i].app_name;
-               objAttachment.push({
-                 file_format: file_format,
-                 attachment_name: attachment_name,
-                 registry_id: app_id,
-                 registry: registry,
-                 application_name: application_name,
-               });
-             }
-           }
-          }
-        );
-
-        db.query(
-          "SELECT attachment_types.id as id, file_size, file_format, " +
-            " attachment_name, attachments.created_at as created_at, attachment_path " +
-            " FROM attachment_types, " +
-            " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-            " attachments.tracking_number = ?",
-          [trackingNumber],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
-            }
-            if (results1.length > 0) {
-              for (var i = 0; i < results1.length; i++) {
-                var file_format1 = results1[i].file_format;
-                var app_id1 = results1[i].id;
-                var attachment_name1 = results1[i].attachment_name;
-                // var registry1 = results[i].registry;
-                var attachment_path = results1[i].attachment_path;
-                var created_at = results1[i].created_at;
-                var file_size1 = results1[i].file_size;
-                objAttachment1.push({
-                  file_format: file_format1,
-                  attachment_name: attachment_name1,
-                  registry_id: app_id1,
-                  file_size: file_size1,
-                  registry: "registry1",
-                  application_name: "application_name1",
-                  created_at: created_at,
-                  attachment_path: attachment_path,
-                });
-              }
-            } else {
-              objAttachment1.push({
-                file_format: "",
-                attachment_name: "",
-                registry_id: "",
-                file_size: "",
-                registry: "",
-                application_name: "",
-                created_at: "",
-                attachment_path: "",
-              });
-            }
-          }
-        );
+        // db.query(
+        //   "SELECT attachment_types.id as id, file_size, file_format, " +
+        //     " attachment_name, attachments.created_at as created_at, attachment_path " +
+        //     " FROM attachment_types, " +
+        //     " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+        //     " attachments.tracking_number = ?",
+        //   [trackingNumber],
+        //   function (error1, results1, fields1) {
+        //     if (error1) {
+        //       console.log(error1);
+        //     }
+        //     if (results1.length > 0) {
+        //       for (var i = 0; i < results1.length; i++) {
+        //         var file_format1 = results1[i].file_format;
+        //         var app_id1 = results1[i].id;
+        //         var attachment_name1 = results1[i].attachment_name;
+        //         // var registry1 = results[i].registry;
+        //         var attachment_path = results1[i].attachment_path;
+        //         var created_at = results1[i].created_at;
+        //         var file_size1 = results1[i].file_size;
+        //         objAttachment1.push({
+        //           file_format: file_format1,
+        //           attachment_name: attachment_name1,
+        //           registry_id: app_id1,
+        //           file_size: file_size1,
+        //           registry: "registry1",
+        //           application_name: "application_name1",
+        //           created_at: created_at,
+        //           attachment_path: attachment_path,
+        //         });
+        //       }
+        //     } else {
+        //       objAttachment1.push({
+        //         file_format: "",
+        //         attachment_name: "",
+        //         registry_id: "",
+        //         file_size: "",
+        //         registry: "",
+        //         application_name: "",
+        //         created_at: "",
+        //         attachment_path: "",
+        //       });
+        //     }
+        //   }
+        // );
 
         var remain_days;
         if (days > 0) {
@@ -449,13 +460,17 @@ sajiliSerikaliRequestRouter.post(
         } else if (days <= 0) {
           remain_days = "Saa " + hours;
         }
-
-        db.query(
-          "select * from personal_infos, applications, wards, districts, regions " +
-            " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
-            " AND applications.foreign_token = personal_infos.secure_token",
+        
+        db.query(`SELECT * 
+          FROM personal_infos
+          LEFT JOIN applications ON applications.foreign_token = personal_infos.secure_token
+          LEFT JOIN wards ON wards.WardCode = personal_infos.ward_id
+          LEFT JOIN districts ON wards.LgaCode = districts.LgaCode 
+          LEFT JOIN regions ON districts.RegionCode = regions.RegionCode
+          WHERE applications.tracking_number = ?`,
           [trackingNumber],
-          function (error1, results1, fields1) {
+          function (error1, results1) {
+      
             if (error1) {
               console.log(error1);
             } else {

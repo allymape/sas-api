@@ -1101,7 +1101,9 @@ module.exports = {
                     ${filterByUserOffice(user, "AND")}
                     `;
     //  All
-    //  console.log(sql)
+    //  console.log(
+    //    filterByUserOffice(user, "AND", "r.zone_id", "s.district_code")
+    //  );
     db.query(
       `${sql} AND a.is_approved IN (0,1,2,3)  ${is_complete}`,
       [application_category],

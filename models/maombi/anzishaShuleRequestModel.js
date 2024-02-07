@@ -10,7 +10,7 @@ module.exports = {
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
- 
+
     const sqlFrom = `FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  
@@ -24,7 +24,7 @@ module.exports = {
             ${
               ["pending", ""].includes(status) ||
               user.ngazi.toLowerCase() != "wizara"
-                ? selectConditionByTitle(user)
+                ? selectConditionByTitle(user , false , false , status)
                 : ""
             } 
             ${sqlStatus}
@@ -36,7 +36,7 @@ module.exports = {
                         districts.LgaName as LgaName, registry_types.registry as registry, folio`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`
-    // console.log(status);
+    // console.log(selectConditionByTitle(user));
     sharedModel.paginate(sqlRows , sqlCount,(error, results , numRows) => {
            if (error) console.log(error);
            callback(error, results , numRows);

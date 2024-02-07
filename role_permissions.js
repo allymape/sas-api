@@ -97,10 +97,11 @@ const rolesPermissions = {
     "Addition of Streams Report|Ripoti ya Kuongeza Mikondo": "v",
     "Addition of Bias Report|Ripoti ya Kuongeza Tahasusi": "v",
     "Comments|Maoni": "v,c",
-    "Profile|Profaili": "v,u",
-    "Letters|Barua": "v",
     "School Name|Jina la Shule" : "u",
   },
+  Auditor : {
+      "Audit|Kaguzi": "v",
+  }
 };
 const defaultPermissions = {
   Dashboard: "v",
