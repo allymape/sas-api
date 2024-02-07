@@ -38,12 +38,12 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                    ,u.signature AS base64signature
                                    FROM ${main_table} v
                                    JOIN applications a ON a.tracking_number = v.tracking_number
-                                   JOIN establishing_schools e ON  e.id = v.school_id
-                                   JOIN administration_areas_view aav_ ON aav_.street_code = v.street_code
+                                   LEFT JOIN establishing_schools e ON  e.id = v.school_id
+                                   LEFT JOIN administration_areas_view aav_ ON aav_.street_code = v.street_code
                                    LEFT JOIN school_registrations s ON s.establishing_school_id = e.id
                                    LEFT JOIN certificate_types c on c.id = e.certificate_type_id
-                                   JOIN staffs u ON a.approved_by = u.id 
-                                   JOIN roles r ON r.id = u.user_level
+                                   LEFT JOIN staffs u ON a.approved_by = u.id 
+                                   LEFT JOIN roles r ON r.id = u.user_level
                                    ${
                                      registry_type == 1
                                        ? `LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token
@@ -53,13 +53,13 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                           LEFT JOIN administration_areas_view aav ON aav.ward_code = i.ward_id`
                                        : ""
                                    }
-                                   WHERE v.tracking_number = ? #AND a.folio IS NOT NULL`,
+                                   WHERE v.tracking_number = ? AND a.folio IS NOT NULL`,
                           [tracking_number],
                           (error2, results) => {
+                      
                             if (error2) console.log(error2);
                             const data = results.length > 0 ? results[0] : null;
-                            db.query(
-                              `SELECT r.RegionName AS sqa_zone_region 
+                            db.query(`SELECT r.RegionName AS sqa_zone_region 
                                       FROM regions r
                                       WHERE r.zone_id = ${
                                         data ? data.zone_id : -1
