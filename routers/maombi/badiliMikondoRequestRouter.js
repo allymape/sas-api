@@ -159,7 +159,7 @@ badiliMkondoRequestRouter.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
+          // created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY HH:mm:ss");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -168,18 +168,11 @@ badiliMkondoRequestRouter.post(
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
+          var remain_days = calculcateRemainDays(created_at);
+           console.log(created_at);
         }
 
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+        
   
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -308,16 +301,7 @@ badiliMkondoRequestRouter.post(
                   });
                 }
 
-                var remain_days;
-                if (days > 0) {
-                  remain_days = "Siku " + days;
-                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                  remain_days = "Sek " + seconds + " zilizopita";
-                } else if (days <= 0 && hours <= 0) {
-                  remain_days = "Dakika " + minutes + " zilizopita";
-                } else if (days <= 0) {
-                  remain_days = "Saa " + hours;
-                }
+               
                 var first_name = "";
                 var middle_name = "";
                 var last_name = "";

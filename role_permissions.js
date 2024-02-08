@@ -98,6 +98,7 @@ const rolesPermissions = {
     "Addition of Bias Report|Ripoti ya Kuongeza Tahasusi": "v",
     "Comments|Maoni": "v,c",
     "School Name|Jina la Shule" : "u",
+    "Attachments|Viambatisho" : "v,c"
   },
   Auditor : {
       "Audit|Kaguzi": "v",

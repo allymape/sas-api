@@ -81,6 +81,7 @@ const ripotiDahaliaChangeRequestRouter = require("./routers/ripoti/ripotiDahalia
 const baruaRouter = require("./routers/barua/baruaRouter.js");
 const workflowRouter = require("./routers/workflowRouter.js");
 const loginActivityRouter = require("./routers/loginActivityRouter.js");
+const attachementRouter = require("./routers/attachmentRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -109,7 +110,7 @@ app.use("/api", feeRouter);
 app.use('/api' , biasRouter);
 app.use('/api' , combinationRouter);
 app.use('/api' , dashboardRouter);
-
+app.use("/api", attachementRouter); 
 
 app.use("/api", requestSummaryRouter);
 app.use("/api", umilikiNaMenejaRequestRouter);

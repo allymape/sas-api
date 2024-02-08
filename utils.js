@@ -586,6 +586,7 @@ const ObjectFuctions = {
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
+     
         str +=
           status == "pending" 
           ? ` AND (${
@@ -594,6 +595,7 @@ const ObjectFuctions = {
             useAlias ? "a.staff_id" : "applications.staff_id"
           } IS NULL)` 
           : '';
+            
       } else {
         //Officer W1
         str += ` AND ${
@@ -603,11 +605,13 @@ const ObjectFuctions = {
       str += ` AND ${
         useAlias ? "d.LgaCode" : "districts.LgaCode"
       } = "${district_code}"`;
+
       return str;
     } else {
       str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = -1`;
       return str;
     }
+    
     return str;
   },
 

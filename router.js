@@ -62699,42 +62699,42 @@ router.post("/thibitisha2fa", shirikishoValidation, (req, res, next) => {
   );
 });
 
-router.post("/upload-attachment", shirikishoValidation, (req, res, next) => {
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(200).json({
-      error: true,
-      statusCode: 422,
-      message: "No access to end point",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  db.query(
-    `INSERT INTO attachments (secure_token, uploader_token,
-        tracking_number, attachment_type_id, attachment_path, user_id, created_at, updated_at) VALUES 
-    (${db.escape(req.body.keyString)}, ${db.escape(req.body.keyString)}, 
-    ${db.escape(req.body.trackerId)}, ${db.escape(req.body.attachment)}, 
-    ${db.escape(req.body.kiambatisho)}, '${db.escape(decoded.id)}', ${db.escape(
-      new Date()
-    )}, ${db.escape(new Date())})`,
-    function (error, results, fields) {
-      if (error)
-        res.send({
-          error: true,
-          statusCode: 302,
-          message: "Kiambatisho haijapanda",
-        });
-      return res.send({
-        error: false,
-        statusCode: 300,
-        message: "Kiambatisho imesajiliwa.",
-      });
-    }
-  );
-});
+// router.post("/upload-attachment", shirikishoValidation, (req, res, next) => {
+//   if (
+//     !req.headers.authorization ||
+//     !req.headers.authorization.startsWith("Bearer") ||
+//     !req.headers.authorization.split(" ")[1]
+//   ) {
+//     return res.status(200).json({
+//       error: true,
+//       statusCode: 422,
+//       message: "No access to end point",
+//     });
+//   }
+//   const theToken = req.headers.authorization.split(" ")[1];
+//   const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+//   db.query(
+//     `INSERT INTO attachments (secure_token, uploader_token,
+//         tracking_number, attachment_type_id, attachment_path, user_id, created_at, updated_at) VALUES 
+//     (${db.escape(req.body.keyString)}, ${db.escape(req.body.keyString)}, 
+//     ${db.escape(req.body.trackerId)}, ${db.escape(req.body.attachment)}, 
+//     ${db.escape(req.body.kiambatisho)}, '${db.escape(decoded.id)}', ${db.escape(
+//       new Date()
+//     )}, ${db.escape(new Date())})`,
+//     function (error, results, fields) {
+//       if (error)
+//         res.send({
+//           error: true,
+//           statusCode: 302,
+//           message: "Kiambatisho haijapanda",
+//         });
+//       return res.send({
+//         error: false,
+//         statusCode: 300,
+//         message: "Kiambatisho imesajiliwa.",
+//       });
+//     }
+//   );
+// });
 
 module.exports = router;

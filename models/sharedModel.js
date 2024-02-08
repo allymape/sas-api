@@ -614,12 +614,11 @@ module.exports = {
               user_to = staff[0].id;
             }
 
-            if (user.cheo != "ke" && !user_to) {
+            if (user.cheo != "ke" && !user_to && haliombi != 4) {
               console.log("Kuna shida");
               callback(success);
             } else {
-              console.log("inatumwa kwa ", staff);
-
+              console.log(`inatumwa kwa ${ haliombi == 4 ? 'Mwombaji' : staff}`);
               db.query(
                 `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
                 (

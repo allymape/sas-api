@@ -397,7 +397,7 @@ badiliUsajiliRequestRouter.post(
                  new_school_category_id,
                  registration_number,
                } = school;
-               console.log(school)
+              //  console.log(school)
                sharedModel.changeSchoolInfos(
                  req,
                  ` school_category_id = ?`,
