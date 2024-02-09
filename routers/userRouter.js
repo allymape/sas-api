@@ -200,12 +200,12 @@ userRouter.post("/create-user", isAuth, (req, res, next) => {
                 region: req.body.region,
                 sign: req.body.selectedFile,
               };
-              userModal.createUser(userData, (success, user , duplicate = false) => {
+              userModal.createUser(userData, (success, user , duplicateCheo = false) => {
                 res.send({
                   error: success ? false : true,
                   statusCode: success ? 300 : 306,
                   data: success ? user : [],
-                  message: duplicate? 'Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa.' : (success 
+                  message: duplicateCheo? 'Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa.' : (success 
                     ? "Umefanikiwa kutengeneza akaunti ya Mtumiaji."
                     : "Haujafanikiwa kutengeneza Akaunti kuna tatizo limetokea"),
                 });
@@ -237,13 +237,16 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
               region: req.body.region,
               sign: req.body.selectedFile,
         };
-  userModal.updateUser(userId, userData, (success, user , duplicate = false) => {
+  userModal.updateUser(userId, userData, (success, user , duplicateCheo = false , emailExist = false) => {
     res.send({
       error: success ? false : true,
       statusCode: success ? 300 : 306,
       data: success ? user : [],
-      message: duplicate
+      message: duplicateCheo
         ? "Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa."
+        :
+        emailExist
+        ? "Baruapepe ya mtumiaji huyu imeshatumika, Tafadhali hakiki ili uendelee."
         : (success
         ? "Umefanikiwa kubadili taarifa za akaunti ya Mtumiaji."
         : "Haujafanikiwa kubadili taarifa za akaunti hii kuna tatizo limetokea"),

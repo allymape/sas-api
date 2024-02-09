@@ -265,52 +265,72 @@ module.exports = {
               userData.push(user.sign);
             }
             userData.push(Number(userId));
-    db.query(
-      `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
-      ${userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"} AND  user_status = 1 AND
-      ${userData[9] ? "district_code='" + userData[9]+"'" : "district_code IS NULL"} `,
-      [userData[2], Number(userId)],
-      (err, result) => {
-        if (err) console.log(err);
-        if (result.length == 0) {
-          db.query(
-            `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
+    const email = userData[1];
+    db.query(`SELECT id 
+              FROM staffs  
+              WHERE email = ? AND id <> ?` , 
+    [email , Number(userId)], 
+    (errorExist , emailExistResults) => {
+      if(errorExist) console.log('Exist Email: ',errorExist)
+      if (emailExistResults.length == 0) {
+        // Npw check if cheo exists
+        db.query(
+          `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
+          ${
+            userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"
+          } AND  user_status = 1 AND
+          ${
+            userData[9]
+              ? "district_code='" + userData[9] + "'"
+              : "district_code IS NULL"
+          } `,
+          [userData[2], Number(userId)],
+          (err, result) => {
+            if (err) console.log(err);
+            if (result.length == 0) {
+              db.query(
+                `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
               new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
               ${user.sign ? ", signature = ?" : ""}
               WHERE id = ?`,
-            userData,
-            (error, updatedUser) => {
-              if (error) {
-                console.log("error findind user: ", error);
-              }
-              var password = user.password;
-              if (password) {
-                hash(password, (hashed, hash) => {
-                  if (hashed) {
-                    db.query(
-                      `UPDATE staffs SET password = ? WHERE id = ?`,
-                      [hash, Number(userId)],
-                      (errorPassword, updatedUser) => {
-                        if (errorPassword) {
-                          console.log("Password Error: ", errorPassword);
-                        }
-                        if (updatedUser) success = true;
-                        callback(success, updatedUser);
-                      }
-                    );
+                userData,
+                (error, updatedUser) => {
+                  if (error) {
+                    console.log("error findind user: ", error);
                   }
-                });
-              } else {
-                if (updatedUser) success = true;
-                callback(success, updatedUser);
-              }
+                  var password = user.password;
+                  if (password) {
+                    hash(password, (hashed, hash) => {
+                      if (hashed) {
+                        db.query(
+                          `UPDATE staffs SET password = ? WHERE id = ?`,
+                          [hash, Number(userId)],
+                          (errorPassword, updatedUser) => {
+                            if (errorPassword) {
+                              console.log("Password Error: ", errorPassword);
+                            }
+                            if (updatedUser) success = true;
+                            callback(success, updatedUser);
+                          }
+                        );
+                      }
+                    });
+                  } else {
+                    if (updatedUser) success = true;
+                    callback(success, updatedUser);
+                  }
+                }
+              );
+            } else {
+              callback(false, null, true); //return cheo exist
             }
-          );
-        } else {
-          callback(false, null, true);
-        }
+          }
+        );
+      } else {
+        callback(false, null, false, true); //return email exist
       }
-    );
+    })
+   
   },
  
   // DISABLE USER ACCOUNT
