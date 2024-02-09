@@ -74,14 +74,14 @@ module.exports = {
     // console.log(user)
     const objStaffs = [];
     db.query(
-      `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
-         s.name as name, phone_no, r.name as role_name 
+      `SELECT s.id as userId, s.name as name,r.name as role_name 
          FROM staffs s
          JOIN roles r ON r.id = s.user_level
          JOIN vyeo v ON v.id = r.vyeoId
          WHERE s.user_status = 1 AND v.id = ${
            user.section_id
-         } ${selectStaffsBySection(user)}
+         }
+         ${selectStaffsBySection(user)}
          ORDER BY name ASC
          `,
       (error, results) => {
@@ -90,22 +90,12 @@ module.exports = {
         }
         for (var i = 0; i < results.length; i++) {
           var userId = results[i].userId;
-          var email = results[i].email;
-          var user_level = results[i].user_level;
-          var last_login = results[i].last_login;
           var name = results[i].name;
-          var phone_no = results[i].phone_no;
           var role_name = results[i].role_name;
-          var vyeoId = results[i].vyeoId;
           objStaffs.push({
             userId: userId,
             name: name,
-            email: email,
-            phoneNumber: phone_no,
-            roleId: user_level,
             role: role_name,
-            last_login: last_login,
-            vyeoId: vyeoId,
           });
         }
         callback(objStaffs);
@@ -115,12 +105,12 @@ module.exports = {
   myMaoni: (tracking_number, callback) => {
     const obj = [];
     db.query(
-      `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
-               roles.name AS cheo 
-        FROM maoni, staffs, roles 
-        WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
-              AND trackingNo = ? 
-              ORDER BY maoni.id DESC`,
+      `SELECT staffs.name AS name, coments, maoni.created_at as created_at, roles.name AS cheo 
+      FROM maoni 
+      JOIN staffs ON staffs.id = maoni.user_from
+      JOIN roles ON roles.id = staffs.user_level
+      WHERE  trackingNo = ?
+      ORDER BY maoni.id DESC`,
       [tracking_number],
       function (error, results) {
         if (error) {
@@ -129,20 +119,13 @@ module.exports = {
 
         for (var i = 0; i < results.length; i++) {
           var name = results[i].name;
-          var user_from = results[i].user_from;
-          var user_to = results[i].user_to;
           var coments = results[i].coments;
           var maoniTime = results[i].created_at;
           var rank_name = results[i].cheo;
-          if (maoniTime == null) {
-            maoniTime = new Date();
-          }
           // console.log(maoniTime)
           // maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
           obj.push({
-            user_from: user_from,
             name: name,
-            user_to: user_to,
             coments: coments,
             created_at: maoniTime,
             rank_name: rank_name,
@@ -228,16 +211,16 @@ module.exports = {
     );
   },
   findApplicationDetails: (tracking_number, callback) => {
-    const obj = [];
-    const objAttachment = [];
-    const objAttachment1 = [];
-    const objAttachment2 = [];
-    const objMess = [];
+    var obj = [];
+    var objAttachment = [];
+    var objAttachment1 = [];
+    var objAttachment2 = [];
+    var objMess = [];
     db.query(
       `SELECT registration_structures.structure as structure, school_sub_categories.subcategory as subcategory,application_category_id, 
                establishing_schools.area as area, establishing_schools.school_size as school_size,
                languages.language as language, school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
-               applications.tracking_number as tracking_number,
+               applications.tracking_number AS tracking_number, is_approved,
                applications.created_at as created_at, applications.registry_type_id as registry_type_id, 
                applications.user_id as user_id, applications.foreign_token as foreign_token, 
                establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
@@ -258,6 +241,7 @@ module.exports = {
         if (error) {
           console.log(error);
         }
+        
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -270,7 +254,6 @@ module.exports = {
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = formatDate(created_at, "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -278,6 +261,7 @@ module.exports = {
           var WardName = results[0].WardName;
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
+          var is_approved = results[0].is_approved;
         } else {
           var tracking_number = "";
           var registry_type_id = null;
@@ -298,8 +282,10 @@ module.exports = {
           var WardName = "";
           var structure = "";
           var subcategory = "";
+          var is_approved = "";
         }
-
+        var remain_days = calculcateRemainDays(created_at);
+       
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
@@ -317,7 +303,7 @@ module.exports = {
             }
           }
         );
-        var remain_days = calculcateRemainDays(created_at);
+   
         if (registry_type_id == 1) {
           db.query(
             "select *, IFNULL(middle_name , '') AS middle_name, IFNULL(last_name , '') AS last_name FROM personal_infos, applications, wards, districts, regions " +
@@ -379,6 +365,7 @@ module.exports = {
                 WardNameMtu: WardNameMtu,
                 LgaNameMtu: LgaNameMtu,
                 RegionNameMtu: RegionNameMtu,
+                is_approved : is_approved
               });
               objAttachment2.push({
                 file_format: "",
@@ -396,9 +383,9 @@ module.exports = {
         //  console.log(application_category_id, registry_type_id);
         db.query(
           `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
-              FROM attachment_types
-              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
-                    AND application_category_id = ${application_category_id}`,
+           FROM attachment_types
+           WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
+           AND application_category_id = ${application_category_id}`,
           function (error, results) {
             if (error) {
               console.log(error);
@@ -436,10 +423,8 @@ module.exports = {
               var file_format1 = results1[i].file_format;
               var app_id1 = results1[i].id;
               var attachment_name1 = results1[i].attachment_name;
-              // var registry1 = results[i].registry;
               var attachment_path = results1[i].attachment_path;
               var created_at = results1[i].created_at;
-              created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS"); //dateandtime.format( new Date(created_at), "DD/MM/YYYY HH:MM:SS");
               var file_size1 = results1[i].file_size;
               objAttachment1.push({
                 file_format: file_format1,
@@ -502,6 +487,7 @@ module.exports = {
                 WardName: WardName,
                 structure: structure,
                 subcategory: "Oldsubcategory",
+                is_approved: is_approved,
               });
               db.query(
                 "SELECT attachment_types.id as id, file_size, file_format, " +
@@ -544,7 +530,6 @@ module.exports = {
             }
           );
         }
-
         callback(obj, objAttachment, objAttachment1, objAttachment2, objMess);
       }
     );

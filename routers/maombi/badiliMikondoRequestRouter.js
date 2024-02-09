@@ -25,7 +25,7 @@ badiliMkondoRequestRouter.post(
      const offset = (page - 1) * per_page;
      const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
                         applications.created_at as created_at, applications.user_id as user_id, 
-                        applications.foreign_token as foreign_token, folio, 
+                        applications.foreign_token as foreign_token, folio, is_approved,
                         establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
                         districts.LgaName as LgaName`;
 
@@ -66,6 +66,7 @@ badiliMkondoRequestRouter.post(
             var created_at = results[i].created_at;
             var schoolCategory = results[i].schoolCategory;
             var folio = results[i].folio;
+            var is_approved = results[i].is_approved;
             var remain_days = calculcateRemainDays(created_at);
           
             obj.push({
@@ -79,7 +80,8 @@ badiliMkondoRequestRouter.post(
               created_at: created_at,
               remain_days: remain_days,
               schoolCategory: schoolCategory,
-              folio
+              folio,
+              is_approved
             });
           }
           // console.log(obj)
@@ -120,7 +122,7 @@ badiliMkondoRequestRouter.post(
     db.query(
       `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
               school_sub_categories.subcategory as subcategory,application_category_id, former_school_infos.stream as streamOld,  
-              establishing_schools.stream as streamNew, establishing_schools.area as area,  
+              establishing_schools.stream as streamNew, establishing_schools.area as area, is_approved, 
               establishing_schools.school_size as school_size, languages.language as language,  
               school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
               applications.tracking_number as tracking_number, applications.created_at as created_at,  
@@ -168,6 +170,7 @@ badiliMkondoRequestRouter.post(
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
+          var is_approved = results[0].is_approved;
           var remain_days = calculcateRemainDays(created_at);
            console.log(created_at);
         }
@@ -341,6 +344,7 @@ badiliMkondoRequestRouter.post(
                   WardNameMtu: WardNameMtu,
                   LgaNameMtu: LgaNameMtu,
                   RegionNameMtu: RegionNameMtu,
+                  is_approved
                 });
                 objAttachment2.push({
                   file_format: "",

@@ -4,7 +4,7 @@ const db = require('../../dbConnection');
 const request = require("request");
 const badiliBweniRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
-const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliBweniRequestRouter.post(
@@ -24,7 +24,7 @@ badiliBweniRequestRouter.post(
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, folio, applications.tracking_number as tracking_number, 
         applications.created_at as created_at, applications.user_id as user_id, 
-        applications.foreign_token as foreign_token, 
+        applications.foreign_token as foreign_token, is_approved,
         establishing_schools.school_name AS school_name, regions.RegionName AS RegionName, 
         districts.LgaName as LgaName`;
 
@@ -65,29 +65,9 @@ badiliBweniRequestRouter.post(
               var registry = results[i].registry;
               var created_at = results[i].created_at;
               var schoolCategory = results[i].schoolCategory;
-              var applicantname;
               var folio = results[i].folio;
-              var today = new Date();
-
-              var diffInSeconds = Math.abs(today - created_at) / 1000;
-              var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-              var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-              var minutes = Math.floor((diffInSeconds / 60) % 60);
-              var seconds = Math.floor(diffInSeconds % 60);
-              var milliseconds = Math.round(
-                (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-              );
-
-              var remain_days;
-              if (days > 0) {
-                remain_days = "Siku " + days;
-              } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                remain_days = "Sek " + seconds + " zilizopita";
-              } else if (days <= 0 && hours <= 0) {
-                remain_days = "Dakika " + minutes + " zilizopita";
-              } else if (days <= 0) {
-                remain_days = "Saa " + hours;
-              }
+              var is_approved = results[i].is_approved;
+              var remain_days = calculcateRemainDays(created_at)
               obj.push({
                 tracking_number: tracking_number,
                 school_name: school_name,
@@ -99,7 +79,8 @@ badiliBweniRequestRouter.post(
                 created_at: created_at,
                 remain_days: remain_days,
                 schoolCategory: schoolCategory,
-                folio
+                folio,
+                is_approved
               });
             }
             // console.log(obj)
@@ -143,7 +124,7 @@ badiliBweniRequestRouter.post(
               essc.subcategory as Newsubcategory,  
               former_school_infos.school_sub_category_id as NewSubCatId, 
               establishing_schools.school_sub_category_id as OldSubCatId,  
-              fssc.subcategory as subcategory,  
+              fssc.subcategory as subcategory, is_approved,
               former_school_infos.stream as streamOld, establishing_schools.stream as streamNew,  
               establishing_schools.area as area, establishing_schools.school_size as school_size,  
               languages.language as language, school_categories.category as schoolCategory,  
@@ -177,14 +158,13 @@ badiliBweniRequestRouter.post(
           var streamOld = results[0].OldSubCatId;
           var streamNew = results[0].NewSubCatId;
           var Newsubcategory = results[0].Newsubcategory;
-          var foreign_token = results[0].foreign_token;
+          var is_approved = results[0].is_approved;
           var school_name = results[0].school_name;
           var LgaName = results[0].LgaName;
           var RegionName = results[0].RegionName;
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -196,16 +176,7 @@ badiliBweniRequestRouter.post(
           var Oldsubcategory = results[0].subcategory;
           // var Oldsubcategory = results[0].subcategory;
         }
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+        var remain_days = calculcateRemainDays(created_at)
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -239,16 +210,6 @@ badiliBweniRequestRouter.post(
             );
             sharedModel.getAttachments(trackingNumber, (attachments) => {
               objAttachment1 = attachments;
-              var remain_days = 0;
-              if (days > 0) {
-                remain_days = "Siku " + days;
-              } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                remain_days = "Sek " + seconds + " zilizopita";
-              } else if (days <= 0 && hours <= 0) {
-                remain_days = "Dakika " + minutes + " zilizopita";
-              } else if (days <= 0) {
-                remain_days = "Saa " + hours;
-              }
               objAttachment2.push({
                 file_format: "",
                 attachment_name: "",
@@ -264,6 +225,7 @@ badiliBweniRequestRouter.post(
                 school_name: school_name,
                 LgaName: LgaName,
                 RegionName: RegionName,
+                is_approved,
                 user_id: user_id,
                 registry_type_id: registry_type_id,
                 registry: registry,

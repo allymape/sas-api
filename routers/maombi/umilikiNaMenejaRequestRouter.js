@@ -5,7 +5,7 @@ const request = require("request");
 const umilikiNaMenejaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('view-school-owners-and-managers'), (req, res) => {
@@ -69,27 +69,8 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
           var is_approved = results[i].is_approved;
           var is_manager = results[i].is_manager;
           var folio = results[i].folio;
-          var today = new Date();
-
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
-
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
+          var remain_days = calculcateRemainDays(created_at)
+        
           obj.push({
             tracking_number: tracking_number,
             school_name: school_name,
@@ -102,7 +83,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
             remain_days: remain_days,
             schoolCategory: schoolCategory,
             is_approved: is_approved,
-            folio
+            folio,
           });
         }
         return res.send({
@@ -141,20 +122,21 @@ umilikiNaMenejaRequestRouter.post(
     var objRef = [];
     // console.log(user.cheo);
     db.query(
-      "SELECT manager_first_name, manager_middle_name, authorized_person, application_category_id, registry_type_id, title, manager_last_name, " +
-      " establishing_schools.area as area, education_level, expertise_level, " +
-      " establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, " +
-      " applications.tracking_number as tracking_number, owner_email, purpose, house_number, street, " +
-      " applications.created_at as created_at, managers.occupation as occupation, manager_phone_number, manager_email, " +
-      " applications.user_id as user_id, applications.foreign_token as foreign_token, " +
-      " establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, " +
-      " districts.LgaName as LgaName, owners.owner_name as owner_name , owners.phone_number as owner_phone_no" +
-      " FROM owners, establishing_schools, applications, wards, districts, regions, managers WHERE " +
-      " regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-      " managers.tracking_number = applications.tracking_number AND " +
-      " wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number " +
-      " AND application_category_id =2 AND owners.establishing_school_id = establishing_schools.id " +
-      " AND applications.tracking_number = ?",
+      `SELECT manager_first_name, manager_middle_name, authorized_person, application_category_id, registry_type_id, title, manager_last_name, 
+          establishing_schools.area as area, education_level, expertise_level, is_approved,
+          establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, 
+          applications.tracking_number as tracking_number, owner_email, purpose, house_number, street, 
+          applications.created_at as created_at, managers.occupation as occupation, manager_phone_number, manager_email, 
+          applications.user_id as user_id, applications.foreign_token as foreign_token, 
+          establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
+          districts.LgaName as LgaName, owners.owner_name as owner_name , owners.phone_number as owner_phone_no
+      FROM owners, establishing_schools, applications, wards, districts, regions, managers 
+      WHERE 
+      regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND 
+      managers.tracking_number = applications.tracking_number AND 
+      wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number
+      AND application_category_id =2 AND owners.establishing_school_id = establishing_schools.id 
+      AND applications.tracking_number = ?`,
       [trackingNumber],
       function (error, results) {
         if (error) {
@@ -190,6 +172,7 @@ umilikiNaMenejaRequestRouter.post(
           var authorized_person = results[0].authorized_person;
           var manager_last_name = results[0].manager_last_name;
           var old_tracking_number = results[0].old_tracking_number;
+          var is_approved = results[0].is_approved;
           var manager_name =
             manager_first_name +
             " " +
@@ -199,18 +182,8 @@ umilikiNaMenejaRequestRouter.post(
 
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
+          var remain_days = calculcateRemainDays(created_at);
         }
-
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -230,13 +203,7 @@ umilikiNaMenejaRequestRouter.post(
           }
         );
 
-        // db.query(
-        //   "SELECT vyeo.id as vyeoId, staffs.id as userId, email, user_level, last_login, " +
-        //     " staffs.name as name, phone_no, vyeo.rank_name as role_name FROM staffs, " +
-        //     " vyeo where user_status = ? AND vyeo.id = staffs.user_level " +
-        //     " AND staffs.user_level IN (?) AND staffs.office = ?",
-        //   [1, 3, office],
-        //   function (error, results) {
+        
         db.query(
           `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
                 s.name as name, phone_no, r.name as role_name 
@@ -372,7 +339,7 @@ umilikiNaMenejaRequestRouter.post(
             if (error) {
               console.log(error);
             }
-            console.log(results)
+            // console.log(results)
             for (var i = 0; i < results.length; i++) {
               var file_format = results[i].file_format;
               var app_id = results[i].id;
@@ -437,16 +404,7 @@ umilikiNaMenejaRequestRouter.post(
             // console.log(objAttachment1)
           }
         );
-        var remain_days;
-        if (days > 0) {
-          remain_days = "Siku " + days;
-        } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-          remain_days = "Sek " + seconds + " zilizopita";
-        } else if (days <= 0 && hours <= 0) {
-          remain_days = "Dakika " + minutes + " zilizopita";
-        } else if (days <= 0) {
-          remain_days = "Saa " + hours;
-        }
+      
         db.query(
           "select * from personal_infos, applications, wards, districts, regions " +
           " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
@@ -509,6 +467,7 @@ umilikiNaMenejaRequestRouter.post(
               attachment_path: "",
               RegionNameMtu: RegionNameMtu,
               owner_phone_no: owner_phone_no,
+              is_approved
             });
             return res.send({
               error: false,

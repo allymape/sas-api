@@ -5,7 +5,7 @@ const request = require("request");
 const sajiliBinafsiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 sajiliBinafsiRequestRouter.post(
@@ -24,7 +24,7 @@ sajiliBinafsiRequestRouter.post(
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
-                          applications.created_at as created_at, applications.user_id as user_id,
+                          applications.created_at as created_at, is_approved, applications.user_id as user_id,
                           applications.foreign_token as foreign_token, folio, 
                           establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
                           districts.LgaName as LgaName`;
@@ -59,6 +59,7 @@ sajiliBinafsiRequestRouter.post(
             var registry_type_id = "";
             var user_id = results[i].user_id;
             var foreign_token = results[i].foreign_token;
+            var is_approved = results[i].is_approved;
             var school_name = results[i].school_name;
             var LgaName = results[i].LgaName;
             var RegionName = results[i].RegionName;
@@ -66,28 +67,7 @@ sajiliBinafsiRequestRouter.post(
             var registry = results[i].registry;
             var created_at = results[i].created_at;
             var schoolCategory = results[i].schoolCategory;
-            var applicantname;
-            var today = new Date();
-
-            var diffInSeconds = Math.abs(today - created_at) / 1000;
-            var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-            var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-            var minutes = Math.floor((diffInSeconds / 60) % 60);
-            var seconds = Math.floor(diffInSeconds % 60);
-            var milliseconds = Math.round(
-              (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-            );
-
-            var remain_days;
-            if (days > 0) {
-              remain_days = "Siku " + days;
-            } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-              remain_days = "Sek " + seconds + " zilizopita";
-            } else if (days <= 0 && hours <= 0) {
-              remain_days = "Dakika " + minutes + " zilizopita";
-            } else if (days <= 0) {
-              remain_days = "Saa " + hours;
-            }
+            var remain_days = calculcateRemainDays(created_at);
             obj.push({
               tracking_number: tracking_number,
               school_name: school_name,
@@ -99,7 +79,8 @@ sajiliBinafsiRequestRouter.post(
               created_at: created_at,
               remain_days: remain_days,
               schoolCategory: schoolCategory,
-              folio
+              folio,
+              is_approved
             });
           }
           // console.log(obj)
@@ -139,7 +120,7 @@ sajiliBinafsiRequestRouter.post(
       var SeminaryTitle;
   
       db.query(
-        "SELECT establishing_schools.id as schoolId, application_category_id," +
+        "SELECT establishing_schools.id as schoolId, application_category_id, is_approved," +
           " school_registrations.registration_number as reg_no, " +
           " school_registrations.updated_at as approved_at, number_of_teachers, gender_type, teacher_student_ratio_recommendation, " +
           " registration_structures.structure as structure, school_opening_date, number_of_students, " +
@@ -202,9 +183,9 @@ sajiliBinafsiRequestRouter.post(
               new Date(schoolOpeningDate),
               "DD/MM/YYYY"
             );
+            var is_approved = results[0].is_approved;
             var registry = "";
             var created_at = results[0].created_at;
-            created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
             var school_address = results[0].school_address;
             var schoolCategory = results[0].schoolCategory;
             var po_box = results[0].po_box;
@@ -234,16 +215,7 @@ sajiliBinafsiRequestRouter.post(
             // console.log(tracking_number_old)
           }
   
-          var today = new Date();
-  
-          var diffInSeconds = Math.abs(today - created_at) / 1000;
-          var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-          var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-          var minutes = Math.floor((diffInSeconds / 60) % 60);
-          var seconds = Math.floor(diffInSeconds % 60);
-          var milliseconds = Math.round(
-            (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-          );
+          var remain_days = calculcateRemainDays(created_at);
   
           db.query(
             "select * from maoni WHERE trackingNo = ?",
@@ -418,16 +390,6 @@ sajiliBinafsiRequestRouter.post(
             }
           );
   
-          var remain_days;
-          if (days > 0) {
-            remain_days = "Siku " + days;
-          } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-            remain_days = "Sek " + seconds + " zilizopita";
-          } else if (days <= 0 && hours <= 0) {
-            remain_days = "Dakika " + minutes + " zilizopita";
-          } else if (days <= 0) {
-            remain_days = "Saa " + hours;
-          }
           db.query(
             "select registry_type_id from applications WHERE tracking_number = ?",
             [tracking_number_old],
@@ -522,6 +484,7 @@ sajiliBinafsiRequestRouter.post(
                       LgaNameMtu: LgaNameMtu,
                       RegionNameMtu: RegionNameMtu,
                       finalFileNumber: finalFileNumber,
+                      is_approved
                     });
                     return res.send({
                       error: false,
@@ -606,6 +569,7 @@ sajiliBinafsiRequestRouter.post(
                       WardNameMtu: "",
                       LgaNameMtu: "",
                       RegionNameMtu: "",
+                      is_approved
                     });
                     return res.send({
                       error: false,

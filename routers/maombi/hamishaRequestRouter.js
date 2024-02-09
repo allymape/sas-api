@@ -27,7 +27,7 @@ hamishaRequestRouter.post(
         // console.log(page , per_page , offset)
         const sqlSelect = `select school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
               applications.created_at as created_at, applications.user_id as user_id, 
-              applications.foreign_token as foreign_token, folio,
+              applications.foreign_token as foreign_token, folio, is_approved,
               establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
               districts.LgaName as LgaName`;
 
@@ -46,7 +46,7 @@ hamishaRequestRouter.post(
                 } ${sqlStatus} ORDER BY applications.created_at DESC`;
         const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
         const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
-        console.log(sqlRows)
+      
        sharedModel.maombiSummaryByCategoryAndStatus(user, 10 , null,(summaries)  => {
           sharedModel.paginate(sqlRows , sqlCount,
             function (error, results , numRows) {
@@ -66,7 +66,7 @@ hamishaRequestRouter.post(
                 var registry = results[i].registry;
                 var created_at = results[i].created_at;
                 var schoolCategory = results[i].schoolCategory;
-                var applicantname;
+                var is_approved = results[i].is_approved;
                 var remain_days = calculcateRemainDays(created_at);
                 obj.push({
                   tracking_number: tracking_number,
@@ -79,7 +79,8 @@ hamishaRequestRouter.post(
                   created_at: created_at,
                   remain_days: remain_days,
                   schoolCategory: schoolCategory,
-                  folio
+                  folio,
+                  is_approved
                 });
               }
               // console.log(obj)
@@ -120,7 +121,7 @@ hamishaRequestRouter.post(
     db.query(
       `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,  
          school_sub_categories.subcategory as subcategory,former_school_infos.school_name as school_name_new,  
-         former_school_infos.stream as streamOld,  
+         former_school_infos.stream as streamOld, is_approved,
          establishing_schools.stream as streamNew, establishing_schools.area as area,  
          establishing_schools.school_size as school_size, languages.language as language,  
          school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
@@ -167,7 +168,7 @@ hamishaRequestRouter.post(
           var streamOld = results[0].streamOld;
           var WardIdOld = results[0].WardIdOld;
           var streamNew = results[0].streamNew;
-          var foreign_token = results[0].foreign_token;
+          var is_approved = results[0].is_approved;
           var school_name_new = results[0].school_name_new;
           var school_name = results[0].school_name;
           var registry = results[0].registry;
@@ -246,6 +247,7 @@ hamishaRequestRouter.post(
 
               obj.push({
                 tracking_number: tracking_number,
+                is_approved,
                 school_name: school_name,
                 StreetNameNew : StreetNameNew,
                 WardNameNew: WardNameNew,

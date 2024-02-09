@@ -5,7 +5,7 @@ const request = require("request");
 const badiliUsajiliRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliUsajiliRequestRouter.post(
@@ -25,7 +25,7 @@ badiliUsajiliRequestRouter.post(
             const offset = (page - 1) * per_page;
             const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
                 applications.created_at as created_at, applications.user_id as user_id, 
-                applications.foreign_token as foreign_token, folio,
+                applications.foreign_token as foreign_token, folio, is_approved,
                 establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
                 districts.LgaName as LgaName
                 `;
@@ -67,29 +67,9 @@ badiliUsajiliRequestRouter.post(
                    var registry = results[i].registry;
                    var created_at = results[i].created_at;
                    var schoolCategory = results[i].schoolCategory;
-                   var applicantname;
                    var folio = results[i].folio;
-                   var today = new Date();
-
-                   var diffInSeconds = Math.abs(today - created_at) / 1000;
-                   var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                   var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                   var minutes = Math.floor((diffInSeconds / 60) % 60);
-                   var seconds = Math.floor(diffInSeconds % 60);
-                   var milliseconds = Math.round(
-                     (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                   );
-
-                   var remain_days;
-                   if (days > 0) {
-                     remain_days = "Siku " + days;
-                   } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                     remain_days = "Sek " + seconds + " zilizopita";
-                   } else if (days <= 0 && hours <= 0) {
-                     remain_days = "Dakika " + minutes + " zilizopita";
-                   } else if (days <= 0) {
-                     remain_days = "Saa " + hours;
-                   }
+                   var is_approved = results[i].is_approved;
+                   var remain_days = calculcateRemainDays(created_at)
                    obj.push({
                      tracking_number: tracking_number,
                      school_name: school_name,
@@ -101,7 +81,8 @@ badiliUsajiliRequestRouter.post(
                      created_at: created_at,
                      remain_days: remain_days,
                      schoolCategory: schoolCategory,
-                     folio
+                     folio,
+                     is_approved
                    });
                  }
                  // console.log(obj)
@@ -139,7 +120,7 @@ badiliUsajiliRequestRouter.post(
     var objAttachment2 = [];
     
     db.query(`
-      SELECT school_registrations.registration_number as registration_number,  
+      SELECT school_registrations.registration_number as registration_number, is_approved,
          registration_structures.structure as structure, establishing_schools.id as establishId,  
          establishing_schools.school_category_id as school_category_id_old,  
          former_school_infos.school_category_id as school_category_id_new,  
@@ -176,7 +157,7 @@ badiliUsajiliRequestRouter.post(
           var user_id = results[0].user_id;
           var streamOld = results[0].streamOld;
           var streamNew = results[0].streamNew;
-          var foreign_token = results[0].foreign_token;
+          var is_approved = results[0].is_approved;
           var school_category_id_old = results[0].school_category_id_old;
           var school_category_id_new = results[0].school_category_id_new;
           var school_name = results[0].school_name;
@@ -186,7 +167,6 @@ badiliUsajiliRequestRouter.post(
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -197,16 +177,7 @@ badiliUsajiliRequestRouter.post(
           var establishId = results[0].establishId;
         }
 
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+        var remain_days = calculcateRemainDays(created_at)
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -248,16 +219,7 @@ badiliUsajiliRequestRouter.post(
           objAttachment1 = attachments;
         });
 
-        var remain_days;
-        if (days > 0) {
-          remain_days = "Siku " + days;
-        } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-          remain_days = "Sek " + seconds + " zilizopita";
-        } else if (days <= 0 && hours <= 0) {
-          remain_days = "Dakika " + minutes + " zilizopita";
-        } else if (days <= 0) {
-          remain_days = "Saa " + hours;
-        }
+       
         db.query(
           "SELECT school_categories.category as schoolCategoryNew FROM " +
             " former_school_infos, school_sub_categories, establishing_schools, applications, " +
@@ -313,6 +275,7 @@ badiliUsajiliRequestRouter.post(
                 var fullname = first_name + " " + middle_name + " " + last_name;
                 obj.push({
                   tracking_number: tracking_number,
+                  is_approved,
                   school_name: school_name,
                   school_category_id_old: school_category_id_old,
                   LgaName: LgaName,

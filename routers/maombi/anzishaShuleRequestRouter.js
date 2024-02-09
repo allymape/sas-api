@@ -42,6 +42,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
       var user = req.user;
     // console.log(cheo , sehemu);
       sharedModel.findApplicationDetails(trackingNumber , (obj ,objAttachment, objAttachment1 , objAttachment2 , objMess) => {
+        console.log(obj)
         sharedModel.myStaffs(user, (objStaffs) => {
            sharedModel.myMaoni(trackingNumber, (objMaoni) => {
              return res.send({

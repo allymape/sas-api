@@ -6,7 +6,7 @@ const badiliMmilikiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
 
-const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliMmilikiRequestRouter.post(
@@ -26,7 +26,7 @@ badiliMmilikiRequestRouter.post(
         const offset = (page - 1) * per_page;
         const sqlSelect = `SELECT applications.tracking_number as tracking_number, folio, applications.created_at as created_at,
         former_owners.owner_name as owner_name, wards.WardName as WardName, LgaName, former_owners.authorized_person as authorized_person,
-        RegionName, establishing_schools.school_name as school_name 
+        RegionName, establishing_schools.school_name as school_name , is_approved
             `;
 
         const sqlFrom = `FROM regions, applications, former_owners, establishing_schools, wards, 
@@ -64,29 +64,10 @@ badiliMmilikiRequestRouter.post(
                 var authorized_person = results[i].authorized_person;
                 var created_at = results[i].created_at;
                 var schoolCategory = results[i].schoolCategory;
-                var applicantname;
                 var folio = results[i].folio;
-                var today = new Date();
+                var is_approved = results[i].is_approved;
+                var remain_days = calculcateRemainDays(created_at)
 
-                var diffInSeconds = Math.abs(today - created_at) / 1000;
-                var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-                var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-                var minutes = Math.floor((diffInSeconds / 60) % 60);
-                var seconds = Math.floor(diffInSeconds % 60);
-                var milliseconds = Math.round(
-                  (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-                );
-
-                var remain_days;
-                if (days > 0) {
-                  remain_days = "Siku " + days;
-                } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                  remain_days = "Sek " + seconds + " zilizopita";
-                } else if (days <= 0 && hours <= 0) {
-                  remain_days = "Dakika " + minutes + " zilizopita";
-                } else if (days <= 0) {
-                  remain_days = "Saa " + hours;
-                }
                 obj.push({
                   tracking_number: tracking_number,
                   school_name: school_name,
@@ -101,7 +82,8 @@ badiliMmilikiRequestRouter.post(
                   created_at: created_at,
                   remain_days: remain_days,
                   schoolCategory: schoolCategory,
-                  folio
+                  folio,
+                  is_approved
                 });
               }
               // console.log(obj)
@@ -143,7 +125,7 @@ badiliMmilikiRequestRouter.post(
 				 establishing_schools.area as area, former_owners.establishing_school_id as establishing_school_id,  
 				 establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size,  
 				 applications.tracking_number as tracking_number, owner_email, purpose,  
-				 applications.created_at as created_at,  
+				 applications.created_at as created_at,is_approved,
 				 applications.user_id as user_id, applications.foreign_token as foreign_token,  
 				 establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,  
 				 districts.LgaName as LgaName, former_owners.owner_name as owner_name, former_owners.phone_number as owner_phone_no 
@@ -161,8 +143,9 @@ badiliMmilikiRequestRouter.post(
         }
         if (results.length > 0) {
           var area = results[0].area;
-          var education_level = "";
+          var is_approved = results[0].is_approved;
           var expertise_level = "";
+          var education_level = "";
           var school_size = results[0].school_size;
           var tracking_number = results[0].tracking_number;
           var title = results[0].title;
@@ -200,16 +183,7 @@ badiliMmilikiRequestRouter.post(
           var subcategory = results[0].subcategory;
         }
 
-        var today = new Date();
-
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+        var remain_days = calculcateRemainDays(created_at)
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -286,16 +260,7 @@ badiliMmilikiRequestRouter.post(
         sharedModel.getAttachments(trackingNumber, (attachments) => {
           objAttachment1 = attachments;
         });
-        var remain_days;
-        if (days > 0) {
-          remain_days = "Siku " + days;
-        } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-          remain_days = "Sek " + seconds + " zilizopita";
-        } else if (days <= 0 && hours <= 0) {
-          remain_days = "Dakika " + minutes + " zilizopita";
-        } else if (days <= 0) {
-          remain_days = "Saa " + hours;
-        }
+      
         db.query(
           "select * from owners " + " WHERE establishing_school_id = ?",
           [establishing_school_id],
@@ -317,6 +282,7 @@ badiliMmilikiRequestRouter.post(
             var fullname = owner_name_old;
             obj.push({
               owner_name_old: owner_name_old,
+              is_approved,
               tracking_number: tracking_number,
               school_name: school_name,
               authorized_person: authorized_person,

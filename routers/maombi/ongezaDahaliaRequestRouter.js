@@ -5,7 +5,7 @@ const request = require("request");
 const ongezaDahaliaRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
 var session = require("express-session"); 
-const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 ongezaDahaliaRequestRouter.post(
@@ -25,7 +25,7 @@ ongezaDahaliaRequestRouter.post(
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT  school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
                       applications.created_at as created_at, applications.user_id as user_id, 
-                      applications.foreign_token as foreign_token, folio,
+                      applications.foreign_token as foreign_token, folio, is_approved,
                       establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
                       districts.LgaName AS LgaName`;
     const sqlFrom = `FROM former_school_infos, establishing_schools, applications,
@@ -62,27 +62,8 @@ ongezaDahaliaRequestRouter.post(
               var created_at = results[i].created_at;
               var schoolCategory = results[i].schoolCategory;
               var folio = results[i].folio;
-              var today = new Date();
-
-              var diffInSeconds = Math.abs(today - created_at) / 1000;
-              var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-              var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-              var minutes = Math.floor((diffInSeconds / 60) % 60);
-              var seconds = Math.floor(diffInSeconds % 60);
-              var milliseconds = Math.round(
-                (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-              );
-
-              var remain_days;
-              if (days > 0) {
-                remain_days = "Siku " + days;
-              } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-                remain_days = "Sek " + seconds + " zilizopita";
-              } else if (days <= 0 && hours <= 0) {
-                remain_days = "Dakika " + minutes + " zilizopita";
-              } else if (days <= 0) {
-                remain_days = "Saa " + hours;
-              }
+              var is_approved = results[i].is_approved;
+              var remain_days = calculcateRemainDays(created_at)
               obj.push({
                 tracking_number: tracking_number,
                 school_name: school_name,
@@ -94,7 +75,8 @@ ongezaDahaliaRequestRouter.post(
                 created_at: created_at,
                 remain_days: remain_days,
                 schoolCategory: schoolCategory,
-                folio
+                folio,
+                is_approved
               });
             }
             // console.log(obj)
@@ -136,7 +118,7 @@ ongezaDahaliaRequestRouter.post(
     db.query(
       `SELECT registration_structures.structure as structure, establishing_schools.id as establishId,
          school_sub_categories.subcategory as subcategory, former_school_infos.stream as streamOld,
-         establishing_schools.stream as streamNew, establishing_schools.area as area,
+         establishing_schools.stream as streamNew, establishing_schools.area as area, is_approved,
          establishing_schools.school_size as school_size, languages.language as language,
          school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
          applications.tracking_number as tracking_number, applications.created_at as created_at,
@@ -170,14 +152,13 @@ ongezaDahaliaRequestRouter.post(
           var streamNew = results[0].streamNew;
           var oldIsHostel = results[0].oldIsHostel;
           var newIsHostel = results[0].newIsHostel;
-          var foreign_token = results[0].foreign_token;
+          var is_approved = results[0].is_approved;
           var school_name = results[0].school_name;
           var LgaName = results[0].LgaName;
           var RegionName = results[0].RegionName;
           var RegionName = results[0].RegionName;
           var registry = results[0].registry;
           var created_at = results[0].created_at;
-          created_at = dateandtime.format(new Date(created_at), "DD/MM/YYYY");
           var schoolCategory = results[0].schoolCategory;
           var language = results[0].language;
           var school_size = results[0].school_size;
@@ -187,15 +168,7 @@ ongezaDahaliaRequestRouter.post(
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
         }
-        var today = new Date();
-        var diffInSeconds = Math.abs(today - created_at) / 1000;
-        var days = Math.floor(diffInSeconds / 60 / 60 / 24);
-        var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
-        var minutes = Math.floor((diffInSeconds / 60) % 60);
-        var seconds = Math.floor(diffInSeconds % 60);
-        var milliseconds = Math.round(
-          (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-        );
+        var remain_days = calculcateRemainDays(created_at)
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -234,16 +207,7 @@ ongezaDahaliaRequestRouter.post(
 
           sharedModel.getAttachments(trackingNumber, function (attachments) {
             objAttachment1 = attachments;
-            var remain_days;
-            if (days > 0) {
-              remain_days = "Siku " + days;
-            } else if (days <= 0 && hours <= 0 && minutes <= 0) {
-              remain_days = "Sek " + seconds + " zilizopita";
-            } else if (days <= 0 && hours <= 0) {
-              remain_days = "Dakika " + minutes + " zilizopita";
-            } else if (days <= 0) {
-              remain_days = "Saa " + hours;
-            }
+           
             var first_name = "";
             var middle_name = "";
             var last_name = "";
@@ -261,6 +225,7 @@ ongezaDahaliaRequestRouter.post(
               LgaName: LgaName,
               RegionName: RegionName,
               user_id: user_id,
+              is_approved,
               registry_type_id: registry_type_id,
               registry: registry,
               establishId: establishId,
