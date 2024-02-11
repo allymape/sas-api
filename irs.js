@@ -82,6 +82,7 @@ const baruaRouter = require("./routers/barua/baruaRouter.js");
 const workflowRouter = require("./routers/workflowRouter.js");
 const loginActivityRouter = require("./routers/loginActivityRouter.js");
 const attachementRouter = require("./routers/attachmentRouter.js");
+const auditTrailRouter = require("./routers/auditTrailRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -148,6 +149,7 @@ app.use("/api", ripotiUsajiliChangeRequestRouter);
 app.use("/api", ripotiDahaliaChangeRequestRouter); 
 app.use("/api", baruaRouter); 
 app.use("/api", loginActivityRouter); 
+app.use("/api", auditTrailRouter); 
 
 
 // Handling Errors

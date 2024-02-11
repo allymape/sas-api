@@ -4,9 +4,9 @@ const sharedModel = require("../sharedModel");
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
   anzishaShuleRequestList: (req , sqlStatus,callback) => {
-    // console.log(selectConditionByTitle(user), sqlStatus);
+   
     const user = req.user;
-    const status = req.body.status ?  req.body.status : ""
+    const status = req.body.status ?  req.body.status : "pending"
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -29,6 +29,7 @@ module.exports = {
             } 
             ${sqlStatus}
             ORDER BY applications.created_at DESC`;
+          //  console.log(selectConditionByTitle(user, false, false, status));
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
                         applications.created_at as created_at,is_approved, applications.registry_type_id as registry_type_id,  
                         applications.user_id as user_id, applications.foreign_token as foreign_token,  
@@ -36,7 +37,7 @@ module.exports = {
                         districts.LgaName as LgaName, registry_types.registry as registry, folio`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`
-    // console.log(selectConditionByTitle(user));
+    // console.log('xx' , selectConditionByTitle(user, false, false, status));
     sharedModel.paginate(sqlRows , sqlCount,(error, results , numRows) => {
            if (error) console.log(error);
            callback(error, results , numRows);

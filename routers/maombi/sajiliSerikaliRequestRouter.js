@@ -23,7 +23,7 @@ sajiliSerikaliRequestRouter.post(
   (req, res, next) => {
     var obj = [];
     const user = req.user;
-    const status = req.body.status ? req.body.status : "";
+    const status = req.body.status ?  req.body.status : "pending";
     const approvedStatus = approvalStatuses(req.body.status);
     const sqlStatus = ` AND is_approved IN ${
       approvedStatus ? approvedStatus : "(0,1)"
@@ -37,20 +37,21 @@ sajiliSerikaliRequestRouter.post(
       4,
       "(3)",
       (summaries) => {
-        const sqlFrom = `FROM school_registrations, establishing_schools, applications, 
-              wards, districts, school_categories, regions 
-              WHERE school_categories.id = establishing_schools.school_category_id 
-              AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND 
-              school_registrations.establishing_school_id = establishing_schools.id AND 
-              wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number
-              AND application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2 OR payment_status_id IS NULL) 
-             ${
-               ["pending", ""].includes(status) ||
-               user.ngazi.toLowerCase() != "wizara"
-                 ? selectConditionByTitle(user)
-                 : ""
-             }  ${sqlStatus}
-             ORDER BY applications.created_at DESC `;
+        const sqlFrom = `FROM school_registrations
+                      JOIN applications ON school_registrations.tracking_number = applications.tracking_number 
+                      JOIN establishing_schools ON school_registrations.establishing_school_id = establishing_schools.id 
+                      LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
+                      LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
+                      LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+                      LEFT JOIN regions ON  regions.RegionCode = districts.RegionCode
+                      WHERE application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2)
+                    ${
+                      ["pending", ""].includes(status) ||
+                      user.ngazi.toLowerCase() != "wizara"
+                        ? selectConditionByTitle(user, false, false, status)
+                        : ""
+                    }  ${sqlStatus}
+                    ORDER BY applications.created_at DESC `;
 
         sharedModel.paginate(
           ` SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 

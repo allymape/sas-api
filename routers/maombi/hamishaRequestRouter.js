@@ -16,7 +16,7 @@ hamishaRequestRouter.post(
    
         var obj = [];
         const user = req.user;  
-        const status = req.body.status ? req.body.status : "";
+        const status = req.body.status ?  req.body.status : "pending";
         const approvedStatus = approvalStatuses(req.body.status);
         const sqlStatus = ` AND is_approved IN ${
           approvedStatus ? approvedStatus : "(0,1)"
@@ -40,8 +40,9 @@ hamishaRequestRouter.post(
               JOIN regions ON regions.RegionCode = districts.RegionCode 
               WHERE application_category_id = 10  AND payment_status_id = 2 
                 ${
-                  ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
-                    ? selectConditionByTitle(user)
+                  ["pending", ""].includes(status) ||
+                  user.ngazi.toLowerCase() != "wizara"
+                    ? selectConditionByTitle(user, false, false, status)
                     : ""
                 } ${sqlStatus} ORDER BY applications.created_at DESC`;
         const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;

@@ -15,7 +15,7 @@ ongezaDahaliaRequestRouter.post(
   (req, res) => {
     var obj = [];
     const user = req.user;
-    const status = req.body.status ? req.body.status : "";
+    const status = req.body.status ?  req.body.status : "pending";
     const approvedStatus = approvalStatuses(req.body.status);
     const sqlStatus = ` AND is_approved IN ${
       approvedStatus ? approvedStatus : "(0,1)"
@@ -36,7 +36,10 @@ ongezaDahaliaRequestRouter.post(
                       wards.WardCode = establishing_schools.ward_id AND former_school_infos.tracking_number = applications.tracking_number 
                       AND application_category_id = 13 AND payment_status_id = 2
                     ${
-                      ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara" ? selectConditionByTitle(user) : ""
+                      ["pending", ""].includes(status) ||
+                      user.ngazi.toLowerCase() != "wizara"
+                        ? selectConditionByTitle(user, false, false, status)
+                        : ""
                     } ${sqlStatus}
                     ORDER BY applications.created_at DESC`;
 

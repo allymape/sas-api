@@ -16,7 +16,7 @@ futaShuleRequestRouter.post(
 
   const obj = [];
   const user = req.user;
-  const status = req.body.status ? req.body.status : "";
+  const status = req.body.status ?  req.body.status : "pending";
   const approvedStatus = approvalStatuses(req.body.status);
   const sqlStatus = ` AND is_approved IN ${
     approvedStatus ? approvedStatus : "(0,1)"
@@ -45,7 +45,7 @@ futaShuleRequestRouter.post(
         ${
           ["pending", ""].includes(status) ||
           user.ngazi.toLowerCase() != "wizara"
-            ? selectConditionByTitle(user)
+            ? selectConditionByTitle(user, false, false, status)
             : ""
         } ${sqlStatus} ORDER BY applications.created_at DESC`;
 

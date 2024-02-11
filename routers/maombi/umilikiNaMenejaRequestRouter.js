@@ -15,7 +15,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
   const page = parseInt(req.body.page);
   const offset = (page - 1) * per_page;
   const user = req.user;
-  const status = req.body.status ? req.body.status : "";
+  const status = req.body.status ?  req.body.status : "pending";
   const approvedStatus = approvalStatuses(req.body.status);
   const sqlStatus = ` AND is_approved IN ${
     approvedStatus ? approvedStatus : "(0,1)"
@@ -35,7 +35,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
       WHERE application_category_id = 2 AND payment_status_id = 2 ${
         ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
-          ? selectConditionByTitle(user)
+          ? selectConditionByTitle(user, false, false, status)
           : ""
       }  ${sqlStatus}
       ORDER BY applications.created_at DESC`;

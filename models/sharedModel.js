@@ -1084,6 +1084,7 @@ module.exports = {
                     a.application_category_id = ? 
                     ${filterByUserOffice(user, "AND")}
                     `;
+                    // console.log(sql)
     //  All
     //  console.log(
     //    filterByUserOffice(user, "AND", "r.zone_id", "s.district_code")
@@ -1146,8 +1147,10 @@ module.exports = {
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     //  console.log(is_paginated);
+    // sql statement to get limited list of rows
     db.query(`${sql_rows}`, parameters, (error, data) => {
       if (error) console.log(error);
+      // sql query to count number of rows
       db.query(`${sql_count}`, (error2, result) => {
         if (error2) {
           console.log(error2);

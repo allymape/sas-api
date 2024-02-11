@@ -581,8 +581,11 @@ const ObjectFuctions = {
 
       return str;
     } else if (ngazi == "kanda") {
-      str += (status == 'pending' ? ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}` : '')+
-               ` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
+      str += (status == 'pending' ? 
+                      ` AND ${
+                        (useAlias ? "a.staff_id" : "applications.staff_id")} = ${id}` : '' )
+                        +(` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`);
+        
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1") {
@@ -611,7 +614,6 @@ const ObjectFuctions = {
       str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = -1`;
       return str;
     }
-    
     return str;
   },
 

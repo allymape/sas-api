@@ -11,16 +11,8 @@ const sharedModel = require("../../models/sharedModel");
 
 // List of 
 anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule", isAuth,(req, res) => {
-    
-    var is_paginated = true;
     const status = approvalStatuses(req.body.status);
     const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
-    // if (typeof req.body.is_paginated !== "undefined") {
-    //   is_paginated =
-    //     req.body.is_paginated == "false" || !req.body.is_paginated
-    //       ? false
-    //       : true;
-    // }
     model.anzishaShuleRequestList(req , sqlStatus, (error, data, numRows) => {
       // console.log(numRows)
             return res.send({

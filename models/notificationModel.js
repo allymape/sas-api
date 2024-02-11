@@ -27,8 +27,8 @@ module.exports = {
                         ${ schoolLocationsSqlJoin() }
                         `;
 
-    const sqlWhere = `WHERE  (a.payment_status_id IS NULL OR a.payment_status_id = 2) AND is_approved IN (1,0)  ${selectConditionByTitle(user, true , true)} `;
-
+    const sqlWhere = `WHERE  a.payment_status_id = 2 AND is_approved IN (1,0)  ${selectConditionByTitle(user, true , true)} `;
+    //  console.log(selectConditionByTitle(user, true, true));
     let data = [];
     // Kuanzisha
     db.query(
