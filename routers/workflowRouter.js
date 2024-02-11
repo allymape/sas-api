@@ -51,79 +51,97 @@ workflowRouter.get("/all-workflows", isAuth, permission('view-workflow'), (req, 
   });
 });
 // Edit workflow
-workflowRouter.get("/editworkflow/:id", isAuth, (req, res) => {
+workflowRouter.get(
+  "/editworkflow/:id",
+  isAuth,
+  permission("update-workflow"),
+  (req, res) => {
     var id = req.params.id;
-  workflowModel.findWorkflow(id, (error , success, workflow) => {
-            return res.send({
-                success: success ? true : false,
-                statusCode: success ? 300 : 306,
-                data: success ? workflow : error,
-                message: success ?  "Success" : "Not found",
-            });
-  });
-});
+    workflowModel.findWorkflow(id, (error, success, workflow) => {
+      return res.send({
+        success: success ? true : false,
+        statusCode: success ? 300 : 306,
+        data: success ? workflow : error,
+        message: success ? "Success" : "Not found",
+      });
+    });
+  }
+);
 
 // Store workflow
-workflowRouter.post("/createworkflow", isAuth, (req, res, next) => {
-            const formData = [];
-            const { application_categories, from, to, order } = req.body;
-            const applicationCategories =
-              typeof application_categories === "object"
-                ? application_categories
-                : [application_categories];
-            const _from = typeof from === 'object' ? from : [from]
-            const _to = typeof to === 'object' ? to : [to]
-            const _order = typeof order === "object" ? order : [order];
-            applicationCategories.forEach((app_id) => {
-                 _from.forEach( (value , index) => {
-                         formData.push([
-                           Number(app_id),
-                           Number(value),
-                           Number(_to[index]),
-                           Number(_order[index]),
-                           formatDate(new Date())
-                         ]);
-                 })
-
-            });
-            console.log(formData)
-            // return;
-            workflowModel.storeWorkflow(formData, (success , message) => {
-              return res.send({
-                success: success,
-                statusCode: success ? 300 : 306,
-                message: message
-              });
-            });
-});
-
-// Store workflow
-workflowRouter.put("/updateworkflow/:id", isAuth, (req, res) => {
-            const formData = req.body;
-            const id = req.params.id;
-            console.log(formData)
-            workflowModel.updateWorkflow(id , formData, (success, message) => {
-              return res.send({
-                success: success,
-                statusCode: success ? 300 : 306,
-                message: message,
-              });
-            });
-            
-});
+workflowRouter.post(
+  "/createworkflow",
+  isAuth,
+  permission("create-workflow"),
+  (req, res, next) => {
+    const formData = [];
+    const { application_categories, from, to, order } = req.body;
+    const applicationCategories =
+      typeof application_categories === "object"
+        ? application_categories
+        : [application_categories];
+    const _from = typeof from === "object" ? from : [from];
+    const _to = typeof to === "object" ? to : [to];
+    const _order = typeof order === "object" ? order : [order];
+    applicationCategories.forEach((app_id) => {
+      _from.forEach((value, index) => {
+        formData.push([
+          Number(app_id),
+          Number(value),
+          Number(_to[index]),
+          Number(_order[index]),
+          formatDate(new Date()),
+        ]);
+      });
+    });
+    console.log(formData);
+    // return;
+    workflowModel.insertOrUpdateWorkflow(req, formData, (success, message) => {
+      return res.send({
+        success: success,
+        statusCode: success ? 300 : 306,
+        message: message,
+      });
+    });
+  }
+);
 
 // Store workflow
-workflowRouter.put("/deleteworkflow/:id", isAuth, (req, res) => {
-            var id = Number(req.params.id);
-            workflowModel.deleteworkflow(id , (error , success , workflow) => {
-                     return res.send({
-                        success: success ? true : false,
-                        statusCode: success ? 300 : 306,
-                        data: success ? workflow : [],
-                        message: success ? "Umefanikiwa kufuta Kanda." : 'Haujafanikiwa kufuta kuna Tatizo, Tafadhali hakiki kama Kanda hii haijatumika kwanza',
-                     });
-                    
-            });
-});
+workflowRouter.put(
+  "/updateworkflow/:id",
+  isAuth,
+  permission("update-workflow"),
+  (req, res) => {
+    const formData = req.body;
+    const id = req.params.id;
+    console.log(formData);
+    workflowModel.insertOrUpdateWorkflow(id, formData, (success, message) => {
+      return res.send({
+        success: success,
+        statusCode: success ? 300 : 306,
+        message: message,
+      });
+    });
+  }
+);
+
+// Store workflow
+workflowRouter.delete(
+  "/deleteworkflow/:id",
+  isAuth,
+  permission("delete-workflow"),
+  (req, res) => {
+    var id = Number(req.params.id);
+    workflowModel.deleteWorkflow(id, (success) => {
+      return res.send({
+        success: success ? true : false,
+        statusCode: success ? 300 : 306,
+        message: `${
+          success ? "Umefanikiwa" : "Haujafanikiwa"
+        } kufuta mtiririko wa utendaji kazi.`,
+      });
+    });
+  }
+);
 
 module.exports = workflowRouter;

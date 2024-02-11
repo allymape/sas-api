@@ -38,7 +38,8 @@ module.exports = {
     );
   },
   //******** STORE WORKFLOW *******************************
-  storeWorkflow: (data , callback) => {
+  insertOrUpdateWorkflow: (req , data , callback) => {
+    const {action} = req.body;
     db.query(
       `INSERT INTO work_flow(application_category_id , start_from , end_to , _order , created_at) VALUES ? 
       ON DUPLICATE KEY UPDATE application_category_id = VALUES(application_category_id) , start_from = VALUES(start_from), end_to = VALUES(end_to) , _order = VALUES(_order) , updated_at = VALUES(updated_at)`,
@@ -48,12 +49,12 @@ module.exports = {
           console.log(error);
           callback(
             false,
-            "Haujafanikiwa Kuongeza Utendaji Kazi (Workflow) " + error.code
+            `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + error.code
           );
         } else {
           callback(
             results.affectedRows > 0 ? true : false,
-            "Umefanikiwa kuongeza Utendaji Kazi (Workflow)"
+            `Umefanikiwa ${action} Utendaji Kazi (Workflow)`
           );
         }
       }
@@ -114,7 +115,7 @@ module.exports = {
   deleteWorkflow: (id, callback) => {
     var success = false;
           db.query(
-            `DELETE FROM algorthm WHERE id = ?`,
+            `DELETE FROM work_flow WHERE id = ?`,
             [id],
             (error, deletedAlgorthm) => {
               if (error) {
@@ -123,7 +124,7 @@ module.exports = {
               if (deletedAlgorthm.affectedRows > 0) {
                 success = true;
               }
-              callback(error, success, deletedAlgorthm);
+              callback(success);
             }
           );
   },
