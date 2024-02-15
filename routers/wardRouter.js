@@ -43,7 +43,17 @@ wardRouter.get("/allwards", isAuth, (req, res, next) => {
             }
         );
 });
-
+wardRouter.get("/lookup-wards", isAuth, (req, res) => {
+  var {lga_code} = req.body;
+  wardModel.lookupWards(lga_code, (error, wards) => {
+    return res.send({
+      error: error ? true : false,
+      statusCode: error ? 306 : 300,
+      data: error ? [] : wards,
+      message: "List of Wards.",
+    });
+  });
+});
 
 // Fetch all wards from wards API and store
 wardRouter.post("/usajiliKata", isAuth, async (req, res, next) => {

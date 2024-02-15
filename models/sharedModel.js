@@ -605,14 +605,13 @@ module.exports = {
             } else {
               console.log(`inatumwa kwa ${ haliombi == 4 ? 'Mwombaji' : staff}`);
               db.query(
-                `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , name , type_of_comment, created_at) VALUES 
+                `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , type_of_comment, created_at) VALUES 
                 (
                   ${db.escape(trackerId)}, 
                   ${db.escape(from_user)}, 
                   ${db.escape(user_to)}, 
                   ${db.escape(coments)}, 
                   '${user.cheo}', 
-                  '${user.name}', 
                   ${db.escape(replyType)}, 
                   ${db.escape(today)}
                 )`,

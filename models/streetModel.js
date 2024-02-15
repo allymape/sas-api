@@ -2,7 +2,7 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF streets *******************************
-  getAllStreets: (offset, per_page, is_paginated , ward_code, callback) => {
+  getAllStreets: (offset, per_page, is_paginated, ward_code, callback) => {
     db.query(
       `SELECT s.id AS id , StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
       FROM streets s
@@ -30,6 +30,24 @@ module.exports = {
             callback(error, streets, result[0].num_rows);
           }
         );
+      }
+    );
+  },
+  lookupStreets: (ward_code, callback) => {
+    db.query(
+      `SELECT s.id AS id , StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
+      FROM streets s
+      JOIN wards w  ON w.WardCode = s.WardCode
+      JOIN districts d ON w.LgaCode = d.LgaCode
+      JOIN regions r ON d.RegionCode = r.RegionCode
+      WHERE s.WardCode = ? 
+      ORDER BY StreetName ASC`,
+      [ward_code],
+      (error, streets) => {
+        if (error) {
+          console.log(error);
+        }
+        callback(error, streets);
       }
     );
   },

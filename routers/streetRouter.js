@@ -35,6 +35,18 @@ streetRouter.get("/allStreets", isAuth, (req, res, next) => {
   });
 });
 
+streetRouter.get("/lookup-streets", isAuth, (req, res) => {
+  const { ward_code } = req.body;
+  streetModel.lookupStreets(ward_code, (error, streets) => {
+    return res.send({
+      error: error ? true : false,
+      statusCode: error ? 306 : 300,
+      data: error ? [] : streets,
+      message: "List of Streets.",
+    });
+  });
+});
+
 // Fetch all streets from Streets API and store
 streetRouter.post("/usajiliMitaa", isAuth, async (req, res, next) => {
        var apiData = [];

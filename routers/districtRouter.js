@@ -43,7 +43,7 @@ districtRouter.get("/allDistricts", isAuth, (req, res, next) => {
   );
 });
 
-districtRouter.get("/lookup-districts", isAuth, (req, res, next) => {
+districtRouter.get("/lookup-districts", isAuth, (req, res) => {
   var region_code  = req.body.region_code;
   const {user} = req;
   districtModel.lookupDistricts(user, region_code, (error, districts) => {
