@@ -71,7 +71,6 @@ module.exports = {
   },
 
   myStaffs: (user, callback) => {
-    // console.log(user)
     const objStaffs = [];
     db.query(
       `SELECT s.id as userId, s.name as name,r.name as role_name 
@@ -88,6 +87,7 @@ module.exports = {
         if (error) {
           console.log(error);
         }
+        // console.log(results)
         for (var i = 0; i < results.length; i++) {
           var userId = results[i].userId;
           var name = results[i].name;
@@ -605,12 +605,14 @@ module.exports = {
             } else {
               console.log(`inatumwa kwa ${ haliombi == 4 ? 'Mwombaji' : staff}`);
               db.query(
-                `INSERT INTO maoni (trackingNo, user_from, user_to, coments, type_of_comment, created_at) VALUES 
+                `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , name , type_of_comment, created_at) VALUES 
                 (
                   ${db.escape(trackerId)}, 
                   ${db.escape(from_user)}, 
                   ${db.escape(user_to)}, 
                   ${db.escape(coments)}, 
+                  '${user.cheo}', 
+                  '${user.name}', 
                   ${db.escape(replyType)}, 
                   ${db.escape(today)}
                 )`,

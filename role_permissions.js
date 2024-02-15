@@ -61,6 +61,7 @@ const rolesPermissions = {
     // Login Activity
     "Login Activity|Waliongia": "v",
     "Letters|Barua": "v",
+    "Handover|Kaimisha" : "c"
   },
   Admin: {
     "Users|Watumiaji": "v,c,u,d",

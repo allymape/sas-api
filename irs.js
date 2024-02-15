@@ -83,6 +83,7 @@ const workflowRouter = require("./routers/workflowRouter.js");
 const loginActivityRouter = require("./routers/loginActivityRouter.js");
 const attachementRouter = require("./routers/attachmentRouter.js");
 const auditTrailRouter = require("./routers/auditTrailRouter.js");
+const handoverRouter = require("./routers/handoverRouter.js");
 
 
 app.use("/api", indexRouter);
@@ -150,6 +151,7 @@ app.use("/api", ripotiDahaliaChangeRequestRouter);
 app.use("/api", baruaRouter); 
 app.use("/api", loginActivityRouter); 
 app.use("/api", auditTrailRouter); 
+app.use("/api", handoverRouter); 
 
 
 // Handling Errors

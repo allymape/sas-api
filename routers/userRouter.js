@@ -16,6 +16,7 @@ const {
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
 const { resetPassword } = require("../templates/emailTemplate.js");
+const sharedModel = require("../models/sharedModel.js");
 const baruaSecret = process.env.BARUA_SECRET_KEY || 'MY-SECRET-KEY'
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes
@@ -158,12 +159,16 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
 });
 //Profile
 userRouter.post("/my-profile", isAuth, (req, res) => {
-  const {id} = req.user
-  userModal.getMyProfile(id, (user , activities) => {
-    return res.send({
-      user: user,
-      activities : activities
-    });
+  const {user} = req;
+  // console.log(user)
+  userModal.getMyProfile(user.id, (profile , activities) => {
+    sharedModel.myStaffs(user , (staffs) => {
+      return res.send({
+        user: profile,
+        staffs: staffs,
+        activities: activities,
+      });
+    })
   });
 });
 //find a user

@@ -1,7 +1,7 @@
 const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate } = require("../utils");
+const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate, formatIp } = require("../utils");
 const { lowerCase, upperCaseFirst } = require("text-case");
 
 module.exports = {
@@ -51,13 +51,13 @@ module.exports = {
                       [login_datetime, user_id],
                       (err) => {
                         if (err) console.log(err);
-                        // insert login activity
+                        
                         db.query(
                           `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
                           [
                             [
                               user_id,
-                              clientIp,
+                              formatIp(clientIp),
                               upperCaseFirst(device),
                               browser,
                               login_datetime,

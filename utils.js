@@ -310,6 +310,17 @@ const ObjectFuctions = {
     var unique_array = array.filter((item, pos) => array.indexOf(item) === pos);
     return unique_array;
   },
+  formatIp : (ip) => {
+      if(ip == "::1"){
+        return '127.0.0.1';
+      }else{
+        if(ip.includes('::ffff:')){
+          return ip.split("::ffff:")[1];
+        }else{
+          return ip;
+        }
+      }
+  },
   promiseRequest: async (admin_area_url, segment, per_page = 2000) => {
     try {
       let response = await axios.get(admin_area_url + segment);
