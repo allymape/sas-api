@@ -815,7 +815,7 @@ const ObjectFuctions = {
         }
         break;
       case 2:
-        url = `/ViewOmbi/${tracking_number}`;
+        url = `/ViewOmbiMmilliki/${tracking_number}`;
         break;
       case 4:
         if (registry_id == 3) {

@@ -66,32 +66,35 @@ userRouter.post("/login", loginlimiter, (req, res) => {
           permissionData.push(permissions[i].permission_name);
         }
         // console.log(permissionData);
-        const token = generateAccessToken({
-          id: userData.id,
-          name : userData.name,
-          office: userData.office,
-          zone_id: userData.zone_id,
-          kanda: userData.kanda,
-          region_code: userData.region_code,
-          district_code: userData.district_code,
-          userPermissions: permissionData,
-          user_level: Number(userData.user_level),
-          section_id: Number(userData.section_id),
-          ngazi: userData.ngazi, //wizara,kanda au wilaya
-          sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-          cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-          cheo_office: Number(userData.cheo_office),
-          jukumu: userData.jukumu,
+        sharedModel.myhandover(user.id, (handover_title) => {
+            const token = generateAccessToken({
+              id: userData.id,
+              name: userData.name,
+              office: userData.office,
+              zone_id: userData.zone_id,
+              kanda: userData.kanda,
+              region_code: userData.region_code,
+              district_code: userData.district_code,
+              userPermissions: permissionData,
+              user_level: Number(userData.user_level),
+              section_id: Number(userData.section_id),
+              ngazi: userData.ngazi, //wizara,kanda au wilaya
+              sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+              cheo: handover_title ? handover_title : userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+              cheo_office: Number(userData.cheo_office),
+              jukumu: userData.jukumu,
+            });
+            res.send({
+              error: false,
+              statusCode: 300,
+              message: message,
+              token,
+              RoleManage: permissions,
+              user: userData,
+            });
+            console.log("rendered data succesfully");
         });
-        res.send({
-          error: false,
-          statusCode: 300,
-          message: message,
-          token,
-          RoleManage: permissions,
-          user: userData,
-        });
-         console.log("rendered data succesfully");
+      
       });
     } else {
       res.status(400).send({
@@ -160,7 +163,6 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
 //Profile
 userRouter.post("/my-profile", isAuth, (req, res) => {
   const {user} = req;
-  // console.log(user)
   userModal.getMyProfile(user.id, (profile , activities) => {
     sharedModel.myStaffs(user , (staffs) => {
       return res.send({

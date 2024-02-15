@@ -685,7 +685,20 @@ module.exports = {
       }
     );
   },
-
+  myhandover : (user_id , callback) => {
+      const today = formatDate(new Date());
+      // console.log(today)
+      db.query(`SELECT LOWER(r.name) AS handedover_cheo
+      FROM handover h
+      JOIN staffs s ON s.id = h.handover_by
+      JOIN roles r ON r.id = s.user_level
+      WHERE staff_id = ? AND start <= ?  AND end >= ?
+      LIMIT 1` , [user_id , today , today] , 
+      (error, handover) => {
+           if(error) console.log(error)
+           callback(handover.length > 0 ? handover[0].handedover_cheo : null);
+      })
+  },
   findOneApplication: (tracking_number, callback) => {
     db.query(
       `SELECT * FROM applications WHERE tracking_number = ?`,

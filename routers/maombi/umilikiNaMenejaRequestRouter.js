@@ -204,96 +204,61 @@ umilikiNaMenejaRequestRouter.post(
         );
 
         
-        db.query(
-          `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
-                s.name as name, phone_no, r.name as role_name 
-         FROM staffs s
-         JOIN roles r ON r.id = s.user_level
-         JOIN vyeo v ON v.id = r.vyeoId
-         WHERE s.user_status = 1 AND v.id = ${user.section_id
-          } ${selectStaffsBySection(user)}
-         ORDER BY name ASC`,
-          function (error, results) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var userId = results[i].userId;
-              var email = results[i].email;
-              var user_level = results[i].user_level;
-              var last_login = results[i].last_login;
-              var name = results[i].name;
-              var phone_no = results[i].phone_no;
-              var role_name = results[i].role_name;
-              var vyeoId = results[i].vyeoId;
-              objStaffs.push({
-                userId: userId,
-                name: name,
-                email: email,
-                phoneNumber: phone_no,
-                roleId: user_level,
-                role: role_name,
-                last_login: last_login,
-                vyeoId: vyeoId,
-              });
-            }
-          }
-        );
+        // db.query(
+        //   `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
+        //         s.name as name, phone_no, r.name as role_name 
+        //  FROM staffs s
+        //  JOIN roles r ON r.id = s.user_level
+        //  JOIN vyeo v ON v.id = r.vyeoId
+        //  WHERE s.user_status = 1 AND v.id = ${user.section_id
+        //   } ${selectStaffsBySection(user)}
+        //  ORDER BY name ASC`,
+        //   function (error, results) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //     for (var i = 0; i < results.length; i++) {
+        //       var userId = results[i].userId;
+        //       var email = results[i].email;
+        //       var user_level = results[i].user_level;
+        //       var last_login = results[i].last_login;
+        //       var name = results[i].name;
+        //       var phone_no = results[i].phone_no;
+        //       var role_name = results[i].role_name;
+        //       var vyeoId = results[i].vyeoId;
+        //       objStaffs.push({
+        //         userId: userId,
+        //         name: name,
+        //         email: email,
+        //         phoneNumber: phone_no,
+        //         roleId: user_level,
+        //         role: role_name,
+        //         last_login: last_login,
+        //         vyeoId: vyeoId,
+        //       });
+        //     }
+        //   }
+        // );
 
-        db.query(
-          "SELECT * from application_statuses",
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var id = results[i].id;
-              var statusName = results[i].status;
-              objApps.push({ statusName: statusName, statusId: id });
-            }
-          }
-        );
-
-        db.query(
-          `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
-               roles.name AS cheo 
-              FROM maoni, staffs, roles 
-              WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
-              AND trackingNo = ? 
-              ORDER BY maoni.id DESC`,
-          [trackingNumber],
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            // console.log(results);
-            for (var i = 0; i < results.length; i++) {
-              var name = results[i].name;
-              var user_from = results[i].user_from;
-              var user_to = results[i].user_to;
-              var coments = results[i].coments;
-              var created_at = results[i].created_at;
-              var rank_name = results[i].cheo;
-              if (created_at == null) {
-                created_at = new Date();
-              }
-              // console.log(maoniTime)
-              created_at = dateandtime.format(
-                new Date(created_at),
-                "DD/MM/YYYY hh:mm:ss"
-              );
-              objMaoni.push({
-                user_from: user_from,
-                name: name,
-                user_to: user_to,
-                coments: coments,
-                created_at: created_at,
-                rank_name: rank_name,
-              });
-            }
-          }
-        );
-
+        // db.query(
+        //   "SELECT * from application_statuses",
+        //   function (error, results, fields) {
+        //     if (error) {
+        //       console.log(error);
+        //     }
+        //     for (var i = 0; i < results.length; i++) {
+        //       var id = results[i].id;
+        //       var statusName = results[i].status;
+        //       objApps.push({ statusName: statusName, statusId: id });
+        //     }
+        //   }
+        // );
+        sharedModel.myMaoni(trackingNumber , (maoni)=> {
+            objMaoni = maoni
+        })
+        sharedModel.myStaffs(user , (staffs) => {
+          objStaffs = staffs
+        })
         db.query(
           "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
           " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
