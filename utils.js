@@ -558,17 +558,15 @@ const ObjectFuctions = {
     return ` AND s.id < -1`;
   },
   selectConditionByTitle: (user, useAlias = false , notification = false , status = 'pending') => {
-    const { cheo, ngazi, id, sehemu, district_code, zone_id, jukumu } = user;
-    // console.log(sehemu);
+    const { cheo, ngazi, handover_by, sehemu, district_code, zone_id, jukumu } = user;
+    const id =  handover_by ? handover_by : user.id
     var str = ``;
     // console.log(jukumu)
     if (ngazi == "wizara") {
       if (
         (ObjectFuctions.lowerCase(jukumu) == "super-admin" ||
           ObjectFuctions.lowerCase(jukumu) == "super admin") &&
-        !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(
-          sehemu
-        )
+        !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(sehemu)
       ) {
         // return `AND is_approved <> 2`;
         if (notification) {
@@ -599,7 +597,7 @@ const ObjectFuctions = {
         
     } else if (ngazi == "wilaya") {
       //  W1
-      if (cheo == "w1") {
+      if (cheo == "w1" || cheo == "kw1") {
      
         str +=
           status == "pending" 

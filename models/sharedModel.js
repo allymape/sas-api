@@ -77,9 +77,7 @@ module.exports = {
          FROM staffs s
          JOIN roles r ON r.id = s.user_level
          JOIN vyeo v ON v.id = r.vyeoId
-         WHERE s.user_status = 1 AND v.id = ${
-           user.section_id
-         }
+         WHERE s.user_status = 1 AND v.id = ${user.section_id}
          ${selectStaffsBySection(user)}
          ORDER BY name ASC
          `,
@@ -241,7 +239,7 @@ module.exports = {
         if (error) {
           console.log(error);
         }
-        
+
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -285,7 +283,7 @@ module.exports = {
           var is_approved = "";
         }
         var remain_days = calculcateRemainDays(created_at);
-       
+
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
@@ -303,7 +301,7 @@ module.exports = {
             }
           }
         );
-   
+
         if (registry_type_id == 1) {
           db.query(
             "select *, IFNULL(middle_name , '') AS middle_name, IFNULL(last_name , '') AS last_name FROM personal_infos, applications, wards, districts, regions " +
@@ -365,7 +363,7 @@ module.exports = {
                 WardNameMtu: WardNameMtu,
                 LgaNameMtu: LgaNameMtu,
                 RegionNameMtu: RegionNameMtu,
-                is_approved : is_approved
+                is_approved: is_approved,
               });
               objAttachment2.push({
                 file_format: "",
@@ -603,7 +601,7 @@ module.exports = {
               console.log("Kuna shida");
               callback(success);
             } else {
-              console.log(`inatumwa kwa ${ haliombi == 4 ? 'Mwombaji' : staff}`);
+              console.log(`inatumwa kwa ${haliombi == 4 ? "Mwombaji" : staff}`);
               db.query(
                 `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , type_of_comment, created_at) VALUES 
                 (
@@ -685,19 +683,50 @@ module.exports = {
       }
     );
   },
-  myhandover : (user_id , callback) => {
-      const today = formatDate(new Date());
-      // console.log(today)
-      db.query(`SELECT LOWER(r.name) AS handedover_cheo
+  myhandover: (user_id, callback) => {
+    const today = formatDate(new Date());
+    db.query(
+      `SELECT handover_by , LOWER(r.name) AS handedover_cheo
       FROM handover h
       JOIN staffs s ON s.id = h.handover_by
       JOIN roles r ON r.id = s.user_level
-      WHERE staff_id = ? AND start <= ?  AND end >= ?
-      LIMIT 1` , [user_id , today , today] , 
+      WHERE staff_id = ? AND start <= ?  AND end >= ? AND active = 1
+      LIMIT 1`,
+      [user_id, today, today],
       (error, handover) => {
-           if(error) console.log(error)
-           callback(handover.length > 0 ? handover[0].handedover_cheo : null);
-      })
+        if (error) console.log(error);
+        callback(
+          handover.length > 0 ? handover[0].handedover_cheo : null,
+          handover.length > 0 ? handover[0].handover_by : null
+        );
+      }
+    );
+  },
+  myActivehandover: (handover_by, callback) => {
+    db.query(
+      `SELECT *
+      FROM handover
+      WHERE active = 1 AND handover_by = ?
+      LIMIT 1`,
+      [handover_by],
+      (error, activeHandover) => {
+        if (error) console.log(error);
+        callback(activeHandover.length > 0 ? true : false);
+      }
+    );
+  },
+  stopHandover: (handover_by, callback) => {
+    const updated_at = new Date();
+    db.query(
+      `UPDATE handover 
+              SET active = 0 , updated_at = ?
+              WHERE handover_by = ? AND active = 1`,
+      [updated_at, handover_by],
+      (error, result) => {
+        if (error) console.log(error);
+        callback(result.affectedRows > 0);
+      }
+    );
   },
   findOneApplication: (tracking_number, callback) => {
     db.query(
@@ -1098,7 +1127,7 @@ module.exports = {
                     a.application_category_id = ? 
                     ${filterByUserOffice(user, "AND")}
                     `;
-                    // console.log(sql)
+    // console.log(sql)
     //  All
     //  console.log(
     //    filterByUserOffice(user, "AND", "r.zone_id", "s.district_code")

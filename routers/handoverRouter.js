@@ -22,11 +22,14 @@ handoverRouter.get("/handover-list", isAuth, (req, res) => {
     const  sql_count = `SELECT COUNT(*) AS num_rows 
                         ${sqlTables}`
     sharedModel.paginate(sql_rows , sql_count , (error , handovers , numRows) => {
-        res.send({
-          statusCode: error ? 306 : 300,
-          handovers,
-          numRows,
-        });
+         sharedModel.myActivehandover(user.id , (activeHandover) => {
+                    res.send({
+                      statusCode: error ? 306 : 300,
+                      handovers,
+                      activeHandover: activeHandover,
+                      numRows,
+                    });
+            });
     } , [offset , per_page])
 });
 
@@ -53,5 +56,13 @@ handoverRouter.post('/handover' , isAuth , (req , res) => {
     })
 })
 
-
+handoverRouter.put(`/stop-handover` , isAuth , (req, res) => {
+    const {user} = req;
+    sharedModel.stopHandover(user.id , (success) => {
+        res.send({
+             statusCode : success ? 300 : 306,
+             message : success ? "Umefanikiwa kuondoa Kaimisho" : " Hakuna Kaimisho."
+        });
+    })    
+});
 module.exports = handoverRouter;

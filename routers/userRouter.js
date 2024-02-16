@@ -33,66 +33,71 @@ userRouter.post("/login", loginlimiter, (req, res) => {
       let user = loginUser[0];
       let office = getUserOffice(user);
       userModal.getStaffOfficeName(office, user, (office_name) => {
-        const userData = {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          phone_no: user.phone_no,
-          user_status: user.user_status,
-          last_login: user.last_login,
-          user_level: user.user_level,
-          role_id: user.new_role_id,
-          station_level: user.station_level,
-          office: office,
-          office_name: office_name,
-          rank_name: user.rank_name,
-          // status_id: user.status_id,
-          zone_id: Number(user.zone_id),
-          kanda: user.zone_name,
-          region_code: user.region_code,
-          district_code: user.district_code,
-          rank_level: user.rank_level,
-          twofa: user.twofa,
-          email: user.email,
-          section_id: user.section_id,
-          ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
-          sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
-          cheo: user.rank_name ? lowerCase(user.rank_name) : "",
-          cheo_office: user.cheo_office,
-          jukumu: user.jukumu ? upperCase(user.jukumu) : "",
-        };
-        // console.log("User Data", userData);
-        for (var i = 0; i < permissions.length; i++) {
-          permissionData.push(permissions[i].permission_name);
-        }
-        // console.log(permissionData);
-        sharedModel.myhandover(user.id, (handover_title) => {
-            const token = generateAccessToken({
-              id: userData.id,
-              name: userData.name,
-              office: userData.office,
-              zone_id: userData.zone_id,
-              kanda: userData.kanda,
-              region_code: userData.region_code,
-              district_code: userData.district_code,
-              userPermissions: permissionData,
-              user_level: Number(userData.user_level),
-              section_id: Number(userData.section_id),
-              ngazi: userData.ngazi, //wizara,kanda au wilaya
-              sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-              cheo: handover_title ? handover_title : userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-              cheo_office: Number(userData.cheo_office),
-              jukumu: userData.jukumu,
-            });
-            res.send({
-              error: false,
-              statusCode: 300,
-              message: message,
-              token,
-              RoleManage: permissions,
-              user: userData,
-            });
-            console.log("rendered data succesfully");
+        sharedModel.myhandover(user.id, (handover_title, handover_by) => {
+          const userData = {
+            id: user.id,
+            name: user.name,
+            username: user.username,
+            phone_no: user.phone_no,
+            user_status: user.user_status,
+            last_login: user.last_login,
+            user_level: user.user_level,
+            role_id: user.new_role_id,
+            station_level: user.station_level,
+            office: office,
+            office_name: office_name,
+            rank_name: user.rank_name,
+            // status_id: user.status_id,
+            zone_id: Number(user.zone_id),
+            kanda: user.zone_name,
+            region_code: user.region_code,
+            district_code: user.district_code,
+            rank_level: user.rank_level,
+            twofa: user.twofa,
+            email: user.email,
+            section_id: user.section_id,
+            ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
+            sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
+            cheo: handover_title
+              ? "k" + handover_title
+              : user.rank_name
+              ? lowerCase(user.rank_name)
+              : "",
+            handover_by : handover_by,
+            cheo_office: user.cheo_office,
+            jukumu: user.jukumu ? upperCase(user.jukumu) : "",
+          };
+          // console.log("User Data", userData);
+          for (var i = 0; i < permissions.length; i++) {
+            permissionData.push(permissions[i].permission_name);
+          }
+          const token = generateAccessToken({
+            id: userData.id,
+            name: userData.name,
+            office: userData.office,
+            zone_id: userData.zone_id,
+            kanda: userData.kanda,
+            region_code: userData.region_code,
+            district_code: userData.district_code,
+            userPermissions: permissionData,
+            user_level: Number(userData.user_level),
+            section_id: Number(userData.section_id),
+            ngazi: userData.ngazi, //wizara,kanda au wilaya
+            sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+            cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+            handover_by : userData.handover_by,
+            cheo_office: Number(userData.cheo_office),
+            jukumu: userData.jukumu,
+          });
+          res.send({
+            error: false,
+            statusCode: 300,
+            message: message,
+            token,
+            RoleManage: permissions,
+            user: userData,
+          });
+          console.log("rendered data succesfully");
         });
       
       });
@@ -165,11 +170,11 @@ userRouter.post("/my-profile", isAuth, (req, res) => {
   const {user} = req;
   userModal.getMyProfile(user.id, (profile , activities) => {
     sharedModel.myStaffs(user , (staffs) => {
-      return res.send({
-        user: profile,
-        staffs: staffs,
-        activities: activities,
-      });
+         return res.send({
+           user: profile,
+           staffs: staffs,
+           activities: activities,
+         });
     })
   });
 });
