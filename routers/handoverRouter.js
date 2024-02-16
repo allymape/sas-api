@@ -5,7 +5,6 @@ const sharedModel = require("../models/sharedModel");
 const { isAuth, formatDate } = require("../utils");
 const handoverModel = require("../models/handoverModel");
 
-
 // List of
 handoverRouter.get("/handover-list", isAuth, (req, res) => {  
     const per_page = parseInt(req.body.per_page);
@@ -31,6 +30,14 @@ handoverRouter.get("/handover-list", isAuth, (req, res) => {
                     });
             });
     } , [offset , per_page])
+});
+
+handoverRouter.post(`/my-active-handover`, isAuth, (req, res) => {
+  sharedModel.myActivehandover(req.user.id, (active) => {
+    res.send({
+      active: active,
+    });
+  });
 });
 
 handoverRouter.post('/handover' , isAuth , (req , res) => {
