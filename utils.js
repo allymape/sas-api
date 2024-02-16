@@ -587,7 +587,6 @@ const ObjectFuctions = {
         // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} 
         // AND is_approved <> 2`;
       }
-
       return str;
     } else if (ngazi == "kanda") {
       str += (status == 'pending' ? 

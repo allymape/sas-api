@@ -103,7 +103,7 @@ module.exports = {
   myMaoni: (tracking_number, callback) => {
     const obj = [];
     db.query(
-      `SELECT staffs.name AS name, coments, maoni.created_at as created_at, roles.name AS cheo 
+      `SELECT staffs.name AS name, coments, maoni.created_at as created_at, UPPER(IFNULL(maoni.title , roles.name)) AS cheo 
       FROM maoni 
       JOIN staffs ON staffs.id = maoni.user_from
       JOIN roles ON roles.id = staffs.user_level
