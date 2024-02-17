@@ -56,7 +56,7 @@ trackApplicationRouter.put(`/update_payment` , isAuth , permission('view-track-a
             }
             res.send({
             statusCode : success ? 300 : 306,
-            message : success ? 'Umefanikiwa kubadili' : 'Haujafanikiwa kubadili kuna tatizo.',
+            message : success ? 'Umefanikiwa kulipia ombi hili' : 'Haujafanikiwa kulipia ombi hili kuna tatizo.',
           })
       })
 });
