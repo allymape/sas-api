@@ -25,7 +25,8 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
     const sqlSelect = `SELECT   applications.tracking_number as tracking_number,
           applications.created_at as created_at, applications.user_id as user_id, 
           applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
-          regions.RegionName as RegionName, districts.LgaName as LgaName, is_approved , folio, owners.is_manager
+          regions.RegionName as RegionName, districts.LgaName as LgaName, is_approved , folio, 
+          owners.is_manager AS is_manager
       `;
     const sqlFrom = `FROM establishing_schools
       INNER JOIN owners ON establishing_schools.id = owners.establishing_school_id 

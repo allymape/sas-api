@@ -18,7 +18,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                        const registry_type = application[0].registry_type_id
                       //  console.log(registry_type)
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
-                     
+                        // console.log(main_table)
                         db.query(
                           `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
@@ -56,7 +56,6 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                    WHERE v.tracking_number = ? AND a.folio IS NOT NULL`,
                           [tracking_number],
                           (error2, results) => {
-                      
                             if (error2) console.log(error2);
                             const data = results.length > 0 ? results[0] : null;
                             db.query(`SELECT r.RegionName AS sqa_zone_region 
@@ -70,6 +69,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                   result.length > 0
                                     ? result[0].sqa_zone_region
                                     : null;
+                                console.log(data)
                                 res.send({
                                   error: false,
                                   statusCode: data ? 300 : 306,
