@@ -11,10 +11,13 @@ loginActivityRouter.post("/login-activity", isAuth, (req, res) => {
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
    
-    const sqlTables = ` FROM login_activity l 
+    const sqlTables = `FROM login_activity l 
                        INNER JOIN staffs s ON s.id = l.staff_id 
+                       JOIN roles r ON r.id = s.user_level
+                       LEFT JOIN districts d ON d.LgaCode = s.district_code
+                       LEFT JOIN regions rg ON rg.RegionCode = s.region_code
                        ORDER BY l.created_at DESC `;
-    const sql_rows = `SELECT s.name AS name, browser , ip , device , l.created_at AS created_at 
+    const sql_rows = `SELECT s.name AS name , r.name AS title, d.LgaName AS council , rg.RegionName AS region, browser , ip , device , l.created_at AS created_at 
                       ${sqlTables}
                       LIMIT ?,?`;
     const  sql_count = `SELECT COUNT(*) AS num_rows 
