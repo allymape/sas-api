@@ -23,7 +23,7 @@ sajiliBinafsiRequestRouter.post(
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
-    const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
+    const sqlSelect = `SELECT school_categories.category as schoolCategory, registration_number, applications.tracking_number as tracking_number,
                           applications.created_at as created_at, is_approved, applications.user_id as user_id,
                           applications.foreign_token as foreign_token, folio, 
                           establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
@@ -67,6 +67,7 @@ sajiliBinafsiRequestRouter.post(
             var RegionName = results[i].RegionName;
             var RegionName = results[i].RegionName;
             var registry = results[i].registry;
+            var registration_number = results[i].registration_number;
             var created_at = results[i].created_at;
             var schoolCategory = results[i].schoolCategory;
             var remain_days = calculcateRemainDays(created_at);
@@ -77,12 +78,13 @@ sajiliBinafsiRequestRouter.post(
               RegionName: RegionName,
               user_id: user_id,
               registry_type_id: registry_type_id,
+              registration_number: registration_number,
               registry: registry,
               created_at: created_at,
               remain_days: remain_days,
               schoolCategory: schoolCategory,
               folio,
-              is_approved
+              is_approved,
             });
           }
           // console.log(obj)

@@ -935,7 +935,7 @@ module.exports = {
       }
     );
   },
-  changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
+changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
     const { haliombi } = req.body;
     if (haliombi == 2) {
       db.query(
@@ -994,7 +994,7 @@ module.exports = {
       default:
         break;
     }
-
+console.log("school category id : ",schoolCatId)
     db.query(`SELECT * FROM algorthm WHERE id = ${id}`, (error, result) => {
       if (error) console.log(error);
       var registration_number = 1;
@@ -1004,6 +1004,23 @@ module.exports = {
         registration_number = result[0].last_number;
         last_number = registration_number + 1;
         exist = true;
+        console.log(
+          "last_number",
+          last_number,
+          "Registration Number: " + registration_number
+        );
+        module.exports.updateSchoolRegistrationNumber(
+          id,
+          existing_reg_no,
+          code,
+          registration_number,
+          exist,
+          tracking_number,
+          last_number,
+          (reg_number) => {
+            callback(reg_number);
+          }
+        );
       } else {
         // Find registration number from existing schools
         db.query(
@@ -1020,63 +1037,89 @@ module.exports = {
               registration_number = parseInt(result[0].registration_number) + 1;
               last_number = registration_number + 1;
             }
+            console.log(
+              "last_number",
+              last_number,
+              "Registration Number: " + registration_number
+            );
+            module.exports.updateSchoolRegistrationNumber(
+              id,
+              existing_reg_no,
+              code,
+              registration_number,
+              exist,
+              tracking_number,
+              last_number,
+              (reg_number) => {
+                callback(reg_number);
+              }
+            );
           }
         );
       }
-
-      console.log("last_number", last_number);
-      //  Update registered schools
-      const today = new Date();
-      db.query(
-        `UPDATE school_registrations SET registration_number = ?, registration_date = ? , updated_at = ? , reg_status = ?
+    });
+  },
+  updateSchoolRegistrationNumber: (
+    id,
+    existing_reg_no,
+    code,
+    registration_number,
+    exist,
+    tracking_number,
+    last_number,
+    __callback
+  ) => {
+    //  Update registered schools
+    const today = new Date();
+    console.log(code + "." + registration_number);
+    db.query(
+      `UPDATE school_registrations SET registration_number = ?, registration_date = ? , updated_at = ? , reg_status = ?
                           WHERE ${
                             existing_reg_no
                               ? "registration_number = ?"
                               : "tracking_number = ?"
                           }`,
-        [
-          code + "." + registration_number,
-          formatDate(today, "YYYY-MM-DD"),
-          today,
-          1,
-          existing_reg_no ? existing_reg_no : tracking_number,
-        ],
-        function (error, result) {
-          if (error) {
-            console.log(error);
-          }
-          if (result.affectedRows > 0) {
-            if (exist) {
-              //  Update algorithm
-              db.query(
-                `UPDATE algorthm SET last_number = ? WHERE id = ${id}`,
-                [last_number],
-                (error, updated) => {
-                  if (error) console.log(error);
-                  if (updated) {
-                    console.log(
-                      `Algorithm updated successfully  ${code}.${registration_number}`
-                    );
-                  }
-                }
-              );
-            } else {
-              //  INSERT IF NOT EXISTING
-              db.query(
-                `INSERT INTO algorthm (id, school_type, last_number) VALUES(?,?,?)`,
-                [id, code, last_number],
-                (error) => {
-                  if (error) console.log(error);
-                }
-              );
-            }
-          }
-          callback(registration_number);
+      [
+        code + "." + registration_number,
+        formatDate(today, "YYYY-MM-DD"),
+        today,
+        1,
+        existing_reg_no ? existing_reg_no : tracking_number,
+      ],
+      function (error, result) {
+        if (error) {
+          console.log(error);
         }
-      );
-    });
+        if (result.affectedRows > 0) {
+          if (exist) {
+            //  Update algorithm
+            db.query(
+              `UPDATE algorthm SET last_number = ? WHERE id = ${id}`,
+              [last_number],
+              (error, updated) => {
+                if (error) console.log(error);
+                if (updated) {
+                  console.log(
+                    `Algorithm updated successfully  ${code}.${registration_number}`
+                  );
+                }
+              }
+            );
+          } else {
+            //  INSERT IF NOT EXISTING
+            db.query(
+              `INSERT INTO algorthm (id, school_type, last_number) VALUES(?,?,?)`,
+              [id, code, last_number],
+              (error) => {
+                if (error) console.log(error);
+              }
+            );
+          }
+        }
+        __callback(registration_number);
+      }
+    );
   },
-
   updateApplicationPayment: (tracking_number, callback) => {
     var success = false;
     db.query(
@@ -1187,6 +1230,20 @@ module.exports = {
         callback(regions);
       }
     );
+  },
+  getSchoolCategoryForRegistration : (tracking_number , callback) => {
+    db.query(`SELECT school_category_id 
+              FROM establishing_schools e
+              JOIN school_registrations s ON s.establishing_school_id = e.id
+              JOIN applications a ON a.tracking_number = s.tracking_number 
+              WHERE a.tracking_number = ?` , [tracking_number] , (error , result) => {
+                  if(error) console.log(error)
+                  if(result.length > 0){
+                    callback(result[0].school_category_id);
+                  }else{
+                    callback(null);
+                  }
+              })
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     //  console.log(is_paginated);

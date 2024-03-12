@@ -54,7 +54,7 @@ sajiliSerikaliRequestRouter.post(
                     ORDER BY applications.created_at DESC `;
 
         sharedModel.paginate(
-          ` SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number, 
+          ` SELECT school_categories.category as schoolCategory, registration_number, applications.tracking_number as tracking_number, 
               applications.created_at as created_at, applications.user_id as user_id, 
               applications.foreign_token as foreign_token, folio, is_approved,
               establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
@@ -76,6 +76,7 @@ sajiliSerikaliRequestRouter.post(
               var RegionName = results[i].RegionName;
               var RegionName = results[i].RegionName;
               var registry = results[i].registry;
+              var registration_number = results[i].registration_number;
               var created_at = results[i].created_at;
               var schoolCategory = results[i].schoolCategory;
               var folio = results[i].folio;
@@ -94,6 +95,7 @@ sajiliSerikaliRequestRouter.post(
                 registry: registry,
                 created_at: created_at,
                 remain_days: remain_days,
+                registration_number: registration_number,
                 schoolCategory: schoolCategory,
                 folio,
                 is_approved,
