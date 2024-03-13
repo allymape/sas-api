@@ -51,14 +51,15 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                        : registry_type == 2
                                        ? `LEFT JOIN institute_infos i ON i.secure_token = a.foreign_token
                                           LEFT JOIN administration_areas_view aav ON aav.ward_code = i.ward_id`
-                                       : ""
+                                       : `LEFT JOIN administration_areas_view aav ON aav.ward_code = e.ward_id`
                                    }
                                    WHERE v.tracking_number = ? AND a.folio IS NOT NULL`,
                           [tracking_number],
                           (error2, results) => {
                             if (error2) console.log(error2);
                             const data = results.length > 0 ? results[0] : null;
-                            db.query(`SELECT r.RegionName AS sqa_zone_region 
+                            db.query(
+                              `SELECT r.RegionName AS sqa_zone_region 
                                       FROM regions r
                                       WHERE r.zone_id = ${
                                         data ? data.zone_id : -1
@@ -69,7 +70,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                   result.length > 0
                                     ? result[0].sqa_zone_region
                                     : null;
-                                console.log(data)
+                                console.log(data);
                                 res.send({
                                   error: false,
                                   statusCode: data ? 300 : 306,
@@ -100,9 +101,12 @@ const getExtraColumns  = (application_category_id , registry_type) => {
       ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, p.personal_address AS address_box , aav.region AS address_region "
       : registry_type == 2
       ? ",i.name AS address_name , i.box AS address_box , aav.region AS address_region"
-      : ", 'Mkurugenzi' AS address_name , v.region AS address_region";
+      : ", CONCAT('Mkurugenzi' ,' ', v.district) AS address_name, aav.ded_box AS address_box, v.region AS address_region";
 
   switch (application_category_id) {
+    case 4:
+      columns += ", v.sharti AS masharti";
+      break;
     case 5:
       columns += ", v.old_stream AS old_stream";
       break;

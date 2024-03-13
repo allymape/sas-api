@@ -1245,6 +1245,13 @@ console.log("school category id : ",schoolCatId)
                   }
               })
   },
+  updateSharti : (tracking_number , conditions) => {
+      if(conditions){
+        db.query(`UPDATE school_registrations SET sharti = ? WHERE tracking_number = ?` , [conditions , tracking_number] , (error) => {
+            if(error) console.log(error)
+        })
+      }
+  },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     //  console.log(is_paginated);
     // sql statement to get limited list of rows

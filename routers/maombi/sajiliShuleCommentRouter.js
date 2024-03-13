@@ -10,7 +10,7 @@ const sharedModel = require("../../models/sharedModel");
  
 sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
   const tracking_number = req.body.trackerId;
-  const schoolCatId = req.body.schoolCategoryID;
+  const conditions = req.body.conditions;
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     var success =  false;
@@ -18,7 +18,7 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
       sharedModel.getSchoolCategoryForRegistration(tracking_number , (schoolCatId) => {
          if(schoolCatId){
                sharedModel.tumaMaoni(req, app_category, (isSuccess) => {
-                success = isSuccess;
+                 success = isSuccess;
                  if (req.body.haliombi == 2) {
                    sharedModel.updateOrCreateRegistrationNumber(
                      tracking_number,
@@ -32,15 +32,21 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
                      }
                    );
                  }
-                  return res.send({
-                    error: success ? false : true,
-                    statusCode: success ? 300 : 306,
-                    data: success ? "success" : "fail",
-                    message: success
-                      ? "Majibu Successfully Recorded."
-                      : "Kuna tatizo",
-                  });
+                 //  Insert sharti la usajili
+                 console.log(tracking_number, conditions);
+                 if (isSuccess) {
+                   sharedModel.updateSharti(tracking_number, conditions);
+                 }
+                 return res.send({
+                   error: success ? false : true,
+                   statusCode: success ? 300 : 306,
+                   data: success ? "success" : "fail",
+                   message: success
+                     ? "Majibu Successfully Recorded."
+                     : "Kuna tatizo",
+                 });
                });
+              
          }else{
            return res.send({
              error: false,
