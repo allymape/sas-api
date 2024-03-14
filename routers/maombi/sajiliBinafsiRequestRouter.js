@@ -111,7 +111,7 @@ sajiliBinafsiRequestRouter.post(
       const user = req.user;
       var userLevel = user.user_level;
       var office = req.body.office;
-      console.log(req.body);
+      // console.log(req.body);
       var todaydate = dateandtime.format(new Date(), "DD/MM/YYYY");
       var obj = [];
       var objMess = [];
@@ -122,36 +122,52 @@ sajiliBinafsiRequestRouter.post(
       var objAttachment1 = [];
       var SeminaryValue;
       var SeminaryTitle;
-  
       db.query(
-        "SELECT establishing_schools.id as schoolId, application_category_id, is_approved," +
-          " school_registrations.registration_number as reg_no, " +
-          " school_registrations.updated_at as approved_at, number_of_teachers, gender_type, teacher_student_ratio_recommendation, " +
-          " registration_structures.structure as structure, school_opening_date, number_of_students, " +
-          " school_sub_categories.subcategory as subcategory, establishing_schools.tracking_number as tracking_number_old, " +
-          " establishing_schools.area as area, school_phone, file_number, school_folio, folio, " +
-          " establishing_schools.school_size as school_size, languages.language as language, school_email, po_box, website, " +
-          " school_categories.id as schoolCategoryID, school_categories.category as schoolCategory, " +
-          " applications.tracking_number as tracking_number, is_seminary, " +
-          " applications.tracking_number as tracking_number, applications.created_at as created_at, teacher_information, " +
-          " applications.registry_type_id as registry_type_id, applications.user_id as user_id, stream, " +
-          " applications.foreign_token as foreign_token, establishing_schools.school_name as school_name, " +
-          " wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName " +
-          " FROM school_gender_types, school_registrations, school_sub_categories, establishing_schools, applications, " +
-          " registration_structures, wards, districts, school_categories, languages, regions " +
-          " WHERE school_gender_types.id = establishing_schools.school_gender_type_id " +
-          " AND school_registrations.establishing_school_id = establishing_schools.id AND " +
-          " school_sub_categories.id = establishing_schools.school_sub_category_id AND " +
-          " languages.id = establishing_schools.language_id AND school_categories.id = establishing_schools.school_category_id " +
-          " AND regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND " +
-          " wards.WardCode = establishing_schools.ward_id AND school_registrations.tracking_number = applications.tracking_number " +
-          " AND application_category_id = ? AND applications.tracking_number = ?",
+        ` SELECT establishing_schools.id as schoolId, 
+		  application_category_id, is_approved,
+          school_registrations.registration_number as reg_no, 
+          school_registrations.updated_at as approved_at, 
+          number_of_teachers, 
+          gender_type, 
+          teacher_student_ratio_recommendation,
+          registration_structures.structure as structure, 
+          school_opening_date, number_of_students,
+          school_sub_categories.subcategory as subcategory, 
+          establishing_schools.tracking_number as tracking_number_old,
+          establishing_schools.area as area, 
+          school_phone, file_number, school_folio, folio,
+          establishing_schools.school_size as school_size, 
+          languages.language as language, 
+          school_email, po_box, website,
+          school_categories.id as schoolCategoryID, 
+          school_categories.category as schoolCategory,
+          applications.tracking_number as tracking_number, is_seminary,applications.tracking_number as tracking_number, 
+          applications.created_at AS created_at, 
+          teacher_information,
+          applications.registry_type_id AS registry_type_id, applications.user_id AS user_id, stream,
+          applications.foreign_token as foreign_token, 
+          establishing_schools.school_name as school_name,
+          wards.WardName as WardName, 
+          regions.RegionName as RegionName, 
+          districts.LgaName as LgaName
+          FROM school_registrations
+          JOIN applications ON school_registrations.tracking_number = applications.tracking_number
+          JOIN establishing_schools ON school_registrations.establishing_school_id = establishing_schools.id
+          LEFT JOIN school_gender_types ON school_gender_types.id = establishing_schools.school_gender_type_id 
+          LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
+          LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
+          LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id 
+          LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
+          LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
+          LEFT JOIN languages ON languages.id = establishing_schools.language_id 
+          LEFT JOIN regions ON regions.RegionCode = districts.RegionCode
+          WHERE application_category_id = ? AND applications.tracking_number = ?`,
         [4, trackingNumber],
-        function (error, results, fields) {
+        function (error, results) {
           if (error) {
             console.log(error);
           }
-          console.log(results);
+          console.log("after");
           if (results.length > 0) {
             var tracking_number = results[0].tracking_number;
             var registry_type_id = results[0].registry_type_id;
@@ -165,7 +181,8 @@ sajiliBinafsiRequestRouter.post(
             var file_number = results[0].file_number;
             var school_folio = results[0].school_folio;
             var folio = results[0].folio;
-            var finalFileNumber = file_number + "/" + school_folio + "/" + folio;
+            var finalFileNumber =
+              file_number + "/" + school_folio + "/" + folio;
             var schoolCategoryID = results[0].schoolCategoryID;
             var school_email = results[0].school_email;
             var school_name = results[0].school_name;
@@ -178,7 +195,10 @@ sajiliBinafsiRequestRouter.post(
             var certificate = results[0].certificate;
             var Stream = results[0].stream;
             var approved_at = results[0].approved_at;
-            approved_at = dateandtime.format(new Date(approved_at), "DD/MM/YYYY");
+            approved_at = dateandtime.format(
+              new Date(approved_at),
+              "DD/MM/YYYY"
+            );
             var tracking_number_old = results[0].tracking_number_old;
             var school_phone = results[0].school_phone;
             var numberOfStudents = results[0].number_of_students;
@@ -218,9 +238,9 @@ sajiliBinafsiRequestRouter.post(
             }
             // console.log(tracking_number_old)
           }
-  
+
           var remain_days = calculcateRemainDays(created_at);
-  
+
           db.query(
             "select * from maoni WHERE trackingNo = ?",
             [trackingNumber],
@@ -239,8 +259,8 @@ sajiliBinafsiRequestRouter.post(
               }
             }
           );
-            db.query(
-              `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
+          db.query(
+            `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
                         s.name as name, phone_no, r.name as role_name 
                 FROM staffs s
                 JOIN roles r ON r.id = s.user_level
@@ -249,33 +269,33 @@ sajiliBinafsiRequestRouter.post(
                   user.section_id
                 } ${selectStaffsBySection(user)}
                 ORDER BY name ASC`,
-              function (error, results, fields) {
-                if (error) {
-                  console.log(error);
-                }
-                for (var i = 0; i < results.length; i++) {
-                  var userId = results[i].userId;
-                  var email = results[i].email;
-                  var user_level = results[i].user_level;
-                  var last_login = results[i].last_login;
-                  var name = results[i].name;
-                  var phone_no = results[i].phone_no;
-                  var role_name = results[i].role_name;
-                  var vyeoId = results[i].vyeoId;
-                  objStaffs.push({
-                    userId: userId,
-                    name: name,
-                    email: email,
-                    phoneNumber: phone_no,
-                    roleId: user_level,
-                    role: role_name,
-                    last_login: last_login,
-                    vyeoId: vyeoId,
-                  });
-                }
+            function (error, results, fields) {
+              if (error) {
+                console.log(error);
               }
-            );
-            // console.log(application_category_id , registry_type_id)
+              for (var i = 0; i < results.length; i++) {
+                var userId = results[i].userId;
+                var email = results[i].email;
+                var user_level = results[i].user_level;
+                var last_login = results[i].last_login;
+                var name = results[i].name;
+                var phone_no = results[i].phone_no;
+                var role_name = results[i].role_name;
+                var vyeoId = results[i].vyeoId;
+                objStaffs.push({
+                  userId: userId,
+                  name: name,
+                  email: email,
+                  phoneNumber: phone_no,
+                  roleId: user_level,
+                  role: role_name,
+                  last_login: last_login,
+                  vyeoId: vyeoId,
+                });
+              }
+            }
+          );
+          // console.log(application_category_id , registry_type_id)
           db.query(
             `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
               FROM attachment_types
@@ -301,7 +321,7 @@ sajiliBinafsiRequestRouter.post(
               }
             }
           );
-  
+
           db.query(
             "SELECT attachment_types.id as id, file_size, file_format, " +
               " attachment_name, attachments.created_at as created_at, attachment_path " +
@@ -348,7 +368,7 @@ sajiliBinafsiRequestRouter.post(
               // console.log(objAttachment1)
             }
           );
-  
+
           db.query(
             "SELECT * from application_statuses",
             function (error, results, fields) {
@@ -362,8 +382,9 @@ sajiliBinafsiRequestRouter.post(
               }
             }
           );
-  
-          db.query(`SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
+
+          db.query(
+            `SELECT staffs.name AS name, user_from, user_to, coments, maoni.created_at as created_at, 
                     roles.name AS cheo 
                     FROM maoni, staffs, roles 
                     WHERE staffs.id = maoni.user_from AND roles.id = staffs.user_level 
@@ -393,7 +414,7 @@ sajiliBinafsiRequestRouter.post(
               }
             }
           );
-  
+
           db.query(
             "select registry_type_id from applications WHERE tracking_number = ?",
             [tracking_number_old],
@@ -409,100 +430,102 @@ sajiliBinafsiRequestRouter.post(
                   function (error1, results1, fields1) {
                     if (error1) {
                       console.log(error1);
-                    }else{
-                      if(results1.length > 0){
-                    var first_name = results1[0].first_name;
-                    var middle_name = results1[0].middle_name;
-                    var last_name = results1[0].last_name;
-                    var occupation = "";
-                    var personal_address = results1[0].personal_address;
-                    var personal_phone_number = results1[0].personal_phone_number;
-                    var personal_email = results1[0].personal_email;
-                    var WardNameMtu = results1[0].WardName;
-                    var LgaNameMtu = results1[0].LgaName;
-                    var RegionNameMtu = results1[0].RegionName;
-                    var fullname =
-                      first_name + " " + middle_name + " " + last_name;
-                    }if(results1.length == 0){
-                      var first_name = "";
-                      var middle_name = "";
-                      var last_name = "";
-                      var occupation = "";
-                      var personal_address = "";
-                      var personal_phone_number = "";
-                      var personal_email = "";
-                      var WardNameMtu = "";
-                      var LgaNameMtu = "";
-                      var RegionNameMtu = "";
-                      var fullname =
-                        first_name + " " + middle_name + " " + last_name;
+                    } else {
+                      if (results1.length > 0) {
+                        var first_name = results1[0].first_name;
+                        var middle_name = results1[0].middle_name;
+                        var last_name = results1[0].last_name;
+                        var occupation = "";
+                        var personal_address = results1[0].personal_address;
+                        var personal_phone_number =
+                          results1[0].personal_phone_number;
+                        var personal_email = results1[0].personal_email;
+                        var WardNameMtu = results1[0].WardName;
+                        var LgaNameMtu = results1[0].LgaName;
+                        var RegionNameMtu = results1[0].RegionName;
+                        var fullname =
+                          first_name + " " + middle_name + " " + last_name;
                       }
-  
-                    obj.push({
-                      schoolId: schoolId,
-                      staffname: staffname,
-                      reg_no: reg_no,
-                      tracking_number: tracking_number,
-                      school_name: school_name,
-                      schoolOpeningDate: schoolOpeningDate,
-                      LgaName: LgaName,
-                      RegionName: RegionName,
-                      user_id: user_id,
-                      school_phone: school_phone,
-                      todaydate: todaydate,
-                      registry_type_id: registry_type_id,
-                      registry: registry,
-                      school_address: school_address,
-                      Stream: Stream,
-                      created_at: created_at,
-                      remain_days: remain_days,
-                      po_box: po_box,
-                      school_email: school_email,
-                      gender_type: gender_type,
-                      fullname: fullname,
-                      schoolCategory: schoolCategory,
-                      Certificate: certificate,
-                      numberOfTeachers: numberOfTeachers,
-                      occupation: occupation,
-                      Website: website,
-                      teacherInformation: teacherInformation,
-                      approved_at: approved_at,
-                      lessons_and_courses: lessons_and_courses,
-                      TeacherRatioStudent: TeacherRatioStudent,
-                      schoolCategoryID: schoolCategoryID,
-                      mwombajiAddress: personal_address,
-                      signature: signature,
-                      mwombajiPhoneNo: personal_phone_number,
-                      SeminaryTitle: SeminaryTitle,
-                      baruaPepe: personal_email,
-                      language: language,
-                      school_size: school_size,
-                      SeminaryValue: SeminaryValue,
-                      area: area,
-                      WardName: WardName,
-                      structure: structure,
-                      isSeminary: isSeminary,
-                      numberOfStudents: numberOfStudents,
-                      subcategory: subcategory,
-                      WardNameMtu: WardNameMtu,
-                      LgaNameMtu: LgaNameMtu,
-                      RegionNameMtu: RegionNameMtu,
-                      finalFileNumber: finalFileNumber,
-                      is_approved
-                    });
-                    return res.send({
-                      error: false,
-                      statusCode: 300,
-                      data: obj,
-                      maoni: objMess,
-                      staffs: objStaffs,
-                      status: objApps,
-                      Maoni: objMaoni,
-                      objAttachment: objAttachment,
-                      objAttachment1: objAttachment1,
-                      message: "Taarifa za ombi kuanzisha shule.",
-                    });
-                  }
+                      if (results1.length == 0) {
+                        var first_name = "";
+                        var middle_name = "";
+                        var last_name = "";
+                        var occupation = "";
+                        var personal_address = "";
+                        var personal_phone_number = "";
+                        var personal_email = "";
+                        var WardNameMtu = "";
+                        var LgaNameMtu = "";
+                        var RegionNameMtu = "";
+                        var fullname =
+                          first_name + " " + middle_name + " " + last_name;
+                      }
+
+                      obj.push({
+                        schoolId: schoolId,
+                        staffname: staffname,
+                        reg_no: reg_no,
+                        tracking_number: tracking_number,
+                        school_name: school_name,
+                        schoolOpeningDate: schoolOpeningDate,
+                        LgaName: LgaName,
+                        RegionName: RegionName,
+                        user_id: user_id,
+                        school_phone: school_phone,
+                        todaydate: todaydate,
+                        registry_type_id: registry_type_id,
+                        registry: registry,
+                        school_address: school_address,
+                        Stream: Stream,
+                        created_at: created_at,
+                        remain_days: remain_days,
+                        po_box: po_box,
+                        school_email: school_email,
+                        gender_type: gender_type,
+                        fullname: fullname,
+                        schoolCategory: schoolCategory,
+                        Certificate: certificate,
+                        numberOfTeachers: numberOfTeachers,
+                        occupation: occupation,
+                        Website: website,
+                        teacherInformation: teacherInformation,
+                        approved_at: approved_at,
+                        lessons_and_courses: lessons_and_courses,
+                        TeacherRatioStudent: TeacherRatioStudent,
+                        schoolCategoryID: schoolCategoryID,
+                        mwombajiAddress: personal_address,
+                        signature: signature,
+                        mwombajiPhoneNo: personal_phone_number,
+                        SeminaryTitle: SeminaryTitle,
+                        baruaPepe: personal_email,
+                        language: language,
+                        school_size: school_size,
+                        SeminaryValue: SeminaryValue,
+                        area: area,
+                        WardName: WardName,
+                        structure: structure,
+                        isSeminary: isSeminary,
+                        numberOfStudents: numberOfStudents,
+                        subcategory: subcategory,
+                        WardNameMtu: WardNameMtu,
+                        LgaNameMtu: LgaNameMtu,
+                        RegionNameMtu: RegionNameMtu,
+                        finalFileNumber: finalFileNumber,
+                        is_approved,
+                      });
+                      return res.send({
+                        error: false,
+                        statusCode: 300,
+                        data: obj,
+                        maoni: objMess,
+                        staffs: objStaffs,
+                        status: objApps,
+                        Maoni: objMaoni,
+                        objAttachment: objAttachment,
+                        objAttachment1: objAttachment1,
+                        message: "Taarifa za ombi kuanzisha shule.",
+                      });
+                    }
                   }
                 );
               }
@@ -522,7 +545,7 @@ sajiliBinafsiRequestRouter.post(
                     var address = results1[0].address;
                     var institute_phone = results1[0].institute_phone;
                     var institute_email = results1[0].institute_email;
-  
+
                     obj.push({
                       schoolId: schoolId,
                       staffname: staffname,
@@ -573,7 +596,7 @@ sajiliBinafsiRequestRouter.post(
                       WardNameMtu: "",
                       LgaNameMtu: "",
                       RegionNameMtu: "",
-                      is_approved
+                      is_approved,
                     });
                     return res.send({
                       error: false,

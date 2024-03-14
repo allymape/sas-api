@@ -1,16 +1,12 @@
 require("dotenv").config();
 const express = require("express");
 const db = require('../../dbConnection');
-const request = require("request");
 const umilikiNaMenejaRequestRouter = express.Router();
-const dateandtime = require("date-and-time");
-var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
+const { isAuth, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('view-school-owners-and-managers'), (req, res) => {
   var obj = [];
-  var date = new Date();
   const per_page = parseInt(req.body.per_page);
   const page = parseInt(req.body.page);
   const offset = (page - 1) * per_page;
@@ -54,12 +50,11 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
             message: "List of maombi kuanzisha shule.",
           });
         }
-
+        
         for (var i = 0; i < results.length; i++) {
           var tracking_number = results[i].tracking_number;
           var registry_type_id = results[i].registry_type_id;
           var user_id = results[i].user_id;
-          var foreign_token = results[i].foreign_token;
           var school_name = results[i].school_name;
           var LgaName = results[i].LgaName;
           var RegionName = results[i].RegionName;
@@ -71,7 +66,6 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
           var is_manager = results[i].is_manager;
           var folio = results[i].folio;
           var remain_days = calculcateRemainDays(created_at)
-        
           obj.push({
             tracking_number: tracking_number,
             school_name: school_name,
@@ -128,7 +122,7 @@ umilikiNaMenejaRequestRouter.post(
           establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size, 
           applications.tracking_number as tracking_number, owner_email, purpose, house_number, street, 
           applications.created_at as created_at, managers.occupation as occupation, manager_phone_number, manager_email, 
-          applications.user_id as user_id, applications.foreign_token as foreign_token, 
+          applications.user_id as user_id, applications.foreign_token as foreign_token, manager_cv, manager_certificate,
           establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
           districts.LgaName as LgaName, owners.owner_name as owner_name , owners.phone_number as owner_phone_no
       FROM owners, establishing_schools, applications, wards, districts, regions, managers 
@@ -163,6 +157,8 @@ umilikiNaMenejaRequestRouter.post(
           var owner_email = results[0].owner_email;
           var manager_phone_number = results[0].manager_phone_number;
           var manager_email = results[0].manager_email;
+          var manager_cv = results[0].manager_cv;
+          var manager_certificate = results[0].manager_certificate;
           var manager_street = results[0].street;
           var LgaName = results[0].LgaName;
           var owner_name = results[0].owner_name;
@@ -204,68 +200,18 @@ umilikiNaMenejaRequestRouter.post(
           }
         );
 
-        
-        // db.query(
-        //   `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
-        //         s.name as name, phone_no, r.name as role_name 
-        //  FROM staffs s
-        //  JOIN roles r ON r.id = s.user_level
-        //  JOIN vyeo v ON v.id = r.vyeoId
-        //  WHERE s.user_status = 1 AND v.id = ${user.section_id
-        //   } ${selectStaffsBySection(user)}
-        //  ORDER BY name ASC`,
-        //   function (error, results) {
-        //     if (error) {
-        //       console.log(error);
-        //     }
-        //     for (var i = 0; i < results.length; i++) {
-        //       var userId = results[i].userId;
-        //       var email = results[i].email;
-        //       var user_level = results[i].user_level;
-        //       var last_login = results[i].last_login;
-        //       var name = results[i].name;
-        //       var phone_no = results[i].phone_no;
-        //       var role_name = results[i].role_name;
-        //       var vyeoId = results[i].vyeoId;
-        //       objStaffs.push({
-        //         userId: userId,
-        //         name: name,
-        //         email: email,
-        //         phoneNumber: phone_no,
-        //         roleId: user_level,
-        //         role: role_name,
-        //         last_login: last_login,
-        //         vyeoId: vyeoId,
-        //       });
-        //     }
-        //   }
-        // );
-
-        // db.query(
-        //   "SELECT * from application_statuses",
-        //   function (error, results, fields) {
-        //     if (error) {
-        //       console.log(error);
-        //     }
-        //     for (var i = 0; i < results.length; i++) {
-        //       var id = results[i].id;
-        //       var statusName = results[i].status;
-        //       objApps.push({ statusName: statusName, statusId: id });
-        //     }
-        //   }
-        // );
-        sharedModel.myMaoni(trackingNumber , (maoni)=> {
-            objMaoni = maoni
-        })
-        sharedModel.myStaffs(user , (staffs) => {
-          objStaffs = staffs
-        })
+        sharedModel.myMaoni(trackingNumber, (maoni) => {
+          objMaoni = maoni;
+        });
+        sharedModel.myStaffs(user, (staffs) => {
+          objStaffs = staffs;
+        });
         db.query(
           "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
-          " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
-          " AND owners.id = referees.owner_id AND tracking_number = ?",
+            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
+            " AND owners.id = referees.owner_id AND tracking_number = ?",
           [trackingNumber],
-          function (error, results, fields) {
+          function (error, results) {
             if (error) {
               console.log(error);
             }
@@ -322,12 +268,13 @@ umilikiNaMenejaRequestRouter.post(
             }
           }
         );
+
         db.query(
           "SELECT attachment_types.id as id, file_size, file_format, " +
-          " attachment_name, attachments.created_at as created_at, attachment_path " +
-          " FROM attachment_types, " +
-          " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-          " attachments.tracking_number = ?",
+            " attachment_name, attachments.created_at as created_at, attachment_path " +
+            " FROM attachment_types, " +
+            " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
+            " attachments.tracking_number = ?",
           [trackingNumber],
           function (error1, results1, fields1) {
             if (error1) {
@@ -370,28 +317,34 @@ umilikiNaMenejaRequestRouter.post(
             // console.log(objAttachment1)
           }
         );
-      
+
         db.query(
-          "select * from personal_infos, applications, wards, districts, regions " +
-          " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
-          " AND applications.foreign_token = personal_infos.secure_token",
-          [1, trackingNumber],
-          function (error1, results1, fields1) {
+          `SELECT * 
+            FROM personal_infos p
+            JOIN applications a ON a.foreign_token = p.secure_token  
+            LEFT JOIN wards w ON w.WardCode = p.ward_id
+            LEFT JOIN districts d ON w.LgaCode = d.LgaCode  
+            LEFT JOIN regions r ON  d.RegionCode = r.RegionCode
+            WHERE a.tracking_number = ?`,
+          [trackingNumber],
+          function (error1, results1) {
             if (error1) {
               console.log(error1);
             }
-            var first_name = results1[0].first_name;
-            var middle_name = results1[0].middle_name;
-            var last_name = results1[0].last_name;
-            var occupation = results1[0].occupation;
-            var personal_address = results1[0].personal_address;
-            var personal_phone_number = results1[0].personal_phone_number;
-            var personal_email = results1[0].personal_email;
-            var WardNameMtu = results1[0].WardName;
-            var LgaNameMtu = results1[0].LgaName;
-            var RegionNameMtu = results1[0].RegionName;
-            // console.log(old_tracking_number)
-            var fullname = first_name + " " + middle_name + " " + last_name;
+            if (results1.length > 0) {
+              var first_name = results1[0].first_name;
+              var middle_name = results1[0].middle_name;
+              var last_name = results1[0].last_name;
+              var occupation = results1[0].occupation;
+              var personal_address = results1[0].personal_address;
+              var personal_phone_number = results1[0].personal_phone_number;
+              var personal_email = results1[0].personal_email;
+              var WardNameMtu = results1[0].WardName;
+              var LgaNameMtu = results1[0].LgaName;
+              var RegionNameMtu = results1[0].RegionName;
+              // console.log(old_tracking_number)
+              var fullname = first_name + " " + middle_name + " " + last_name;
+            }
             obj.push({
               tracking_number: tracking_number,
               school_name: school_name,
@@ -412,6 +365,8 @@ umilikiNaMenejaRequestRouter.post(
               remain_days: remain_days,
               manager_phone_number: manager_phone_number,
               manager_email: manager_email,
+              manager_cv: manager_cv,
+              manager_certificate: manager_certificate,
               fullname: fullname,
               schoolCategory: "",
               occupation: occupation,
@@ -433,8 +388,9 @@ umilikiNaMenejaRequestRouter.post(
               attachment_path: "",
               RegionNameMtu: RegionNameMtu,
               owner_phone_no: owner_phone_no,
-              is_approved
+              is_approved,
             });
+
             return res.send({
               error: false,
               statusCode: 300,
