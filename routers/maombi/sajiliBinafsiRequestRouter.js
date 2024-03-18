@@ -139,6 +139,7 @@ sajiliBinafsiRequestRouter.post(
           establishing_schools.school_size as school_size, 
           languages.language as language, 
           school_email, po_box, website,
+          sharti,
           school_categories.id as schoolCategoryID, 
           school_categories.category as schoolCategory,
           applications.tracking_number as tracking_number, is_seminary,applications.tracking_number as tracking_number, 
@@ -194,6 +195,7 @@ sajiliBinafsiRequestRouter.post(
             var teacherInformation = results[0].teacher_information;
             var certificate = results[0].certificate;
             var Stream = results[0].stream;
+            var sharti = results[0].sharti;
             var approved_at = results[0].approved_at;
             approved_at = dateandtime.format(
               new Date(approved_at),
@@ -488,6 +490,7 @@ sajiliBinafsiRequestRouter.post(
                         numberOfTeachers: numberOfTeachers,
                         occupation: occupation,
                         Website: website,
+                        sharti : sharti,
                         teacherInformation: teacherInformation,
                         approved_at: approved_at,
                         lessons_and_courses: lessons_and_courses,

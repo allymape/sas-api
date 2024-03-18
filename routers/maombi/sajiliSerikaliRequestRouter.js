@@ -143,6 +143,7 @@ sajiliSerikaliRequestRouter.post(
         registration_structures.structure as structure, school_opening_date, number_of_students,
         school_sub_categories.subcategory as subcategory,
         is_approved,
+        sharti,
         establishing_schools.tracking_number as tracking_number_old,
         establishing_schools.area as area, school_phone,
         establishing_schools.school_size as school_size,
@@ -194,6 +195,7 @@ sajiliSerikaliRequestRouter.post(
           var teacherInformation = results[0].teacher_information;
           var certificate = results[0].certificate;
           var Stream = results[0].stream;
+          var sharti = results[0].sharti;
           var isForDisabled = results[0].is_for_disabled;
           var tracking_number_old = results[0].tracking_number_old;
           var school_phone = results[0].school_phone;
@@ -239,8 +241,6 @@ sajiliSerikaliRequestRouter.post(
           }
         }
 
-       
-
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [trackingNumber],
@@ -259,21 +259,27 @@ sajiliSerikaliRequestRouter.post(
             }
           }
         );
-        sharedModel.myStaffs(user , (staffs) => {
+        sharedModel.myStaffs(user, (staffs) => {
           objStaffs = staffs;
-        })
-       
+        });
+
         sharedModel.myMaoni(trackingNumber, (maoni) => {
           objMaoni = maoni;
         });
-        sharedModel.getAttachmentTypes(registry_type_id , application_category_id , null , (attachment_types) => {
-          objAttachment =  attachment_types;
-        })
-        sharedModel.getAttachments(trackingNumber , (attachments) => {
+        sharedModel.getAttachmentTypes(
+          registry_type_id,
+          application_category_id,
+          null,
+          (attachment_types) => {
+            objAttachment = attachment_types;
+          }
+        );
+        sharedModel.getAttachments(trackingNumber, (attachments) => {
           objAttachment1 = attachments;
-        })
+        });
 
-        db.query(`SELECT * 
+        db.query(
+          `SELECT * 
           FROM personal_infos
           LEFT JOIN applications ON applications.foreign_token = personal_infos.secure_token
           LEFT JOIN wards ON wards.WardCode = personal_infos.ward_id
@@ -282,7 +288,6 @@ sajiliSerikaliRequestRouter.post(
           WHERE applications.tracking_number = ?`,
           [trackingNumber],
           function (error1, results1) {
-      
             if (error1) {
               console.log(error1);
             } else {
@@ -335,6 +340,7 @@ sajiliSerikaliRequestRouter.post(
                 numberOfTeachers: numberOfTeachers,
                 occupation: "",
                 Website: website,
+                sharti : sharti,
                 teacherInformation: teacherInformation,
                 specialization: specialization,
                 lessons_and_courses: lessons_and_courses,
