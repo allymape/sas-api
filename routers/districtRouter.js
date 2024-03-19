@@ -93,9 +93,9 @@ districtRouter.post("/usajiliWilaya", isAuth, async (req, res) => {
 });
 
 districtRouter.put(`/update-district/:id` , isAuth , (req , res) => {
-       const {sqa_address , lga_address} = req.body;
+       const {sqa_address , lga_address , ngazi} = req.body;
        const {id} = req.params;
-       const formData = [Number(sqa_address) , Number(lga_address) , Number(id)];
+       const formData = [Number(sqa_address) , Number(lga_address) , ngazi , Number(id)];
        districtModel.updateDistrict(formData , (updated) => {
               res.send({
                 success :updated,

@@ -5,7 +5,7 @@ module.exports = {
 
     db.query(
       `SELECT districts.id AS id, regions.id AS reg_id, regions.RegionName AS regionName,
-      districts.LgaName AS LgaName, districts.LgaCode AS LgaCode , 
+      districts.LgaName AS LgaName , IFNULL(ngazi, '') AS ngazi, districts.LgaCode AS LgaCode , 
       districts.sqa_box AS sqa_box , districts.district_box AS lga_box,
       districts.created_at AS createdAt , districts.updated_at AS updatedAt 
       FROM districts, regions 
@@ -66,7 +66,7 @@ module.exports = {
   },
   //***********Update*************/
   updateDistrict : (formData , callback) => {
-      db.query(`UPDATE districts SET sqa_box = ? , district_box = ?  WHERE id = ?` , formData , (error , district ) => {
+      db.query(`UPDATE districts SET sqa_box = ? , district_box = ? , ngazi = ?  WHERE id = ?` , formData , (error , district ) => {
         if(error) console.log(error)
           if(district.affectedRows > 0){
             callback(true)

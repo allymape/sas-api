@@ -29,6 +29,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                          aav_.region_box AS region_box,
                                          aav_.has_zone_office AS has_zone_office,
                                          aav_.district_box AS district_box,
+                                         aav_.ngazi_ya_wilaya AS ngazi_ya_wilaya,
                                          aav_.district_sqa_box AS district_sqa_box,
                                          r.description AS cheo
                                    ${getExtraColumns(
@@ -70,7 +71,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                   result.length > 0
                                     ? result[0].sqa_zone_region
                                     : null;
-                                console.log(data);
+                                // console.log("xx",data.ngazi_ya_wilaya);
                                 res.send({
                                   error: false,
                                   statusCode: data ? 300 : 306,
