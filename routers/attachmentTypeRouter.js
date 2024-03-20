@@ -74,6 +74,7 @@ attachementTypeRouter.post("/add-attachment-type", isAuth, (req, res, next) => {
                req.body.aina_ombi,
                structure ? structure : null,
                1,
+               req.body.is_backend,
                formatDate(new Date()),
              ]);
             attachmentTypeModel.storeAttachmentTypes(formData , (error , success , result) => {
@@ -100,9 +101,11 @@ attachementTypeRouter.put("/update-attachment-type/:id", isAuth, (req, res, next
                       req.body.aina_ombi,
                       structure ? structure : null,
                       req.body.hali,
+                      req.body.is_backend,
                       id,
                 ];
-  
+
+                console.log(req.body.is_backend);
               attachmentTypeModel.updateAttachmentType(id,formData, (error, success, attachementType) => {
                   return res.send({
                     success: success ? true : false,

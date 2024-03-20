@@ -19,7 +19,8 @@ module.exports = {
               attachment_name,IFNULL(registry , '') as registry,a.status_id as status, 
               registry_type_id as registration_type_id, application_category_id , 
               IFNULL(rs.structure , '') AS structure,
-              a.registration_structure_id AS structure_id
+              a.registration_structure_id AS structure_id,
+              is_backend
       ${sqlFrom}
       ${$where}
       LIMIT ?,?`,
@@ -44,7 +45,7 @@ module.exports = {
   storeAttachmentTypes: (formData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO attachment_types (attachment_name, file_size , file_format,registry_type_id, application_category_id , registration_structure_id , status_id, created_at) VALUES ?`,
+      `INSERT INTO attachment_types (attachment_name, file_size , file_format,registry_type_id, application_category_id , registration_structure_id , status_id, is_backend, created_at) VALUES ?`,
       [formData],
       (error, result) => {
         if (error) {
@@ -80,7 +81,7 @@ module.exports = {
     var success = false;
     db.query(
       `UPDATE attachment_types SET attachment_name = ?, file_size = ?, 
-              file_format = ?, registry_type_id = ?, application_category_id = ? , registration_structure_id = ? , status_id = ?  
+              file_format = ?, registry_type_id = ?, application_category_id = ? , registration_structure_id = ? , status_id = ?  , is_backend = ?
        WHERE id = ?`,
       formData,
       (error, AttachmentTypes, fields) => {
