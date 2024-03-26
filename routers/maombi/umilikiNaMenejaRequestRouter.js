@@ -123,15 +123,19 @@ umilikiNaMenejaRequestRouter.post(
           applications.tracking_number as tracking_number, owner_email, purpose, house_number, street, 
           applications.created_at as created_at, managers.occupation as occupation, manager_phone_number, manager_email, 
           applications.user_id as user_id, applications.foreign_token as foreign_token, manager_cv, manager_certificate,
-          establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
-          districts.LgaName as LgaName, owners.owner_name as owner_name , owners.phone_number as owner_phone_no
-      FROM owners, establishing_schools, applications, wards, districts, regions, managers 
-      WHERE 
-      regions.RegionCode = districts.RegionCode AND districts.LgaCode = wards.LgaCode AND 
-      managers.tracking_number = applications.tracking_number AND 
-      wards.WardCode = establishing_schools.ward_id AND owners.tracking_number = applications.tracking_number
-      AND application_category_id =2 AND owners.establishing_school_id = establishing_schools.id 
-      AND applications.tracking_number = ?`,
+          establishing_schools.school_name as school_name, 
+          s.StreetName as StreetName,w.WardName as WardName, r.RegionName as RegionName, d.LgaName as LgaName, 
+          owners.owner_name as owner_name , 
+          owners.phone_number as owner_phone_no
+      FROM owners
+      JOIN applications ON owners.tracking_number = applications.tracking_number
+      JOIN managers ON managers.tracking_number = applications.tracking_number
+      JOIN establishing_schools ON owners.establishing_school_id = establishing_schools.id
+      LEFT JOIN  wards  w ON w.WardCode = managers.ward_id
+      LEFT JOIN streets s ON s.StreetCode = managers.street
+      LEFT JOIN districts d ON d.LgaCode = w.LgaCode
+      LEFT JOIN regions r ON r.RegionCode = d.RegionCode
+      WHERE  application_category_id = 2 AND applications.tracking_number = ?`,
       [trackingNumber],
       function (error, results) {
         if (error) {
@@ -159,7 +163,8 @@ umilikiNaMenejaRequestRouter.post(
           var manager_email = results[0].manager_email;
           var manager_cv = results[0].manager_cv;
           var manager_certificate = results[0].manager_certificate;
-          var manager_street = results[0].street;
+          var manager_street = results[0].StreetName;
+          var house_number = results[0].house_number;
           var LgaName = results[0].LgaName;
           var owner_name = results[0].owner_name;
           var occupationManager = results[0].occupation;
@@ -382,6 +387,7 @@ umilikiNaMenejaRequestRouter.post(
               WardName: WardName,
               structure: structure,
               manager_street: manager_street,
+              house_number: house_number,
               subcategory: subcategory,
               WardNameMtu: WardNameMtu,
               LgaNameMtu: LgaNameMtu,

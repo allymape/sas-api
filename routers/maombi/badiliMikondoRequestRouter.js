@@ -172,7 +172,7 @@ badiliMkondoRequestRouter.post(
           var establishId = results[0].establishId;
           var is_approved = results[0].is_approved;
           var remain_days = calculcateRemainDays(created_at);
-           console.log(created_at);
+          //  console.log(created_at);
         }
 
         
@@ -290,7 +290,7 @@ badiliMkondoRequestRouter.post(
                   // var registry1 = results[i].registry;
                   var attachment_path = results1[i].attachment_path;
                   var created_at = results1[i].created_at;
-                  created_at = formatDate(created_at, "DD/MM/YYYY HH:MM:SS");
+                  created_at = created_at;
                   var file_size1 = results1[i].file_size;
                   objAttachment1.push({
                     file_format: file_format1,
@@ -304,7 +304,6 @@ badiliMkondoRequestRouter.post(
                   });
                 }
 
-               
                 var first_name = "";
                 var middle_name = "";
                 var last_name = "";

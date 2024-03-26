@@ -71,7 +71,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                   result.length > 0
                                     ? result[0].sqa_zone_region
                                     : null;
-                                // console.log("xx",data.ngazi_ya_wilaya);
+                                console.log(registry_type);
                                 res.send({
                                   error: false,
                                   statusCode: data ? 300 : 306,
@@ -102,7 +102,9 @@ const getExtraColumns  = (application_category_id , registry_type) => {
       ? ",CONCAT(p.first_name , ' ', p.middle_name , ' ', p.last_name ) AS address_name, p.personal_address AS address_box , aav.region AS address_region "
       : registry_type == 2
       ? ",i.name AS address_name , i.box AS address_box , aav.region AS address_region"
-      : ", CONCAT('Mkurugenzi' ,' ', v.district) AS address_name, aav.ded_box AS address_box, v.region AS address_region";
+      : registry_type == 3 
+      ? ", CONCAT('Mkurugenzi' ,' ', v.district) AS address_name, aav.ded_box AS address_box, v.region AS address_region"
+      : "";
 
   switch (application_category_id) {
     case 4:

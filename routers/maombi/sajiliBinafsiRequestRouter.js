@@ -491,6 +491,7 @@ sajiliBinafsiRequestRouter.post(
                         occupation: occupation,
                         Website: website,
                         sharti : sharti,
+                        application_category_id:application_category_id,
                         teacherInformation: teacherInformation,
                         approved_at: approved_at,
                         lessons_and_courses: lessons_and_courses,

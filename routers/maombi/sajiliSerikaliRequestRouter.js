@@ -341,6 +341,7 @@ sajiliSerikaliRequestRouter.post(
                 occupation: "",
                 Website: website,
                 sharti : sharti,
+                application_category_id : application_category_id,
                 teacherInformation: teacherInformation,
                 specialization: specialization,
                 lessons_and_courses: lessons_and_courses,

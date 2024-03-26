@@ -484,7 +484,7 @@ const ObjectFuctions = {
     var str = `AND s.id <> ${id} `;
     if (ngazi == "wizara") {
       if (cheo == "ke") {
-        str += ` OR LOWER(r.name) IN ('adsa','mus','dsne') `;
+        str += ` OR LOWER(r.name) IN ('adsa','mus','dsne','dlsu','hlsu') `;
       }
     } else if (ngazi == "kanda") {
       //  K1 && Officers

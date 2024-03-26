@@ -221,7 +221,8 @@ module.exports = {
                applications.tracking_number AS tracking_number, is_approved,
                applications.created_at as created_at, applications.registry_type_id as registry_type_id, 
                applications.user_id as user_id, applications.foreign_token as foreign_token, 
-               establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName, 
+               establishing_schools.school_name as school_name, wards.WardName as WardName , 
+               streets.StreetName as StreetName, regions.RegionName as RegionName, 
                districts.LgaName as LgaName, registry_types.registry as registry
           FROM applications  
           JOIN establishing_schools  ON  establishing_schools.tracking_number = applications.tracking_number  
@@ -230,6 +231,7 @@ module.exports = {
           LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
           LEFT JOIN languages ON languages.id = establishing_schools.language_id
           LEFT JOIN registry_types ON registry_types.id = applications.registry_type_id
+          LEFT JOIN streets ON streets.StreetCode = establishing_schools.village_id
           JOIN wards ON wards.WardCode = establishing_schools.ward_id
           JOIN districts ON districts.LgaCode = wards.LgaCode
           JOIN regions ON regions.RegionCode = districts.RegionCode
@@ -239,7 +241,7 @@ module.exports = {
         if (error) {
           console.log(error);
         }
-
+        // console.log(results[0])
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -257,6 +259,7 @@ module.exports = {
           var school_size = results[0].school_size;
           var area = results[0].area;
           var WardName = results[0].WardName;
+          var StreetName = results[0].StreetName;
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
           var is_approved = results[0].is_approved;
@@ -277,6 +280,7 @@ module.exports = {
           var language = "";
           var school_size = "";
           var area = "";
+          var StreetName = "";
           var WardName = "";
           var structure = "";
           var subcategory = "";
@@ -304,9 +308,11 @@ module.exports = {
 
         if (registry_type_id == 1) {
           db.query(
-            "select *, IFNULL(middle_name , '') AS middle_name, IFNULL(last_name , '') AS last_name FROM personal_infos, applications, wards, districts, regions " +
-              " WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id " +
-              " AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?",
+            `SELECT *, IFNULL(middle_name , '') AS middle_name, IFNULL(last_name , '') AS last_name 
+             FROM personal_infos, applications, wards, districts, regions
+             WHERE districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND wards.WardCode = personal_infos.ward_id
+              AND applications.foreign_token = personal_infos.secure_token AND applications.tracking_number = ?
+              `,
             [tracking_number],
             function (error1, results1) {
               if (error1) {
@@ -321,6 +327,7 @@ module.exports = {
                 var personal_address = results1[0].personal_address;
                 var personal_phone_number = results1[0].personal_phone_number;
                 var personal_email = results1[0].personal_email;
+                var StreetNameMtu = '';
                 var WardNameMtu = results1[0].WardName;
                 var LgaNameMtu = results1[0].LgaName;
                 var RegionNameMtu = results1[0].RegionName;
@@ -334,6 +341,7 @@ module.exports = {
                 var personal_phone_number = "";
                 var personal_email = "";
                 var WardNameMtu = "";
+                var StreetNameMtu = "";
                 var LgaNameMtu = "";
                 var RegionNameMtu = "";
                 var fullname = "";
@@ -343,6 +351,8 @@ module.exports = {
                 school_name: school_name,
                 LgaName: LgaName,
                 RegionName: RegionName,
+                WardName: WardName,
+                StreetName: StreetName,
                 user_id: user_id,
                 registry_type_id: registry_type_id,
                 registry: registry,
@@ -357,9 +367,9 @@ module.exports = {
                 language: language,
                 school_size: school_size,
                 area: area,
-                WardName: WardName,
                 structure: structure,
                 subcategory: subcategory,
+                StreetNameMtu: StreetNameMtu,
                 WardNameMtu: WardNameMtu,
                 LgaNameMtu: LgaNameMtu,
                 RegionNameMtu: RegionNameMtu,
@@ -469,6 +479,8 @@ module.exports = {
                 school_name: school_name,
                 LgaName: LgaName,
                 RegionName: RegionName,
+                WardName: WardName,
+                StreetName: StreetName,
                 user_id: user_id,
                 registry_type_id: registry_type_id,
                 registry: registry,
@@ -482,7 +494,6 @@ module.exports = {
                 language: language,
                 school_size: school_size,
                 area: area,
-                WardName: WardName,
                 structure: structure,
                 subcategory: "Oldsubcategory",
                 is_approved: is_approved,
