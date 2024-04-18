@@ -108,7 +108,7 @@ const getExtraColumns  = (application_category_id , registry_type) => {
 
   switch (application_category_id) {
     case 4:
-      columns += ", v.sharti AS masharti";
+      columns += ", v.sharti AS masharti, gender_type";
       break;
     case 5:
       columns += ", v.old_stream AS old_stream";
