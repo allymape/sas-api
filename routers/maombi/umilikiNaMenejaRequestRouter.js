@@ -211,6 +211,9 @@ umilikiNaMenejaRequestRouter.post(
         sharedModel.myStaffs(user, (staffs) => {
           objStaffs = staffs;
         });
+        sharedModel.getAttachmentTypes(registry_type_id , application_category_id , null , (types) => {
+          objAttachment = types;
+        });
         db.query(
           "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
             " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
@@ -242,33 +245,6 @@ umilikiNaMenejaRequestRouter.post(
                 WardName: WardName,
                 LgaName: LgaName,
                 RegionName: RegionName,
-              });
-            }
-          }
-        );
-
-        db.query(
-          `SELECT attachment_types.id as id, file_size, file_format, UPPER(attachment_name) as attachment_name 
-              FROM attachment_types
-              WHERE status_id = 1 AND (registry_type_id = ${registry_type_id} OR registry_type_id = 0) 
-                    AND application_category_id = ${application_category_id}`,
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            // console.log(results)
-            for (var i = 0; i < results.length; i++) {
-              var file_format = results[i].file_format;
-              var app_id = results[i].id;
-              var attachment_name = results[i].attachment_name;
-              var registry = "";
-              var application_name = "";
-              objAttachment.push({
-                file_format: file_format,
-                attachment_name: attachment_name,
-                registry_id: app_id,
-                registry: registry,
-                application_name: application_name,
               });
             }
           }
