@@ -249,56 +249,10 @@ umilikiNaMenejaRequestRouter.post(
             }
           }
         );
-
-        db.query(
-          "SELECT attachment_types.id as id, file_size, file_format, " +
-            " attachment_name, attachments.created_at as created_at, attachment_path " +
-            " FROM attachment_types, " +
-            " attachments WHERE attachments.attachment_type_id = attachment_types.id AND " +
-            " attachments.tracking_number = ?",
-          [trackingNumber],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
-            }
-            // console.log("markboy");
-            // console.log(results1);
-            if (results1.length > 0) {
-              for (var i = 0; i < results1.length; i++) {
-                var file_format1 = results1[i].file_format;
-                var app_id1 = results1[i].id;
-                var attachment_name1 = results1[i].attachment_name;
-                // var registry1 = results[i].registry;
-                var attachment_path = results1[i].attachment_path;
-                var created_at = results1[i].created_at;
-                var file_size1 = results1[i].file_size;
-                objAttachment1.push({
-                  file_format: file_format1,
-                  attachment_name: attachment_name1,
-                  registry_id: app_id1,
-                  file_size: file_size1,
-                  registry: "registry1",
-                  application_name: "application_name1",
-                  created_at: created_at,
-                  attachment_path: attachment_path,
-                });
-              }
-            } else {
-              objAttachment1.push({
-                file_format: "",
-                attachment_name: "",
-                registry_id: "",
-                file_size: "",
-                registry: "",
-                application_name: "",
-                created_at: "",
-                attachment_path: "",
-              });
-            }
-            // console.log(objAttachment1)
-          }
-        );
-
+        sharedModel.getAttachments(trackingNumber , (attachments) => {
+          objAttachment1 = attachments
+          console.log(objAttachment1);
+        });
         db.query(
           `SELECT * 
             FROM personal_infos p
