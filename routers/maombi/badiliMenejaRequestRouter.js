@@ -92,7 +92,8 @@ badiliMenejaRequestRouter.post(
       ` SELECT fm.manager_first_name AS manager_first_name, fm.manager_middle_name AS manager_middle_name , fm.manager_last_name AS manager_last_name, 
                fm.manager_phone_number as manager_phone_no , fm.manager_email as manager_email, fm.manager_cv AS manager_cv,
                m.manager_first_name AS old_manager_first_name, m.manager_middle_name AS old_manager_middle_name , m.manager_last_name AS old_manager_last_name,
-               m.manager_phone_number as old_manager_phone_no , m.manager_email as old_manager_email, m.manager_cv as old_manager_cv,
+               m.manager_phone_number as old_manager_phone_no , m.manager_email as old_manager_email, m.manager_cv as manager_cv , fm.manager_cv as old_manager_cv, 
+               m.manager_certificate AS manager_certificate, fm.manager_certificate as old_manager_certificate,
               fm.manager_first_name AS manager_first_name, fm.manager_middle_name AS manager_middle_name , fm.manager_last_name AS manager_last_name,
               registry_type_id , application_category_id,  is_approved,
               e.area as area, fm.establishing_school_id as establishing_school_id,  
@@ -142,12 +143,14 @@ badiliMenejaRequestRouter.post(
           var manager_last_name = results[0].manager_last_name;
           var manager_email = results[0].manager_email;
           var manager_cv = results[0].manager_cv;
+          var former_manager_cv = results[0].old_manager_cv;
+          var manager_certificate = results[0].manager_certificate;
+          var former_manager_certificate = results[0].old_manager_certificate;
           var manager_phone_no = results[0].manager_phone_no;
           var former_manager_first_name = results[0].old_manager_first_name;
           var former_manager_middle_name = results[0].old_manager_middle_name;
           var former_manager_last_name = results[0].old_manager_last_name;
           var former_manager_email = results[0].old_manager_email;
-          var former_manager_cv = results[0].old_manager_cv;
           var former_manager_phone_no = results[0].old_manager_phone_no;
           var occupationManager = "";
           var WardName = results[0].WardName;
@@ -252,12 +255,12 @@ badiliMenejaRequestRouter.post(
               manager_phone_no: manager_phone_no,
               manager_email: manager_email,
               is_approved,
-              manager_cv: manager_cv,
               former_manager_phone_no: former_manager_phone_no,
               former_manager_email: former_manager_email,
+              manager_cv: manager_cv,
               former_manager_cv: former_manager_cv,
-              manager_cv : manager_cv,
-              former_manager_cv : former_manager_cv,
+              manager_certificate: manager_certificate,
+              former_manager_certificate: former_manager_certificate,
               tracking_number: tracking_number,
               school_name: school_name,
               authorized_person: authorized_person,
