@@ -241,7 +241,6 @@ module.exports = {
         if (error) {
           console.log(error);
         }
-        // console.log(results[0])
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -287,7 +286,7 @@ module.exports = {
           var is_approved = "";
         }
         var remain_days = calculcateRemainDays(created_at);
-
+       
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
@@ -451,12 +450,16 @@ module.exports = {
 
         if (registry_type_id == 2) {
           db.query(
-            "select institute_infos.id as id, institute_infos.name as name, institute_infos.address as address, " +
-              " institute_infos.institute_phone as institute_phone, institute_infos.institute_email as institute_email " +
-              " from institute_infos, applications WHERE " +
-              " applications.foreign_token = institute_infos.secure_token AND applications.tracking_number = ?",
+            `SELECT institute_infos.id as id, institute_infos.name as name, institute_infos.address as address, 
+              institute_infos.institute_phone as institute_phone, institute_infos.institute_email as institute_email ,
+              StreetName,WardName,LgaName,RegionName
+              FROM institute_infos,applications,regions, districts,wards,streets
+              WHERE  districts.RegionCode = regions.RegionCode AND wards.LgaCode = districts.LgaCode AND 
+              wards.WardCode = institute_infos.ward_id AND streets.StreetCode = institute_infos.street
+              AND applications.foreign_token = institute_infos.secure_token AND applications.tracking_number = ?
+              `,
             [tracking_number],
-            function (error1, results1, fields1) {
+            function (error1, results1) {
               if (error1) {
                 console.log(error1);
               }
@@ -467,6 +470,11 @@ module.exports = {
                 var address = results1[0].address;
                 var institute_phone = results1[0].institute_phone;
                 var institute_email = results1[0].institute_email;
+                var StreetNameMtu = results1[0].StreetName;
+                var WardNameMtu = results1[0].WardName;
+                var LgaNameMtu = results1[0].LgaName;
+                var RegionNameMtu = results1[0].RegionName;
+                console.log(WardNameMtu, RegionNameMtu, LgaNameMtu, name);
               } else {
                 var instId = "";
                 var name = "";
@@ -488,6 +496,10 @@ module.exports = {
                 remain_days: remain_days,
                 fullname: name,
                 occupation: "-",
+                StreetNameMtu: StreetNameMtu,
+                WardNameMtu: WardNameMtu,
+                LgaNameMtu: LgaNameMtu,
+                RegionNameMtu: RegionNameMtu,
                 mwombajiAddress: address,
                 mwombajiPhoneNo: institute_phone,
                 baruaPepe: institute_email,
@@ -495,7 +507,8 @@ module.exports = {
                 school_size: school_size,
                 area: area,
                 structure: structure,
-                subcategory: "Oldsubcategory",
+                schoolCategory: schoolCategory,
+                subcategory: subcategory,
                 is_approved: is_approved,
               });
               db.query(
