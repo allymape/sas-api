@@ -215,9 +215,11 @@ umilikiNaMenejaRequestRouter.post(
           objAttachment = types;
         });
         db.query(
-          "SELECT * from referees, owners, wards, districts, regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode " +
-            " AND owners.id = referees.owner_id AND tracking_number = ?",
+          `SELECT * 
+           FROM owners, referees, wards, districts, regions 
+           WHERE regions.RegionCode = districts.RegionCode AND 
+           districts.LgaCode = wards.LgaCode AND referees.ward_id = wards.WardCode 
+           AND owners.id = referees.owner_id AND tracking_number = ?`,
           [trackingNumber],
           function (error, results) {
             if (error) {
