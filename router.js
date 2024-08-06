@@ -34,11 +34,26 @@ const loginlimiter = rateLimit({
 });
 
 
+// router.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
+
+express().set("trust proxy", 1);
+
 router.use(
   session({
+    cookie: {
+      secure: true,
+      maxAge: 60000,
+    },
+    // store: new RedisStore(),
     secret: "secret",
-    resave: true,
     saveUninitialized: true,
+    resave: false,
   })
 );
 
