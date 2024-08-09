@@ -20,7 +20,7 @@ module.exports = {
             LEFT JOIN registry_types ON registry_types.id = applications.registry_type_id 
             LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
             LEFT JOIN staffs ON applications.staff_id = staffs.id
-            WHERE  application_category_id = 1  AND payment_status_id = 2
+            WHERE  application_category_id = 1  AND payment_status_id = 2 AND is_complete = 1
             ${
               ["pending", ""].includes(status) ||
               user.ngazi.toLowerCase() != "wizara"
