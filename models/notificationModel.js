@@ -36,7 +36,7 @@ module.exports = {
        JOIN establishing_schools e ON e.tracking_number = a.tracking_number
        ${commonJoin} 
        ${sqlWhere}
-       AND a.application_category_id = 1
+       AND a.application_category_id = 1 AND is_complete = 1
       `,
       (error, kuanzisha) => {
         if (error) console.log(error);
