@@ -33,12 +33,18 @@ const { notifyUserOnComment } = require("./templates/emailTemplate");
 
 
 const ObjectFuctions = {
-  generateAccessToken : (user) => {
+  generateAccessToken: (user) => {
     // console.log(user)
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect", { expiresIn: '15m' });
+    return jwt.sign(
+      user,
+      process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect",
+      { expiresIn: "15m" }
+    );
   },
-  generateRefreshToken : (user) => {
-    return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+  generateRefreshToken: (user) => {
+    return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {
+      expiresIn: "7d",
+    });
   },
   getUserOffice: (user) => {
     if (!user.zone_id && !user.district_code) {
@@ -154,49 +160,48 @@ const ObjectFuctions = {
     return i;
   },
   // notify
-  notifyUser : (userTo , application_category , sender , tracking_number) => {
-         console.log(`Start Email Notification`)
-         db.query(
-           `SELECT app_name FROM application_categories ac WHERE ac.id = ?`,
-           [application_category],
-           (error2, app_category) => {
-             if (error2) console.log(error2);
-             db.query(
-               `SELECT name, email FROM staffs s WHERE s.id = ? AND email_notify = 1`,
-               [userTo],
-               (error, staff) => {
-                 if (error) console.log(error);
-                 if (app_category.length > 0) {
-                   const app_name = app_category[0].app_name;
-                  
-                   if (staff.length > 0) {
-                     let { name, email } = staff[0];
-                     let link = `${
-                       process.env.APP_URL ||
-                       "http:localhost:" + process.env.HTTP_PORT
-                     }`;
-                     let htmlContent = notifyUserOnComment(
-                       name,
-                       app_name,
-                       sender,
-                       link,
-                       tracking_number
-                     );
-                     let mailOptions = ObjectFuctions.setMailOptions(
-                       email,
-                       "Notify",
-                       htmlContent
-                     );
-                    ObjectFuctions.sendEmail(mailOptions, (error, info) => {
-                       console.log("Message %s sent: %s", info, error);
-                     });
-                   }
-                 }
-               }
-             );
-           }
-         );
-     
+  notifyUser: (userTo, application_category, sender, tracking_number) => {
+    console.log(`Start Email Notification`);
+    db.query(
+      `SELECT app_name FROM application_categories ac WHERE ac.id = ?`,
+      [application_category],
+      (error2, app_category) => {
+        if (error2) console.log(error2);
+        db.query(
+          `SELECT name, email FROM staffs s WHERE s.id = ? AND email_notify = 1`,
+          [userTo],
+          (error, staff) => {
+            if (error) console.log(error);
+            if (app_category.length > 0) {
+              const app_name = app_category[0].app_name;
+
+              if (staff.length > 0) {
+                let { name, email } = staff[0];
+                let link = `${
+                  process.env.APP_URL ||
+                  "http:localhost:" + process.env.HTTP_PORT
+                }`;
+                let htmlContent = notifyUserOnComment(
+                  name,
+                  app_name,
+                  sender,
+                  link,
+                  tracking_number
+                );
+                let mailOptions = ObjectFuctions.setMailOptions(
+                  email,
+                  "Notify",
+                  htmlContent
+                );
+                ObjectFuctions.sendEmail(mailOptions, (error, info) => {
+                  console.log("Message %s sent: %s", info, error);
+                });
+              }
+            }
+          }
+        );
+      }
+    );
   },
   //Send Email
   sendEmail: (mailOptions, callback) => {
@@ -210,7 +215,7 @@ const ObjectFuctions = {
       },
     });
     transporter.sendMail(mailOptions, (error, info) => {
-      if(error) console.log(error)
+      if (error) console.log(error);
       callback(error, info);
     });
   },
@@ -310,16 +315,16 @@ const ObjectFuctions = {
     var unique_array = array.filter((item, pos) => array.indexOf(item) === pos);
     return unique_array;
   },
-  formatIp : (ip) => {
-      if(ip == "::1"){
-        return '127.0.0.1';
-      }else{
-        if(ip.includes('::ffff:')){
-          return ip.split("::ffff:")[1];
-        }else{
-          return ip;
-        }
+  formatIp: (ip) => {
+    if (ip == "::1") {
+      return "127.0.0.1";
+    } else {
+      if (ip.includes("::ffff:")) {
+        return ip.split("::ffff:")[1];
+      } else {
+        return ip;
       }
+    }
   },
   promiseRequest: async (admin_area_url, segment, per_page = 2000) => {
     try {
@@ -364,7 +369,7 @@ const ObjectFuctions = {
       format
     );
   },
-  initiliazeRolesAndPermissions: (userId , callback) => {
+  initiliazeRolesAndPermissions: (userId, callback) => {
     let roles = [];
     let permissions = [];
     let permission_role = [];
@@ -372,12 +377,12 @@ const ObjectFuctions = {
     let all_display_names = [];
     let role_with_permissions = [];
     let default_permissions = [];
-    Object.entries(defaultPermissions).forEach(([name , values]) => {
-         values.split(",").forEach(value => {
-              default_permissions.push(
-                lowerCase(paramCase(translations["en"][value] + " " + name))
-              );
-         })
+    Object.entries(defaultPermissions).forEach(([name, values]) => {
+      values.split(",").forEach((value) => {
+        default_permissions.push(
+          lowerCase(paramCase(translations["en"][value] + " " + name))
+        );
+      });
     });
     // build all role , all permissions names and display names
     // console.log(default_permissions);
@@ -498,7 +503,7 @@ const ObjectFuctions = {
   },
   getMyNextBoss: (user, application_category, staff_id) => {
     const { cheo, zone_id } = user;
-   
+
     if (staff_id == 0 || staff_id == "" || staff_id == null) {
       var str = ``;
       // Business Flow base on application category
@@ -557,16 +562,24 @@ const ObjectFuctions = {
     }
     return ` AND s.id < -1`;
   },
-  selectConditionByTitle: (user, useAlias = false , notification = false , status = 'pending') => {
-    const { cheo, ngazi, handover_by, sehemu, district_code, zone_id, jukumu } = user;
-    const id =  handover_by ? handover_by : user.id
+  selectConditionByTitle: (
+    user,
+    useAlias = false,
+    notification = false,
+    status = "pending"
+  ) => {
+    const { cheo, ngazi, handover_by, sehemu, district_code, zone_id, jukumu } =
+      user;
+    const id = handover_by ? handover_by : user.id;
     var str = ``;
     // console.log(jukumu)
     if (ngazi == "wizara") {
       if (
         (ObjectFuctions.lowerCase(jukumu) == "super-admin" ||
           ObjectFuctions.lowerCase(jukumu) == "super admin") &&
-        !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(sehemu)
+        !["w1", "k1", "adsa", "masjala", "mus", "dlsu", "dsne", "ke"].includes(
+          sehemu
+        )
       ) {
         // return `AND is_approved <> 2`;
         if (notification) {
@@ -576,37 +589,37 @@ const ObjectFuctions = {
       }
 
       if (sehemu == "dahrm" || sehemu == "masjala" || sehemu == "registry") {
-          if (notification) {
-            return ` AND 1 < 0`; 
-          }
+        if (notification) {
+          return ` AND 1 < 0`;
+        }
         str += ``;
         // str += ` AND is_approved = 2`;
       } else {
         // console.log(cheo , id)
-        str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}`;
-        // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id} 
+        str += ` AND ${
+          useAlias ? "a.staff_id" : "applications.staff_id"
+        } = ${id}`;
+        // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}
         // AND is_approved <> 2`;
       }
       return str;
     } else if (ngazi == "kanda") {
-      str += (status == 'pending' ? 
-                      ` AND ${
-                        (useAlias ? "a.staff_id" : "applications.staff_id")} = ${id}` : '' )
-                        +(` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`);
-        
+      str +=
+        (status == "pending"
+          ? ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}`
+          : "") +
+        ` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
     } else if (ngazi == "wilaya") {
       //  W1
       if (cheo == "w1" || cheo == "kw1") {
-     
         str +=
-          status == "pending" 
-          ? ` AND (${
-            useAlias ? "a.staff_id" : "applications.staff_id"
-          } = ${id} OR  ${
-            useAlias ? "a.staff_id" : "applications.staff_id"
-          } IS NULL)` 
-          : '';
-            
+          status == "pending"
+            ? ` AND (${
+                useAlias ? "a.staff_id" : "applications.staff_id"
+              } = ${id} OR  ${
+                useAlias ? "a.staff_id" : "applications.staff_id"
+              } IS NULL)`
+            : "";
       } else {
         //Officer W1
         str += ` AND ${
@@ -640,8 +653,8 @@ const ObjectFuctions = {
       case 2:
         $where = `${start_with} ${table_zone_alias} = ${zone_id}  ${
           ["s.district_code", "staffs.district_code"].includes(table_lga_alias)
-            ? 'AND '+table_lga_alias+ ' IS NULL'
-            : ''
+            ? "AND " + table_lga_alias + " IS NULL"
+            : ""
         }  ${more_sql_filter}`;
         break;
       case 3:
@@ -671,39 +684,39 @@ const ObjectFuctions = {
   },
   registeredSchoolsEstablishedApplicationSqlJoin: () => {
     return `JOIN establishing_schools e ON s.establishing_school_id = e.id
-            JOIN  applications a ON a.tracking_number = e.tracking_number`;
+            JOIN  applications a ON a.tracking_number = s.tracking_number`;
   },
-  joinsByApplicationCategory : (category) => {
-       var sqlJoin = ``;
-       if(category == 1){
-          sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number`;
-       }
-       if(category == 2) {
-         sqlJoin = `LEFT JOIN owners o ON o.tracking_number = a.tracking_number 
+  joinsByApplicationCategory: (category) => {
+    var sqlJoin = ``;
+    if (category == 1) {
+      sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number`;
+    }
+    if (category == 2) {
+      sqlJoin = `LEFT JOIN owners o ON o.tracking_number = a.tracking_number 
                     LEFT JOIN establishing_schools e ON o.establishing_school_id = e.id`;
-       }
-       if(category == 4) {
-          sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number
+    }
+    if (category == 4) {
+      sqlJoin = `LEFT JOIN establishing_schools e ON a.tracking_number = e.tracking_number
                     LEFT JOIN school_registrations s ON s.establishing_school_id = e.id `;
-       }
-        if (category == 7) {
-          sqlJoin = `LEFT JOIN former_owners fo ON fo.tracking_number = a.tracking_number 
+    }
+    if (category == 7) {
+      sqlJoin = `LEFT JOIN former_owners fo ON fo.tracking_number = a.tracking_number 
                      LEFT JOIN establishing_schools e ON fo.establishing_school_id = e.id`;
-        }
-        if (category == 8) {
-          sqlJoin = `LEFT JOIN former_managers fm ON fm.tracking_number = a.tracking_number 
+    }
+    if (category == 8) {
+      sqlJoin = `LEFT JOIN former_managers fm ON fm.tracking_number = a.tracking_number 
                      LEFT JOIN establishing_schools e ON fm.establishing_school_id = e.id`;
-        }
-        if (category == 12) {
-          sqlJoin = `LEFT JOIN former_school_combinations fsc ON fsc.tracking_number = a.tracking_number 
+    }
+    if (category == 12) {
+      sqlJoin = `LEFT JOIN former_school_combinations fsc ON fsc.tracking_number = a.tracking_number 
                      LEFT JOIN establishing_schools e ON fsc.establishing_school_id = e.id`;
-        }
-       if([5, 6, 9, 10, 11, 13, 14].includes(category)) {
-           sqlJoin = `LEFT JOIN former_school_infos fsi ON fsi.tracking_number = a.tracking_number 
-                      LEFT JOIN establishing_schools e ON fsi.establishing_school_id = e.id`; 
-       }
-       console.log(category)
-       return sqlJoin;
+    }
+    if ([5, 6, 9, 10, 11, 13, 14].includes(category)) {
+      sqlJoin = `LEFT JOIN former_school_infos fsi ON fsi.tracking_number = a.tracking_number 
+                      LEFT JOIN establishing_schools e ON fsi.establishing_school_id = e.id`;
+    }
+    console.log(category);
+    return sqlJoin;
   },
   InsertAuditTrail: (
     user_id,
@@ -746,34 +759,34 @@ const ObjectFuctions = {
       }
     );
   },
-  auditTrail : (req , action , comment , module) => {
-         if(action == 'new'){
-              ObjectFuctions.InsertAuditTrail(
-                req.user.id,
-                "created",
-                req.body,
-                req.url,
-                req.body.browser_used,
-                null,
-                comment,
-                req.body.ip_address,
-                module
-              );
-         }
-         console.log(req)
-         if(action == 'edit'){
-              ObjectFuctions.UpdateAuditTrail(
-                req.user.id,
-                "updated",
-                req.body,
-                req.url,
-                req.body.browser_used,
-                null,
-                comment,
-                req.body.ip_address,
-                module
-              );
-         }
+  auditTrail: (req, action, comment, module) => {
+    if (action == "new") {
+      ObjectFuctions.InsertAuditTrail(
+        req.user.id,
+        "created",
+        req.body,
+        req.url,
+        req.body.browser_used,
+        null,
+        comment,
+        req.body.ip_address,
+        module
+      );
+    }
+    console.log(req);
+    if (action == "edit") {
+      ObjectFuctions.UpdateAuditTrail(
+        req.user.id,
+        "updated",
+        req.body,
+        req.url,
+        req.body.browser_used,
+        null,
+        comment,
+        req.body.ip_address,
+        module
+      );
+    }
   },
   calculcateRemainDays: (fromDate) => {
     var today = new Date();
@@ -953,74 +966,74 @@ const ObjectFuctions = {
       }
     );
   },
-  applicationView : (application_category_id) => {
-          var table_view = '';
-          switch (Number(application_category_id)) {
-            case 1:
-              table_view = "established_schools_view";
-              break;
-            case 2:
-              table_view = "school_owners_view";
-              break;
-            case 3:
-              table_view = "school_managers_view";
-              break;
-            case 4:
-              table_view = "registered_schools_view";
-              break;
-            case 5:
-              table_view = "streams_change_view";
-              break;
-            case 6:
-              table_view = "registration_change_view";
-              break;
-            case 7:
-              table_view = "owners_change_view";
-              break;
-            case 8:
-              table_view = "managers_change_view";
-              break;
-            case 9:
-              table_view = "name_change_view";
-              break;
-            case 10:
-              table_view = "transfer_change_view";
-              break;
-            case 11:
-              table_view = "deregistration_change_view";
-              break;
-            case 12:
-              table_view = "tahasusi_change_view";
-              break;
-            case 13:
-              table_view = "dahalia_change_view";
-              break;
-            case 14:
-              table_view = "bweni_change_view";
-              break;
-            default:
-              break;
-          }
-          return table_view;
+  applicationView: (application_category_id) => {
+    var table_view = "";
+    switch (Number(application_category_id)) {
+      case 1:
+        table_view = "established_schools_view";
+        break;
+      case 2:
+        table_view = "school_owners_view";
+        break;
+      case 3:
+        table_view = "school_managers_view";
+        break;
+      case 4:
+        table_view = "registered_schools_view";
+        break;
+      case 5:
+        table_view = "streams_change_view";
+        break;
+      case 6:
+        table_view = "registration_change_view";
+        break;
+      case 7:
+        table_view = "owners_change_view";
+        break;
+      case 8:
+        table_view = "managers_change_view";
+        break;
+      case 9:
+        table_view = "name_change_view";
+        break;
+      case 10:
+        table_view = "transfer_change_view";
+        break;
+      case 11:
+        table_view = "deregistration_change_view";
+        break;
+      case 12:
+        table_view = "tahasusi_change_view";
+        break;
+      case 13:
+        table_view = "dahalia_change_view";
+        break;
+      case 14:
+        table_view = "bweni_change_view";
+        break;
+      default:
+        break;
+    }
+    return table_view;
   },
-  approvalStatuses : (status) => {
-       var status_id = '';
-        switch (status) {
-          case "pending":
-            status_id = "(0,1)";
-            break;
-          case "approved":
-            status_id =  "(2)";
-            break;
-          case "rejected":
-            status_id =  "(3)";
-            break;
-          default:
-            status_id = null;
-            break;
-        }
-        return status_id;
-  }
+  approvalStatuses: (status) => {
+    var status_id = "";
+    switch (status) {
+      case "pending":
+        status_id = "(0,1)";
+        break;
+      case "approved":
+        status_id = "(2)";
+        break;
+      case "rejected":
+        status_id = "(3)";
+        break;
+      default:
+        status_id = null;
+        break;
+    }
+    return status_id;
+  },
 };
 
 module.exports = ObjectFuctions;

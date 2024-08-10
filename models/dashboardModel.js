@@ -5,14 +5,15 @@ module.exports = {
   getAllSummaries : (user , callback) => {
         const summaryCategoriesSql = `SELECT sc.id AS id , sc.category AS category, 
                                       COUNT(*) AS total
-                                      FROM  establishing_schools e
+                                      FROM  school_registrations s
+                                      ${registeredSchoolsEstablishedApplicationSqlJoin()} 
                                       JOIN school_categories sc ON sc.id = e.school_category_id 
-                                      ${establishedApplicationRegisteredSchoolsSqlJoin()} 
                                       ${schoolLocationsSqlJoin()}
                                        WHERE 
                                        a.is_approved=2 AND 
                                        s.reg_status = 1 
-                                       ${filterByUserOffice(user , 'AND')}
+                                       #AND a.is_complete = 1
+                                       ${filterByUserOffice(user, "AND")}
                                        GROUP BY category, id
                                        ORDER BY id ASC`; 
         db.query(summaryCategoriesSql, (error , summaryCategories) => {
@@ -22,8 +23,8 @@ module.exports = {
                     
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
-                       FROM establishing_schools e
-                       ${establishedApplicationRegisteredSchoolsSqlJoin()}
+                       FROM school_registrations s
+                       ${registeredSchoolsEstablishedApplicationSqlJoin()}
                        INNER JOIN registry_types rt ON rt.id = a.registry_type_id
                        ${schoolLocationsSqlJoin()}
                        WHERE a.is_approved = 2 AND s.reg_status = 1
@@ -43,7 +44,7 @@ module.exports = {
                                   LEFT JOIN  establishing_schools e ON e.tracking_number = a.tracking_number
                                   LEFT JOIN owners o ON o.establishing_school_id = e.id
                                   WHERE ac.id NOT IN (1,4) 
-                                  #AND a.is_approved = 2
+                                  AND a.is_approved = 2
                                   GROUP BY ac.id , ac.app_name 
                                   `,
                           (error3, summaryApplications) => {
@@ -59,8 +60,9 @@ module.exports = {
                                 LEFT JOIN establishing_schools e ON e.registration_structure_id = rs.id
                                 LEFT JOIN applications a ON a.tracking_number = e.tracking_number
                                 WHERE 
-                                #a.is_approved = 2 AND 
-                                a.application_category_id = 1
+                                a.is_approved = 2 AND 
+                                a.application_category_id = 1 AND
+                                a.is_complete = 1
                                 GROUP BY label
                                 ORDER BY label ASC`,
                               (error4, summaryStructures) => {
@@ -74,8 +76,9 @@ module.exports = {
                                   `SELECT COUNT(*) AS total 
                                    FROM  school_registrations s
                                    JOIN establishing_schools e ON s.establishing_school_id = e.id
+                                   JOIN applications a ON a.tracking_number = s.tracking_number
                                    ${schoolLocationsSqlJoin()}
-                                   WHERE s.reg_status = 1
+                                   WHERE s.reg_status = 1 AND a.is_approved = 2
                                    ${filterByUserOffice(user, "AND")}`,
                                   (error5, summaryRegisteredSchools) => {
                                     if (error5) {
@@ -106,11 +109,10 @@ module.exports = {
       db.query(`SELECT ${selectConditionByRanks(user)} , sc.id AS category , 
                 COUNT(*) AS school_count
                 FROM school_registrations s 
-                JOIN establishing_schools e ON s.establishing_school_id = e.id
-                JOIN applications a ON a.tracking_number = e.tracking_number
-                LEFT JOIN school_categories sc ON sc.id = e.school_category_id
+                ${ registeredSchoolsEstablishedApplicationSqlJoin()}
+                JOIN school_categories sc ON sc.id = e.school_category_id
                 ${schoolLocationsSqlJoin()}
-                WHERE a.is_approved = 2 AND s.reg_status = 1 
+                WHERE a.is_approved = 2 AND s.reg_status = 1 AND a.is_complete=1
                 ${filterByUserOffice(user , 'AND')}
                 GROUP BY region , sc.id 
                 ORDER BY region ASC`, 
@@ -170,9 +172,11 @@ module.exports = {
         let sql = `SELECT IFNULL(YEAR(s.registration_date) , 'NULL') AS label , COUNT(*) as total
                       FROM school_registrations s
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
+                      JOIN applications a ON a.tracking_number = s.tracking_number
                       ${schoolLocationsSqlJoin()} 
                       ${filterByUserOffice(user, "WHERE")}
                       #WHERE YEAR(s.updated_at) <> 0
+                      #WHERE a.is_complete = 1
                       GROUP BY label
                       ORDER BY label ASC
                       `;
