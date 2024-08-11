@@ -71,8 +71,8 @@ module.exports = {
                     );
                     // return;
                   } else {
+                    console.log("Compare password.")
                     message = "Wrong username or password.";
-
                     callback(false, [], [], message);
                     // return;
                   }
@@ -87,7 +87,7 @@ module.exports = {
           }
         );
       } catch (error) {
-        console.log("Username not found.");
+        console.log(error);
         message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo.";
         callback(false, [], [], message);
       }
