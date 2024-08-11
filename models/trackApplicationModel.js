@@ -15,6 +15,7 @@ module.exports = {
       : ``;
 
    const commonSql = `FROM ${main_table_view} a
+                      JOIN applications ap ON ap.tracking_number = a.tracking_number
                       LEFT JOIN users u ON u.id = a.user_id
                       LEFT JOIN staffs s ON s.id = a.staff_id
                       LEFT JOIN roles c ON c.id = s.user_level
@@ -26,7 +27,7 @@ module.exports = {
                       ON a.tracking_number = m.trackingNo
                       LEFT JOIN zones z ON (s.zone_id IS NOT NULL AND  z.id = s.zone_id) 
                       LEFT JOIN payment_statuses p ON p.id = a.payment_status_id
-                      WHERE 1 = 1 
+                      WHERE ap.is_complete = 1
                       ${filter}
                       ${ sehemu == "k1" ? "AND s.zone_id = " + zone_id : ""}
                       ${ sehemu == "w1" ? "AND a.district_code = '" + district_code+"'" : ""}
