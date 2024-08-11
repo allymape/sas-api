@@ -7,8 +7,9 @@ const { lowerCase, upperCaseFirst } = require("text-case");
 module.exports = {
   //******** USER LOGIN *******************************
   loginUser: (req , callback) => {
-      const {username , password , clientIp , browser , device} = req.body;
-      var message = '';
+      try {
+        const { username, password, clientIp, browser, device } = req.body;
+        var message = "";
         //const userData = [];
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
@@ -27,13 +28,13 @@ module.exports = {
             INNER JOIN role_management rm ON rm.id = s.new_role_id
             LEFT JOIN ranks rnk ON rnk.id = v.rank_level
             LEFT JOIN zones z ON z.id = s.zone_id
-            WHERE username = ? AND user_status = 1;`,
+            WHERE username = ? AND user_status = 1`,
           [username],
           (error, user) => {
             if (error) {
               console.log(error);
             }
-            if (user  && user.length == 1) {
+            if (user && user.length == 1) {
               db.query(
                 `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
                 (error2, permissions) => {
@@ -51,7 +52,7 @@ module.exports = {
                       [login_datetime, user_id],
                       (err) => {
                         if (err) console.log(err);
-                        
+
                         db.query(
                           `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
                           [
@@ -71,8 +72,8 @@ module.exports = {
                     // return;
                   } else {
                     message = "Wrong username or password.";
-                    
-                    callback(false, [], [] , message);
+
+                    callback(false, [], [], message);
                     // return;
                   }
                 }
@@ -80,11 +81,16 @@ module.exports = {
             } else {
               console.log("Username not found.");
               message = "Wrong username or password.";
-              callback(false, [], [] , message);
+              callback(false, [], [], message);
               // return;
             }
           }
         );
+      } catch (error) {
+        console.log("Username not found.");
+        message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo.";
+        callback(false, [], [], message);
+      }
   },
   //******** LIST USERS *******************************
   getUsers: (offset, per_page, searchQuery, user , callback) => {
