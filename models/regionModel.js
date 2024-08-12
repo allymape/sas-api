@@ -31,7 +31,7 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            console.log(regions);
+            // console.log(regions);
             callback(error, regions, result2[0].num_rows);
           }
         );
@@ -39,7 +39,7 @@ module.exports = {
     );
   },
   lookupRegions: (user,zone_id, callback) => {
-     console.log(user)
+    //  console.log(user)
     db.query(
       `SELECT r.id AS regionId, r.RegionCode AS regionCode, RegionName AS regionName, 
               IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, 

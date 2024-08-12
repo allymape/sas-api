@@ -200,7 +200,7 @@ module.exports = {
   // Edit School
   editSchool : (tracking_number , callback) => {
         db.query(`SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
-                  IFNULL(DATE(s.created_at) , null) AS registration_date,
+                  IFNULL(DATE(s.registration_date) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
                   w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region 
@@ -211,6 +211,7 @@ module.exports = {
                           if(error){
                             console.log(error);
                           }
+                          console.log("hii" , school)
                   callback(error , school[0])
         });
   },
