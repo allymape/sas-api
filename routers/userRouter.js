@@ -12,6 +12,7 @@ const {
   lowerCase,
   upperCase,
   generateAccessToken,
+  generateRefreshToken,
 } = require("../utils.js");
 var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
@@ -146,7 +147,35 @@ userRouter.post(`/authenticate-barua` , (req , res) => {
           })
         }
 });
-
+//Refresh tokens
+userRouter.post('/refresh_token' , isAuth , (req , res) => {
+      const {user} = req
+      if(user){
+        const token = generateAccessToken({
+          id: user.id,
+          name: user.name,
+          office: user.office,
+          zone_id: user.zone_id,
+          kanda: user.kanda,
+          region_code: user.region_code,
+          district_code: user.district_code,
+          userPermissions: user.userPermissions,
+          user_level: Number(user.user_level),
+          section_id: Number(user.section_id),
+          ngazi: user.ngazi, //wizara,kanda au wilaya
+          sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+          cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+          handover_by: user.handover_by,
+          cheo_office: Number(user.cheo_office),
+          jukumu: user.jukumu,
+        });
+        return res.send({
+          success: true,
+          statusCode: 300,
+          token: token,
+        });
+      }
+})
 //get list of users
 userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

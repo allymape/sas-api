@@ -38,13 +38,17 @@ const ObjectFuctions = {
     return jwt.sign(
       user,
       process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect",
-      { expiresIn: "15m" }
+      { expiresIn: process.env.EXPIRED_IN || "15m" }
     );
   },
   generateRefreshToken: (user) => {
-    return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {
-      expiresIn: "7d",
-    });
+    return jwt.sign(
+      user,
+      process.env.REFRESH_TOKEN_SECRET || "the-super-strong-secrect",
+      {
+        expiresIn: process.env.EXPIRED_IN || "15m",
+      }
+    );
   },
   getUserOffice: (user) => {
     if (!user.zone_id && !user.district_code) {
