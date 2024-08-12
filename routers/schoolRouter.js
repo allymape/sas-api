@@ -145,6 +145,7 @@ schoolRouter.post(`/add-school` , (req , res) => {
           status_id,
           is_complete,
           2,
+          null,
           created_at,
           updated_at,
         ]);
@@ -180,7 +181,7 @@ schoolRouter.post(`/add-school` , (req , res) => {
           registration_date,
         ]);
         
-        owners.push([id, secure_token ,id, owner_name, created_at]);
+        owners.push([id, secure_token, id, tracking_number,owner_name, created_at]);
 
         applicants.push([
           id,
