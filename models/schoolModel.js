@@ -8,10 +8,9 @@ module.exports = {
     const  type     = db.escape(Number(typeKeyword));
     const  owner    = db.escape(Number(ownerKeyword));
     const  sign     = db.escape(compare);
-   
     const sqlQuery = `FROM school_registrations s 
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
-                      JOIN applications a ON a.tracking_number = e.tracking_number
+                      JOIN applications a ON a.tracking_number = s.tracking_number
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       ${ schoolLocationsSqlJoin() }
@@ -30,7 +29,7 @@ module.exports = {
     // console.log(searchByKeywordQuery, searchByTypeQuery, searchByOwnerQuery);
    
     db.query(
-      `SELECT e.tracking_number AS id,
+      `SELECT a.tracking_number AS id,
               school_name AS name, 
               registration_number AS reg_no, 
               rt.registry AS ownership,
@@ -55,6 +54,7 @@ module.exports = {
               LIMIT ?, ?`,
       [offset, per_page],
       (error, schools) => {
+        if(error) console.log(error)
         db.query(
           `SELECT COUNT(*) AS num_rows 
               ${sqlQuery}  
@@ -66,7 +66,7 @@ module.exports = {
               console.log(error2);
               error = error2;
             }
-            // console.log(result[0].num_rows);
+            console.log(result[0].num_rows);
             callback(error, schools, result[0].num_rows);
           }
         );
