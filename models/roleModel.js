@@ -127,8 +127,7 @@ module.exports = {
         if (error) {
           console.log("Error", error);
         }
-
-        if (result.affectedRows > 0 && permissions.length > 0) {
+        if (result.affectedRows > 0 && permissions && permissions.length > 0) {
           syncPermissions(
             permissions,
             userId,
