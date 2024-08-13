@@ -4,15 +4,15 @@ const request = require("request");
 const algorithmRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 
-var session = require("express-session");
+// var session = require("express-session");
 const algorithmModel = require("../models/algorithmModel.js");
-algorithmRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// algorithmRouter.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
 // List of Algorithms
 algorithmRouter.get("/all-algorithms", isAuth, permission('view-algorithm'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

@@ -5,13 +5,13 @@ const hierarchyRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const hierarchyModel = require("../models/hierarchyModel.js");
 var session = require("express-session");
-hierarchyRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// hierarchyRouter.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
 // List of hierarchies
 hierarchyRouter.get("/all_hierarchies", isAuth, permission('view-hierarchies'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

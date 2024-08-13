@@ -14,13 +14,13 @@ const {
   // memberValidation,
 } = require("../validation");
 
-regionRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// regionRouter.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
 // List of regions
 regionRouter.get("/regions", isAuth, (req, res, next) => {
     var per_page = parseInt(req.query.per_page);

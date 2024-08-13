@@ -7,13 +7,13 @@ const roleModel = require("../models/roleModel.js");
 var session = require("express-session");
 const permissionModel = require("../models/permissionModel.js");
 const rolePermissionModel = require("../models/rolePermissionModel.js");
-roleRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// roleRouter.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
 // List of roles
 roleRouter.get("/allRoles", isAuth, permission('view-roles'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

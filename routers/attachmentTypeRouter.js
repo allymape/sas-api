@@ -6,13 +6,13 @@ const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = requi
 var session = require("express-session");
 const attachmentTypeModel = require("../models/attachmentTypeModel.js");
 const sharedModel = require("../models/sharedModel.js");
-attachementTypeRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+// attachementTypeRouter.use(
+//   session({
+//     secret: "secret",
+//     resave: true,
+//     saveUninitialized: true,
+//   })
+// );
 // List of attachementTypes
 attachementTypeRouter.get("/all-attachment-types", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
