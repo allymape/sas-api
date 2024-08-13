@@ -20,6 +20,7 @@ module.exports = {
             r.id AS rank_id , r.name as rank_name,
             zone_id,zone_name,region_code,district_code, 
             v.status_id as status_id, 
+            is_password_changed,
             v.id as cheo_office ,
             v.rank_level as rank_level, s.twofa as twofa 
             FROM staffs s
@@ -411,9 +412,10 @@ module.exports = {
                         hash(newpassword , (hashed , hash) => {
                               if(hashed){
                                 db.query(
-                                  `UPDATE staffs SET password = ?
+                                  `UPDATE staffs 
+                                  SET password = ? , is_password_changed = ?
                                   WHERE id = ?`,
-                                  [hash, user_id],
+                                  [hash,1, user_id],
                                   (error2, result) => {
                                     if (error2) console.log(error2);
                                     const success = result.affectedRows > 0;

@@ -48,7 +48,7 @@ userRouter.post("/login", loginlimiter, (req, res) => {
             office: office,
             office_name: office_name,
             rank_name: user.rank_name,
-            // status_id: user.status_id,
+            is_password_changed: user.is_password_changed,
             zone_id: Number(user.zone_id),
             kanda: user.zone_name,
             region_code: user.region_code,
@@ -64,7 +64,7 @@ userRouter.post("/login", loginlimiter, (req, res) => {
               : user.rank_name
               ? lowerCase(user.rank_name)
               : "",
-            handover_by : handover_by,
+            handover_by: handover_by,
             cheo_office: user.cheo_office,
             jukumu: user.jukumu ? upperCase(user.jukumu) : "",
           };
@@ -86,7 +86,8 @@ userRouter.post("/login", loginlimiter, (req, res) => {
             ngazi: userData.ngazi, //wizara,kanda au wilaya
             sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
             cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-            handover_by : userData.handover_by,
+            handover_by: userData.handover_by,
+            is_password_changed: userData.is_password_changed,
             cheo_office: Number(userData.cheo_office),
             jukumu: userData.jukumu,
           });
