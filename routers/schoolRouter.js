@@ -178,7 +178,7 @@ schoolRouter.post(`/add-school` , (req , res) => {
           registration_number,
           registration_status,
           created_at,
-          registration_date,
+          updated_at,
         ]);
         
         owners.push([id, secure_token, id, tracking_number,owner_name, created_at]);
