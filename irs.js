@@ -4,7 +4,7 @@ const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const indexRouter = require("./router.js");
+// const indexRouter = require("./router.js");
 // var session = require('express-session');
 process.env.TZ="Africa/Dar_es_Salaam"
 const app = express();
@@ -86,7 +86,7 @@ const auditTrailRouter = require("./routers/auditTrailRouter.js");
 const handoverRouter = require("./routers/handoverRouter.js");
 
 
-app.use("/api", indexRouter);
+// app.use("/api", indexRouter);
 app.use("/api" , anzishaShuleRequestRouter);
 app.use("/api" , trackApplicationRouter);
 app.use("/api", regionRouter);
