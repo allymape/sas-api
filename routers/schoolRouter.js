@@ -227,11 +227,11 @@ schoolRouter.get(`/edit-school/:id` , (req , res) => {
 schoolRouter.put(`/update-school/:id` , (req , res) => {
     const tracking_number = req.params.id;
     const data = req.body;
-    schoolModel.updateSchool(tracking_number , data , (error) => {
+    schoolModel.updateSchool(tracking_number , data , (error , message) => {
          res.send({
            error: error ? true : false,
            statusCode: error ? 306 : 300,
-           message: error ? "Haujafanikiwa kuna tatizo" : "Umefanikiwa kufanya mabadiliko",
+           message: message,
          });
     });
 })

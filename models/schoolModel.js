@@ -1,5 +1,5 @@
 const db = require("../dbConnection");
-const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate } = require("../utils");
+const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
@@ -40,7 +40,7 @@ module.exports = {
               w.WardName AS ward, 
               st.StreetName AS street,
               IFNULL(registration_date , '') AS reg_date, 
-              s.updated_at AS updated_at, 
+              DATE_FORMAT(s.updated_at , '%Y-%m-%d %H:%i:%s') AS updated_at, 
               CASE 
                   WHEN s.reg_status = 1 THEN 'Imesajiliwa'
                   WHEN s.reg_status = 2 THEN 'Imefutiwa Usajili'
@@ -54,7 +54,7 @@ module.exports = {
               LIMIT ?, ?`,
       [offset, per_page],
       (error, schools) => {
-        if(error) console.log(error)
+        if (error) console.log(error);
         db.query(
           `SELECT COUNT(*) AS num_rows 
               ${sqlQuery}  
@@ -81,8 +81,8 @@ module.exports = {
           : "";
         const sql = `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
                     r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
-                            FROM applications a
-                            ${applicationEstablishedRegisteredSchoolsSqlJoin()} 
+                            FROM school_registrations s
+                            ${registeredSchoolsEstablishedApplicationSqlJoin()} 
                             ${schoolLocationsSqlJoin()}
                             ${searchSql}
                             ORDER BY school_name ASC
@@ -199,60 +199,88 @@ module.exports = {
   },
   // Edit School
   editSchool : (tracking_number , callback) => {
-        db.query(`SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
+        db.query(
+          `SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
                   IFNULL(DATE(s.registration_date) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
                   w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region 
-                  FROM establishing_schools e
-                  ${ establishedApplicationRegisteredSchoolsSqlJoin() }
-                  ${ schoolLocationsSqlJoin() }
-                  WHERE a.tracking_number = ? ` , [tracking_number] , (error , school) => {
-                          if(error){
-                            console.log(error);
-                          }
-                          console.log("hii" , school)
-                  callback(error , school[0])
-        });
+                  FROM school_registrations s
+                  ${registeredSchoolsEstablishedApplicationSqlJoin()}
+                  ${schoolLocationsSqlJoin()}
+                  WHERE s.tracking_number = ? `,
+          [tracking_number],
+          (error, school) => {
+            if (error) {
+              console.log(error);
+            }
+            console.log("hii", school);
+            callback(error, school[0]);
+          }
+        );
   },
   updateSchool : (tracking_number , data , callback) => {
     const {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
-    const currentDate = formatDate(new Date());
-    const values = [
-      school_name,
-      kata,
-      mtaa,
-      category,
-      ownership,
-      registration_date,
-      registration_number,
-      currentDate,
-      currentDate,
-      currentDate,
-      tracking_number,
-    ];
-      //  console.log(values , data)
-        db.query(`UPDATE applications a
-                  ${applicationEstablishedRegisteredSchoolsSqlJoin()}
+    var message = '';
+    db.query(`SELECT id 
+              FROM school_registrations s 
+              WHERE s.registration_number = ? AND s.tracking_number <> ?` , 
+      [registration_number , tracking_number] , 
+      (err , results) => {
+             if(err) console.log(err)
+              // Update
+              if(results.length == 0){
+                 const currentDate = formatDate(new Date());
+                 const values = [
+                   school_name,
+                   kata,
+                   mtaa,
+                   category,
+                   ownership,
+                   registration_number,
+                   registration_date,
+                   currentDate,
+                   currentDate,
+                   currentDate,
+                   currentDate,
+                   tracking_number,
+                 ];
+                 //  console.log(values , data)
+                 db.query(
+                   `UPDATE  school_registrations s
+                  ${registeredSchoolsEstablishedApplicationSqlJoin()}
                   SET e.school_name = ?,
                       e.ward_id = ?,
                       e.village_id = ?,
                       e.school_category_id = ?,
                       a.registry_type_id = ?,
-                      s.created_at = ?,
                       s.registration_number = ?,
+                      s.registration_date = ?,
+                      s.created_at = ?,
                       s.updated_at = ?,
                       e.updated_at = ?,
                       a.updated_at = ?
-                  WHERE e.tracking_number = ?
-                  ` ,
-                  values
-                  , (error , result) => {
-          if(error){
-            console.log(error)
-          }
-          callback(error);
-        })
+                  WHERE s.tracking_number = ?
+                  `,
+                   values,
+                   (error , result) => {
+                     if (error) {
+                       console.log(error);
+                       message = "Haujafanikiwa kuna tatizo.";
+                     }else{
+                       if(result.affectedRows > 0) {
+                        message = "Umefanikiwa kufanya mabadiliko.";
+                       }else{
+                        message = "Haujafanikiwa kuna tatizo.";
+                       }
+                     }
+                     callback(error , message);
+                   }
+                 );
+              }else{
+                callback(true , "Namba ya usajili uliyoingiza imeshatumika.");
+              }
+    })
   },
 
   changeSchoolName : (req , callback) => {
