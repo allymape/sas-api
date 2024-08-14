@@ -43,7 +43,7 @@ module.exports = {
                     console.log(error2);
                   }
                   if (bcrypt.compareSync(password, user[0].password)) {
-                    console.log("User found.");
+                    console.log(`User found ${username}`);
                     // console.log(permissions)
                     message = "Logged in!";
                     const login_datetime = formatDate(new Date());
@@ -72,7 +72,7 @@ module.exports = {
                     );
                     // return;
                   } else {
-                    console.log("Compare password.")
+                    console.log(`Compare password for username ${username}`)
                     message = "Wrong username or password.";
                     callback(false, [], [], message);
                     // return;
@@ -80,7 +80,7 @@ module.exports = {
                 }
               );
             } else {
-              console.log("Username not found.");
+              console.log(`Username not found ${username}`);
               message = "Wrong username or password.";
               callback(false, [], [], message);
               // return;
