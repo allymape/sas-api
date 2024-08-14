@@ -1,12 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-const db = require('../../dbConnection');
-const request = require("request");
 const requestSummaryRouter = express.Router();
-const model = require("../../models/maombi/anzishaShuleRequestModel")
-const dateandtime = require("date-and-time");
-var session = require("express-session"); 
-const { isAuth, formatDate } = require("../../utils");
+const { isAuth } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 // List of 

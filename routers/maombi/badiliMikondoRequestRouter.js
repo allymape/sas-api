@@ -1,11 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const db = require('../../dbConnection');
-const request = require("request");
 const badiliMkondoRequestRouter = express.Router();
-const dateandtime = require("date-and-time");
-var session = require("express-session");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, calculcateRemainDays, approvalStatuses } = require("../../utils");
+const { isAuth, permission, selectConditionByTitle, selectStaffsBySection, calculcateRemainDays, approvalStatuses } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 badiliMkondoRequestRouter.post(

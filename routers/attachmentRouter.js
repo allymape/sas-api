@@ -1,11 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-const request = require("request");
 const attachementRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase, permission } = require("../utils.js");
-var session = require("express-session");
-const attachmentTypeModel = require("../models/attachmentTypeModel.js");
-const sharedModel = require("../models/sharedModel.js");
+const { isAuth , formatDate , permission } = require("../utils.js");
 const db = require("../dbConnection");
 
 attachementRouter.post(

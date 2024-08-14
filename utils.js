@@ -229,7 +229,7 @@ const ObjectFuctions = {
       from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
       to: emailTo, // list of receivers
       subject: subject, // Subject line
-      text: ``, // plain text body
+      text: plainText, // plain text body
       html: html, // html body
     };
   },
@@ -750,7 +750,7 @@ const ObjectFuctions = {
         message,
         tableId,
       ],
-      (err, result) => {
+      (err) => {
         if (err) {
           console.log(err);
           return {
@@ -799,9 +799,9 @@ const ObjectFuctions = {
     var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
     var minutes = Math.floor((diffInSeconds / 60) % 60);
     var seconds = Math.floor(diffInSeconds % 60);
-    var milliseconds = Math.round(
-      (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-    );
+    // var milliseconds = Math.round(
+    //   (diffInSeconds - Math.floor(diffInSeconds)) * 1000
+    // );
     var remain_days = null;
     if (days > 7) {
       remain_days = ObjectFuctions.formatDate(fromDate, "DD-MM-YYYY HH:mm:ss");

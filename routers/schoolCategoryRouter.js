@@ -1,9 +1,7 @@
 require("dotenv").config();
 const express = require("express");
-const request = require("request");
 const schoolCategoryRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
-var session = require("express-session");
+const { isAuth , permission } = require("../utils.js");
 const schoolCategoryModel = require("../models/schoolCategoryModel.js");
 
 // List of fees

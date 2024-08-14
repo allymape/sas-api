@@ -1,20 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const request = require("request");
 const workflowRouter = express.Router();
-const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
-
-var session = require("express-session");
+const { isAuth , formatDate , permit, permission } = require("../utils.js");
 const sharedModel = require("../models/sharedModel.js");
 const workflowModel = require("../models/workflowModel.js");
-workflowRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
-
 //Workflow lookup data
 workflowRouter.get('/workflow-lookup' , (req , res) => {
     sharedModel.getApplicationCategories((categories) => {

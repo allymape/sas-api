@@ -20,14 +20,20 @@
     "express-rate-limit": "^6.7.0",
     "express-validator": "^6.14.2",
     "ioredis": "^5.3.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.4.3",
     "node-fetch": "^3.3.1",
     "nodemailer": "^6.7.8",
     "request": "^2.88.2",
     "request-ip": "^3.3.0",
-    "request-promise": "^4.2.6",
+    "request-promise": "^0.0.1",
     "text-case": "^1.0.9"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.1.0",
+    "@typescript-eslint/parser": "^8.1.0",
+    "eslint": "^9.9.0",
+    "eslint-plugin-node": "^11.1.0"
   }
 }
