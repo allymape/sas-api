@@ -20,7 +20,7 @@ const con = require("./dbConnection_two");
 var crypto = require("crypto");
 const { send } = require("process");
 const requestIp = require("request-ip");
-var session = require("express-session");
+// var session = require("express-session");
 
 var rateLimit = require("express-rate-limit");
 const { permission } = require("./utils");
@@ -34,28 +34,20 @@ const loginlimiter = rateLimit({
 });
 
 
+// express().set("trust proxy", 1);
+
 // router.use(
 //   session({
+//     cookie: {
+//       secure: true,
+//       maxAge: 60000,
+//     },
+//     // store: new RedisStore(),
 //     secret: "secret",
-//     resave: true,
 //     saveUninitialized: true,
+//     resave: false,
 //   })
 // );
-
-express().set("trust proxy", 1);
-
-router.use(
-  session({
-    cookie: {
-      secure: true,
-      maxAge: 60000,
-    },
-    // store: new RedisStore(),
-    secret: "secret",
-    saveUninitialized: true,
-    resave: false,
-  })
-);
 
 function formatDate(date){
   return convertDateTimeTZ(date , 'Africa/Dar_es_salaam')

@@ -1,11 +1,6 @@
 require("dotenv").config();
-const createError = require("http-errors");
 const express = require("express");
-const path = require("path");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-// const indexRouter = require("./router.js");
-// var session = require('express-session');
 process.env.TZ="Africa/Dar_es_Salaam"
 const app = express();
 
@@ -23,7 +18,7 @@ app.use(express.json());
 app.use(cors());
 
 // ##############START##########################
-// new Routes make this file short possible
+// new Routes make this file short as possible
 const regionRouter = require("./routers/regionRouter");
 const districtRouter = require("./routers/districtRouter.js");
 const wardRouter = require("./routers/wardRouter.js");
