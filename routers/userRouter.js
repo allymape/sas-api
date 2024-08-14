@@ -30,11 +30,15 @@ const loginlimiter = rateLimit({
 userRouter.post("/login", loginlimiter, (req, res) => {
   userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
-      const permissionData = [];
+      const userPermissions = [];
       let user = loginUser[0];
       let office = getUserOffice(user);
       userModal.getStaffOfficeName(office, user, (office_name) => {
         sharedModel.myhandover(user.id, (handover_title, handover_by) => {
+          // console.log("User Data", userData);
+          for (var i = 0; i < permissions.length; i++) {
+            userPermissions.push(permissions[i].permission_name);
+          }
           const userData = {
             id: user.id,
             name: user.name,
@@ -67,30 +71,10 @@ userRouter.post("/login", loginlimiter, (req, res) => {
             handover_by: handover_by,
             cheo_office: user.cheo_office,
             jukumu: user.jukumu ? upperCase(user.jukumu) : "",
+            userPermissions: userPermissions,
           };
-          // console.log("User Data", userData);
-          for (var i = 0; i < permissions.length; i++) {
-            permissionData.push(permissions[i].permission_name);
-          }
-          const token = generateAccessToken({
-            id: userData.id,
-            name: userData.name,
-            office: userData.office,
-            zone_id: userData.zone_id,
-            kanda: userData.kanda,
-            region_code: userData.region_code,
-            district_code: userData.district_code,
-            userPermissions: permissionData,
-            user_level: Number(userData.user_level),
-            section_id: Number(userData.section_id),
-            ngazi: userData.ngazi, //wizara,kanda au wilaya
-            sehemu: userData.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-            cheo: userData.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-            handover_by: userData.handover_by,
-            is_password_changed: userData.is_password_changed,
-            cheo_office: Number(userData.cheo_office),
-            jukumu: userData.jukumu,
-          });
+
+          const token = generateAccessToken(loggedUserData(userData));
           res.send({
             error: false,
             statusCode: 300,
@@ -152,24 +136,7 @@ userRouter.post(`/authenticate-barua` , (req , res) => {
 userRouter.post('/refresh_token' , isAuth , (req , res) => {
       const {user} = req
       if(user){
-        const token = generateAccessToken({
-          id: user.id,
-          name: user.name,
-          office: user.office,
-          zone_id: user.zone_id,
-          kanda: user.kanda,
-          region_code: user.region_code,
-          district_code: user.district_code,
-          userPermissions: user.userPermissions,
-          user_level: Number(user.user_level),
-          section_id: Number(user.section_id),
-          ngazi: user.ngazi, //wizara,kanda au wilaya
-          sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
-          cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
-          handover_by: user.handover_by,
-          cheo_office: Number(user.cheo_office),
-          jukumu: user.jukumu,
-        });
+        const token = generateAccessToken(loggedUserData(user));
         return res.send({
           success: true,
           statusCode: 300,
@@ -360,5 +327,27 @@ userRouter.put("/change-my-password", isAuth, (req, res) => {
     });
   });
 });
+
+function loggedUserData(user){
+  return {
+    id: user.id,
+    name: user.name,
+    office: user.office,
+    zone_id: user.zone_id,
+    kanda: user.kanda,
+    region_code: user.region_code,
+    district_code: user.district_code,
+    userPermissions: user.userPermissions,
+    user_level: Number(user.user_level),
+    section_id: Number(user.section_id),
+    ngazi: user.ngazi, //wizara,kanda au wilaya
+    sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
+    cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
+    handover_by: user.handover_by,
+    is_password_changed: user.is_password_changed,
+    cheo_office: Number(user.cheo_office),
+    jukumu: user.jukumu,
+  };
+}
 
 module.exports = userRouter;
