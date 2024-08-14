@@ -4,8 +4,6 @@ const request = require("request");
 const combinationRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const combinationModel = require("../models/combinationModel.js");
-var session = require("express-session");
-
 // List of combinations
 combinationRouter.get("/allCombinations", isAuth, permission('view-combinations'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

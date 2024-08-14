@@ -3,15 +3,7 @@ const express = require("express");
 const request = require("request");
 const applicationCategoryRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = require("../utils.js");
-var session = require("express-session");
 const applicationCategoryModel = require("../models/applicationCategoryModel.js");
-// applicationCategoryRouter.use(
-//   session({
-//     secret: "secret",
-//     resave: true,
-//     saveUninitialized: true,
-//   })
-// );
 // List of Application Categories
 applicationCategoryRouter.get("/all-application-categories", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

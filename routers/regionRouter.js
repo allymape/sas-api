@@ -5,7 +5,7 @@ const regionRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 const { isAuth, isAdmin , formatDate , permit, promiseRequest } = require("../utils.js");
 const regionModel = require("../models/regionModel.js");
-var session = require("express-session");
+
 const {
   // signupValidation,
   // loginValidation,

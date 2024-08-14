@@ -4,8 +4,6 @@ const request = require("request");
 const biasRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const biasModel = require("../models/biasModel.js");
-var session = require("express-session");
-
 // List of biases
 biasRouter.get("/allBiases", isAuth, permission('view-biases'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

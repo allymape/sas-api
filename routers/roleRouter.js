@@ -4,7 +4,6 @@ const request = require("request");
 const roleRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, titleCase, headerCase, initiliazeRolesAndPermissions, permission } = require("../utils.js");
 const roleModel = require("../models/roleModel.js");
-var session = require("express-session");
 const permissionModel = require("../models/permissionModel.js");
 const rolePermissionModel = require("../models/rolePermissionModel.js");
 // roleRouter.use(

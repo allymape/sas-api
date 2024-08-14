@@ -4,7 +4,6 @@ const request = require("request");
 const feeRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const feeModel = require("../models/feeModel.js");
-var session = require("express-session");
 
 // List of fees
 feeRouter.get("/allFees", isAuth, permission('view-fees'), (req, res, next) => {

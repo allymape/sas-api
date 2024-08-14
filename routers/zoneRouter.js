@@ -4,14 +4,8 @@ const request = require("request");
 const zoneRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const zoneModel = require("../models/zoneModel.js");
-var session = require("express-session");
-zoneRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+
+
 // List of zones
 zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

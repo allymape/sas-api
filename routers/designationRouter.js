@@ -4,14 +4,6 @@ const request = require("request");
 const designationRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const designationModel = require("../models/designationModel.js");
-var session = require("express-session");
-// designationRouter.use(
-//   session({
-//     secret: "secret",
-//     resave: true,
-//     saveUninitialized: true,
-//   })
-// );
 // List of designations
 designationRouter.get("/all_designations", isAuth, permission('view-designations'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

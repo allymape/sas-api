@@ -3,15 +3,7 @@ const express = require("express");
 const request = require("request");
 const registrationTypeRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = require("../utils.js");
-var session = require("express-session");
 const registrationTypeModel = require("../models/registrationTypeModel.js");
-registrationTypeRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
 // List of Registration Type
 registrationTypeRouter.get("/all-registration-types", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

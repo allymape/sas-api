@@ -4,14 +4,8 @@ const request = require("request");
 const permissionRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, paramCase, sentenceCase } = require("../utils.js");
 const permissionModel = require("../models/permissionModel.js");
-var session = require("express-session");
-permissionRouter.use(
-  session({
-    secret: "secret",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
+
+
 // List of permissions
 permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

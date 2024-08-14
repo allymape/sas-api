@@ -4,8 +4,6 @@ const request = require("request");
 const rankRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const rankModel = require("../models/rankModel.js");
-var session = require("express-session");
-
 // List of ranks
 rankRouter.get("/allRanks", isAuth, permission('view-ranks'), (req, res, next) => {
   var per_page = parseInt(req.query.per_page);

@@ -4,7 +4,6 @@ const db = require('../../dbConnection');
 const request = require("request");
 const sajiliBinafsiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
-var session = require("express-session");
 const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 

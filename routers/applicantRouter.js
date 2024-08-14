@@ -10,7 +10,6 @@ const {
   paramCase,
   sentenceCase,
 } = require("../utils.js");
-var session = require("express-session");
 const applicantModel = require("../models/applicantModel.js");
 
 // List of Application Categories
