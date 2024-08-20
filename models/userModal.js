@@ -34,7 +34,7 @@ module.exports = {
           [username],
           (error, user) => {
             if (error) {
-              console.log(error);
+              console.log("Query Error: " , error , user);
             }
             if (user && user.length == 1) {
               db.query(
