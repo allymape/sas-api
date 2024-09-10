@@ -134,6 +134,11 @@ const ObjectFuctions = {
     result += ObjectFuctions.randomString(numberCharacters, 1);
     return result;
   },
+  // Validate Registration Number
+  validateRegistrationNumber: (registration_number) => {
+    const regex = /^(EM\.|CU\.|EA\.|S\.)\d+$/;
+    return regex.test(registration_number.replace(/\s+/g,''));
+  },
   // return random String
   randomString: (string, length) => {
     var result = "";

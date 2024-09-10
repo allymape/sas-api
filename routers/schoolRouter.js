@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const schoolRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission } = require("../utils.js");
+const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission, validateRegistrationNumber } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
 const sharedModel = require("../models/sharedModel.js");
 
@@ -108,7 +108,7 @@ schoolRouter.post(`/add-school` , (req , res) => {
             : null) +
           "-20001008-" +
           id;
-        var registration_number = data.registration_number;
+        var registration_number = data.registration_number.replace(/\s+/g, "");
         var registration_date = data.registration_date
           ? formatDate(data.registration_date, "YYYY-MM-DD 00:00:00")
           : null;
@@ -190,6 +190,8 @@ schoolRouter.post(`/add-school` , (req , res) => {
           ward_uid,
           created_at,
         ]);
+       
+        if(validateRegistrationNumber(registration_number)){
         schoolModel.checkIfExistSchool(registration_number , (exist) => {
              if(exist){
                   res.send({
@@ -208,6 +210,13 @@ schoolRouter.post(`/add-school` , (req , res) => {
         });
              }
         })
+      }else{
+        res.send({
+          error: true,
+          statusCode: 306,
+          message: "Namba ya Usajili sio sahihi. Hakikisha namba ya usajili haijaacha nafasi na imetenganishwa na nukta",
+        });
+      }
     });
 })
 // Edit School
@@ -227,13 +236,21 @@ schoolRouter.get(`/edit-school/:id` , (req , res) => {
 schoolRouter.put(`/update-school/:id` , (req , res) => {
     const tracking_number = req.params.id;
     const data = req.body;
-    schoolModel.updateSchool(tracking_number , data , (error , message) => {
-         res.send({
-           error: error ? true : false,
-           statusCode: error ? 306 : 300,
-           message: message,
-         });
-    });
+    if(validateRegistrationNumber(data.registration_number)){
+        schoolModel.updateSchool(tracking_number , data , (error , message) => {
+            res.send({
+              error: error ? true : false,
+              statusCode: error ? 306 : 300,
+              message: message,
+            });
+        });
+  }else{
+     res.send({
+          error: true,
+          statusCode: 306,
+          message: "Namba ya Usajili sio sahihi. Hakikisha namba ya usajili haijaacha nafasi na imetenganishwa na nukta",
+        });
+  }
 })
 
 // change school name

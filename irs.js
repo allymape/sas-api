@@ -79,6 +79,7 @@ const loginActivityRouter = require("./routers/loginActivityRouter.js");
 const attachementRouter = require("./routers/attachmentRouter.js");
 const auditTrailRouter = require("./routers/auditTrailRouter.js");
 const handoverRouter = require("./routers/handoverRouter.js");
+const updateSchoolDetailRouter = require("./routers/updateSchoolDetailRouter.js");
 
 
 // app.use("/api", indexRouter);
@@ -89,6 +90,7 @@ app.use("/api", districtRouter);
 app.use("/api", wardRouter);
 app.use("/api", streetRouter);
 app.use("/api", schoolRouter);
+app.use("/api", updateSchoolDetailRouter);
 app.use("/api", userRouter);
 app.use("/api", permissionRouter);
 app.use("/api", roleRouter);

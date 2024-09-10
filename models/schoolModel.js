@@ -29,7 +29,7 @@ module.exports = {
     // console.log(searchByKeywordQuery, searchByTypeQuery, searchByOwnerQuery);
    
     db.query(
-      `SELECT a.tracking_number AS id,
+      `SELECT s.tracking_number AS id,
               school_name AS name, 
               registration_number AS reg_no, 
               rt.registry AS ownership,
@@ -220,8 +220,9 @@ module.exports = {
         );
   },
   updateSchool : (tracking_number , data , callback) => {
-    const {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
+    var {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
     var message = '';
+    registration_number = registration_number.replace(/\s+/g,'');
     db.query(`SELECT id 
               FROM school_registrations s 
               WHERE s.registration_number = ? AND s.tracking_number <> ?` , 
@@ -247,6 +248,11 @@ module.exports = {
                    tracking_number,
                  ];
                  //  console.log(values , data)
+                //  remove space reg number
+                db.query(`UPDATE school_registrations SET registration_number = REPLACE(registration_number , ' ', '')`, 
+                  function (e) {
+                    if(e) console.log(e);
+                  });
                  db.query(
                    `UPDATE  school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}
