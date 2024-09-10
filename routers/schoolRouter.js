@@ -6,6 +6,7 @@ var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission, validateRegistrationNumber } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
 const sharedModel = require("../models/sharedModel.js");
+const algorithmModel = require("../models/algorithmModel.js");
 
 
 // List of schools
@@ -202,6 +203,11 @@ schoolRouter.post(`/add-school` , (req , res) => {
              }else{
               schoolModel.storeSchools( established_schools, applications, school_registrations,owners, applicants , (success) => {
               // console.log(success)
+                if (success) {
+                  algorithmModel.storeAlgorithm((success) => {
+                    console.log(success);
+                  });
+                }
                 res.send({
                     error: success ? false : true,
                     statusCode: success ? 300 : 306,
@@ -238,6 +244,11 @@ schoolRouter.put(`/update-school/:id` , (req , res) => {
     const data = req.body;
     if(validateRegistrationNumber(data.registration_number)){
         schoolModel.updateSchool(tracking_number , data , (error , message) => {
+             if(!error){
+                algorithmModel.storeAlgorithm((success) => {
+                  console.log(success);
+                });
+             }
             res.send({
               error: error ? true : false,
               statusCode: error ? 306 : 300,
