@@ -249,10 +249,10 @@ module.exports = {
                  ];
                  //  console.log(values , data)
                 //  remove space reg number
-                db.query(`UPDATE school_registrations SET registration_number = REPLACE(registration_number , ' ', '')`, 
-                  function (e) {
-                    if(e) console.log(e);
-                  });
+                // db.query(`UPDATE school_registrations SET registration_number = REPLACE(registration_number , ' ', '')`, 
+                //   function (e) {
+                //     if(e) console.log(e);
+                //   });
                  db.query(
                    `UPDATE  school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}

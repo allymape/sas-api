@@ -26,14 +26,15 @@ module.exports = {
     db.query(`SELECT id , code FROM school_categories` , (error , results) => {
         if(error) console.log(error)
         var data = [];
+      console.log(results.length)
         for (let i = 0; i < results.length; i++) {
             const element = results[i];
             db.query(
               `SELECT substring_index(s.registration_number , '.', 1) AS registration_code,
-		                    substring_index(s.registration_number , '.', -1) AS registration_number
+		                    CAST(substring_index(s.registration_number , '.', -1) AS SIGNED) AS registration_number
                 FROM school_registrations s
                 WHERE  s.registration_number LIKE "%${element.code}%" 
-                ORDER BY length(s.registration_number) DESC , s.registration_number DESC 
+                ORDER BY  registration_number DESC 
                 LIMIT 1`,
               (error, result2) => {
                 if (error) console.log(error);
@@ -47,6 +48,7 @@ module.exports = {
                 } else {
                   values.push(element.id, element.code, 1);
                 }
+                console.log(values);
                 db.query(
                   `INSERT INTO algorthm (id , school_type , last_number) 
                           VALUES ? ON DUPLICATE KEY UPDATE last_number = VALUES(last_number) , 

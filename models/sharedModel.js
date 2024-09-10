@@ -1049,11 +1049,10 @@ console.log("school category id : ",schoolCatId)
         // Find registration number from existing schools
         db.query(
           `SELECT substring_index(s.registration_number , '.', 1) AS registration_code,
-		                    substring_index(s.registration_number , '.', -1) AS registration_number
+                  CAST(substring_index(s.registration_number , '.', -1) AS SIGNED) AS registration_number
                 FROM school_registrations s
-                WHERE s.tracking_number <> "${tracking_number}" 
-                      AND s.registration_number LIKE "%${code}%" 
-                ORDER BY length(s.registration_number) DESC , s.registration_number DESC 
+                WHERE s.tracking_number <> "${tracking_number}" AND s.registration_number LIKE "%${code}%" 
+                ORDER BY s.registration_number DESC 
                 LIMIT 1`,
           (error, result) => {
             if (error) console.log(error);
