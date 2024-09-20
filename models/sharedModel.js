@@ -69,7 +69,93 @@ module.exports = {
       }
     );
   },
-
+  // Teaching Languages
+  getLanguages: (callback) => {
+    db.query(
+      `SELECT id, language AS name FROM languages`,
+      (error, languages) => {
+        if (error) {
+          console.log("Can't get languages due to ", error);
+        }
+        callback(languages);
+      }
+    );
+  },
+  // Teaching Sub Categories
+  getSchoolSubCategories: (callback) => {
+    db.query(
+      `SELECT id, subcategory AS name FROM school_sub_categories`,
+      (error, sub_categories) => {
+        if (error) {
+          console.log("Can't get sub categories due to ", error);
+        }
+        callback(sub_categories);
+      }
+    );
+  },
+  // Building
+  getBuildingStructures: (callback) => {
+    db.query(
+      `SELECT id, building AS name FROM building_structures`,
+      (error, building_structures) => {
+        if (error) {
+          console.log("Can't get building structure due to ", error);
+        }
+        callback(building_structures);
+      }
+    );
+  },
+  // Building
+  getSchoolGender: (callback) => {
+    db.query(
+      `SELECT id, gender_type AS name FROM school_gender_types`,
+      (error, school_gender_types) => {
+        if (error) {
+          console.log("Can't get school gender due to ", error);
+        }
+        callback(school_gender_types);
+      }
+    );
+  },
+  // Specialization
+  getSchoolSpecialization: (callback) => {
+    db.query(
+      `SELECT id, specialization AS name FROM school_specializations`,
+      (error, school_specializations) => {
+        if (error) {
+          console.log("Can't get school_specializations due to ", error);
+        }
+        callback(school_specializations);
+      }
+    );
+  },
+  getCurriculum: (callback) => {
+    db.query(
+      `SELECT id, curriculum AS name FROM curricula`,
+      (error, curricula) => {
+        if (error) {
+          console.log("Can't get curricula due to ", error);
+        }
+        callback(curricula);
+      }
+    );
+  },
+  getSectNames: (callback) => {
+    db.query(`SELECT id, word AS name FROM sect_names`, (error, sect_names) => {
+      if (error) {
+        console.log("Can't get sect_names due to ", error);
+      }
+      callback(sect_names);
+    });
+  },
+  getCertificates: (callback) => {
+    db.query(`SELECT id, certificate AS name FROM certificate_types`, (error, certificate_types) => {
+      if (error) {
+        console.log("Can't get certificate_types due to ", error);
+      }
+      callback(certificate_types);
+    });
+  },
   myStaffs: (user, callback) => {
     const objStaffs = [];
     db.query(
@@ -286,7 +372,7 @@ module.exports = {
           var is_approved = "";
         }
         var remain_days = calculcateRemainDays(created_at);
-       
+
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
@@ -326,7 +412,7 @@ module.exports = {
                 var personal_address = results1[0].personal_address;
                 var personal_phone_number = results1[0].personal_phone_number;
                 var personal_email = results1[0].personal_email;
-                var StreetNameMtu = '';
+                var StreetNameMtu = "";
                 var WardNameMtu = results1[0].WardName;
                 var LgaNameMtu = results1[0].LgaName;
                 var RegionNameMtu = results1[0].RegionName;
@@ -489,24 +575,24 @@ module.exports = {
                 RegionName: RegionName,
                 WardName: WardName,
                 StreetName: StreetName,
-                user_id : user_id,
-                registry_type_id : registry_type_id,
-                registry : registry,
-                created_at : created_at,
-                remain_days : remain_days,
-                fullname : name,
-                occupation : "-",
-                StreetNameMtu : StreetNameMtu,
-                WardNameMtu : WardNameMtu,
-                LgaNameMtu : LgaNameMtu,
-                RegionNameMtu : RegionNameMtu,
-                mwombajiAddress : address,
-                mwombajiPhoneNo : institute_phone,
-                baruaPepe : institute_email,
-                language : language,
-                school_size : school_size,
-                area : area,
-                structure : structure,
+                user_id: user_id,
+                registry_type_id: registry_type_id,
+                registry: registry,
+                created_at: created_at,
+                remain_days: remain_days,
+                fullname: name,
+                occupation: "-",
+                StreetNameMtu: StreetNameMtu,
+                WardNameMtu: WardNameMtu,
+                LgaNameMtu: LgaNameMtu,
+                RegionNameMtu: RegionNameMtu,
+                mwombajiAddress: address,
+                mwombajiPhoneNo: institute_phone,
+                baruaPepe: institute_email,
+                language: language,
+                school_size: school_size,
+                area: area,
+                structure: structure,
                 schoolCategory: schoolCategory,
                 subcategory: subcategory,
                 is_approved: is_approved,
@@ -959,7 +1045,7 @@ module.exports = {
       }
     );
   },
-changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
+  changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
     const { haliombi } = req.body;
     if (haliombi == 2) {
       db.query(
@@ -1018,7 +1104,7 @@ changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
       default:
         break;
     }
-console.log("school category id : ",schoolCatId)
+    console.log("school category id : ", schoolCatId);
     db.query(`SELECT * FROM algorthm WHERE id = ${id}`, (error, result) => {
       if (error) console.log(error);
       var registration_number = 1;
@@ -1254,26 +1340,34 @@ console.log("school category id : ",schoolCatId)
       }
     );
   },
-  getSchoolCategoryForRegistration : (tracking_number , callback) => {
-    db.query(`SELECT school_category_id 
+  getSchoolCategoryForRegistration: (tracking_number, callback) => {
+    db.query(
+      `SELECT school_category_id 
               FROM establishing_schools e
               JOIN school_registrations s ON s.establishing_school_id = e.id
               JOIN applications a ON a.tracking_number = s.tracking_number 
-              WHERE a.tracking_number = ?` , [tracking_number] , (error , result) => {
-                  if(error) console.log(error)
-                  if(result.length > 0){
-                    callback(result[0].school_category_id);
-                  }else{
-                    callback(null);
-                  }
-              })
-  },
-  updateSharti : (tracking_number , conditions) => {
-      if(conditions){
-        db.query(`UPDATE school_registrations SET sharti = ? WHERE tracking_number = ?` , [conditions , tracking_number] , (error) => {
-            if(error) console.log(error)
-        })
+              WHERE a.tracking_number = ?`,
+      [tracking_number],
+      (error, result) => {
+        if (error) console.log(error);
+        if (result.length > 0) {
+          callback(result[0].school_category_id);
+        } else {
+          callback(null);
+        }
       }
+    );
+  },
+  updateSharti: (tracking_number, conditions) => {
+    if (conditions) {
+      db.query(
+        `UPDATE school_registrations SET sharti = ? WHERE tracking_number = ?`,
+        [conditions, tracking_number],
+        (error) => {
+          if (error) console.log(error);
+        }
+      );
+    }
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     //  console.log(is_paginated);
