@@ -18,6 +18,7 @@ conn.connect((err) => {
   console.info(`Database is connected successfully! Server: ${process.env.DB_HOST}`);
 });
 
+
 conn.on("error" , (err) => {
   console.log("Mysql Error: "+ err);
 })

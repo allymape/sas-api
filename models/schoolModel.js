@@ -14,7 +14,7 @@ module.exports = {
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       ${ schoolLocationsSqlJoin() }
-                      WHERE  s.reg_status IN (1,2,3)
+                      WHERE  s.reg_status IN (1)
                       `;
   
     const searchByKeywordQuery =  searchKeyword ? `AND 
@@ -43,7 +43,7 @@ module.exports = {
               DATE_FORMAT(s.updated_at , '%Y-%m-%d %H:%i:%s') AS updated_at, 
               CASE 
                   WHEN s.reg_status = 1 THEN 'Imesajiliwa'
-                  WHEN s.reg_status = 2 THEN 'Imefutiwa Usajili'
+                  WHEN s.reg_status = 0 THEN 'Imefutiwa Usajili'
                   ELSE 'Unknown'
               END AS status,
               reg_status
@@ -86,6 +86,7 @@ module.exports = {
                             ${schoolLocationsSqlJoin()}
                             ${searchSql}
                             ORDER BY school_name ASC
+                            WHERE s.reg_status = 1
                             LIMIT ? , ?`;
         // console.log(sql);
       db.query(

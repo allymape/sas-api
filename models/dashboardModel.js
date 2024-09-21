@@ -1,5 +1,5 @@
 const db = require("../dbConnection");
-const { arraySum, schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, filterByUserOffice, selectConditionByRanks, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
+const { arraySum, schoolLocationsSqlJoin, filterByUserOffice, selectConditionByRanks, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
 
 module.exports = {
   getAllSummaries : (user , callback) => {
@@ -79,7 +79,8 @@ module.exports = {
                                    JOIN applications a ON a.tracking_number = s.tracking_number
                                    ${schoolLocationsSqlJoin()}
                                    WHERE s.reg_status = 1 AND a.is_approved = 2
-                                   ${filterByUserOffice(user, "AND")}`,
+                                   ${filterByUserOffice(user, "AND")}
+                                   `,
                                   (error5, summaryRegisteredSchools) => {
                                     if (error5) {
                                       console.log(error5);
