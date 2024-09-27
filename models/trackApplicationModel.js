@@ -64,6 +64,13 @@ module.exports = {
               error = error2;
               console.log(error);
             }
+            db.query(
+              `SELECT tracking_number, application_category_id  , created_at FROM applications WHERE is_approved IN (0,1,4) AND application_category_id = 4`,
+              (error, applications) => {
+                if (error) console.log(error);
+                console.log(applications);
+              }
+            );
             callback(error, applications, results2[0].num_rows);
           }
         );
