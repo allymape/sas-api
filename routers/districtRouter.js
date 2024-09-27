@@ -19,18 +19,12 @@ districtRouter.get("/allDistricts", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  var is_paginated = true;
-  var region_code = null;
-  if (typeof req.body.is_paginated !== "undefined") {
-    is_paginated =
-      req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
-    region_code  = req.body.region_code;
-  }
+  // var is_paginated = true;
+  let search_value = req.body.search.value;
   districtModel.getAllDistricts(
     offset,
     per_page,
-    is_paginated,
-    region_code,
+    search_value,
     (error, districts, numRows) => {
       return res.send({
         error: error ? true : false,
@@ -95,7 +89,13 @@ districtRouter.post("/usajiliWilaya", isAuth, async (req, res) => {
 districtRouter.put(`/update-district/:id` , isAuth , (req , res) => {
        const {sqa_address , lga_address , ngazi} = req.body;
        const {id} = req.params;
-       const formData = [Number(sqa_address) , Number(lga_address) , ngazi , Number(id)];
+       const formData = [
+         Number(sqa_address),
+         Number(lga_address),
+         ngazi,
+         formatDate(new Date()),
+         Number(id),
+       ];
        districtModel.updateDistrict(formData , (updated) => {
               res.send({
                 success :updated,

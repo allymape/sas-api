@@ -11,14 +11,8 @@ zoneRouter.get("/allZones", isAuth, permission('view-zones'), (req, res, next) =
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  var is_paginated = true;
-        if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated =
-              req.body.is_paginated == "false" || !req.body.is_paginated
-                ? false
-                : true;
-        }
-  zoneModel.getAllZones(offset, per_page, is_paginated , (error, zones, numRows) => {
+  let search_value = req.body.search.value;
+  zoneModel.getAllZones(offset, per_page, search_value , (error, zones, numRows) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,

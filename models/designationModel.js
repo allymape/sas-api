@@ -3,48 +3,50 @@ const { lowerCase } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF DesignationS *******************************
-  getAllDesignations: (offset, per_page, is_paginated, hierarchy_id, search, callback) => {
-    //  console.log(is_paginated);
-    const vyeoQuery = `SELECT 
+  getAllDesignations: (offset, per_page, search_value, callback) => {
+    var searchQuery = "";
+    var queryParams = [];
+    if (search_value) {
+      searchQuery += ` AND (r.name LIKE ? OR rank_name LIKE ?)`;
+      queryParams.push(`%${search_value}%` , `%${search_value}%`);
+    }
+    let sql = ` FROM roles r
+                LEFT JOIN vyeo v ON v.id = r.vyeoId
+                WHERE 1 = 1 
+                ${searchQuery}
+                ORDER BY r.name ASC  `;
+
+    db.query(
+      ` SELECT 
       r.id as id,
       r.name as name, 
       r.description AS description,
       v.rank_name as role, 
       r.vyeoId AS level,
-      r.status_id AS status
-      FROM roles r
-      LEFT JOIN vyeo v ON v.id = r.vyeoId 
-      ${is_paginated ? (search ? 'WHERE name LIKE ?' : '') : " WHERE r.status_id = 1 AND r.vyeoId = ?"}
-      ${is_paginated ? ' LIMIT ?,?' : ''}`;
-    db.query(
-      vyeoQuery,
-      is_paginated ? (search ?  ['%'+search+'%' , offset, per_page] : [offset, per_page]) : [hierarchy_id],
-      (error, designations, fields) => {
-        if(error) console.log(error)
+      r.status_id AS status,
+      r.created_at AS created_at ,
+      r.updated_at AS updated_at
+        ${sql}
+        ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
+      per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
+      (error, list) => {
         db.query(
-          `SELECT vyeo.id as id, vyeo.rank_name as name 
-          FROM vyeo where status_id = 1`, 
-            (error2 , levels) => {
-                  if(error2){
-                    error = error2;
-                    console.log(error2);
-                  }
-               db.query(
-                 "SELECT COUNT(*) AS num_rows FROM roles",
-                 (error3, result, fields2) => {
-                      if(error3){
-                        error = error3;
-                      }
-                   callback(error, designations, levels, result[0].num_rows);
-                 }
-               );
-            });       
+          `SELECT COUNT(*) AS num_rows  ${sql}`,
+          queryParams,
+          (error2, result2) => {
+            if (error2) {
+              error = error2;
+              console.log(error);
+            }
+            // console.log(regions);
+            callback(error, list, result2[0].num_rows);
+          }
+        );
       }
     );
   },
 
   lookupDesignations: (hierarchy_id, callback) => {
-    
     db.query(
       `SELECT 
         r.id as id,
@@ -58,7 +60,7 @@ module.exports = {
       [hierarchy_id],
       (error, designations) => {
         if(error) console.log(error)
-        callback(error, designations);      
+        callback(error , designations);      
       }
     );
   },

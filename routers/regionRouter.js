@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const regionRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin , formatDate , permit, promiseRequest } = require("../utils.js");
+const { isAuth , formatDate, promiseRequest } = require("../utils.js");
 const regionModel = require("../models/regionModel.js");
 
 const {
@@ -26,16 +26,8 @@ regionRouter.get("/regions", isAuth, (req, res, next) => {
     var per_page = parseInt(req.query.per_page);
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
-    var is_paginated = true;
-    var zone_id = null;
-    if (typeof req.body.is_paginated !== "undefined") {
-      is_paginated =
-        req.body.is_paginated == "false" || !req.body.is_paginated
-          ? false
-          : true;
-      zone_id = req.body.zone_id;
-    }
-    regionModel.getAllRegions(offset, per_page, is_paginated, zone_id, (error, regions, numRows) => {
+    let search_value = req.body.search.value;
+    regionModel.getAllRegions(offset, per_page, search_value, (error, regions, numRows) => {
       return res.send({
         error: error ? true : false,
         statusCode: error ? 306 : 300,

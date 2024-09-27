@@ -20,7 +20,6 @@ module.exports = {
                     if(error){
                         console.log(error);
                     }
-                    
                     db.query(
                       `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
                        FROM school_registrations s

@@ -95,47 +95,56 @@ module.exports = {
       }
   },
   //******** LIST USERS *******************************
-  getUsers: (offset, per_page, searchQuery, user , callback) => {
-    const tafuta = searchQuery.tafuta; 
-    const tafutaQuery =
-      tafuta != "undefined" && tafuta
-        ? ` WHERE (s.email LIKE '%${tafuta}%' OR 
-                   s.username LIKE '%${tafuta}%' OR
-                   s.name LIKE '%${tafuta}%' OR
-                   r.name LIKE '%${tafuta}%' OR
-                   v.rank_name LIKE '%${tafuta}%' OR
-                   d.LgaName LIKE '%${tafuta}%' OR
-                   rg.RegionName LIKE '%${tafuta}%' OR
-                   z.zone_name LIKE '%${tafuta}%'
-                  )`
-        : "";
-    const commonSql = `FROM staffs s ${staffCommonJoins()}`;
-                  //  console.log(user)
-    db.query(
-      `SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
+  getUsers: (offset, per_page, search_value, user , inactive,callback) => {
+    var searchQuery = "";
+    var queryParams = [];
+    if (search_value) {
+      searchQuery += ` AND (s.email LIKE ? OR 
+                            s.username LIKE ? OR
+                            s.name LIKE ? OR
+                            r.name LIKE ? OR
+                            v.rank_name LIKE ? OR
+                            d.LgaName LIKE ? OR
+                            rg.RegionName LIKE ? OR
+                            z.zone_name LIKE ? OR
+                            s.phone_no LIKE ?
+                          )`;
+      queryParams.push(
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`
+      );
+    }
+    let sql = ` FROM staffs s ${staffCommonJoins()}
+                WHERE 1 = 1
+                ${inactive == 'true' ? ' AND s.user_status = 0' : ''}
+                ${searchQuery}
+                ${filterByUserOffice(user, search_value ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
+                `;
+    db.query(`SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
                 s.name as name, phone_no, IFNULL(r.name , '') as level_name, v.rank_name AS section_name,
                 IFNULL(rank_level , '') as rank_level, IFNULL(rm.role_name , '') as role_name,
                 IFNULL(z.zone_name , '') as zone_name , rg.RegionName as region_name, IFNULL(d.LgaName , '') as 
                 lga_name , CASE WHEN s.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , 
                 s.user_status as user_status
-        ${commonSql}
-        ${tafutaQuery}
-        ${filterByUserOffice(user, tafuta ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
-        LIMIT ? , ?`,
-      [offset, per_page],
+                ${sql}
+                ${per_page > 0 ? "LIMIT ? , ?" : ""}`, 
+                per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, users) => {
-        if (error) {
-          console.log(error);
-        }
+        if(error) console.log(error);
         db.query(
-          `SELECT COUNT(*) AS num_rows 
-            ${commonSql} 
-            ${tafutaQuery} 
-            ${filterByUserOffice(user, tafuta ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}`,
+          `SELECT COUNT(*) AS num_rows  ${sql}`,
+          queryParams,
           (error2, result2) => {
             if (error2) {
               error = error2;
-              console.log(error2);
+              console.log(error);
             }
             callback(error, users, result2[0].num_rows);
           }
@@ -342,16 +351,17 @@ module.exports = {
   },
  
   // DISABLE USER ACCOUNT
-  disableUser : (user , id , callback) => {
+  activateDeactivateUser : (user , id , callback) => {
        var updated = false;
-       db.query(`SELECT s.id AS staff_id FROM staffs s
+       db.query(`SELECT s.id AS staff_id , user_status 
+                 FROM staffs s
                 ${staffCommonJoins()} 
                 WHERE s.id = ?
                 ${filterByUserOffice(user, " AND ", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
                 ` , [id] , (error , staff) =>{
             if(error) console.log(error);
             if(staff.length > 0){
-                db.query(`UPDATE staffs s SET s.user_status = 0 WHERE s.id = ?` , [Number(id)] , (error2 , disabledStaff) => {
+                db.query(`UPDATE staffs s SET s.user_status = ${staff[0].user_status ? 0 : 1} WHERE s.id = ?` , [Number(id)] , (error2 , disabledStaff) => {
                    if(error2) console.log(error2);
                      if(disabledStaff.affectedRows > 0){
                         updated = true;

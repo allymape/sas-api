@@ -4,33 +4,46 @@ const request = require("request");
 const designationRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const designationModel = require("../models/designationModel.js");
+const sharedModel = require("../models/sharedModel.js");
 // List of designations
-designationRouter.get("/all_designations", isAuth, permission('view-designations'), (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  var hierarchy_id = null;
-  var search = req.body.tafuta;
-  var is_paginated = true;
-        if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated =
-              req.body.is_paginated == "false" || !req.body.is_paginated
-                ? false
-                : true;
-            hierarchy_id = req.body.hierarchy_id
-        }
-  designationModel.getAllDesignations(offset, per_page, is_paginated , hierarchy_id, search, (error, designations,levels, numRows) => {
-            return res.send({
-                error: error ? true : false,
-                statusCode: error ? 306 : 300,
-                designations: error ? null : designations,
-                levels: error ? null : levels,
-                numRows: numRows,
-                is_paginated : is_paginated,
-                message: error ? "Something went wrong." : "List of designations.",
+designationRouter.get("/lookup_designations", isAuth, permission('view-designations'), (req, res, next) => {
+  hierarchy_id = req.body.hierarchy_id;
+  designationModel.lookupDesignations(hierarchy_id, (error , designations) => {
+            sharedModel.getLevels((levels) => {
+              return res.send({
+                designations: designations,
+                levels: levels,
+              });
             });
   });
 });
+
+designationRouter.get(
+  "/all_designations",
+  isAuth,
+  permission("view-designations"),
+  (req, res) => {
+    var per_page = parseInt(req.query.per_page);
+    var page = parseInt(req.query.page);
+    var offset = (page - 1) * per_page;
+    var search_value = req.body.search.value;
+    
+    designationModel.getAllDesignations(
+      offset,
+      per_page,
+      search_value,
+      (error, designations, numRows) => {
+        return res.send({
+          error: error ? true : false,
+          statusCode: error ? 306 : 300,
+          data : error ? error : designations,
+          numRows: numRows,
+          message: error ? "Something went wrong." : "List of designations.",
+        });
+      }
+    );
+  }
+);
 
 designationRouter.get("/designations_by_section", isAuth, (req, res, next) => {
   var hierarchy_id = req.body.hierarchy_id

@@ -140,6 +140,18 @@ module.exports = {
       }
     );
   },
+  getLevels : (callback) => {
+     db.query(
+       `SELECT vyeo.id as id, vyeo.rank_name as name 
+          FROM vyeo where status_id = 1`,
+       (error2, levels) => {
+         if (error2) {
+           console.log(error2);
+         }
+          callback(levels);
+       }
+     );
+  },
   getSectNames: (callback) => {
     db.query(`SELECT id, word AS name FROM sect_names`, (error, sect_names) => {
       if (error) {

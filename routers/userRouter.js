@@ -149,9 +149,10 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  var searchQuery = req.body; 
+  var search_value = req.body.search.value; 
   var user = req.user;
-  userModal.getUsers(offset, per_page, searchQuery, user, (error, users, numRows) => {
+  var inactive = req.body.inactive;
+  userModal.getUsers(offset, per_page, search_value, user, inactive,(error, users, numRows) => {
     // console.log(users);
     return res.send({
       error: error ? true : false,
@@ -264,11 +265,11 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
 });
 
 //Disable User Account
-userRouter.put("/disable-user/:id", isAuth , permission('delete-users'), (req, res) => {
+userRouter.put("/activate-deactivate-user/:id", isAuth , permission('delete-users'), (req, res) => {
   const user_id = req.params.id;
   const {user} = req
   // console.log("kakak")
-  userModal.disableUser(user , user_id , (success , message) => {
+  userModal.activateDeactivateUser(user , user_id , (success , message) => {
     // console.log(success , message)
       res.send({
           statusCode : success ? 300 : 306,
@@ -281,8 +282,9 @@ userRouter.post("/reset-user-password", function (req, res) {
   var email = req.body.email;
   userModal.findUserByEmail(email , (success , user) => {
        if(success){
-              let link = `${(process.env.APP_URL || 'http:localhost:'+process.env.HTTP_PORT)}/PasswordReset`
-              let htmlContent = resetPassword(user.name, link);
+              let link = `${(process.env.APP_URL+'/PasswordReset' || 'http:localhost:'+process.env.HTTP_PORT)}/PasswordReset`
+              let name = user[0].name;
+              let htmlContent = resetPassword(name, link);
               let mailOptions = setMailOptions(email, "Reset Password" , htmlContent);
               sendEmail(mailOptions, (error, info) => {
                 console.log("Message %s sent: %s", info, error);

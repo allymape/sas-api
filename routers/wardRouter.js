@@ -5,32 +5,17 @@ const wardRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
 const { isAuth, isAdmin, formatDate, promiseRequest } = require("../utils.js");
 const wardModel = require("../models/wardModel.js");
-// wardRouter.use(
-//   session({
-//     secret: "secret",
-//     resave: true,
-//     saveUninitialized: true,
-//   })
-// );
 
 // List of Wards
 wardRouter.get("/allwards", isAuth, (req, res, next) => {
         var per_page = parseInt(req.query.per_page);
         var page = parseInt(req.query.page);
         var offset = (page - 1) * per_page;
-        var is_paginated = true;
-        var lga_code = null;
-
-        if (typeof req.body.is_paginated !== "undefined") {
-          is_paginated = req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
-          lga_code = req.body.lga_code;
-        }
-
+         let search_value = req.body.search.value;
         wardModel.getAllWards(
             offset,
             per_page,
-            is_paginated,
-            lga_code,
+            search_value,
             (error, wards, numRows) => {
             // console.log(wards);
             return res.send({

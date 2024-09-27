@@ -2,22 +2,39 @@ const db = require("../dbConnection");
 
 module.exports = {
   //******** GET A LIST OF ZONES *******************************
-  getAllZones: (offset, per_page, is_paginated, callback) => {
-    //  console.log(is_paginated);
+  getAllZones: (offset, per_page, search_value, callback) => {
+    var searchQuery = "";
+    var queryParams = [];
+    if (search_value) {
+      searchQuery += ` AND (zone_name LIKE ? )`;
+      queryParams.push(
+        `%${search_value}%`
+      );
+    }
+    let sql = ` FROM zones
+                WHERE 1 = 1 
+                ${searchQuery}
+                ORDER BY zone_name ASC  `;
+
     db.query(
-      `SELECT * FROM zones  ${
-        is_paginated ? " " : " WHERE status_id = 1 "
-      } ORDER BY zone_name ASC ${is_paginated ? " LIMIT ?,?" : ""}`,
-      is_paginated ? [offset, per_page] : [],
+      ` SELECT *   
+        ${sql}
+        ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
+      per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, zones) => {
         db.query(
-          "SELECT COUNT(*) AS num_rows FROM zones",
-          (error2, result, fields2) => {
-            callback(error, zones, result[0].num_rows);
+          `SELECT COUNT(*) AS num_rows  ${sql}`,
+          queryParams,
+          (error2, result2) => {
+            if (error2) {
+              error = error2;
+              console.log(error);
+            }
+            // console.log(regions);
+            callback(error, zones, result2[0].num_rows);
           }
         );
-      }
-    );
+      });
   },
   lookupZones: (user , callback) => {
     //  console.log(is_paginated);

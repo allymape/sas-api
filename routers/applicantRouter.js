@@ -17,19 +17,9 @@ applicantRouter.get("/all-applicants", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
-  var search = req.body.search;
-  var is_paginated = true;
-  if (typeof req.body.is_paginated !== "undefined") {
-    is_paginated =
-      req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
-  }
-  applicantModel.getAllApplicants(
-    offset,
-    per_page,
-    is_paginated,
-    search,
-    (error, applicants, numRows) => {
-      //  console.log(applicants);
+  var search_value = req.body.search.value;
+
+  applicantModel.getAllApplicants(offset,per_page,search_value,(error, applicants, numRows) => {
       return res.send({
         error: error ? true : false,
         statusCode: error ? 306 : 300,
@@ -62,7 +52,7 @@ applicantRouter.get("/look_for_applicants", isAuth, (req, res, next) => {
   );
 });
 // List of Applicant
-applicantRouter.get("/find-applicant/:id", isAuth, (req, res, next) => {
+applicantRouter.get("/find-applicant/:id", isAuth, (req, res) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
@@ -95,6 +85,25 @@ applicantRouter.get("/find-applicant/:id", isAuth, (req, res, next) => {
           attachments : error ? [] : attachments,
           attachmentsNumRows : attachmentsNumRows
         },
+        message: error ? "Something went wrong." : "Applicant",
+      });
+    }
+  );
+});
+// List of Applicant
+applicantRouter.get("/applicant-schools/:id", isAuth, (req, res) => {
+  var per_page = parseInt(req.query.per_page);
+  var page = parseInt(req.query.page);
+  var offset = (page - 1) * per_page;
+  var applicant_id = req.params.id;
+  var search_value = req.body.search.value;
+  applicantModel.getApplicantSchools(offset,per_page,applicant_id,search_value,(error,schools,numRows) => {
+     console.log(applicant_id , numRows);
+      return res.send({
+        error: error ? true : false,
+        statusCode: error ? 306 : 300,
+        numRows: numRows,
+        data : error ? [] : schools,
         message: error ? "Something went wrong." : "Applicant",
       });
     }
