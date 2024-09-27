@@ -21,7 +21,11 @@ module.exports = {
                         console.log(error);
                     }
                     db.query(
-                      `SELECT rt.registry AS owner, COUNT(a.registry_type_id) AS total 
+                      `SELECT CASE 
+                                  WHEN registry_type_id IN (1, 2) THEN 'Non Government'  
+                                  WHEN registry_type_id = 3 THEN 'Government' 
+                              END AS owner, 
+                              COUNT(*) AS total 
                        FROM school_registrations s
                        ${registeredSchoolsEstablishedApplicationSqlJoin()}
                        INNER JOIN registry_types rt ON rt.id = a.registry_type_id
@@ -51,7 +55,7 @@ module.exports = {
                               console.log(error3);
                               error = error3;
                             }
-                          
+
                             db.query(
                               `SELECT rs.structure AS label,
                                 COUNT(*) AS total
@@ -131,13 +135,12 @@ module.exports = {
             if (!formattedResults[region]) {
               formattedResults[region] = {
                 total: 0,
-                categories: {},
+                categories: {"1": 0,"2" : 0,"3" : 0, "4" : 0},
               };
             }
 
             // Update the total count for the region
             formattedResults[region].total += school_count;
-
             // Update the count for the category
             if (!formattedResults[region].categories[category]) {
               formattedResults[region].categories[category] = 0;

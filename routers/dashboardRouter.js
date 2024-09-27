@@ -18,10 +18,11 @@ dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
     })
 
 });
-dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res, next) => {
+dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res) => {
   const { user } = req;
 
    dashboardModel.getSchoolByRegionsAndCategories(user , (data , minValue, maxValue) => {
+    // console.log(data)
             return res.send({
               error: data ? false : true,
               statusCode: data ? 300 : 306,

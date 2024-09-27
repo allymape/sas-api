@@ -125,7 +125,7 @@ module.exports = {
                 WHERE 1 = 1
                 ${inactive == 'true' ? ' AND s.user_status = 0' : ''}
                 ${searchQuery}
-                ${filterByUserOffice(user, search_value ? " AND " : " WHERE", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
+                ${filterByUserOffice(user, "AND", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
                 `;
     db.query(`SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
                 s.name as name, phone_no, IFNULL(r.name , '') as level_name, v.rank_name AS section_name,

@@ -676,8 +676,8 @@ const ObjectFuctions = {
     return $where;
   },
   schoolLocationsSqlJoin: () => {
-    return `LEFT JOIN streets   st ON st.StreetCode = e.village_id
-            LEFT JOIN wards      w ON w.WardCode = e.ward_id
+    return `JOIN streets   st ON st.StreetCode = e.village_id
+            JOIN wards      w ON w.WardCode = e.ward_id
             LEFT JOIN districts  d ON d.LgaCode = w.LgaCode
             LEFT JOIN regions    r ON r.RegionCode = d.RegionCode
             LEFT JOIN zones z ON  z.id = r.zone_id`;
