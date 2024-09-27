@@ -27,7 +27,7 @@ module.exports = {
                       ON a.tracking_number = m.trackingNo
                       LEFT JOIN zones z ON (s.zone_id IS NOT NULL AND  z.id = s.zone_id) 
                       LEFT JOIN payment_statuses p ON p.id = a.payment_status_id
-                      WHERE ap.is_complete = 1 AND ap.is_approved IN (0,1,4)
+                      WHERE ap.is_complete IN (0,1) AND ap.is_approved IN (0,1,4)
                       ${filter}
                       ${ sehemu == "k1" ? "AND s.zone_id = " + zone_id : ""}
                       ${ sehemu == "w1" ? "AND a.district_code = '" + district_code+"'" : ""}
@@ -64,13 +64,14 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            db.query(
-              `SELECT tracking_number, application_category_id  , created_at FROM applications WHERE is_approved IN (0,1,4) AND application_category_id = 4`,
-              (error, applications) => {
-                if (error) console.log(error);
-                console.log(applications);
-              }
-            );
+            // db.query(
+            //   `SELECT tracking_number, application_category_id  , created_at , is_approved FROM applications WHERE is_approved IN (0,1,4) AND application_category_id = 4`,
+            //   (error, applications) => {
+            //     if (error) console.log(error);
+            //     console.log(applications);
+            //   }
+            // );
+            console.log(applications);
             callback(error, applications, results2[0].num_rows);
           }
         );
