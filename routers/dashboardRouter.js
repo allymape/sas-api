@@ -1,14 +1,15 @@
 require("dotenv").config();
 const express = require("express");
 const dashboardRouter = express.Router();
-const { isAuth, permission } = require("../utils.js");
+const { isAuth, permission, formatDate } = require("../utils.js");
 const dashboardModel = require("../models/dashboardModel.js");
 
 //Summaries
 dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
   const {user} = req;
+    console.log("START ... here" , formatDate(new Date()))
     dashboardModel.getAllSummaries(user , (error , registrations ,categories , owners , applications , structures) => {
-            // console.log("dash data"); 
+            console.log("END ... here", formatDate(new Date()));
             res.send({
                error: error ? true : false,
                statusCode: error ? 306 : 300,

@@ -3,33 +3,46 @@ const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, 
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
-  getAllSchools: (offset, per_page, searchKeyword, typeKeyword, ownerKeyword, compare , callback) => {
-    const  keyword  = db.escape(compare == 'LIKE' ? `%${searchKeyword}%` : `${searchKeyword}`);
-    const  type     = db.escape(Number(typeKeyword));
-    const  owner    = db.escape(Number(ownerKeyword));
-    const  sign     = db.escape(compare);
-    const sqlQuery = `FROM school_registrations s 
+  getAllSchools: (offset, per_page, type_search, owner_search, search_value , callback) => {
+     var searchQuery = "";
+     var queryParams = [];
+     if (search_value) {
+       searchQuery += ` AND (school_name LIKE ? OR 
+                              registration_number LIKE ? OR 
+                              RegionName LIKE ? OR 
+                              LgaName LIKE ? OR 
+                              WardName LIKE ? OR 
+                              StreetName LIKE ?
+                            )`;
+       queryParams.push(
+         `%${search_value}%`,
+         `%${search_value}%`,
+         `%${search_value}%`,
+         `%${search_value}%`,
+         `%${search_value}%`,
+         `%${search_value}%`,
+       );
+     }
+     if(type_search){
+      searchQuery += ` AND e.school_category_id = ?`;
+      queryParams.push(Number(type_search));
+     }
+     if (owner_search) {
+       searchQuery += ` AND a.registry_type_id = ?`;
+       queryParams.push(Number(owner_search));
+     }
+
+     let sql = `FROM school_registrations s 
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       JOIN applications a ON a.tracking_number = s.tracking_number
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       ${ schoolLocationsSqlJoin() }
                       WHERE  s.reg_status IN (1)
-                      `;
-  
-    const searchByKeywordQuery =  searchKeyword ? `AND 
-                  ( ${ (sign == '=' ? 'e.school_name='+keyword : 'e.school_name LIKE '+keyword) }  
-                    OR 
-                    ${ sign == '=' ? 's.registration_number='+keyword : 's.registration_number LIKE '+keyword }
-                  )` : '';
-    //  console.log(sign , searchByKeywordQuery , keyword);
-    const searchByTypeQuery    =  typeKeyword    ? `AND  e.school_category_id = ${type}` : '';
-    const searchByOwnerQuery   =  ownerKeyword   ? `AND a.registry_type_id = ${owner}` : '';
-     
-    // console.log(searchByKeywordQuery, searchByTypeQuery, searchByOwnerQuery);
-   
-    db.query(
-      `SELECT s.tracking_number AS id,
+                      ${searchQuery}
+                      ORDER BY school_name ASC`;
+
+     db.query(`SELECT s.tracking_number AS id,
               school_name AS name, 
               registration_number AS reg_no, 
               rt.registry AS ownership,
@@ -47,46 +60,40 @@ module.exports = {
                   ELSE 'Unknown'
               END AS status,
               reg_status
-              ${sqlQuery}
-              ${searchByKeywordQuery}
-              ${searchByTypeQuery}
-              ${searchByOwnerQuery}
-              LIMIT ?, ?`,
-      [offset, per_page],
-      (error, schools) => {
-        if (error) console.log(error);
-        db.query(
-          `SELECT COUNT(*) AS num_rows 
-              ${sqlQuery}  
-              ${searchByKeywordQuery}
-              ${searchByTypeQuery}
-              ${searchByOwnerQuery}`,
-          (error2, result) => {
-            if (error2) {
-              console.log(error2);
-              error = error2;
-            }
-            console.log(result[0].num_rows);
-            callback(error, schools, result[0].num_rows);
-          }
-        );
-      }
-    );
+              ${sql}
+              ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
+       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
+       (error, schools) => {
+        if(error) console.log(error)
+         db.query(
+           `SELECT COUNT(*) AS num_rows  ${sql}`,
+           queryParams,
+           (error2, result2) => {
+             if (error2) {
+               error = error2;
+               console.log(error);
+             }
+             // console.log(regions);
+             callback(error, schools, result2[0].num_rows);
+           }
+         );
+       }
+     );
   },
   // LOOK FOR SCHOOLS
   lookForSchools : (offset , per_page , search, callback) => {
         const keyword = db.escape(`%${search}%`);
         const searchSql = search
-          ? ` WHERE (e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword}) `
+          ? ` AND (e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword}) `
           : "";
         const sql = `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
                     r.RegionName AS region, d.LgaName AS district, w.WardName AS ward
                             FROM school_registrations s
                             ${registeredSchoolsEstablishedApplicationSqlJoin()} 
                             ${schoolLocationsSqlJoin()}
-                            ${searchSql}
-                            ORDER BY school_name ASC
                             WHERE s.reg_status = 1
+                             ${searchSql}
+                            ORDER BY school_name ASC
                             LIMIT ? , ?`;
         // console.log(sql);
       db.query(

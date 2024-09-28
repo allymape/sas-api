@@ -31,11 +31,24 @@ module.exports = {
           // console.log(regions);
           callback(error, regions, result2[0].num_rows);
         });
-      }
-    );
+      });
   },
   lookupRegions: (user, zone_id, callback) => {
     //  console.log(user)
+    var condition = ''
+    if(zone_id){
+      condition += `${
+                    ["wilaya"].includes(user.ngazi)
+                      ? "INNER JOIN districts d ON d.RegionCode = r.RegionCode"
+                      : ""
+                  }
+                  WHERE r.zone_id = ?
+                  ${
+                    ["wilaya"].includes(user.ngazi)
+                      ? "AND  d.LgaCode= '" + user.district_code + "'"
+                      : ""
+                  }`;
+    }
     db.query(
       `SELECT r.id AS regionId, r.RegionCode AS regionCode, RegionName AS regionName, 
               IFNULL(zone_name , '') AS zoneName , IFNULL(r.zone_id , '') AS zoneCode, 
@@ -43,19 +56,9 @@ module.exports = {
               r.updated_at AS updatedAt 
       FROM regions r 
       LEFT JOIN zones z ON z.id = r.zone_id 
-      ${
-        ["wilaya"].includes(user.ngazi)
-          ? "INNER JOIN districts d ON d.RegionCode = r.RegionCode"
-          : ""
-      }
-      WHERE r.zone_id = ?
-      ${
-        ["wilaya"].includes(user.ngazi)
-          ? "AND  d.LgaCode= '" + user.district_code + "'"
-          : ""
-      }
+      ${condition}
       ORDER BY RegionName ASC`,
-      [Number(zone_id)],
+      zone_id ? [Number(zone_id)] : '',
       (error, regions) => {
         if (error) console.log(error);
         callback(error, regions);

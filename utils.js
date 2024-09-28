@@ -474,18 +474,18 @@ const ObjectFuctions = {
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
   },
-  selectConditionByRanks: (user) => {
+  selectConditionByRanks: (user , alias = '') => {
     const { office } = user;
     let $select = "";
     switch (Number(office)) {
       case 1:
-        $select = `r.RegionName AS region`;
+        $select = alias ? `${alias}.region AS label` :`r.RegionName AS region`;
         break;
       case 2:
-        $select = `d.LgaName AS region`;
+        $select = alias ? `${alias}.district AS label` : `d.LgaName AS region`;
         break;
       case 3:
-        $select = `w.WardName AS region`;
+        $select = alias ? `${alias}.ward AS label` : `w.WardName AS region`;
         break;
       default:
         break;

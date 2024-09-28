@@ -113,18 +113,8 @@ module.exports = {
                     });
   },
   //   FIND AN APPLICANT
-  findApplicant: (offset, per_page, applicantId, search, callback) => {
+  findApplicant: (offset, per_page, applicantId, callback) => {
     const id = db.escape(Number(applicantId));
-    const keyword = db.escape(`%${search}%`);
-    const searchSql = search
-      ? ` AND (
-              e.school_name LIKE ${keyword} OR 
-              s.registration_number LIKE ${keyword} OR
-              s.tracking_number LIKE ${keyword} 
-            )`
-      : "";
-    const attachmentSearch = search ? ` AND a.tracking_number LIKE ${keyword} OR 
-                                        at.attachment_name LIKE ${keyword}` : ""
     db.query(
       `SELECT u.id AS id, u.name AS name , u.email AS email, u.created_at AS created_at, 
                     IFNULL(COUNT(a.id)  , 0) AS total
@@ -171,76 +161,16 @@ module.exports = {
                   error = error3;
                   console.log(error3);
                 }
-                const schoolsSql = `FROM school_registrations s
-                                                    LEFT JOIN establishing_schools e ON e.id = s.establishing_school_id
-                                                    LEFT JOIN school_categories sc ON sc.id = e.school_category_id
-                                                    LEFT JOIN applications a ON a.tracking_number = e.tracking_number
-                                                    ${schoolLocationsSqlJoin()}
-                                                    WHERE a.user_id = ${id} AND reg_status = 1`;
-
-                db.query(
-                  `SELECT s.registration_number AS reg_number , e.school_name AS name, 
-                                                e.tracking_number AS tracking_number ,s.registration_date AS registration_date,
-                                                sc.category AS type , 
-                                                r.RegionName AS region, d.LgaName AS district, w.WardName AS ward, st.StreetName AS village
-                                                ${schoolsSql} ${searchSql}
-                                                LIMIT ?, ?`,
-                  [offset, per_page],
-                  (error4, schools) => {
-                    if (error4) {
-                      error = error4;
-                      console.log(error4);
-                    }
-                    db.query(
-                      `SELECT COUNT(*) as num_rows ${schoolsSql} ${searchSql}`,
-                      (error5, result2) => {
-                        if (error5) {
-                          error = error5;
-                          console.log(error5);
-                        }
-
-                        const attachmentSql = ` FROM attachments a
-                                                JOIN applications ap ON ap.tracking_number = a.tracking_number
-                                                JOIN attachment_types at ON at.id = a.attachment_type_id
-                                                JOIN application_categories ac ON ac.id = at.application_category_id
-                                                WHERE ap.user_id = ${id} `;
-                        db.query(
-                          `SELECT at.attachment_name AS name , ac.app_name AS application_category_name,
-                                                a.tracking_number AS tracking_number , 
-                                                attachment_path , a.created_at AS created_at
-                                                ${attachmentSql} ${attachmentSearch}
-                                                LIMIT ?,?`,
-                          [offset, per_page],
-                          (error6, attachments) => {
-                            if (error6) {
-                              error = error6;
-                              console.log(error);
-                            }
-                            db.query(
-                              `SELECT count(*) AS num_rows ${attachmentSql} ${attachmentSearch}`,
-                              (error7, result3) => {
-                                if (error7) {
-                                  error = error7;
-                                  console.log(error);
-                                }
-                                callback(
-                                  error,
-                                  applicant,
-                                  applications,
-                                  result[0].num_rows,
-                                  schools,
-                                  result2[0].num_rows,
-                                  attachments,
-                                  result3[0].num_rows
-                                );
-                              }
-                            );
-                          }
-                        );
-                      }
-                    );
-                  }
-                );
+                 callback(
+                   error,
+                   applicant,
+                   applications,
+                   result[0].num_rows,
+                  //  schools,
+                  //  result2[0].num_rows,
+                  //  attachments,
+                  //  result3[0].num_rows
+                 );
               }
             );
           }

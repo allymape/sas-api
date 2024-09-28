@@ -57,12 +57,10 @@ applicantRouter.get("/find-applicant/:id", isAuth, (req, res) => {
   var page = parseInt(req.query.page);
   var offset = (page - 1) * per_page;
   var applicant_id = req.params.id;
-  var search = req.body.search;
   applicantModel.findApplicant(
     offset,
     per_page,
     applicant_id,
-    search,
     (
       error,
       applicant,
@@ -80,10 +78,10 @@ applicantRouter.get("/find-applicant/:id", isAuth, (req, res) => {
           applicant: error ? [] : applicant,
           applications: error ? [] : applications,
           applicationsNumRows: applicationsNumRows,
-          schools: error ? [] : schools,
-          schoolsNumRows: schoolsNumRows,
-          attachments : error ? [] : attachments,
-          attachmentsNumRows : attachmentsNumRows
+          // schools: error ? [] : schools,
+          // schoolsNumRows: schoolsNumRows,
+          // attachments : error ? [] : attachments,
+          // attachmentsNumRows : attachmentsNumRows
         },
         message: error ? "Something went wrong." : "Applicant",
       });

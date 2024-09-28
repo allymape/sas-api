@@ -10,23 +10,20 @@ const algorithmModel = require("../models/algorithmModel.js");
 
 
 // List of schools
-schoolRouter.get("/all-schools", isAuth, (req, res, next) => {
+schoolRouter.get("/all-schools", isAuth, (req, res) => {
   const per_page = parseInt(req.query.per_page);
   const page = parseInt(req.query.page);
   const offset = (page - 1) * per_page;
-  const keyword = req.body.tafuta !== undefined ? req.body.tafuta : null;
+  const search_value = req.body.search.value
   const type = req.body.aina !== undefined ? req.body.aina : null;
   const owner = req.body.umiliki !== undefined ? req.body.umiliki : null;
-  const sign = req.body.sign;
+  // const sign = req.body.sign;
   schoolModel.getAllSchools(offset, 
           per_page, 
-          keyword,
           type , 
           owner , 
-          sign,
+          search_value,
           (error, schools, numRows) => {
-    // console.log(schools.length);
-    // console.log(schools);
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,
@@ -283,7 +280,11 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
       var owners = [];
       var applicants = [];
      
-       var results = await promiseRequest(admin_area_url , 'schools');
+       var results = await promiseRequest(
+         admin_area_url,
+         "schools"
+       );
+       console.log(results)
            if(results){
              //iterate through all datas received and store  to established_schools, applications and school_registrations  array
              for (let i = 0; i < results.length; i++) {
@@ -424,14 +425,14 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
                res.send({
                  statusCode: 306,
                  message:
-                   "Haujafanikiwa kupakia Shule wasiliana na Msimamizi wa Mfumo.",
+                   "No Data: Haujafanikiwa kupakia Shule wasiliana na Msimamizi wa Mfumo.",
                });
              }
            }else{
               res.send({
                 statusCode: 306,
                 message:
-                  "Haujafanikiwa kupakia Shule wasiliana na Msimamizi wa Mfumo.",
+                  "No Results: Haujafanikiwa kupakia Shule wasiliana na Msimamizi wa Mfumo.",
               });
            }
 });
