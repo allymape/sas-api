@@ -24,11 +24,11 @@ trackApplicationRouter.get(
         search_value,
         user,
         (error, applications, numRows) => {
-          console.log(applications)
+          console.log(applications);
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
-            data: applications ,
+            data: applications,
             numRows: numRows,
             message: error ? "Something went wrong." : "List of applications.",
           });

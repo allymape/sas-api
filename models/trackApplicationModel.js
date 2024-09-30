@@ -51,6 +51,7 @@ module.exports = {
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, applications) => {
+        if(error) console.log(error)
         db.query(
           `SELECT COUNT(*) AS num_rows  ${sql}`,
           queryParams,
@@ -59,73 +60,12 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            // console.log(regions);
+            console.log(regions);
             callback(error, applications, result2[0].num_rows);
           }
         );
       }
     );
-    // const { tafuta, category } = search;
-    // // const main_table_view = applicationView(app_category_id);
-    // const { sehemu, zone_id, district_code } = user;
-    // let filter = tafuta
-    //   ? ` AND (a.tracking_number LIKE '%${tafuta}%'
-    //                       OR u.name LIKE '%${tafuta}%'
-    //                       OR c.name LIKE '%${tafuta}%'
-    //              )`
-    //   : ``;
-
-    // const commonSql = `FROM track_application_view a
-    //                   LEFT JOIN staffs s ON s.id = a.staff_id
-    //                   LEFT JOIN roles r ON r.id = s.user_level
-    //                   LEFT JOIN vyeo v ON v.id = r.vyeoId
-    //                   ${filter}
-    //                   ${sehemu == "k1" ? "AND a.zone_id = " + zone_id : ""}
-    //                   ${
-    //                     sehemu == "w1"
-    //                       ? "AND a.district_code = '" + district_code + "'"
-    //                       : ""
-    //                   }
-    //                   `;
-    // db.query(
-    //   `SELECT tracking_number ,
-    //           application_category,
-    //           applicant_name ,
-    //           application_created_at,
-    //           submitted_created_at,
-    //           UPPER(school_name) AS school_name,
-    //           category,
-    //           title,
-    //           region_name ,
-    //           district_name,
-    //           ward_name,
-    //           street_name,
-    //           zone_name,
-    //           status,
-    //           payment_status,
-    //           payment_status_id,
-    //           v.rank_level AS rank
-    //           ${commonSql}
-    //           ORDER BY submitted_created_at DESC
-    //           ${is_paginated ? " LIMIT ?,?" : ""}`,
-    //   is_paginated ? [offset, per_page] : [],
-    //   (error, applications) => {
-    //     if (error) console.log(error);
-    //     console.log("finish");
-    //     db.query(
-    //       `SELECT COUNT(*) AS num_rows
-    //            ${commonSql}
-    //            `,
-    //       (error2, results2) => {
-    //         if (error2) {
-    //           error = error2;
-    //           console.log(error);
-    //         }
-    //         callback(error, applications, results2[0].num_rows);
-    //       }
-    //     );
-    //   }
-    // );
   },
   // Duplicate
   getMaoni: (tracking_number, callback) => {
