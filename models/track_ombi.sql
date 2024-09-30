@@ -1,8 +1,5 @@
 CREATE 
-    ALGORITHM = UNDEFINED 
-    DEFINER = `root`@`localhost` 
-    SQL SECURITY DEFINER
-VIEW `sas_db`.`track_application_view` AS
+VIEW `MOE`.`track_application_view` AS
     (SELECT 
         `a`.`tracking_number` AS `tracking_number`,
         `a`.`app_name` AS `application_category`,
@@ -19,28 +16,30 @@ VIEW `sas_db`.`track_application_view` AS
         UCASE(`a`.`zone_name`) AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`established_schools_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`established_schools_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -59,28 +58,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`registered_schools_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`registered_schools_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -99,28 +100,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`school_owners_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`school_owners_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -139,28 +142,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`school_managers_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`school_managers_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -179,28 +184,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`streams_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`streams_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -219,28 +226,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`owners_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`owners_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -259,28 +268,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`managers_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`managers_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -299,28 +310,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`name_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`name_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -339,28 +352,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`transfer_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`transfer_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -379,28 +394,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`deregistration_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`deregistration_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -419,28 +436,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`tahasusi_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`tahasusi_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -459,28 +478,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`dahalia_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`dahalia_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -499,28 +520,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`bweni_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`bweni_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4)) UNION (SELECT 
@@ -539,46 +562,30 @@ VIEW `sas_db`.`track_application_view` AS
         `a`.`zone_name` AS `zone_name`,
         `a`.`is_approved` AS `status`,
         `p`.`status` AS `payment_status`,
-        `p`.`id` AS `payment_status_id`
+        `p`.`id` AS `payment_status_id`,
+        `a`.`staff_id` AS `staff_id`,
+        `a`.`registry` AS `registry`
     FROM
-        ((((((((`sas_db`.`registration_change_view` `a`
-        JOIN `sas_db`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
-        LEFT JOIN `sas_db`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
-        LEFT JOIN `sas_db`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
-        LEFT JOIN `sas_db`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
+        ((((((((`MOE`.`registration_change_view` `a`
+        JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
+        LEFT JOIN `MOE`.`users` `u` ON (`u`.`id` = `a`.`user_id`))
+        LEFT JOIN `MOE`.`staffs` `s` ON (`s`.`id` = `a`.`staff_id`))
+        LEFT JOIN `MOE`.`roles` `c` ON (`c`.`id` = `s`.`user_level`))
         LEFT JOIN (SELECT 
             `m2`.`created_at` AS `maoni_created_at`,
                 `m2`.`trackingNo` AS `trackingNo`
         FROM
-            `sas_db`.`maoni` `m2`
+            `MOE`.`maoni` `m2`
         WHERE
             `m2`.`id` = (SELECT 
                     MAX(`m3`.`id`)
                 FROM
-                    `sas_db`.`maoni` `m3`)
+                    `MOE`.`maoni` `m3`)
         LIMIT 1) `m` ON (`a`.`tracking_number` = `m`.`trackingNo`))
-        LEFT JOIN `sas_db`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
+        LEFT JOIN `MOE`.`zones` `z` ON (`s`.`zone_id` IS NOT NULL
             AND `z`.`id` = `s`.`zone_id`))
-        LEFT JOIN `sas_db`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
-        LEFT JOIN `sas_db`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
+        LEFT JOIN `MOE`.`payment_statuses` `p` ON (`p`.`id` = `a`.`payment_status_id`))
+        LEFT JOIN `MOE`.`vyeo` `v` ON (`v`.`id` = `c`.`vyeoId`))
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4))
-
-
-
-
-
-
-
-
-            SELECT tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
-             UPPER(school_name) AS school_name,category,title, region_name , district_name,ward_name,street_name,zone_name,
-             status, payment_status, payment_status_id,v.rank_level AS rank_
-              FROM track_application_view a
-                     LEFT JOIN staffs s ON s.id = a.staff_id 
-                     LEFT JOIN roles r ON r.id = s.user_level
-                     LEFT JOIN vyeo v ON v.id = r.vyeoId
-                     WHERE 1=1
-                     ORDER BY submitted_created_at DESC
-             LIMIT 0 , 10;

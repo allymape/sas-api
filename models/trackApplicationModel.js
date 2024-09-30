@@ -46,7 +46,7 @@ module.exports = {
     db.query(
       `SELECT tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
               UPPER(school_name) AS school_name,category,title, region_name , district_name,ward_name,street_name,zone_name,
-              status, payment_status, payment_status_id,v.rank_level AS ngazi
+              status, payment_status, payment_status_id,v.rank_level AS ngazi, registry
               ${sql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
