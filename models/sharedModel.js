@@ -168,35 +168,70 @@ module.exports = {
       callback(certificate_types);
     });
   },
-  myStaffs: (user, callback) => {
+  myStaffs: (user, callback , application_category_id = 0 , zone_id = 0 , district_code = null) => {
     const objStaffs = [];
-    db.query(
-      `SELECT s.id as userId, s.name as name,r.name as role_name 
-         FROM staffs s
-         JOIN roles r ON r.id = s.user_level
-         JOIN vyeo v ON v.id = r.vyeoId
-         WHERE s.user_status = 1 AND v.id = ${user.section_id}
-         ${selectStaffsBySection(user)}
+    // Find previous boss who attended this request
+    module.exports.getPreviousStaff(application_category_id,user,zone_id, district_code,
+      (previous_office_boss) => {
+        db.query(
+          `(SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name 
+            FROM staffs s
+            JOIN roles r ON r.id = s.user_level
+            JOIN vyeo v ON v.id = r.vyeoId
+            WHERE s.user_status = 1 AND v.id = ${user.section_id}
+            ${selectStaffsBySection(user)}
+         )
+         ${previous_office_boss}
          ORDER BY name ASC
+         
          `,
-      (error, results) => {
-        if (error) {
-          console.log(error);
-        }
-        // console.log(results)
-        for (var i = 0; i < results.length; i++) {
-          var userId = results[i].userId;
-          var name = results[i].name;
-          var role_name = results[i].role_name;
-          objStaffs.push({
-            userId: userId,
-            name: name,
-            role: role_name,
-          });
-        }
-        callback(objStaffs);
+          (error, results) => {
+            if (error) {
+              console.log(error);
+            }
+            // console.log(results)
+            for (var i = 0; i < results.length; i++) {
+              var userId = results[i].userId;
+              var name = results[i].name;
+              var role_name = results[i].role_name;
+              objStaffs.push({
+                userId: userId,
+                name: name,
+                role: role_name,
+              });
+            }
+            callback(objStaffs);
+          }
+        );
       }
     );
+  },
+    //
+  getPreviousStaff : (application_category_id , user , zone_id , district_code, callback) =>{
+    const {section_id , cheo} = user;
+    db.query(`SELECT r.id AS id , rank_level
+              FROM work_flow w
+              JOIN vyeo v ON v.id = w.start_from
+              JOIN roles r ON r.vyeoId = v.id
+              WHERE LOWER(r.name) = LOWER(rank_name) AND end_to = ? AND application_category_id = ?
+              LIMIT 1`, [section_id , application_category_id] , (err , result) =>{
+                if(err) console.log(err)
+                  if(result.length > 0 && 
+                    (district_code || zone_id) && 
+                    (cheo == 'adsa' || cheo == 'kadsa' || cheo == "mus" || cheo == 'kmus')){
+                    const {id , rank_level} = result[0]
+                    const sql = `UNION (SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name
+                                  FROM staffs s
+                                  JOIN roles r ON r.id = s.user_level
+                                  JOIN vyeo v ON v.id = r.vyeoId
+                                  WHERE s.user_status = 1 AND user_level = ${id} AND 
+                                  ${rank_level == 3 ? 'district_code="'+district_code+'"' : 'zone_id='+zone_id }
+                                )`;
+                    callback(sql);
+                  }else{
+                    callback('')
+                  }
+              })
   },
   myMaoni: (tracking_number, callback) => {
     const obj = [];
@@ -321,7 +356,8 @@ module.exports = {
                applications.user_id as user_id, applications.foreign_token as foreign_token, 
                establishing_schools.school_name as school_name, wards.WardName as WardName , 
                streets.StreetName as StreetName, regions.RegionName as RegionName, 
-               districts.LgaName as LgaName, registry_types.registry as registry
+               districts.LgaName as LgaName, registry_types.registry as registry,
+               zone_id , districts.LgaCode AS district_code
           FROM applications  
           JOIN establishing_schools  ON  establishing_schools.tracking_number = applications.tracking_number  
           JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
@@ -333,6 +369,7 @@ module.exports = {
           JOIN wards ON wards.WardCode = establishing_schools.ward_id
           JOIN districts ON districts.LgaCode = wards.LgaCode
           JOIN regions ON regions.RegionCode = districts.RegionCode
+          JOIN zones z ON z.id = regions.zone_id
           WHERE applications.tracking_number = ?`,
       [tracking_number],
       function (error, results) {
@@ -650,10 +687,11 @@ module.exports = {
             }
           );
         }
-        callback(obj, objAttachment, objAttachment1, objAttachment2, objMess);
+        callback(obj, objAttachment, objAttachment1, objAttachment2, objMess , results);
       }
     );
   },
+
   // Business Flow base on application category
   getMyNextBoss: (user, application_category, staff_id, callback) => {
     var str = (str = ` AND s.id < -1`);
@@ -670,10 +708,7 @@ module.exports = {
           if (error) console.log(error);
           if (result.length == 1) {
             const { rank_name, rank_level } = result[0];
-            str = ` AND LOWER(r.name) =  '${rank_name}' AND 
-                                s.zone_id ${
-                                  rank_level == 1 ? " IS NULL" : " = " + zone_id
-                                }`;
+            str = ` AND LOWER(r.name) =  '${rank_name}' AND s.zone_id ${rank_level == 1 ? " IS NULL" : " = " + zone_id}`;
           }
           callback(str);
         }

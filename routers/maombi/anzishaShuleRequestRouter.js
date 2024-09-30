@@ -31,11 +31,11 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
       // console.log("ni",req.body);
       var trackingNumber = req.body.TrackingNumber;
       var user = req.user;
-    // console.log(cheo , sehemu);
-      sharedModel.findApplicationDetails(trackingNumber , (obj ,objAttachment, objAttachment1 , objAttachment2 , objMess) => {
-        // console.log(obj)
-        sharedModel.myStaffs(user, (objStaffs) => {
-           sharedModel.myMaoni(trackingNumber, (objMaoni) => {
+      sharedModel.findApplicationDetails(trackingNumber , (obj ,objAttachment, objAttachment1 , objAttachment2 , objMess, results) => {
+      sharedModel.myMaoni(trackingNumber, (objMaoni) => {
+           const {application_category_id , zone_id , district_code} = results[0]
+           console.log(application_category_id , zone_id , district_code)
+        sharedModel.myStaffs(user, (objStaffs) => { 
              return res.send({
                error: false,
                statusCode: 300,
@@ -49,7 +49,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
                Maoni: objMaoni,
                message: "Taarifa za ombi kuanzisha shule.",
              });
-           });
+           } , application_category_id , zone_id , district_code);
         });
       }
     );

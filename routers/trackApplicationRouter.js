@@ -8,45 +8,44 @@ const sharedModel = require("../models/sharedModel.js");
 //
 // List of applications
 trackApplicationRouter.get(
-  "/track_applications/:application",
+  "/track_applications",
   isAuth,
   permission("view-track-application"),
   (req, res) => {
     var per_page = parseInt(req.query.per_page);
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
-    var is_paginated = true;
-    const application_categroy_id = req.params.application;
-    if (typeof req.body.is_paginated !== "undefined") {
-      is_paginated =
-        req.body.is_paginated == "false" || !req.body.is_paginated
-          ? false
-          : true;
-    }
-    const searchQuery = req.body;
+    var search_value = req.body.search.value;
     const user = req.user;
-    sharedModel.getApplicationCategories((categories) => {
+    // sharedModel.getApplicationCategories((categories) => {
       trackApplicationModel.getAllApplications(
         offset,
         per_page,
-        is_paginated,
-        searchQuery,
-        application_categroy_id,
+        search_value,
         user,
         (error, applications, numRows) => {
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
-            data: { applications, categories },
+            data: applications ,
             numRows: numRows,
-            is_paginated: is_paginated,
             message: error ? "Something went wrong." : "List of applications.",
           });
         }
       );
-    });
+    // });
   }
 );
+
+trackApplicationRouter.get(`/application_comments/:tracking_number` , isAuth , permission('view-track-application') , (req, res) => {
+     const tracking_number = req.params.tracking_number
+      sharedModel.myMaoni( tracking_number , (comments) => {
+            res.send({
+            data : comments,
+            message : 'List ya Maoni'
+          })
+      })
+});
 
 trackApplicationRouter.put(`/update_payment` , isAuth , permission('view-track-application') , (req, res) => {
      const tracking_number = req.body.tracking_number
