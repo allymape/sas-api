@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const request = require("request");
 var trackApplicationRouter = express.Router();
-const { isAuth, permission, auditTrail, notifyMwombaji } = require("../utils.js");
+const { isAuth, permission, auditTrail } = require("../utils.js");
 const trackApplicationModel = require("../models/trackApplicationModel.js");
 const sharedModel = require("../models/sharedModel.js");
 //
@@ -24,7 +24,6 @@ trackApplicationRouter.get(
         search_value,
         user,
         (error, applications, numRows) => {
-          notifyMwombaji('EM-20240820-902', 2);
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
