@@ -24,7 +24,6 @@ trackApplicationRouter.get(
         search_value,
         user,
         (error, applications, numRows) => {
-          console.log(applications);
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
