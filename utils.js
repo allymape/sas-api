@@ -29,7 +29,7 @@ const {
   localeLowerCase,
 } = require("text-case");
 const dateAndTime = require("date-and-time");
-const { notifyUserOnComment } = require("./templates/emailTemplate");
+const { notifyStaffOnComment, notifyMwombajiOnComment } = require("./templates/emailTemplate");
 
 
 const ObjectFuctions = {
@@ -137,7 +137,7 @@ const ObjectFuctions = {
   // Validate Registration Number
   validateRegistrationNumber: (registration_number) => {
     const regex = /^(EM\.|CU\.|EA\.|S\.)\d+$/;
-    return regex.test(registration_number.replace(/\s+/g,''));
+    return regex.test(registration_number.replace(/\s+/g, ""));
   },
   // return random String
   randomString: (string, length) => {
@@ -169,7 +169,7 @@ const ObjectFuctions = {
     return i;
   },
   // notify
-  notifyUser: (userTo, application_category, sender, tracking_number) => {
+  notifyStaff: (userTo, application_category, sender, tracking_number) => {
     console.log(`Start Email Notification`);
     db.query(
       `SELECT app_name FROM application_categories ac WHERE ac.id = ?`,
@@ -190,7 +190,7 @@ const ObjectFuctions = {
                   process.env.APP_URL ||
                   "http:localhost:" + process.env.HTTP_PORT
                 }`;
-                let htmlContent = notifyUserOnComment(
+                let htmlContent = notifyStaffOnComment(
                   name,
                   app_name,
                   sender,
@@ -212,6 +212,51 @@ const ObjectFuctions = {
       }
     );
   },
+  notifyMwombaji: (tracking_number , haliombi) => {
+           if([2,3,4].includes(haliombi)){
+            db.query(
+              `SELECT u.name AS username, email, app_name 
+                FROM applications a 
+                JOIN users u ON u.id = a.user_id
+                JOIN application_categories ac ON ac.id = a.application_category_id
+                WHERE a.tracking_number = ?`,
+              [tracking_number],
+              (error, applicant) => {
+                if (error) console.log(error);
+                if (applicant.length > 0) {
+                  let { email , app_name , username } = applicant[0];
+                  let link = `${
+                    process.env.FRONT_URL || "http:localhost:" + process.env.HTTP_PORT
+                  }`;
+                  let htmlContent = notifyMwombajiOnComment(
+                    username,
+                    app_name,
+                    link,
+                    tracking_number,
+                    haliombi == 2
+                      ? "limekubaliwa"
+                      : haliombi == 3
+                      ? "limekataliwa"
+                      : haliombi == 4
+                      ? "limerudishwa"
+                      : ""
+                  );
+                  let mailOptions = ObjectFuctions.setMailOptions(
+                    email,
+                    "Notify",
+                    htmlContent
+                  );
+                  console.log(applicant);
+                  ObjectFuctions.sendEmail(mailOptions, (error, info) => {
+                    console.log("Message %s sent: %s", info, error);
+                  });
+                }
+              }
+            );
+           }else{
+            console.log("Linaendelea kushugulikiwa ...")
+           }
+  },
   //Send Email
   sendEmail: (mailOptions, callback) => {
     let transporter = nodeMailer.createTransport({
@@ -231,7 +276,7 @@ const ObjectFuctions = {
   // Mail options
   setMailOptions: (emailTo, subject, html = "", plainText = "") => {
     return {
-      from: '"SAS Administrator" <noreply@codebiz.co.tz>', // sender address
+      from: '"SAS Administration" <noreply@moe.go.tz>', // sender address
       to: emailTo, // list of receivers
       subject: subject, // Subject line
       text: plainText, // plain text body
@@ -474,12 +519,12 @@ const ObjectFuctions = {
     // console.log(roles , permissions , permission_role);
     callback(roles, permissions, permission_role);
   },
-  selectConditionByRanks: (user , alias = '') => {
+  selectConditionByRanks: (user, alias = "") => {
     const { office } = user;
     let $select = "";
     switch (Number(office)) {
       case 1:
-        $select = alias ? `${alias}.region AS label` :`r.RegionName AS region`;
+        $select = alias ? `${alias}.region AS label` : `r.RegionName AS region`;
         break;
       case 2:
         $select = alias ? `${alias}.district AS label` : `d.LgaName AS region`;
@@ -1043,7 +1088,6 @@ const ObjectFuctions = {
     }
     return status_id;
   },
-  
 };
 
 module.exports = ObjectFuctions;

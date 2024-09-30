@@ -9,7 +9,8 @@ const {
   joinsByApplicationCategory,
   filterByUserOffice,
   schoolLocationsSqlJoin,
-  notifyUser
+  notifyStaff,
+  notifyMwombaji
 } = require("../utils");
 
 module.exports = {
@@ -777,12 +778,13 @@ module.exports = {
                     if (results.affectedRows > 0) {
                       success = true;
                       //sendMail notify
-                      notifyUser(
+                      notifyStaff(
                         user_to,
                         application_category,
                         user.name,
                         trackerId
                       );
+                      notifyMwombaji(trackerId, haliombi);
                     }
                     db.query(
                       "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
