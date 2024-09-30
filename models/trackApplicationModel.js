@@ -60,7 +60,7 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            console.log(regions);
+            console.log(applications);
             callback(error, applications, result2[0].num_rows);
           }
         );
