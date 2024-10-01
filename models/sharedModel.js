@@ -1318,7 +1318,7 @@ module.exports = {
     callback
   ) => {
     const is_complete = `${
-      [1,4].includes(application_category) ? "AND a.is_complete IN (1)" : ""
+      [1,2,4].includes(Number(application_category)) ? "AND a.is_complete IN (1)" : ""
     }`;
     const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
@@ -1332,7 +1332,6 @@ module.exports = {
                     a.application_category_id = ? 
                     ${filterByUserOffice(user, "AND")}
                     `;
-    // console.log(sql)
     //  All
     //  console.log(
     //    filterByUserOffice(user, "AND", "r.zone_id", "s.district_code")

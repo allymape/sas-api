@@ -4,13 +4,11 @@ const sharedModel = require("../sharedModel");
 module.exports = {
   //******** GET A LIST OF APPLICANTS *******************************
   anzishaShuleRequestList: (req , sqlStatus,callback) => {
-   
     const user = req.user;
     const status = req.body.status ?  req.body.status : "pending"
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
-
     const sqlFrom = `FROM establishing_schools
             JOIN applications ON establishing_schools.tracking_number = applications.tracking_number
             LEFT JOIN wards ON wards.wardCode = establishing_schools.ward_id  

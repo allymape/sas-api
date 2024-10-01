@@ -18,7 +18,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`established_schools_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -60,7 +62,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`registered_schools_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -102,7 +106,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`school_owners_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -144,7 +150,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`school_managers_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -186,7 +194,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`streams_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -228,7 +238,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`owners_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -270,7 +282,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`managers_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -312,7 +326,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`name_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -354,7 +370,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`transfer_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -396,7 +414,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`deregistration_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -438,7 +458,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`tahasusi_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -480,7 +502,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`dahalia_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -522,7 +546,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`bweni_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))
@@ -564,7 +590,9 @@ VIEW `MOE`.`track_application_view` AS
         `p`.`status` AS `payment_status`,
         `p`.`id` AS `payment_status_id`,
         `a`.`staff_id` AS `staff_id`,
-        `a`.`registry` AS `registry`
+        `a`.`registry` AS `registry`,
+        `a`.`district_code` AS `district_code`,
+        `a`.`zone_id` AS `zone_id`
     FROM
         ((((((((`MOE`.`registration_change_view` `a`
         JOIN `MOE`.`applications` `ap` ON (`ap`.`tracking_number` = `a`.`tracking_number`))

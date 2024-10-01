@@ -213,48 +213,49 @@ const ObjectFuctions = {
     );
   },
   notifyMwombaji: (tracking_number , haliombi) => {
-           if([2,3,4].includes(haliombi)){
-            db.query(
-              `SELECT u.name AS username, email, app_name 
+           if ([2, 3, 4].includes(Number(haliombi))) {
+             db.query(
+               `SELECT u.name AS username, email, app_name 
                 FROM applications a 
                 JOIN users u ON u.id = a.user_id
                 JOIN application_categories ac ON ac.id = a.application_category_id
                 WHERE a.tracking_number = ?`,
-              [tracking_number],
-              (error, applicant) => {
-                if (error) console.log(error);
-                if (applicant.length > 0) {
-                  let { email , app_name , username } = applicant[0];
-                  let link = `${
-                    process.env.FRONT_URL || "http:localhost:" + process.env.HTTP_PORT
-                  }`;
-                  let htmlContent = notifyMwombajiOnComment(
-                    username,
-                    app_name,
-                    link,
-                    tracking_number,
-                    haliombi == 2
-                      ? "limekubaliwa"
-                      : haliombi == 3
-                      ? "limekataliwa"
-                      : haliombi == 4
-                      ? "limerudishwa"
-                      : ""
-                  );
-                  let mailOptions = ObjectFuctions.setMailOptions(
-                    email,
-                    "Notify",
-                    htmlContent
-                  );
-                  console.log(applicant);
-                  ObjectFuctions.sendEmail(mailOptions, (error, info) => {
-                    console.log("Message %s sent: %s", info, error);
-                  });
-                }
-              }
-            );
-           }else{
-            console.log("Linaendelea kushugulikiwa ...")
+               [tracking_number],
+               (error, applicant) => {
+                 if (error) console.log(error);
+                 if (applicant.length > 0) {
+                   let { email, app_name, username } = applicant[0];
+                   let link = `${
+                     process.env.FRONT_URL ||
+                     "http:localhost:" + process.env.HTTP_PORT
+                   }`;
+                   let htmlContent = notifyMwombajiOnComment(
+                     username,
+                     app_name,
+                     link,
+                     tracking_number,
+                     haliombi == 2
+                       ? "limekubaliwa"
+                       : haliombi == 3
+                       ? "limekataliwa"
+                       : haliombi == 4
+                       ? "limerudishwa"
+                       : ""
+                   );
+                   let mailOptions = ObjectFuctions.setMailOptions(
+                     email,
+                     "Notify",
+                     htmlContent
+                   );
+                   console.log(applicant);
+                   ObjectFuctions.sendEmail(mailOptions, (error, info) => {
+                     console.log("Message %s sent: %s", info, error);
+                   });
+                 }
+               }
+             );
+           } else {
+             console.log("Linaendelea kushugulikiwa ...");
            }
   },
   //Send Email
@@ -561,7 +562,7 @@ const ObjectFuctions = {
     if (staff_id == 0 || staff_id == "" || staff_id == null) {
       var str = ``;
       // Business Flow base on application category
-      if ([1, 2, 7, 8].includes(application_category)) {
+      if ([1, 2, 7, 8].includes(Number(application_category))) {
         // W1->ADSA->KE
         switch (cheo) {
           case "w1":
@@ -575,7 +576,7 @@ const ObjectFuctions = {
             break;
         }
       }
-      if ([4, 5, 6, 12, 13, 14].includes(application_category)) {
+      if ([4, 5, 6, 12, 13, 14].includes(Number(application_category))) {
         // W1->K1->MUS->KE
         switch (cheo) {
           case "w1":
@@ -595,7 +596,7 @@ const ObjectFuctions = {
             break;
         }
       }
-      if ([9, 10, 11].includes(application_category)) {
+      if ([9, 10, 11].includes(Number(application_category))) {
         //W1->K1->ADSA->KE
         switch (cheo) {
           case "w1":
