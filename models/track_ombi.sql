@@ -1,3 +1,4 @@
+
 CREATE 
 VIEW `MOE`.`track_application_view` AS
     (SELECT 
@@ -617,3 +618,6 @@ VIEW `MOE`.`track_application_view` AS
     WHERE
         `ap`.`is_complete` IN (0 , 1)
             AND `ap`.`is_approved` IN (0 , 1, 4))
+
+
+

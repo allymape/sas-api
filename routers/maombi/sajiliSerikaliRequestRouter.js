@@ -83,9 +83,7 @@ sajiliSerikaliRequestRouter.post(
               var folio = results[i].folio;
               var applicantname;
               var is_approved = results[0].is_approved;
-
               var remain_days = calculcateRemainDays(created_at);
-
               obj.push({
                 tracking_number: tracking_number,
                 school_name: school_name,
@@ -202,10 +200,6 @@ sajiliSerikaliRequestRouter.post(
           var school_phone = results[0].school_phone;
           var numberOfStudents = results[0].number_of_students;
           var schoolOpeningDate = results[0].school_opening_date;
-          // schoolOpeningDate = dateandtime.format(
-          //   schoolOpeningDate,
-          //   "DD/MM/YYYY"
-          // );
           schoolOpeningDate = formatDate(schoolOpeningDate);
           var registry = "";
           var created_at = results[0].created_at;
@@ -241,11 +235,10 @@ sajiliSerikaliRequestRouter.post(
             DisabledTitle = "Jumuishi";
           }
         }
-
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [trackingNumber],
-          function (error, resultsMaoni, fields) {
+          function (error, resultsMaoni) {
             if (error) {
               console.log(error);
             }
@@ -258,136 +251,134 @@ sajiliSerikaliRequestRouter.post(
                 objMess.push({ coments: coments });
               }
             }
-          }
-        );
-        sharedModel.myStaffs(user, (staffs) => {
-          objStaffs = staffs;
-        });
-
-        sharedModel.myMaoni(trackingNumber, (maoni) => {
-          objMaoni = maoni;
-        });
-        sharedModel.getAttachmentTypes(
-          registry_type_id,
-          application_category_id,
-          null,
-          (attachment_types) => {
-            objAttachment = attachment_types;
-          }
-        );
-        sharedModel.getAttachments(trackingNumber, (attachments) => {
-          objAttachment1 = attachments;
-        });
-
-        db.query(
-          `SELECT * 
+            sharedModel.myMaoni(trackingNumber, (objMaoni) => {
+              sharedModel.getAttachmentTypes(
+                registry_type_id,
+                application_category_id,
+                null,
+                (attachment_types) => {
+                  objAttachment = attachment_types;
+                }
+              );
+              sharedModel.getAttachments(trackingNumber, (objAttachment1) => {
+                // objAttachment1 = attachments;
+                sharedModel.myStaffs(user, (objStaffs) => {
+                  db.query(
+                    `SELECT * 
           FROM personal_infos
           LEFT JOIN applications ON applications.foreign_token = personal_infos.secure_token
           LEFT JOIN wards ON wards.WardCode = personal_infos.ward_id
           LEFT JOIN districts ON wards.LgaCode = districts.LgaCode 
           LEFT JOIN regions ON districts.RegionCode = regions.RegionCode
           WHERE applications.tracking_number = ?`,
-          [trackingNumber],
-          function (error1, results1) {
-            if (error1) {
-              console.log(error1);
-            } else {
-              if (results1.length > 0) {
-                var first_name = results1[0].first_name;
-                var middle_name = results1[0].middle_name;
-                var last_name = results1[0].last_name;
-                var occupation = results1[0].occupation;
-                var personal_address = results1[0].personal_address;
-                var personal_phone_number = results1[0].personal_phone_number;
-                var personal_email = results1[0].personal_email;
-                var WardNameMtu = results1[0].WardName;
-                var LgaNameMtu = results1[0].LgaName;
-                var RegionNameMtu = results1[0].RegionName;
-                var fullname = first_name + " " + middle_name + " " + last_name;
-              } else {
-                var first_name = "";
-                var middle_name = "";
-                var last_name = "";
-                var occupation = "";
-                var personal_address = "";
-                var personal_phone_number = "";
-                var personal_email = "";
-                var WardNameMtu = "";
-                var LgaNameMtu = "";
-                var RegionNameMtu = "";
-                var fullname = first_name + " " + middle_name + " " + last_name;
-              }
-              obj.push({
-                tracking_number: tracking_number,
-                school_name: school_name,
-                schoolOpeningDate: schoolOpeningDate,
-                LgaName: LgaName,
-                RegionName: RegionName,
-                user_id: user_id,
-                school_phone: school_phone,
-                owner_name: owner_name,
-                registry_type_id: registry_type_id,
-                registry: registry,
-                school_address: school_address,
-                Stream: Stream,
-                created_at: created_at,
-                remain_days: remain_days,
-                po_box: po_box,
-                school_email: school_email,
-                gender_type: gender_type,
-                fullname: "",
-                schoolCategory: schoolCategory,
-                Certificate: certificate,
-                numberOfTeachers: numberOfTeachers,
-                occupation: "",
-                Website: website,
-                sharti : sharti,
-                application_category_id : application_category_id,
-                teacherInformation: teacherInformation,
-                specialization: specialization,
-                lessons_and_courses: lessons_and_courses,
-                TeacherRatioStudent: TeacherRatioStudent,
-                schoolCategoryID: schoolCategoryID,
-                is_approved,
-                mwombajiAddress: "",
-                mwombajiPhoneNo: "",
-                SeminaryTitle: SeminaryTitle,
-                DisabledTitle: DisabledTitle,
-                building: building,
-                baruaPepe: "",
-                language: language,
-                school_size: school_size,
-                SeminaryValue: SeminaryValue,
-                managerName: manager_first_name,
-                area: area,
-                WardName: WardName,
-                structure: structure,
-                isSeminary: isSeminary,
-                numberOfStudents: numberOfStudents,
-                subcategory: subcategory,
-                WardNameMtu: "",
-                LgaNameMtu: "",
-                RegionNameMtu: "",
-              });
+                    [trackingNumber],
+                    function (error1, results1) {
+                      if (error1) {
+                        console.log(error1);
+                      } else {
+                        if (results1.length > 0) {
+                          var first_name = results1[0].first_name;
+                          var middle_name = results1[0].middle_name;
+                          var last_name = results1[0].last_name;
+                          var occupation = results1[0].occupation;
+                          var personal_address = results1[0].personal_address;
+                          var personal_phone_number =
+                            results1[0].personal_phone_number;
+                          var personal_email = results1[0].personal_email;
+                          var WardNameMtu = results1[0].WardName;
+                          var LgaNameMtu = results1[0].LgaName;
+                          var RegionNameMtu = results1[0].RegionName;
+                          var fullname =
+                            first_name + " " + middle_name + " " + last_name;
+                        } else {
+                          var first_name = "";
+                          var middle_name = "";
+                          var last_name = "";
+                          var occupation = "";
+                          var personal_address = "";
+                          var personal_phone_number = "";
+                          var personal_email = "";
+                          var WardNameMtu = "";
+                          var LgaNameMtu = "";
+                          var RegionNameMtu = "";
+                          var fullname =
+                            first_name + " " + middle_name + " " + last_name;
+                        }
+                        obj.push({
+                          tracking_number: tracking_number,
+                          school_name: school_name,
+                          schoolOpeningDate: schoolOpeningDate,
+                          LgaName: LgaName,
+                          RegionName: RegionName,
+                          user_id: user_id,
+                          school_phone: school_phone,
+                          owner_name: owner_name,
+                          registry_type_id: registry_type_id,
+                          registry: registry,
+                          school_address: school_address,
+                          Stream: Stream,
+                          created_at: created_at,
+                          remain_days: remain_days,
+                          po_box: po_box,
+                          school_email: school_email,
+                          gender_type: gender_type,
+                          fullname: "",
+                          schoolCategory: schoolCategory,
+                          Certificate: certificate,
+                          numberOfTeachers: numberOfTeachers,
+                          occupation: "",
+                          Website: website,
+                          sharti: sharti,
+                          application_category_id: application_category_id,
+                          teacherInformation: teacherInformation,
+                          specialization: specialization,
+                          lessons_and_courses: lessons_and_courses,
+                          TeacherRatioStudent: TeacherRatioStudent,
+                          schoolCategoryID: schoolCategoryID,
+                          is_approved,
+                          mwombajiAddress: "",
+                          mwombajiPhoneNo: "",
+                          SeminaryTitle: SeminaryTitle,
+                          DisabledTitle: DisabledTitle,
+                          building: building,
+                          baruaPepe: "",
+                          language: language,
+                          school_size: school_size,
+                          SeminaryValue: SeminaryValue,
+                          managerName: manager_first_name,
+                          area: area,
+                          WardName: WardName,
+                          structure: structure,
+                          isSeminary: isSeminary,
+                          numberOfStudents: numberOfStudents,
+                          subcategory: subcategory,
+                          WardNameMtu: "",
+                          LgaNameMtu: "",
+                          RegionNameMtu: "",
+                        });
 
-              // console.log(obj)
-              return res.send({
-                error: false,
-                statusCode: 300,
-                data: obj,
-                maoni: objMess,
-                staffs: objStaffs,
-                status: objApps,
-                Maoni: objMaoni,
-                objAttachment: objAttachment,
-                objAttachment1: objAttachment1,
-                message: "Taarifa za ombi kuanzisha shule.",
+                        console.log(objStaffs);
+                        return res.send({
+                          error: false,
+                          statusCode: 300,
+                          data: obj,
+                          maoni: objMess,
+                          staffs: objStaffs,
+                          status: objApps,
+                          Maoni: objMaoni,
+                          objAttachment: objAttachment,
+                          objAttachment1: objAttachment1,
+                          message: "Taarifa za ombi kuanzisha shule.",
+                        });
+                      }
+                    }
+                  );
+                });
               });
-            }
+            });
           }
         );
-      }
-    );
+    });
   }
 );
 

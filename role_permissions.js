@@ -14,7 +14,7 @@ const rolesPermissions = {
     "Hierarchies|Uongozi": "v,c,u,d",
     "Designations|Vyeo": "v,c,u,d",
     "Fees|Ada za Malipo": "v,c,u,d",
-    "Attachments|Viambatisho": "v,c,u,d",
+    "Attachments|Viambatisho": "v,up,u,d",
     "Wards|Kata": "v,c,u,d",
     "Streets|Mitaa": "v,c,u,d",
     "Districts|Wilaya": "v,c,u,d",
@@ -149,6 +149,7 @@ const translations = {
     u: "update",
     d: "delete",
     r: "restore",
+    up: 'upload',
   },
   sw: {
     v: "ona",
@@ -156,6 +157,7 @@ const translations = {
     u: "badili",
     d: "futa",
     r: "rudisha",
+    up: 'pandisha'
   },
 };
 
