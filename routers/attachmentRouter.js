@@ -7,7 +7,7 @@ const db = require("../dbConnection");
 attachementRouter.post(
   "/upload-attachment",
   isAuth,
-  permission('create-attachments'),
+  permission('upload-attachments'),
   (req, res) => {
     const {user} = req;
     const {keyString , trackerId , attachment , kiambatisho} = req.body
