@@ -38,12 +38,12 @@ sajiliBinafsiRequestRouter.post(
                       WHERE  application_category_id = 4 AND applications.registry_type_id <> 3 
                             AND payment_status_id = 2
                             AND is_complete = 1
-                        ${
-                          ["pending", ""].includes(status) ||
-                          user.ngazi.toLowerCase() != "wizara"
-                            ? selectConditionByTitle(user, false, false, status)
-                            : ""
-                        } ${sqlStatus}
+                            ${
+                              ["pending", ""].includes(status) ||
+                              user.ngazi.toLowerCase() != "wizara"
+                                ? selectConditionByTitle(user, false, false, status)
+                                : ""
+                            } ${sqlStatus}
                         ORDER BY applications.created_at DESC`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
