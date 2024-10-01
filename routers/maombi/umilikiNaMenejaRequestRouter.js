@@ -135,7 +135,7 @@ umilikiNaMenejaRequestRouter.post(
       LEFT JOIN streets s ON s.StreetCode = managers.street
       LEFT JOIN districts d ON d.LgaCode = w.LgaCode
       LEFT JOIN regions r ON r.RegionCode = d.RegionCode
-      WHERE  application_category_id = 2 AND applications.tracking_number = ?`,
+      WHERE  application_category_id = 2 AND applications.tracking_number = ? AND is_complete = 1`,
       [trackingNumber],
       function (error, results) {
         if (error) {
