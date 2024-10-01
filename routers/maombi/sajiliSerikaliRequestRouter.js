@@ -356,8 +356,6 @@ sajiliSerikaliRequestRouter.post(
                           LgaNameMtu: "",
                           RegionNameMtu: "",
                         });
-
-                        console.log(objStaffs);
                         return res.send({
                           error: false,
                           statusCode: 300,
