@@ -60,9 +60,11 @@ hierarchyRouter.post("/add_hierarchy", isAuth, (req, res, next) => {
             var data = [];
             var name = req.body.name
             var rank = req.body.rank
+            var overdue = Number(req.body.overdue)
             data.push([
                     name,
                     rank,
+                    overdue,
                     1
             ]);
             hierarchyModel.storeHierarchy(data , (error , success , result) => {
@@ -82,15 +84,17 @@ hierarchyRouter.put("/update_hierarchy/:id", isAuth, (req, res, next) => {
             var data = [];
             var name = req.body.name;
             var rank = req.body.rank
+            var overdue = Number(req.body.overdue)
             var status = req.body.status == "on" || req.body.status == 1 ? true : false ;
             var id = Number(req.params.id);
             data.push(
                 name,
                 rank,
+                overdue,
                 status,
                 id
             );
-    
+            console.log(req.body);
             hierarchyModel.updateHierarchy(data, (error , success , hierarchy) => {
                      return res.send({
                         success: success ? true : false,

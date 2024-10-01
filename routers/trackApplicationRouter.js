@@ -23,11 +23,16 @@ trackApplicationRouter.get(
         per_page,
         search_value,
         user,
-        (error, applications, numRows) => {
+        (error, applications, numRows , ovedue) => {
+          const data = applications.map((item) => ({
+            ...item,
+            overdue: item.status == 0 ? ovedue : item.overdue
+          }));
+          console.log(data)
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
-            data: applications,
+            data: data,
             numRows: numRows,
             message: error ? "Something went wrong." : "List of applications.",
           });

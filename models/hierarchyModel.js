@@ -4,7 +4,11 @@ module.exports = {
   //******** GET A LIST OF Hierarchies *******************************
   getAllHierarchies: (offset, per_page, is_paginated, rank_id, callback) => {
     const hierarchiesQuery = `SELECT v.id AS id,
-      v.rank_name as name, r.name as rank_name, v.status_id AS status, v.rank_level AS rank_level
+      v.rank_name as name, 
+      r.name as rank_name, 
+      v.status_id AS status, 
+      v.rank_level AS rank_level,
+      v.overdue AS overdue
       FROM vyeo v
       LEFT JOIN ranks r ON v.rank_level = r.id 
       ${is_paginated ? "" : " WHERE v.status_id = 1"} ${
@@ -67,7 +71,7 @@ module.exports = {
   storeHierarchy: (HierarchyData, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO vyeo (rank_name  , rank_level , status_id) VALUES ?`,
+      `INSERT INTO vyeo (rank_name  , rank_level , overdue , status_id) VALUES ?`,
       [HierarchyData],
       (error, result) => {
         if (error) {
@@ -102,7 +106,7 @@ module.exports = {
   updateHierarchy: (hierarchyData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  vyeo SET rank_name = ? , rank_level = ? , status_id = ?  WHERE id = ?`,
+      `UPDATE  vyeo SET rank_name = ? , rank_level = ?, overdue = ? , status_id = ?  WHERE id = ?`,
       hierarchyData,
       (error, hierarchy, fields) => {
         if (error) {

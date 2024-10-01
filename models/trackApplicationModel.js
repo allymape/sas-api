@@ -47,7 +47,7 @@ module.exports = {
     db.query(
       `SELECT a.tracking_number AS tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
               UPPER(school_name) AS school_name,category,title, region_name , district_name,ward_name,street_name,zone_name,
-              status, payment_status, a.payment_status_id AS payment_status_id,v.rank_level AS ngazi, registry
+              status, v.overdue AS overdue, payment_status, a.payment_status_id AS payment_status_id,v.rank_level AS ngazi, registry
               ${sql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
@@ -61,8 +61,15 @@ module.exports = {
               error = error2;
               console.log(error);
             }
+            db.query(`SELECT overdue FROM vyeo WHERE UPPER(rank_name) = 'W1'`, (error3, vyeo) => {
+              error3 ? console.log(error3) : "";
+              var overdue = 1;
+              if(vyeo.length > 0){
+                overdue = vyeo[0].overdue;
+              }
+              callback(error, applications, result2[0].num_rows , overdue);
+            });
             // console.log(applications);
-            callback(error, applications, result2[0].num_rows);
           }
         );
       }

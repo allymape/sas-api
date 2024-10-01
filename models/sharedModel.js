@@ -755,8 +755,12 @@ module.exports = {
               user_to = staff[0].id;
             }
 
-            if (user.cheo != "ke" && !user_to && haliombi != 4) {
-              console.log("Kuna shida");
+            if (
+              (user.cheo != "ke" || user.cheo != "kke") &&
+              !user_to &&
+              haliombi != 4
+            ) {
+              console.log("Kuna shida hakuna id ya staff wa kutumiwa");
               callback(success);
             } else {
               console.log(`inatumwa kwa ${haliombi == 4 ? "Mwombaji" : staff}`);
@@ -789,10 +793,10 @@ module.exports = {
                     db.query(
                       "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
                       [
-                        user_to,
+                        haliombi == 4 ? null : user_to,
                         0,
                         haliombi,
-                        haliombi > 1 ? user.id : null,
+                        haliombi > 1 && haliombi < 4 ? user.id : null,
                         today,
                         trackerId,
                       ],
