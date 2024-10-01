@@ -1314,7 +1314,7 @@ module.exports = {
     callback
   ) => {
     const is_complete = `${
-      application_category == 1 ? "AND a.is_complete IN (1)" : ""
+      [1,4].includes(application_category) ? "AND a.is_complete IN (1)" : ""
     }`;
     const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a

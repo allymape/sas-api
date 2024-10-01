@@ -42,7 +42,10 @@ sajiliSerikaliRequestRouter.post(
                       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
                       LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
                       LEFT JOIN regions ON  regions.RegionCode = districts.RegionCode
-                      WHERE application_category_id = 4 AND applications.registry_type_id = 3 AND (payment_status_id = 2)
+                      WHERE application_category_id = 4 AND 
+                            applications.registry_type_id = 3 AND 
+                            payment_status_id = 2 AND 
+                            is_complete = 1
                     ${
                       ["pending", ""].includes(status) ||
                       user.ngazi.toLowerCase() != "wizara"
