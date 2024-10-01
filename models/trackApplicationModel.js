@@ -7,7 +7,7 @@ module.exports = {
     var queryParams = [];
     const { sehemu, zone_id, district_code } = user;
     if (search_value) {
-      searchQuery += ` AND (tracking_number LIKE ? OR 
+      searchQuery += ` AND (a.tracking_number LIKE ? OR 
                             school_name LIKE ? OR 
                             application_category LIKE ? OR
                             category LIKE ? OR
@@ -33,7 +33,8 @@ module.exports = {
                       LEFT JOIN staffs s ON s.id = a.staff_id 
                       LEFT JOIN roles r ON r.id = s.user_level
                       LEFT JOIN vyeo v ON v.id = r.vyeoId
-                      WHERE 1=1
+                      JOIN applications app ON app.tracking_number = a.tracking_number
+                      WHERE 1=1 AND app.is_complete = 1
                       ${sehemu == "k1" ? "AND a.zone_id = " + zone_id : ""}
                       ${
                         sehemu == "w1"
@@ -44,14 +45,14 @@ module.exports = {
                       ORDER BY submitted_created_at DESC`;
 
     db.query(
-      `SELECT tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
+      `SELECT a.tracking_number AS tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
               UPPER(school_name) AS school_name,category,title, region_name , district_name,ward_name,street_name,zone_name,
-              status, payment_status, payment_status_id,v.rank_level AS ngazi, registry
+              status, payment_status, a.payment_status_id AS payment_status_id,v.rank_level AS ngazi, registry
               ${sql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, applications) => {
-        if(error) console.log(error)
+        if (error) console.log(error);
         db.query(
           `SELECT COUNT(*) AS num_rows  ${sql}`,
           queryParams,
