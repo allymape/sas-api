@@ -62,7 +62,7 @@ module.exports = {
                     JOIN establishing_schools e ON e.id = s.establishing_school_id
                     ${commonJoin} 
                     ${sqlWhere}
-                    AND a.application_category_id = 4`,
+                    AND a.application_category_id = 4 AND is_complete = 1`,
                   (error, kusajili) => {
                     if (error) console.log(error);
                     notificationArrayData(kusajili, (x) => {
@@ -131,21 +131,6 @@ module.exports = {
                                                       Number(new Date(objB.created_at)) -
                                                       Number(new Date(objA.created_at))
                                                   );
-                                                  // find today messages
-                                                  // const today = formatDate(
-                                                  //   new Date()
-                                                  // );
-                                                  
-                                                  // const todayData = data.filter((item) => {
-                                                  //   const itemDate = new Date(item.created_at);
-                                                  //  console.log(today)
-                                                  //   return (
-                                                  //     itemDate.getDay() === today.getDay() && 
-                                                  //     itemDate.getMonth() === today.getMonth() &&
-                                                  //     itemDate.getFullYear() == today.getFullYear
-                                                  //   )
-                                                  // })
-                                                  // console.log(sortedDataDesc)
                                                   callback(sortedDataDesc, data.length);
                                                 }
                                               );
