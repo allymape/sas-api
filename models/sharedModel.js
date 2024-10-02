@@ -776,12 +776,12 @@ module.exports = {
               db.query(
                 `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , type_of_comment, created_at) VALUES 
                 (
-                  ${db.escape(trackerId)}, 
-                  ${db.escape(from_user)}, 
-                  ${db.escape(user_to)}, 
-                  ${db.escape(coments)}, 
-                  '${user.cheo}', 
-                  ${db.escape(replyType)}, 
+                  ${db.escape(trackerId)},
+                  ${db.escape(from_user)},
+                  ${haliombi == 4 ? null : db.escape(user_to)},
+                  ${db.escape(coments)},
+                  '${user.cheo}',
+                  ${db.escape(replyType)},
                   ${db.escape(today)}
                 )`,
                 function (error, results) {
