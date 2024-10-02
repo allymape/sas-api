@@ -28,7 +28,6 @@ trackApplicationRouter.get(
             ...item,
             overdue: item.status == 0 ? ovedue : item.overdue
           }));
-          console.log(data)
           return res.send({
             error: error ? true : false,
             statusCode: error ? 306 : 300,
