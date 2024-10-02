@@ -24,9 +24,11 @@ trackApplicationRouter.get(
         search_value,
         user,
         (error, applications, numRows , ovedue) => {
+
           const data = applications.map((item) => ({
             ...item,
-            overdue: item.status == 0 ? ovedue : item.overdue
+            overdue: item.status == 0 ? ovedue : item.overdue,
+            office : user.office
           }));
           return res.send({
             error: error ? true : false,

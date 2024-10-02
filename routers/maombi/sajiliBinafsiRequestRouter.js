@@ -259,8 +259,7 @@ sajiliBinafsiRequestRouter.post(
                   objMess.push({ coments: coments });
                 }
               }
-            }
-          );
+            });
           db.query(
             `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
                         s.name as name, phone_no, r.name as role_name 

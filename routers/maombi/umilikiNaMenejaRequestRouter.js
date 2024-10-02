@@ -30,7 +30,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
       INNER JOIN wards ON wards.WardCode = establishing_schools.ward_id
       INNER JOIN districts ON districts.LgaCode = wards.LgaCode 
       INNER JOIN regions ON  regions.RegionCode = districts.RegionCode 
-      WHERE application_category_id = 2 AND payment_status_id = 2 ${
+      WHERE application_category_id = 2 AND is_complete = 1 AND payment_status_id = 2 ${
         ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
           ? selectConditionByTitle(user, false, false, status)
           : ""
@@ -42,13 +42,13 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
     sharedModel.paginate(sqlRows , sqlCount , function (error, results , numRows) {
         if (error) {
           console.log(error);
-          return res.send({
-            error: true,
-            statusCode: 300,
-            dataList: [],
-            dataSummary: null,
-            message: "List of maombi kuanzisha shule.",
-          });
+          // return res.send({
+          //   error: true,
+          //   statusCode: 300,
+          //   dataList: [],
+          //   dataSummary: null,
+          //   message: "List of maombi kuanzisha shule.",
+          // });
         }
         
         for (var i = 0; i < results.length; i++) {
@@ -253,7 +253,7 @@ umilikiNaMenejaRequestRouter.post(
           );
           sharedModel.getAttachments(trackingNumber, (attachments) => {
             objAttachment1 = attachments;
-            console.log(objAttachment1);
+            // console.log(objAttachment1);
 
             db.query(
               `SELECT * 

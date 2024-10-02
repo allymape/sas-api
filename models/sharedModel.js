@@ -237,10 +237,15 @@ module.exports = {
   myMaoni: (tracking_number, callback) => {
     const obj = [];
     db.query(
-      `SELECT staffs.name AS name, coments, maoni.created_at as created_at, UPPER(IFNULL(maoni.title , roles.name)) AS cheo 
+      `SELECT s1.name AS name, coments, s2.name AS name_to,
+          maoni.created_at as created_at, 
+          UPPER(IFNULL(maoni.title , r1.name)) AS cheo,
+          UPPER(r2.name) AS cheo_to
       FROM maoni 
-      JOIN staffs ON staffs.id = maoni.user_from
-      JOIN roles ON roles.id = staffs.user_level
+      JOIN staffs s1 ON s1.id = maoni.user_from
+      LEFT JOIN staffs s2 ON s2.id = maoni.user_to
+      JOIN roles r1 ON r1.id = s1.user_level
+      JOIN roles r2 ON r2.id = s2.user_level
       WHERE  trackingNo = ?
       ORDER BY maoni.id DESC`,
       [tracking_number],
@@ -251,16 +256,20 @@ module.exports = {
 
         for (var i = 0; i < results.length; i++) {
           var name = results[i].name;
+          var name_to = results[i].name_to;
           var coments = results[i].coments;
           var maoniTime = results[i].created_at;
           var rank_name = results[i].cheo;
+          var rank_name_to = results[i].cheo_to;
           // console.log(maoniTime)
           // maoniTime = dateandtime.format(maoniTime, "DD/MM/YYYY hh:mm:ss");
           obj.push({
             name: name,
+            name_to: name_to,
             coments: coments,
             created_at: maoniTime,
             rank_name: rank_name,
+            rank_name_to: rank_name_to,
           });
         }
         callback(obj);
