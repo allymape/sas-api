@@ -141,17 +141,17 @@ module.exports = {
       }
     );
   },
-  getLevels : (callback) => {
-     db.query(
-       `SELECT vyeo.id as id, vyeo.rank_name as name 
+  getLevels: (callback) => {
+    db.query(
+      `SELECT vyeo.id as id, vyeo.rank_name as name 
           FROM vyeo where status_id = 1`,
-       (error2, levels) => {
-         if (error2) {
-           console.log(error2);
-         }
-          callback(levels);
-       }
-     );
+      (error2, levels) => {
+        if (error2) {
+          console.log(error2);
+        }
+        callback(levels);
+      }
+    );
   },
   getSectNames: (callback) => {
     db.query(`SELECT id, word AS name FROM sect_names`, (error, sect_names) => {
@@ -162,17 +162,30 @@ module.exports = {
     });
   },
   getCertificates: (callback) => {
-    db.query(`SELECT id, certificate AS name FROM certificate_types`, (error, certificate_types) => {
-      if (error) {
-        console.log("Can't get certificate_types due to ", error);
+    db.query(
+      `SELECT id, certificate AS name FROM certificate_types`,
+      (error, certificate_types) => {
+        if (error) {
+          console.log("Can't get certificate_types due to ", error);
+        }
+        callback(certificate_types);
       }
-      callback(certificate_types);
-    });
+    );
   },
-  myStaffs: (user, callback , application_category_id = 0 , zone_id = 0 , district_code = null) => {
+  myStaffs: (
+    user,
+    callback,
+    application_category_id = 0,
+    zone_id = 0,
+    district_code = null
+  ) => {
     const objStaffs = [];
     // Find previous boss who attended this request
-    module.exports.getPreviousStaff(application_category_id,user,zone_id, district_code,
+    module.exports.getPreviousStaff(
+      application_category_id,
+      user,
+      zone_id,
+      district_code,
       (previous_office_boss) => {
         db.query(
           `(SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name 
@@ -207,32 +220,48 @@ module.exports = {
       }
     );
   },
-    //
-  getPreviousStaff : (application_category_id , user , zone_id , district_code, callback) =>{
-    const {section_id , cheo} = user;
-    db.query(`SELECT r.id AS id , rank_level
+  //
+  getPreviousStaff: (
+    application_category_id,
+    user,
+    zone_id,
+    district_code,
+    callback
+  ) => {
+    const { section_id, cheo } = user;
+    db.query(
+      `SELECT r.id AS id , rank_level
               FROM work_flow w
               JOIN vyeo v ON v.id = w.start_from
               JOIN roles r ON r.vyeoId = v.id
               WHERE LOWER(r.name) = LOWER(rank_name) AND end_to = ? AND application_category_id = ?
-              LIMIT 1`, [section_id , application_category_id] , (err , result) =>{
-                if(err) console.log(err)
-                  if(result.length > 0 && 
-                    (district_code || zone_id) && 
-                    (cheo == 'adsa' || cheo == 'kadsa' || cheo == "mus" || cheo == 'kmus')){
-                    const {id , rank_level} = result[0]
-                    const sql = `UNION (SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name
+              LIMIT 1`,
+      [section_id, application_category_id],
+      (err, result) => {
+        if (err) console.log(err);
+        if (
+          result.length > 0 &&
+          (district_code || zone_id) &&
+          (cheo == "adsa" || cheo == "kadsa" || cheo == "mus" || cheo == "kmus")
+        ) {
+          const { id, rank_level } = result[0];
+          const sql = `UNION (SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name
                                   FROM staffs s
                                   JOIN roles r ON r.id = s.user_level
                                   JOIN vyeo v ON v.id = r.vyeoId
                                   WHERE s.user_status = 1 AND user_level = ${id} AND 
-                                  ${rank_level == 3 ? 'district_code="'+district_code+'"' : 'zone_id='+zone_id }
+                                  ${
+                                    rank_level == 3
+                                      ? 'district_code="' + district_code + '"'
+                                      : "zone_id=" + zone_id
+                                  }
                                 )`;
-                    callback(sql);
-                  }else{
-                    callback('')
-                  }
-              })
+          callback(sql);
+        } else {
+          callback("");
+        }
+      }
+    );
   },
   myMaoni: (tracking_number, callback) => {
     const obj = [];
@@ -697,16 +726,24 @@ module.exports = {
             }
           );
         }
-        callback(obj, objAttachment, objAttachment1, objAttachment2, objMess , results);
+        callback(
+          obj,
+          objAttachment,
+          objAttachment1,
+          objAttachment2,
+          objMess,
+          results
+        );
       }
     );
   },
 
   // Business Flow base on application category
-  getMyNextBoss: (user, application_category, staff_id, callback) => {
+  getMyNextBoss: (haliombi , user, application_category, staff_id, callback) => {
     var str = (str = ` AND s.id < -1`);
-    const { cheo_office, zone_id, ngazi } = user;
-    if (staff_id == 0 || staff_id == "" || staff_id == null) {
+    const { cheo_office, zone_id } = user;
+
+    if (haliombi != 4 && (staff_id == 0 || staff_id == "" || staff_id == null)) {
       db.query(
         `SELECT LOWER(rank_name) AS rank_name , rank_level
           FROM work_flow w
@@ -718,7 +755,9 @@ module.exports = {
           if (error) console.log(error);
           if (result.length == 1) {
             const { rank_name, rank_level } = result[0];
-            str = ` AND LOWER(r.name) =  '${rank_name}' AND s.zone_id ${rank_level == 1 ? " IS NULL" : " = " + zone_id}`;
+            str = ` AND LOWER(r.name) =  '${rank_name}' AND s.zone_id ${
+              rank_level == 1 ? " IS NULL" : " = " + zone_id
+            }`;
           }
           callback(str);
         }
@@ -742,7 +781,9 @@ module.exports = {
     } = req.body;
     const userTo = staffs == "#" || staffs == "" ? 0 : Number(staffs);
     const staff_id = userTo == 0 ? null : userTo;
+
     module.exports.getMyNextBoss(
+      haliombi,
       user,
       application_category,
       staff_id,
@@ -773,6 +814,8 @@ module.exports = {
               callback(success);
             } else {
               console.log(`inatumwa kwa ${haliombi == 4 ? "Mwombaji" : staff}`);
+              // console.log(haliombi, user_to);
+              // return haliombi;
               db.query(
                 `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , type_of_comment, created_at) VALUES 
                 (
@@ -781,7 +824,7 @@ module.exports = {
                   ${haliombi == 4 ? null : db.escape(user_to)},
                   ${db.escape(coments)},
                   '${user.cheo}',
-                  ${db.escape(replyType)},
+                  ${db.escape(haliombi)},
                   ${db.escape(today)}
                 )`,
                 function (error, results) {
@@ -1327,7 +1370,9 @@ module.exports = {
     callback
   ) => {
     const is_complete = `${
-      [1,2,4].includes(Number(application_category)) ? "AND a.is_complete IN (1)" : ""
+      [1, 2, 4].includes(Number(application_category))
+        ? "AND a.is_complete IN (1)"
+        : ""
     }`;
     const sql = `SELECT COUNT(*) AS num_rows 
                     FROM applications a
