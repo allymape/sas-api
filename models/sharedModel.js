@@ -245,7 +245,7 @@ module.exports = {
       JOIN staffs s1 ON s1.id = maoni.user_from
       LEFT JOIN staffs s2 ON s2.id = maoni.user_to
       JOIN roles r1 ON r1.id = s1.user_level
-      JOIN roles r2 ON r2.id = s2.user_level
+      LEFT JOIN roles r2 ON r2.id = s2.user_level
       WHERE  trackingNo = ?
       ORDER BY maoni.id DESC`,
       [tracking_number],
