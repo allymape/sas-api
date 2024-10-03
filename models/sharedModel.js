@@ -845,7 +845,7 @@ module.exports = {
                     db.query(
                       "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
                       [
-                        haliombi == 4 ? null : user_to,
+                        [2, 3, 4].includes(Number(haliombi)) ? null : user_to,
                         0,
                         haliombi,
                         haliombi > 1 && haliombi < 4 ? user.id : null,

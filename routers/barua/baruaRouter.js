@@ -47,10 +47,10 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                    LEFT JOIN roles r ON r.id = u.user_level
                                    ${
                                      registry_type == 1
-                                       ? `LEFT JOIN personal_infos p ON p.secure_token = a.foreign_token
+                                       ? `JOIN personal_infos p ON p.secure_token = a.foreign_token
                                           LEFT JOIN administration_areas_view aav ON aav.ward_code = p.ward_id`
                                        : registry_type == 2
-                                       ? `LEFT JOIN institute_infos i ON i.secure_token = a.foreign_token
+                                       ? `JOIN institute_infos i ON i.secure_token = a.foreign_token
                                           LEFT JOIN administration_areas_view aav ON aav.ward_code = i.ward_id`
                                        : `LEFT JOIN administration_areas_view aav ON aav.ward_code = e.ward_id`
                                    }
