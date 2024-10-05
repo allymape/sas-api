@@ -75,34 +75,33 @@ module.exports = {
   },
 
   //******** DELETE BIAS *******************************
-  deleteBias: (id, callback) => {
+  deleteRestoreBias: (id, callback) => {
     var success = false;
     db.query(
-      `SELECT COUNT(*) AS num_rows 
-       FROM vyeo v 
-       WHERE v.rank_level = ?`,
+      `SELECT status_id  
+       FROM school_specializations
+       WHERE id = ?`,
       [id],
       (error, result) => {
         if (error) {
           console.log(error);
         }
-        var numRows = result[0].num_rows;
-        console.log(numRows , id);
-        if (numRows > 0) {
-          callback(error, success, null);
+        if (result.length == 0) {
+          callback(false);
         } else {
+          var status_id = result[0].status_id;
           db.query(
-            `UPDATE ranks SET status_id = 0  WHERE id = ?`,
+            `UPDATE school_specializations SET status_id = ${status_id == 1 ? 0 : 1}  WHERE id = ?`,
             [id],
             (error2, deletedBias) => {
               if (error2) {
                 console.log(error2);
-                error = error2 
+                error = error2;
               }
               if (deletedBias.affectedRows > 0) {
                 success = true;
               }
-              callback(error, success, deletedBias);
+              callback(success);
             }
           );
         }

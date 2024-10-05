@@ -85,14 +85,15 @@ combinationRouter.put("/updateCombination/:id", isAuth, (req, res, next) => {
 });
 
 // Store combination
-combinationRouter.put("/deleteCombination/:id", isAuth, (req, res, next) => {
+combinationRouter.put("/deleteCombination/:id", isAuth, (req, res) => {
             var id = Number(req.params.id);
-            combinationModel.deleteCombination(id , (error , success , combination) => {
+            console.log(id)
+            combinationModel.deleteRestoreCombination(id , (error , success , combination) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? combination : [],
-                        message: success ? "Umefanikiwa kufuta Ngazi." : 'Haujafanikiwa kufuta kuna Tatizo, Tafadhali hakiki kama Ngazi hii haijatumika kwanza',
+                        message: success ? "Umefanikiwa kubadili hali ya Tahasusi." : 'Haujafanikiwa kubadili hali ya Tahasusi.',
                      });
                     
             });

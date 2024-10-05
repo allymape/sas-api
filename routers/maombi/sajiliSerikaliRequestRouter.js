@@ -52,7 +52,7 @@ sajiliSerikaliRequestRouter.post(
                         ? selectConditionByTitle(user, false, false, status)
                         : ""
                     }  ${sqlStatus}
-                    ORDER BY applications.created_at DESC `;
+                    ORDER BY applications.id DESC `;
 
         sharedModel.paginate(
           ` SELECT school_categories.category as schoolCategory, registration_number, applications.tracking_number as tracking_number, 

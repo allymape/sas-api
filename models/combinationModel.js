@@ -5,7 +5,7 @@ module.exports = {
   getAllCombinations: (offset, per_page, is_paginated, callback) => {
     //  console.log(is_paginated);
     db.query(
-      `SELECT specialization, school_specialization_id, combination, c.id as comb_id 
+      `SELECT specialization, school_specialization_id, combination, c.id as comb_id, c.status_id AS status_id 
       FROM combinations c 
       JOIN school_specializations s ON s.id = c.school_specialization_id
         ${is_paginated ? " " : " WHERE c.status_id = 1 "} 
@@ -87,34 +87,34 @@ module.exports = {
   },
 
   //******** DELETE COMBINATION *******************************
-  deleteCombination: (id, callback) => {
+  deleteRestoreCombination: (id, callback) => {
     var success = false;
     db.query(
-      `SELECT COUNT(*) AS num_rows 
-       FROM vyeo v 
-       WHERE v.rank_level = ?`,
+      `SELECT  status_id 
+       FROM combinations 
+       WHERE id = ?`,
       [id],
       (error, result) => {
         if (error) {
           console.log(error);
         }
-        var numRows = result[0].num_rows;
-        console.log(numRows, id);
-        if (numRows > 0) {
-          callback(error, success, null);
+       
+        if (result.length == 0) {
+          callback(true, false, null);
         } else {
+           var status_id = result[0].status_id;
           db.query(
-            `UPDATE ranks SET status_id = 0  WHERE id = ?`,
+            `UPDATE combinations SET status_id = ${status_id == 1 ? 0 : 1}  WHERE id = ?`,
             [id],
-            (error2, deletedCombination) => {
+            (error2, updatedCombination) => {
               if (error2) {
                 console.log(error2);
                 error = error2;
               }
-              if (deletedCombination.affectedRows > 0) {
+              if (updatedCombination.affectedRows > 0) {
                 success = true;
               }
-              callback(error, success, deletedCombination);
+              callback(error, success, updatedCombination);
             }
           );
         }

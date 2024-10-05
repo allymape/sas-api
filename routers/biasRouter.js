@@ -81,14 +81,16 @@ biasRouter.put("/updateBias/:id", isAuth, (req, res, next) => {
 });
 
 // Store bias
-biasRouter.put("/deleteCombination/:id", isAuth, (req, res, next) => {
+biasRouter.put("/deleteBias/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
-            biasModel.deleteCombination(id , (error , success , bias) => {
+            biasModel.deleteRestoreBias(id , (success) => {
                      return res.send({
-                        success: success ? true : false,
-                        statusCode: success ? 300 : 306,
-                        data: success ? bias : [],
-                        message: success ? "Umefanikiwa kufuta Michepuo." : 'Haujafanikiwa kufuta kuna Tatizo, Tafadhali hakiki kama Michepuo hii haijatumika kwanza',
+                       success: success ? true : false,
+                       statusCode: success ? 300 : 306,
+                       data: [],
+                       message: success
+                         ? "Umefanikiwa kubadili hali ya Mchepuo."
+                         : "Haujafanikiwa kubadili hali ya Mchepuo",
                      });
                     
             });
