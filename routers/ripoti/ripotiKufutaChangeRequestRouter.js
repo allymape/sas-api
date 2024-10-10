@@ -80,7 +80,7 @@ ripotiKufutaChangeRequestRouter.get("/ripoti-kufuta-shule", isAuth, (req, res) =
                      ${from} ORDER BY approved_at DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
-          console.log(sqlRows)
+          // console.log(sqlRows)
           sharedModel.paginate(
             sqlRows,
             sqlCount,

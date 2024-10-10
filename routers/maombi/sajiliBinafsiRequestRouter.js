@@ -10,7 +10,6 @@ const sharedModel = require("../../models/sharedModel");
 sajiliBinafsiRequestRouter.post(
     "/maombi-usajili-shule", 
     isAuth, 
-    permission('view-school-owners-and-managers'), 
 (req, res) => {
     var obj = [];
     const user = req.user;
@@ -26,11 +25,12 @@ sajiliBinafsiRequestRouter.post(
                           applications.created_at as created_at, is_approved, applications.user_id as user_id,
                           applications.foreign_token as foreign_token, folio, 
                           establishing_schools.school_name as school_name, regions.RegionName as RegionName, 
-                          districts.LgaName as LgaName`;
+                          districts.LgaName as LgaName , wards.WardName AS WardName , streets.StreetName AS StreetName`;
 
     const sqlFrom = ` FROM school_registrations
                       JOIN applications ON school_registrations.tracking_number = applications.tracking_number 
                       JOIN establishing_schools ON school_registrations.establishing_school_id = establishing_schools.id 
+                      LEFT JOIN streets ON streets.StreetCode = establishing_schools.village_id
                       LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id
                       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
                       LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
@@ -49,7 +49,6 @@ sajiliBinafsiRequestRouter.post(
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     
     sharedModel.maombiSummaryByCategoryAndStatus(user , 4 , '(1,2)' , (summary) => {
-      
       sharedModel.paginate(sqlRows , sqlCount, function (error, results , numRows) {
           if (error) {
             console.log(error);
@@ -65,7 +64,8 @@ sajiliBinafsiRequestRouter.post(
             var school_name = results[i].school_name;
             var LgaName = results[i].LgaName;
             var RegionName = results[i].RegionName;
-            var RegionName = results[i].RegionName;
+            var WardName = results[i].WardName;
+            var StreetName = results[i].StreetName;
             var registry = results[i].registry;
             var registration_number = results[i].registration_number;
             var created_at = results[i].created_at;
@@ -74,6 +74,8 @@ sajiliBinafsiRequestRouter.post(
             obj.push({
               tracking_number: tracking_number,
               school_name: school_name,
+              StreetName: StreetName,
+              WardName: WardName,
               LgaName: LgaName,
               RegionName: RegionName,
               user_id: user_id,
@@ -105,7 +107,6 @@ sajiliBinafsiRequestRouter.post(
 sajiliBinafsiRequestRouter.post(
     "/view-ombi-kusajili-details",
     isAuth, 
-    permission('view-school-owners-and-managers'), 
     (req, res) => {
       var trackingNumber = req.body.TrackingNumber;
       const user = req.user;
@@ -148,6 +149,7 @@ sajiliBinafsiRequestRouter.post(
           applications.registry_type_id AS registry_type_id, applications.user_id AS user_id, stream,
           applications.foreign_token as foreign_token, 
           establishing_schools.school_name as school_name,
+          streets.StreetName as StreetName, 
           wards.WardName as WardName, 
           regions.RegionName as RegionName, 
           districts.LgaName as LgaName
@@ -157,6 +159,7 @@ sajiliBinafsiRequestRouter.post(
           LEFT JOIN school_gender_types ON school_gender_types.id = establishing_schools.school_gender_type_id 
           LEFT JOIN school_sub_categories ON school_sub_categories.id = establishing_schools.school_sub_category_id 
           LEFT JOIN registration_structures ON registration_structures.id = establishing_schools.registration_structure_id 
+          LEFT JOIN streets ON streets.StreetCode = establishing_schools.village_id
           LEFT JOIN wards ON wards.WardCode = establishing_schools.ward_id 
           LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
           LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
@@ -189,6 +192,8 @@ sajiliBinafsiRequestRouter.post(
             var school_name = results[0].school_name;
             var gender_type = results[0].gender_type;
             var application_category_id = results[0].application_category_id;
+            var WardName = results[0].WardName;
+            var StreetName = results[0].StreetName;
             var LgaName = results[0].LgaName;
             var reg_no = results[0].reg_no;
             var RegionName = results[0].RegionName;
@@ -259,7 +264,8 @@ sajiliBinafsiRequestRouter.post(
                   objMess.push({ coments: coments });
                 }
               }
-            });
+            }
+          );
           db.query(
             `SELECT r.id as vyeoId, s.id as userId, email, user_level, last_login, 
                         s.name as name, phone_no, r.name as role_name 
@@ -489,8 +495,8 @@ sajiliBinafsiRequestRouter.post(
                         numberOfTeachers: numberOfTeachers,
                         occupation: occupation,
                         Website: website,
-                        sharti : sharti,
-                        application_category_id:application_category_id,
+                        sharti: sharti,
+                        application_category_id: application_category_id,
                         teacherInformation: teacherInformation,
                         approved_at: approved_at,
                         lessons_and_courses: lessons_and_courses,
@@ -505,6 +511,7 @@ sajiliBinafsiRequestRouter.post(
                         school_size: school_size,
                         SeminaryValue: SeminaryValue,
                         area: area,
+                        StreetName: StreetName,
                         WardName: WardName,
                         structure: structure,
                         isSeminary: isSeminary,
