@@ -808,12 +808,24 @@ module.exports = {
             if (
               (user.cheo != "ke" || user.cheo != "kke") &&
               !user_to &&
-              haliombi != 4
+              [0,1].includes(Number(haliombi))
             ) {
               console.log("Kuna shida hakuna id ya staff wa kutumiwa");
               callback(success);
             } else {
-              console.log(`inatumwa kwa ${haliombi == 4 ? "Mwombaji" : staff}`);
+              if([0,1 , 4].includes(Number(haliombi))){
+                console.log(
+                  `inatumwa kwa ${
+                    haliombi == 4
+                      ? "Mwombaji"
+                      : staff.length > 0
+                      ? staff[0].name
+                      : ""
+                  }`
+                );
+              }else{
+                console.log(Number(haliombi) == 2 ? 'Ombi limethibitishwa' : (Number(haliombi) == 3) ? 'Ombi limekataliwa' : 'Ombi halijulikani limefanyiwa nini: haliombi ='+ haliombi)
+              }
               // console.log(haliombi, user_to);
               // return haliombi;
               db.query(
