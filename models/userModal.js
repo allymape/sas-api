@@ -11,7 +11,7 @@ module.exports = {
         const { username, password, clientIp, browser, device } = req.body;
         var message = "";
         //const userData = [];
-        console.log(clientIp);
+        // console.log(clientIp);
         db.query(
           `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
