@@ -267,10 +267,11 @@ module.exports = {
     const obj = [];
     db.query(
       `SELECT s1.name AS name, coments, s2.name AS name_to,
-          maoni.created_at as created_at, 
-          UPPER(IFNULL(maoni.title , r1.name)) AS cheo,
-          UPPER(r2.name) AS cheo_to, LOWER(title) AS title
-      FROM maoni 
+              maoni.created_at as created_at,
+              UPPER(IFNULL(maoni.title , r1.name)) AS cheo,
+              UPPER(r2.name) AS cheo_to,
+              LOWER(title) AS title
+      FROM maoni
       JOIN staffs s1 ON s1.id = maoni.user_from
       LEFT JOIN staffs s2 ON s2.id = maoni.user_to
       JOIN roles r1 ON r1.id = s1.user_level
