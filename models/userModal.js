@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate, formatIp } = require("../utils");
 const { lowerCase, upperCaseFirst } = require("text-case");
+const { use } = require("../routers/userRouter");
 
 module.exports = {
   //******** USER LOGIN *******************************
@@ -132,7 +133,7 @@ module.exports = {
                 IFNULL(rank_level , '') as rank_level, IFNULL(rm.role_name , '') as role_name,
                 IFNULL(z.zone_name , '') as zone_name , rg.RegionName as region_name, IFNULL(d.LgaName , '') as 
                 lga_name , CASE WHEN s.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , 
-                s.user_status as user_status
+                s.user_status as user_status, is_password_changed
                 ${sql}
                 ${per_page > 0 ? "LIMIT ? , ?" : ""}`, 
                 per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
@@ -281,6 +282,9 @@ module.exports = {
             if(user.sign){ 
               userData.push(user.sign);
             }
+            if (user.has_to_change_password_changed) {
+              userData.push(0);
+            }
             userData.push(Number(userId));
     const email = userData[1];
     db.query(`SELECT id 
@@ -306,9 +310,10 @@ module.exports = {
             if (err) console.log(err);
             if (result.length == 0) {
               db.query(
-                `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?,office = ?, 
+                `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?  ,office = ?, 
               new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
               ${user.sign ? ", signature = ?" : ""}
+              ${user.has_to_change_password_changed ? ", is_password_changed = ?" : ""}
               WHERE id = ?`,
                 userData,
                 (error, updatedUser) => {

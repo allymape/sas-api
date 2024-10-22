@@ -235,18 +235,22 @@ userRouter.post("/create-user", isAuth, (req, res, next) => {
 userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
   var userId = req.params.id;
   var userData = {
-              fullname: req.body.name,
-              username: req.body.username,
-              phoneNumber: req.body.phone,
-              email: req.body.email,
-              roleId: req.body.roleId,
-              password: req.body.password,
-              levelId: req.body.levelId,
-              lgas: req.body.lgas,
-              zone: req.body.zone,
-              region: req.body.region,
-              sign: req.body.selectedFile,
-        };
+    fullname: req.body.name,
+    username: req.body.username,
+    phoneNumber: req.body.phone,
+    email: req.body.email,
+    roleId: req.body.roleId,
+    password: req.body.password,
+    levelId: req.body.levelId,
+    lgas: req.body.lgas,
+    zone: req.body.zone,
+    region: req.body.region,
+    sign: req.body.selectedFile,
+  };
+
+  if (req.body.has_to_change_password_changed) {
+    userData.has_to_change_password_changed = true;
+  }
   userModal.updateUser(userId, userData, (success, user , duplicateCheo = false , emailExist = false) => {
     res.send({
       error: success ? false : true,
