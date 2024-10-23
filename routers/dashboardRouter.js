@@ -3,6 +3,7 @@ const express = require("express");
 const dashboardRouter = express.Router();
 const { isAuth, permission, formatDate } = require("../utils.js");
 const dashboardModel = require("../models/dashboardModel.js");
+const sharedModel = require("../models/sharedModel.js");
 
 //Summaries
 dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
@@ -18,6 +19,32 @@ dashboardRouter.get("/school-summaries" , isAuth , (req , res) => {
              });
     })
 
+});
+dashboardRouter.get("/dashboard-filters" , isAuth , (req , res) => {
+  const {user} = req;
+  sharedModel.getSchoolCategories((categories) => {
+    sharedModel.getSchoolOwnerships((ownerships) => {
+        sharedModel.getRegions(user , (regions) => {
+          res.send({
+            error: false,
+            statusCode: 300,
+            data: {categories , ownerships  , regions},
+            message: "Success",
+          });
+      })
+    })
+  })
+});
+dashboardRouter.get("/map-data", isAuth, (req, res) => {
+  console.log("Map Data")
+      dashboardModel.getMapData(req, (data) => {
+        return res.send({
+          error: data ? false : true,
+          statusCode: data ? 300 : 306,
+          data: data,
+          message: data ? "Success" : "Error",
+        });
+      });
 });
 dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res) => {
   const { user } = req;

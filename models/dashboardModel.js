@@ -8,7 +8,12 @@ module.exports = {
                                     COUNT(*) AS total
                                 FROM registered_schools_view sr
                                 WHERE sr.reg_status = 1
-                                ${filterByUserOffice(user, "AND" , 'sr.zone_id' , 'sr.district_code')}
+                                ${filterByUserOffice(
+                                  user,
+                                  "AND",
+                                  "sr.zone_id",
+                                  "sr.district_code"
+                                )}
                                 GROUP BY category , id
                                 ORDER BY id ASC`;
     db.query(summaryCategoriesSql, (error, summaryCategories) => {
@@ -107,11 +112,19 @@ module.exports = {
     // region means label (it can be region_name , lga_name, ward_name and street_name)
     // console.log('here again' , new Date())
     db.query(
-      `SELECT ${selectConditionByRanks(user , 'sr')} , sr.school_category_id AS category , 
+      `SELECT ${selectConditionByRanks(
+        user,
+        "sr"
+      )} , sr.school_category_id AS category , 
                 COUNT(*) AS school_count
                 FROM registered_schools_view sr
                 WHERE sr.reg_status = 1
-                ${filterByUserOffice(user, "AND" , 'sr.zone_id' , 'sr.district_code')}
+                ${filterByUserOffice(
+                  user,
+                  "AND",
+                  "sr.zone_id",
+                  "sr.district_code"
+                )}
                 GROUP BY label , sr.school_category_id
                 ORDER BY label ASC`,
       function (error, results) {
@@ -141,7 +154,7 @@ module.exports = {
           formattedResults[label].categories[category] += school_count;
         });
         // End
-          // console.log(formattedResults);
+        // console.log(formattedResults);
         var maxValue = 0;
         var minValue = 0;
         var initial = 0;
@@ -167,7 +180,12 @@ module.exports = {
     let sql = `SELECT IFNULL(YEAR(sr.registration_date) , 'NULL') AS label , COUNT(*) as total
                 FROM registered_schools_view sr
                 WHERE sr.reg_status = 1
-                ${filterByUserOffice(user, "AND" , 'sr.zone_id' , 'sr.district_code')}
+                ${filterByUserOffice(
+                  user,
+                  "AND",
+                  "sr.zone_id",
+                  "sr.district_code"
+                )}
                 GROUP BY label
                 ORDER BY label ASC
                 `;
@@ -190,6 +208,95 @@ module.exports = {
       callback(individual, cumulative);
     });
   },
+  getMapData: (req, callback) => {
+     const { user } = req;
+     var search = false
+     const {
+       southWestLat,
+       southWestLng,
+       northEastLat,
+       northEastLng,
+       zoom,
+       name_or_reg,
+       category,
+       ownership,
+       region,
+       district,
+       ward,
+       street
+     } = req.body;
+     
+     var sql = `SELECT *
+                  FROM school_locations_map_view
+                  WHERE latitude BETWEEN ? AND ?
+                  AND longitude BETWEEN ? AND ?
+                  ${filterByUserOffice(
+                    user,
+                    "AND",
+                    "zone_id",
+                    "district_code"
+                  )}
+                  `;
+    if (name_or_reg) {
+      sql += ` AND (name LIKE ? OR registration_number LIKE ?)`;
+      search = true;
+    }
+    if (category) {
+      sql += ` AND school_category_id = ?`;
+       search = true;
+    }
+    if (ownership) {
+      sql += ` AND registry_type_id = ?`;
+       search = true;
+    }
+    if (region) {
+      sql += ` AND region_code = ?`;
+       search = true;
+    }
+    if (district) {
+      sql += ` AND district_code = ?`;
+      search = true;
+    }
+    if (ward) {
+      sql += ` AND ward_code = ?`;
+      search = true;
+    }
+    if (street) {
+      sql += ` AND street_code = ?`;
+       search = true;
+    }
+    if (zoom < 6) {
+      sql = sql += ` LIMIT 500`;
+    }else if(zoom == 6){
+      sql = sql += ` LIMIT 1000`;
+    }
+    else {
+      sql = sql += ` LIMIT 2000`;
+    }
+    const queryParams = [
+      southWestLat,
+      northEastLat,
+      southWestLng,
+      northEastLng,
+      ...(name_or_reg ? [`%${name_or_reg}%`, `%${name_or_reg}%`] : []),
+      ...(category ? [category] : []),
+      ...(ownership ? [ownership] : []),
+      ...(region ? [region] : []),
+      ...(district ? [district] : []),
+      ...(ward ? [ward] : []),
+      ...(street ? [street] : []),
+    ];
+     db.query(
+       sql,
+       queryParams,
+       (error, data) => {
+         if (error) {
+           console.log(error);
+         }
+         callback(data);
+       }
+     );
+  }
 };
 
 
