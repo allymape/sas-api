@@ -279,7 +279,7 @@ module.exports = {
       northEastLat,
       southWestLng,
       northEastLng,
-      ...(name_or_reg ? [`%${name_or_reg}%`, `%${name_or_reg}%`] : []),
+      ...(name_or_reg ? [`%${name_or_reg}%`, `${name_or_reg}`] : []),
       ...(category ? [category] : []),
       ...(ownership ? [ownership] : []),
       ...(region ? [region] : []),
@@ -294,18 +294,19 @@ module.exports = {
          if (error) {
            console.log(error);
          }
+         console.log(data.length);
          callback(data);
        }
      );
   },
   updateMarker: (data, callback) => {
-    const { tracking_number, lat, lon } = data;
+    const { tracking_number, latitude, longitude } = data;
     db.query(
       `UPDATE establishing_schools es
        JOIN school_registrations sr ON sr.establishing_school_id = es.id
        SET latitude = ?, longitude = ? 
        WHERE sr.tracking_number = ?`,
-      [lat, lon, tracking_number],
+      [latitude, longitude, tracking_number],
       (error, result) => {
         if (error) {
           console.log(error);

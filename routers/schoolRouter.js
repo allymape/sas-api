@@ -239,6 +239,7 @@ schoolRouter.get(`/edit-school/:id` , (req , res) => {
 schoolRouter.put(`/update-school/:id` , (req , res) => {
     const tracking_number = req.params.id;
     const data = req.body;
+  
     if(validateRegistrationNumber(data.registration_number)){
         schoolModel.updateSchool(tracking_number , data , (error , message) => {
              if(!error){
@@ -284,7 +285,7 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
          admin_area_url,
          "schools"
        );
-       console.log(results)
+      //  console.log(results)
            if(results){
              //iterate through all datas received and store  to established_schools, applications and school_registrations  array
              for (let i = 0; i < results.length; i++) {

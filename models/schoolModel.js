@@ -49,6 +49,7 @@ module.exports = {
               sc.category AS category,
               IFNULL(school_opening_date , '') AS opening_date, 
               r.RegionName AS region, 
+              latitude,longitude,
               d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
@@ -208,7 +209,7 @@ module.exports = {
   // Edit School
   editSchool : (tracking_number , callback) => {
         db.query(
-          `SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category, 
+          `SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category,latitude,longitude, 
                   IFNULL(DATE(s.registration_date) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
@@ -228,7 +229,7 @@ module.exports = {
         );
   },
   updateSchool : (tracking_number , data , callback) => {
-    var {school_name , kata , mtaa, category ,registration_date, registration_number , ownership} = data;
+    var {school_name , kata , mtaa, category ,registration_date, registration_number , ownership , latitude , longitude} = data;
     var message = '';
     registration_number = registration_number.replace(/\s+/g,'');
     db.query(`SELECT id 
@@ -242,6 +243,8 @@ module.exports = {
                  const currentDate = formatDate(new Date());
                  const values = [
                    school_name,
+                   latitude ? parseFloat(latitude) : null,
+                   longitude ? parseFloat(longitude) : null,
                    kata,
                    mtaa,
                    category,
@@ -265,6 +268,8 @@ module.exports = {
                    `UPDATE  school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}
                   SET e.school_name = ?,
+                      e.latitude = ?,
+                      e.longitude = ?,
                       e.ward_id = ?,
                       e.village_id = ?,
                       e.school_category_id = ?,
