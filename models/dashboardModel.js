@@ -242,7 +242,7 @@ module.exports = {
       search = true;
     }
     if (category) {
-      sql += ` AND school_category_id = ?`;
+      sql += ` AND category_id = ?`;
        search = true;
     }
     if (ownership) {
