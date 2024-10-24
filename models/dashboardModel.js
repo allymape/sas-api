@@ -238,7 +238,7 @@ module.exports = {
                   )}
                   `;
     if (name_or_reg) {
-      sql += ` AND (name LIKE ? OR registration_number LIKE ?)`;
+      sql += ` AND (name LIKE ? OR registration_number = ?)`;
       search = true;
     }
     if (category) {
