@@ -266,12 +266,13 @@ module.exports = {
        search = true;
     }
     if (zoom < 6) {
+      sql = sql += ` LIMIT 40`;
+    }else if (zoom == 6) {
+      sql = sql += ` LIMIT 100`;
+    } else if (zoom > 6 && zoom < 10) {
       sql = sql += ` LIMIT 500`;
-    }else if(zoom == 6){
-      sql = sql += ` LIMIT 1000`;
-    }
-    else {
-      sql = sql += ` LIMIT 2000`;
+    } else {
+      sql = sql += `LIMIT 2000`;
     }
     const queryParams = [
       southWestLat,
@@ -296,6 +297,26 @@ module.exports = {
          callback(data);
        }
      );
+  },
+  updateMarker: (data, callback) => {
+    const { tracking_number, lat, lon } = data;
+    db.query(
+      `UPDATE establishing_schools es
+       JOIN school_registrations sr ON sr.establishing_school_id = es.id
+       SET latitude = ?, longitude = ? 
+       WHERE sr.tracking_number = ?`,
+      [lat, lon, tracking_number],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+        }
+        if(result.affectedRows > 0){
+          callback(true);
+        }else{
+          callback(false);
+        }
+      }
+    );
   }
 };
 

@@ -46,6 +46,14 @@ dashboardRouter.get("/map-data", isAuth, (req, res) => {
         });
       });
 });
+dashboardRouter.post("/update-marker", isAuth, permission('update-school-marker'), (req, res) => {
+  dashboardModel.updateMarker(req.body, (success) => {
+    return res.send({
+      statusCode: success ? 300 : 306,
+      message: success ? "Marker is updated successfully" : "Error, Please contact Administrator",
+    });
+  });
+});
 dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res) => {
   const { user } = req;
 
