@@ -212,51 +212,50 @@ const ObjectFuctions = {
       }
     );
   },
-  notifyMwombaji: (tracking_number , haliombi) => {
-           if ([2, 3, 4].includes(Number(haliombi))) {
-             db.query(
-               `SELECT u.name AS username, email, app_name 
+  notifyMwombaji: (tracking_number, haliombi) => {
+    if ([2, 3, 4].includes(Number(haliombi))) {
+      db.query(
+        `SELECT u.name AS username, email, app_name 
                 FROM applications a 
                 JOIN users u ON u.id = a.user_id
                 JOIN application_categories ac ON ac.id = a.application_category_id
                 WHERE a.tracking_number = ?`,
-               [tracking_number],
-               (error, applicant) => {
-                 if (error) console.log(error);
-                 if (applicant.length > 0) {
-                   let { email, app_name, username } = applicant[0];
-                   let link = `${
-                     process.env.FRONT_URL ||
-                     "http:localhost:" + process.env.HTTP_PORT
-                   }`;
-                   let htmlContent = notifyMwombajiOnComment(
-                     username,
-                     app_name,
-                     link,
-                     tracking_number,
-                     haliombi == 2
-                       ? "limekubaliwa"
-                       : haliombi == 3
-                       ? "limekataliwa"
-                       : haliombi == 4
-                       ? "limerudishwa"
-                       : ""
-                   );
-                   let mailOptions = ObjectFuctions.setMailOptions(
-                     email,
-                     "Notify",
-                     htmlContent
-                   );
-                   console.log(applicant);
-                   ObjectFuctions.sendEmail(mailOptions, (error, info) => {
-                     console.log("Message %s sent: %s", info, error);
-                   });
-                 }
-               }
-             );
-           } else {
-             console.log("Linaendelea kushugulikiwa ...");
-           }
+        [tracking_number],
+        (error, applicant) => {
+          if (error) console.log(error);
+          if (applicant.length > 0) {
+            let { email, app_name, username } = applicant[0];
+            let link = `${
+              process.env.FRONT_URL || "http:localhost:" + process.env.HTTP_PORT
+            }`;
+            let htmlContent = notifyMwombajiOnComment(
+              username,
+              app_name,
+              link,
+              tracking_number,
+              haliombi == 2
+                ? "limekubaliwa"
+                : haliombi == 3
+                ? "limekataliwa"
+                : haliombi == 4
+                ? "limerudishwa"
+                : ""
+            );
+            let mailOptions = ObjectFuctions.setMailOptions(
+              email,
+              "Notify",
+              htmlContent
+            );
+            console.log(applicant);
+            ObjectFuctions.sendEmail(mailOptions, (error, info) => {
+              console.log("Message %s sent: %s", info, error);
+            });
+          }
+        }
+      );
+    } else {
+      console.log("Linaendelea kushugulikiwa ...");
+    }
   },
   //Send Email
   sendEmail: (mailOptions, callback) => {
@@ -773,6 +772,85 @@ const ObjectFuctions = {
     console.log(category);
     return sqlJoin;
   },
+  auditMiddleware: (tableName = "", action = "create", messageText = "") => {
+    return (req, res, next) => {
+      const { user, body, url } = req;
+      const { id , user_level} = user;
+      const { clientInfo } = body;
+      delete body.clientInfo;
+      const { ip, browserInfo } = clientInfo;
+      const { os, browser, platform } = browserInfo;
+      const api_router = url;
+      const rollId = user_level;
+      const tableId = tableName;
+      const event_type = action == "create" ? "created" : "updated";
+      const message = messageText
+        ? messageText
+        : action == "create"
+        ? "Ameingiza taarifa mpya"
+        : "Amesasisha taarifa";
+      const new_body = action == "create" ? body : null;
+      const old_body = action == "update" ? body : null;
+      const user_id = id;
+      const ip_address = ObjectFuctions.formatIp(ip);
+      const browser_used = `${os} ${browser} ${platform}`;
+      ObjectFuctions.insertAudit(
+        user_id,
+        event_type,
+        new_body,
+        old_body,
+        api_router,
+        browser_used,
+        rollId,
+        message,
+        ip_address,
+        tableId
+      );
+      next();
+    };
+  },
+  insertAudit: (
+    user_id,
+    event_type,
+    new_body,
+    old_body,
+    api_router,
+    browser_used,
+    rollId,
+    message,
+    ip_address,
+    tableId
+  ) => {
+    db.query(
+      `INSERT INTO audit_trail (user_id, event_type, new_body,old_body, 
+        created_at, ip_address, api_router, browser_used, rollId, message, tableName)
+        VALUES (?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?)`,
+      [
+        user_id,
+        event_type,
+        new_body ? JSON.stringify(new_body) : null,
+        old_body ? JSON.stringify(old_body) : null,
+        new Date(),
+        ip_address,
+        api_router,
+        browser_used,
+        rollId,
+        message,
+        tableId,
+      ],
+      (err) => {
+        if (err) {
+          console.log(err);
+          return {
+            error: true,
+            statusCode: 400,
+            message: err,
+          };
+        }
+        return "sent";
+      }
+    );
+  },
   InsertAuditTrail: (
     user_id,
     event_type,
@@ -784,11 +862,10 @@ const ObjectFuctions = {
     ip_address,
     tableId
   ) => {
-    // console.log(JSON.stringify(new_body));
     db.query(
-      "INSERT INTO audit_trail (user_id, event_type, new_body, " +
-        "created_at, ip_address, api_router, browser_used, rollId, message, tableName) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      `INSERT INTO audit_trail (user_id, event_type, new_body, 
+        created_at, ip_address, api_router, browser_used, rollId, message, tableName)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user_id,
         event_type,
@@ -828,7 +905,6 @@ const ObjectFuctions = {
         module
       );
     }
-    console.log(req);
     if (action == "edit") {
       ObjectFuctions.UpdateAuditTrail(
         req.user.id,
@@ -850,9 +926,6 @@ const ObjectFuctions = {
     var hours = Math.floor((diffInSeconds / 60 / 60) % 24);
     var minutes = Math.floor((diffInSeconds / 60) % 60);
     var seconds = Math.floor(diffInSeconds % 60);
-    // var milliseconds = Math.round(
-    //   (diffInSeconds - Math.floor(diffInSeconds)) * 1000
-    // );
     var remain_days = null;
     if (days > 7) {
       remain_days = ObjectFuctions.formatDate(fromDate, "DD-MM-YYYY HH:mm:ss");

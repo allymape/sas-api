@@ -14,14 +14,14 @@ auditTrailRouter.get("/audit-trail",isAuth, permission('view-audit'), (req, res)
        var queryParams = [];
        if (search_value) {
          searchQuery += ` AND (
-                              staffs.name LIKE ? OR 
+                              s.name LIKE ? OR 
                               event_type LIKE ? OR 
                               ip_address LIKE ? OR 
                               old_body LIKE ? OR 
                               new_body LIKE ? OR 
                               tableName LIKE ? OR 
                               api_router LIKE ? OR 
-                              audit_trail.id LIKE ?)`;
+                              a.id LIKE ?)`;
          queryParams.push(
            `%${search_value}%`,
            `%${search_value}%`,
@@ -34,15 +34,16 @@ auditTrailRouter.get("/audit-trail",isAuth, permission('view-audit'), (req, res)
          );
        }
        const sqlFrom = `
-                  FROM audit_trail
-                  JOIN staffs ON audit_trail.user_id = staffs.id 
+                  FROM audit_trail a
+                  JOIN staffs s ON a.user_id = s.id 
+                  LEFT JOIN roles r ON r.id = s.user_level
                   WHERE 1=1 
                   ${searchQuery}
-                  ORDER BY audit_trail.id DESC`;
-       const sql_rows = `SELECT audit_trail.id as id, audit_trail.event_type as event_type, 
-                              audit_trail.created_at as created_at, audit_trail.ip_address as ip_address, 
-                              audit_trail.api_router as api_router, audit_trail.browser_used as browser_used, 
-                              audit_trail.message as message, name, rollId, tableName, old_body, new_body
+                  ORDER BY a.id DESC`;
+       const sql_rows = `SELECT a.id as id, a.event_type as event_type, 
+                              a.created_at as created_at, a.ip_address as ip_address, 
+                              a.api_router as api_router, a.browser_used as browser_used, 
+                              a.message as message, s.name AS name, r.name AS rollId, tableName, old_body, new_body
                           ${sqlFrom} 
                           LIMIT ?,?`;
         const sql_count = `SELECT COUNT(*) num_rows ${sqlFrom}`;

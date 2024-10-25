@@ -17,11 +17,17 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
   const search_value = req.body.search.value
   const type = req.body.aina !== undefined ? req.body.aina : null;
   const owner = req.body.umiliki !== undefined ? req.body.umiliki : null;
-  // const sign = req.body.sign;
+  const invalid_or_no_reg = req.body.invalid_or_no_reg !== undefined || req.body.invalid_or_no_reg != "" ? Number(req.body.invalid_or_no_reg) : null;
+  const geolocation = req.body.geolocation !== undefined || req.body.geolocation != "" ? Number(req.body.geolocation) : null;
+  const duplicate_reg = req.body.duplicate_reg !== undefined || req.body.duplicate_reg != "" ? Number(req.body.duplicate_reg): null;
+
   schoolModel.getAllSchools(offset, 
           per_page, 
-          type , 
-          owner , 
+          type, 
+          owner, 
+          invalid_or_no_reg,
+          geolocation,
+          duplicate_reg,
           search_value,
           (error, schools, numRows) => {
     return res.send({

@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const dashboardRouter = express.Router();
-const { isAuth, permission, formatDate } = require("../utils.js");
+const { isAuth, permission, formatDate, auditMiddleware } = require("../utils.js");
 const dashboardModel = require("../models/dashboardModel.js");
 const sharedModel = require("../models/sharedModel.js");
 
@@ -46,14 +46,23 @@ dashboardRouter.get("/map-data", isAuth, (req, res) => {
         });
       });
 });
-dashboardRouter.post("/update-marker", isAuth, permission('update-school-marker'), (req, res) => {
-  dashboardModel.updateMarker(req.body, (success) => {
-    return res.send({
-      statusCode: success ? 300 : 306,
-      message: success ? "Marker is updated successfully" : "Error, Please contact Administrator",
+dashboardRouter.post(
+  "/update-marker",
+  isAuth,
+  permission("update-school-marker"),
+  auditMiddleware("establishing_schools" , "update" , "Update School Marker"),
+  (req, res) => {
+    console.log(req.body);
+    dashboardModel.updateMarker(req.body, (success) => {
+      return res.send({
+        statusCode: success ? 300 : 306,
+        message: success
+          ? "Marker is updated successfully"
+          : "Error, Please contact Administrator",
+      });
     });
-  });
-});
+  }
+);
 dashboardRouter.get("/schools-summary-by-regions-and-categories", isAuth, (req, res) => {
   const { user } = req;
 
