@@ -423,6 +423,15 @@ const ObjectFuctions = {
       format
     );
   },
+  extractDateRange : (date_range) => {
+      const extract_date = date_range.split("to");
+      const start_date = extract_date.length == 2 ? ObjectFuctions.formatDate(extract_date[0], "YYYY-MM-DD") : ObjectFuctions.formatDate(date_range , "YYYY-MM-DD");
+      const end_date   = extract_date.length == 2 ? ObjectFuctions.formatDate(extract_date[1], "YYYY-MM-DD") : null;
+      return {
+              start_date , 
+              end_date
+            };
+  },
   initiliazeRolesAndPermissions: (userId, callback) => {
     let roles = [];
     let permissions = [];
