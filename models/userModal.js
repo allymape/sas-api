@@ -196,22 +196,34 @@ module.exports = {
    //******** CREATE USER *******************************
   createUser: (user , callback) => {
     var success = false;
+    const {
+      username,
+      email,
+      fullname,
+      levelId,
+      lgas,
+      zone,
+      region,
+      phoneNumber,
+      roleId,
+      password
+    } = user;
     var userData =
             [
               crypto
               .randomBytes(10)
               .toString("hex"),
-              lowerCase(user.username),
-              lowerCase(user.email),
-              user.levelId,
-              titleCase(user.fullname),
-              user.phoneNumber,
-              user.lgas ? user.lgas : user.zone ? user.zone : null,
-              user.roleId,
-              user.password,
-              user.zone ? user.zone : null,
-              user.region ? user.region : null,
-              user.lgas ? user.lgas : null,
+              username  ? lowerCase(username) : username,
+              email ? lowerCase(email) : email,
+              levelId,
+              fullname ? titleCase(fullname) : fullname,
+              phoneNumber,
+              lgas ? lgas : (zone ? zone : null),
+              roleId,
+              password,
+              zone ? zone : null,
+              region ? region : null,
+              lgas ? lgas : null,
               1,
               formatDate(new Date())
             ];

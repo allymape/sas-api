@@ -16,8 +16,9 @@ loginActivityRouter.post("/login-activity", isAuth, (req, res) => {
                        JOIN roles r ON r.id = s.user_level
                        LEFT JOIN districts d ON d.LgaCode = s.district_code
                        LEFT JOIN regions rg ON rg.RegionCode = s.region_code
+                       LEFT JOIN zones z ON z.id = s.zone_id
                        ORDER BY l.created_at DESC `;
-    const sql_rows = `SELECT s.name AS name , r.name AS title, d.LgaName AS council , rg.RegionName AS region, browser , ip , device , l.created_at AS created_at 
+    const sql_rows = `SELECT s.name AS name , r.name AS title, d.LgaName AS council , zone_name AS zone, rg.RegionName AS region, browser , ip , device , l.created_at AS created_at 
                       ${sqlTables}
                       LIMIT ?,?`;
     const  sql_count = `SELECT COUNT(*) AS num_rows 
