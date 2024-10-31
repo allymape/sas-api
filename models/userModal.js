@@ -97,7 +97,7 @@ module.exports = {
       );
     } catch (error) {
       console.log(error);
-      message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo.";
+      message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo...";
       callback(false, [], [], message);
     }
   },
