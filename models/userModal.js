@@ -1,20 +1,26 @@
 const db = require("../dbConnection");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { titleCase, hash, filterByUserOffice, staffCommonJoins, formatDate, formatIp } = require("../utils");
+const {
+  titleCase,
+  hash,
+  filterByUserOffice,
+  staffCommonJoins,
+  formatDate,
+  formatIp,
+} = require("../utils");
 const { lowerCase, upperCaseFirst } = require("text-case");
-const { use } = require("../routers/userRouter");
 
 module.exports = {
   //******** USER LOGIN *******************************
-  loginUser: (req , callback) => {
-      try {
-        const { username, password, clientIp, browser, device } = req.body;
-        var message = "";
-        //const userData = [];
-        // console.log(clientIp);
-        db.query(
-          `SELECT s.id as id, password, s.name as name, s.username as username, 
+  loginUser: (req, callback) => {
+    try {
+      const { username, password, clientIp, browser, device } = req.body;
+      var message = "";
+      //const userData = [];
+      // console.log(clientIp);
+      db.query(
+        `SELECT s.id as id, password, s.name as name, s.username as username, 
             s.phone_no as phone_no, s.user_status as user_status, s.last_login as last_login, 
             s.role_id as role_id, s.new_role_id as new_role_id, s.email as email, v.id AS section_id,
             rnk.name as ngazi, v.rank_name as sehemu, rm.role_name as jukumu,
@@ -32,71 +38,71 @@ module.exports = {
             LEFT JOIN ranks rnk ON rnk.id = v.rank_level
             LEFT JOIN zones z ON z.id = s.zone_id
             WHERE username = ? AND user_status = 1`,
-          [username],
-          (error, user) => {
-            if (error) {
-              console.log("Query Error: " , error , user);
-            }
-            if (user && user.length == 1) {
-              db.query(
-                `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
-                (error2, permissions) => {
-                  if (error2) {
-                    console.log(error2);
-                  }
-                  if (bcrypt.compareSync(password, user[0].password)) {
-                    console.log(`User found ${username}`);
-                    // console.log(permissions)
-                    message = "Logged in!";
-                    const login_datetime = formatDate(new Date());
-                    const user_id = user[0].id;
-                    db.query(
-                      `UPDATE staffs SET last_login = ? WHERE id = ?`,
-                      [login_datetime, user_id],
-                      (err) => {
-                        if (err) console.log(err);
-
-                        db.query(
-                          `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
-                          [
-                            [
-                              user_id,
-                              formatIp(clientIp),
-                              upperCaseFirst(device),
-                              browser,
-                              login_datetime,
-                              login_datetime,
-                            ],
-                          ]
-                        );
-                        callback(true, user, permissions, message);
-                      }
-                    );
-                    // return;
-                  } else {
-                    console.log(`Compare password for username ${username}`)
-                    message = "Wrong username or password.";
-                    callback(false, [], [], message);
-                    // return;
-                  }
-                }
-              );
-            } else {
-              console.log(`Username not found ${username}`);
-              message = "Wrong username or password.";
-              callback(false, [], [], message);
-              // return;
-            }
+        [username],
+        (error, user) => {
+          if (error) {
+            console.log("Query Error: ", error, user);
           }
-        );
-      } catch (error) {
-        console.log(error);
-        message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo.";
-        callback(false, [], [], message);
-      }
+          if (user && user.length == 1) {
+            db.query(
+              `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
+              (error2, permissions) => {
+                if (error2) {
+                  console.log(error2);
+                }
+                if (bcrypt.compareSync(password, user[0].password)) {
+                  console.log(`User found ${username}`);
+                  // console.log(permissions)
+                  message = "Logged in!";
+                  const login_datetime = formatDate(new Date());
+                  const user_id = user[0].id;
+                  db.query(
+                    `UPDATE staffs SET last_login = ? WHERE id = ?`,
+                    [login_datetime, user_id],
+                    (err) => {
+                      if (err) console.log(err);
+
+                      db.query(
+                        `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
+                        [
+                          [
+                            user_id,
+                            formatIp(clientIp),
+                            upperCaseFirst(device),
+                            browser,
+                            login_datetime,
+                            login_datetime,
+                          ],
+                        ]
+                      );
+                      callback(true, user, permissions, message);
+                    }
+                  );
+                  // return;
+                } else {
+                  console.log(`Compare password for username ${username}`);
+                  message = "Wrong username or password.";
+                  callback(false, [], [], message);
+                  // return;
+                }
+              }
+            );
+          } else {
+            console.log(`Username not found ${username}`);
+            message = "Wrong username or password.";
+            callback(false, [], [], message);
+            // return;
+          }
+        }
+      );
+    } catch (error) {
+      console.log(error);
+      message = "Kuna hitilafu, Wasiliana na msimamizi wa mfumo.";
+      callback(false, [], [], message);
+    }
   },
   //******** LIST USERS *******************************
-  getUsers: (offset, per_page, search_value, user , inactive,callback) => {
+  getUsers: (offset, per_page, search_value, user, inactive, callback) => {
     var searchQuery = "";
     var queryParams = [];
     if (search_value) {
@@ -124,21 +130,28 @@ module.exports = {
     }
     let sql = ` FROM staffs s ${staffCommonJoins()}
                 WHERE 1 = 1
-                ${inactive == 'true' ? ' AND s.user_status = 0' : ''}
+                ${inactive == "true" ? " AND s.user_status = 0" : ""}
                 ${searchQuery}
-                ${filterByUserOffice(user, "AND", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
+                ${filterByUserOffice(
+                  user,
+                  "AND",
+                  "s.zone_id",
+                  "s.district_code",
+                  ` AND s.id <> ${user.id}`
+                )}
                 `;
-    db.query(`SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
+    db.query(
+      `SELECT   username, s.id as userId, email, v.id as vyeoId, user_level, IFNULL(last_login , '') as last_login,
                 s.name as name, phone_no, IFNULL(r.name , '') as level_name, v.rank_name AS section_name,
                 IFNULL(rank_level , '') as rank_level, IFNULL(rm.role_name , '') as role_name,
                 IFNULL(z.zone_name , '') as zone_name , rg.RegionName as region_name, IFNULL(d.LgaName , '') as 
                 lga_name , CASE WHEN s.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , 
                 s.user_status as user_status, is_password_changed
                 ${sql}
-                ${per_page > 0 ? "LIMIT ? , ?" : ""}`, 
-                per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
+                ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
+      per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, users) => {
-        if(error) console.log(error);
+        if (error) console.log(error);
         db.query(
           `SELECT COUNT(*) AS num_rows  ${sql}`,
           queryParams,
@@ -154,21 +167,28 @@ module.exports = {
     );
   },
   // ********** USER PROFILE *************
-  getMyProfile : (id , callback) =>{
-       db.query(`SELECT name,username,email , email_notify,phone_no,created_at,updated_at
+  getMyProfile: (id, callback) => {
+    db.query(
+      `SELECT name,username,email , email_notify,phone_no,created_at,updated_at
                 FROM staffs s 
-                WHERE s.id = ?` , [id] , 
-      (error , user) => {
-          if(error) console.log(error)
-          db.query(`SELECT browser , ip , device , created_at 
+                WHERE s.id = ?`,
+      [id],
+      (error, user) => {
+        if (error) console.log(error);
+        db.query(
+          `SELECT browser , ip , device , created_at 
                     FROM login_activity
                     WHERE staff_id = ? 
                     ORDER BY created_at DESC 
-                    LIMIT 10` , [id] , (erro2 , loginActivities) => {
-                      if(erro2) console.log(erro2);
-                      callback(user[0] , loginActivities);
-                    })
-       })
+                    LIMIT 10`,
+          [id],
+          (erro2, loginActivities) => {
+            if (erro2) console.log(erro2);
+            callback(user[0], loginActivities);
+          }
+        );
+      }
+    );
   },
   //******** FIND USER *******************************
   findUser: (userId, user, callback) => {
@@ -180,7 +200,12 @@ module.exports = {
         FROM staffs s
         LEFT JOIN roles r ON r.id = s.user_level
         LEFT JOIN vyeo v ON v.id = r.vyeoId
-        WHERE s.id = ? ${filterByUserOffice(user, "AND", "s.zone_id" , 's.district_code')}`,
+        WHERE s.id = ? ${filterByUserOffice(
+          user,
+          "AND",
+          "s.zone_id",
+          "s.district_code"
+        )}`,
       [Number(userId)],
       (error, user) => {
         if (error) {
@@ -193,8 +218,8 @@ module.exports = {
       }
     );
   },
-   //******** CREATE USER *******************************
-  createUser: (user , callback) => {
+  //******** CREATE USER *******************************
+  createUser: (user, callback) => {
     var success = false;
     const {
       username,
@@ -206,109 +231,117 @@ module.exports = {
       region,
       phoneNumber,
       roleId,
-      password
+      password,
     } = user;
-    var userData =
-            [
-              crypto
-              .randomBytes(10)
-              .toString("hex"),
-              username  ? lowerCase(username) : username,
-              email ? lowerCase(email) : email,
-              levelId,
-              fullname ? titleCase(fullname) : fullname,
-              phoneNumber,
-              lgas ? lgas : (zone ? zone : null),
-              roleId,
-              password,
-              zone ? zone : null,
-              region ? region : null,
-              lgas ? lgas : null,
-              1,
-              formatDate(new Date())
-            ];
-            // Set signature if uploaded
-            if(user.sign){ 
-              userData.push(user.sign);
-            }
-     db.query(
+    var userData = [
+      crypto.randomBytes(10).toString("hex"),
+      username ? lowerCase(username) : username,
+      email ? lowerCase(email) : email,
+      levelId,
+      fullname ? titleCase(fullname) : fullname,
+      phoneNumber,
+      lgas ? lgas : zone ? zone : null,
+      roleId,
+      password,
+      zone ? zone : null,
+      region ? region : null,
+      lgas ? lgas : null,
+      1,
+      formatDate(new Date()),
+    ];
+    // Set signature if uploaded
+    if (user.sign) {
+      userData.push(user.sign);
+    }
+    db.query(
       `SELECT * 
       FROM staffs 
       WHERE user_level = ? AND 
-      ${userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"} AND  user_status = 1 AND
-      ${userData[11] ? "district_code='" + userData[11]+"'" : "district_code IS NULL"}`,
+      ${
+        userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"
+      } AND  user_status = 1 AND
+      ${
+        userData[11]
+          ? "district_code='" + userData[11] + "'"
+          : "district_code IS NULL"
+      }`,
       [userData[3], userData[9], userData[11]],
       (err, result) => {
         if (err) console.log(err);
-          if(result.length == 0){
-            db.query(
-              `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
+        if (result.length == 0) {
+          db.query(
+            `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
                     new_role_id, password , zone_id, region_code, district_code, user_status , created_at
                     ${user.sign ? ",signature" : ""}) VALUES ?`,
-              [[userData]],
-              (error, createdUser) => {
-                if (error) {
-                  console.log(error);
-                }
-                if (createdUser.affectedRows > 0) {
-                  success = true;
-                }
-                callback(success, createdUser);
+            [[userData]],
+            (error, createdUser) => {
+              if (error) {
+                console.log(error);
               }
-            );
-          }else{
-             callback(false, null , true);
-          }
-      });
+              if (createdUser.affectedRows > 0) {
+                success = true;
+              }
+              callback(success, createdUser);
+            }
+          );
+        } else {
+          callback(false, null, true);
+        }
+      }
+    );
   },
 
-  findUserByEmail : (email , callback) => {
+  findUserByEmail: (email, callback) => {
     var success = false;
-    db.query(`SELECT name FROM staffs WHERE email = ? and user_status = 1` , [email] , (error , user) => {
-          if(error){
-            console.log(error);
-          }else if(user.length == 1){
-            success = true;
-          }
-          callback(success , user);
-    })
+    db.query(
+      `SELECT name FROM staffs WHERE email = ? and user_status = 1`,
+      [email],
+      (error, user) => {
+        if (error) {
+          console.log(error);
+        } else if (user.length == 1) {
+          success = true;
+        }
+        callback(success, user);
+      }
+    );
   },
   //******** UPDATE USER *******************************
-  updateUser: (userId, user , callback) => {
+  updateUser: (userId, user, callback) => {
     var success = false;
-    var userData =
-            [
-              lowerCase(user.username),
-              lowerCase(user.email),
-              Number(user.levelId),
-              titleCase(user.fullname),
-              user.phoneNumber,
-              user.lgas ? user.lgas : user.zone ? user.zone : null,
-              user.roleId,
-              user.zone ? user.zone : null,
-              user.region ? user.region : null,
-              user.lgas ? user.lgas : null,
-              formatDate(new Date())
-            ];
-            // Set signature if uploaded
-            if(user.sign){ 
-              userData.push(user.sign);
-            }
-            if (user.has_to_change_password_changed) {
-              userData.push(0);
-            }
-            userData.push(Number(userId));
+    var userData = [
+      lowerCase(user.username),
+      lowerCase(user.email),
+      Number(user.levelId),
+      titleCase(user.fullname),
+      user.phoneNumber,
+      user.lgas ? user.lgas : user.zone ? user.zone : null,
+      user.roleId,
+      user.zone ? user.zone : null,
+      user.region ? user.region : null,
+      user.lgas ? user.lgas : null,
+      formatDate(new Date()),
+    ];
+    // Set signature if uploaded
+    if (user.sign) {
+      userData.push(user.sign);
+    }
+    if (user.has_to_change_password_changed) {
+      userData.push(0);
+    }
+    userData.push(Number(userId));
     const email = userData[1];
-    db.query(`SELECT id 
+    db.query(
+      `SELECT id 
               FROM staffs  
-              WHERE email = ? AND id <> ?` , 
-    [email , Number(userId)], 
-    (errorExist , emailExistResults) => {
-      if(errorExist) console.log('Exist Email: ',errorExist)
-      if (emailExistResults.length == 0) {
-        // Npw check if cheo exists
-        db.query(
-          `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
+              WHERE email = ? AND id <> ?`,
+      [email, Number(userId)],
+      (errorExist, emailExistResults) => {
+        if (errorExist) console.log("Exist Email: ", errorExist);
+        if (emailExistResults.length == 0) {
+          // Npw check if cheo exists
+          db.query(
+            `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
           ${
             userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"
           } AND  user_status = 1 AND
@@ -317,156 +350,189 @@ module.exports = {
               ? "district_code='" + userData[9] + "'"
               : "district_code IS NULL"
           } `,
-          [userData[2], Number(userId)],
-          (err, result) => {
-            if (err) console.log(err);
-            if (result.length == 0) {
-              db.query(
-                `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?  ,office = ?, 
+            [userData[2], Number(userId)],
+            (err, result) => {
+              if (err) console.log(err);
+              if (result.length == 0) {
+                db.query(
+                  `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?  ,office = ?, 
               new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
               ${user.sign ? ", signature = ?" : ""}
-              ${user.has_to_change_password_changed ? ", is_password_changed = ?" : ""}
+              ${
+                user.has_to_change_password_changed
+                  ? ", is_password_changed = ?"
+                  : ""
+              }
               WHERE id = ?`,
-                userData,
-                (error, updatedUser) => {
-                  if (error) {
-                    console.log("error findind user: ", error);
-                  }
-                  var password = user.password;
-                  if (password) {
-                    hash(password, (hashed, hash) => {
-                      if (hashed) {
-                        db.query(
-                          `UPDATE staffs SET password = ? WHERE id = ?`,
-                          [hash, Number(userId)],
-                          (errorPassword, updatedUser) => {
-                            if (errorPassword) {
-                              console.log("Password Error: ", errorPassword);
+                  userData,
+                  (error, updatedUser) => {
+                    if (error) {
+                      console.log("error findind user: ", error);
+                    }
+                    var password = user.password;
+                    if (password) {
+                      hash(password, (hashed, hash) => {
+                        if (hashed) {
+                          db.query(
+                            `UPDATE staffs SET password = ? WHERE id = ?`,
+                            [hash, Number(userId)],
+                            (errorPassword, updatedUser) => {
+                              if (errorPassword) {
+                                console.log("Password Error: ", errorPassword);
+                              }
+                              if (updatedUser) success = true;
+                              callback(success, updatedUser);
                             }
-                            if (updatedUser) success = true;
-                            callback(success, updatedUser);
-                          }
-                        );
-                      }
-                    });
-                  } else {
-                    if (updatedUser) success = true;
-                    callback(success, updatedUser);
+                          );
+                        }
+                      });
+                    } else {
+                      if (updatedUser) success = true;
+                      callback(success, updatedUser);
+                    }
                   }
-                }
-              );
-            } else {
-              callback(false, null, true); //return cheo exist
+                );
+              } else {
+                callback(false, null, true); //return cheo exist
+              }
             }
-          }
-        );
-      } else {
-        callback(false, null, false, true); //return email exist
+          );
+        } else {
+          callback(false, null, false, true); //return email exist
+        }
       }
-    })
-   
+    );
   },
- 
+
   // DISABLE USER ACCOUNT
-  activateDeactivateUser : (user , id , callback) => {
-       var updated = false;
-       db.query(`SELECT s.id AS staff_id , user_status 
+  activateDeactivateUser: (user, id, callback) => {
+    var updated = false;
+    db.query(
+      `SELECT s.id AS staff_id , user_status 
                  FROM staffs s
                 ${staffCommonJoins()} 
                 WHERE s.id = ?
-                ${filterByUserOffice(user, " AND ", 's.zone_id' , 's.district_code' , ` AND s.id <> ${user.id}`)}
-                ` , [id] , (error , staff) =>{
-            if(error) console.log(error);
-            if(staff.length > 0){
-                db.query(`UPDATE staffs s SET s.user_status = ${staff[0].user_status ? 0 : 1} WHERE s.id = ?` , [Number(id)] , (error2 , disabledStaff) => {
-                   if(error2) console.log(error2);
-                     if(disabledStaff.affectedRows > 0){
-                        updated = true;
-                     }
-                     callback(updated , updated ? "Umefanikiwa kufuta akaunti hii kwa muda." : "Haujafanikiwa kuna tatizo, Wasiliana na Msimamizi wa Mfumo.")
-                })
-            }else{
-                callback(updated , 'Hakuna mtumiaji mwenye akaunti hiyo.');
+                ${filterByUserOffice(
+                  user,
+                  " AND ",
+                  "s.zone_id",
+                  "s.district_code",
+                  ` AND s.id <> ${user.id}`
+                )}
+                `,
+      [id],
+      (error, staff) => {
+        if (error) console.log(error);
+        if (staff.length > 0) {
+          db.query(
+            `UPDATE staffs s SET s.user_status = ${
+              staff[0].user_status ? 0 : 1
+            } WHERE s.id = ?`,
+            [Number(id)],
+            (error2, disabledStaff) => {
+              if (error2) console.log(error2);
+              if (disabledStaff.affectedRows > 0) {
+                updated = true;
+              }
+              callback(
+                updated,
+                updated
+                  ? "Umefanikiwa kufuta akaunti hii kwa muda."
+                  : "Haujafanikiwa kuna tatizo, Wasiliana na Msimamizi wa Mfumo."
+              );
             }
-       })
-  },
-  getStaffOfficeName : (office , user , callback) => {
-    const {zone_id , district_code} = user;
-      switch (office) {
-        case 1:
-          callback('HQ')
-          break;
-        case 2:
-          db.query(`SELECT zone_name FROM zones 
-                    WHERE id = ${zone_id}` , (error , result) => {
-              if(error) console.log('unable to find user zone ' , error);
-              if(result.length > 0){
-                 callback(result[0].zone_name);
-              }
-          });
-          break;
-        case 3:
-          db.query(`SELECT LgaName FROM districts 
-                    WHERE LgaCode = "${district_code}"` , (error , result) => {
-              if(error) console.log('unable to find user district ' , error);
-              if(result.length > 0){
-                callback(result[0].LgaName)
-              }
-            });
-          break;
-        default:
-           callback(null);
-          break;
+          );
+        } else {
+          callback(updated, "Hakuna mtumiaji mwenye akaunti hiyo.");
+        }
       }
-     
+    );
+  },
+  getStaffOfficeName: (office, user, callback) => {
+    const { zone_id, district_code } = user;
+    switch (office) {
+      case 1:
+        callback("HQ");
+        break;
+      case 2:
+        db.query(
+          `SELECT zone_name FROM zones 
+                    WHERE id = ${zone_id}`,
+          (error, result) => {
+            if (error) console.log("unable to find user zone ", error);
+            if (result.length > 0) {
+              callback(result[0].zone_name);
+            }
+          }
+        );
+        break;
+      case 3:
+        db.query(
+          `SELECT LgaName FROM districts 
+                    WHERE LgaCode = "${district_code}"`,
+          (error, result) => {
+            if (error) console.log("unable to find user district ", error);
+            if (result.length > 0) {
+              callback(result[0].LgaName);
+            }
+          }
+        );
+        break;
+      default:
+        callback(null);
+        break;
+    }
   },
   // Update my profile
-  updateMyProfile : (formData , callback) => {
-      db.query(`UPDATE staffs SET phone_no = ? , email_notify = ? 
-                WHERE id = ?` , formData , (error , result) => {
-                  if(error) console.log(error)
-                  callback(result.affectedRows > 0)
-                })
+  updateMyProfile: (formData, callback) => {
+    db.query(
+      `UPDATE staffs SET phone_no = ? , email_notify = ? 
+                WHERE id = ?`,
+      formData,
+      (error, result) => {
+        if (error) console.log(error);
+        callback(result.affectedRows > 0);
+      }
+    );
   },
   // change my password
-  changeMyPassword : (oldpassword , newpassword , user_id , callback) => {
-       db.query(`SELECT password 
+  changeMyPassword: (oldpassword, newpassword, user_id, callback) => {
+    db.query(
+      `SELECT password 
                  FROM staffs
-                 WHERE id = ? `, [user_id] , (error , staff) => {
-                    if(error) console.log(error)
-                    // check for valid password
-                    if(bcrypt.compareSync(oldpassword , staff[0].password)){
-                      // update password
-                        hash(newpassword , (hashed , hash) => {
-                              if(hashed){
-                                db.query(
-                                  `UPDATE staffs 
+                 WHERE id = ? `,
+      [user_id],
+      (error, staff) => {
+        if (error) console.log(error);
+        // check for valid password
+        if (bcrypt.compareSync(oldpassword, staff[0].password)) {
+          // update password
+          hash(newpassword, (hashed, hash) => {
+            if (hashed) {
+              db.query(
+                `UPDATE staffs 
                                   SET password = ? , is_password_changed = ?
                                   WHERE id = ?`,
-                                  [hash,1, user_id],
-                                  (error2, result) => {
-                                    if (error2) console.log(error2);
-                                    const success = result.affectedRows > 0;
-                                    callback(
-                                      success,
-                                      success
-                                        ? "Umefanikiwa kubadili nywila."
-                                        : "Haujafanikiwa kubadili nywila kuna tatizo."
-                                    );
-                                  }
-                                );
-                              }else{
-                                callback(
-                                  false,
-                                  "Haujafanikiwa kubadili nywila kuna tatizo."
-                                );
-                              }
-                        })
-                    }else{
-                      callback( false , `Neno la siri la sasa sio sahihi.`)
-                    }
-                 })
-     
-       }
+                [hash, 1, user_id],
+                (error2, result) => {
+                  if (error2) console.log(error2);
+                  const success = result.affectedRows > 0;
+                  callback(
+                    success,
+                    success
+                      ? "Umefanikiwa kubadili nywila."
+                      : "Haujafanikiwa kubadili nywila kuna tatizo."
+                  );
+                }
+              );
+            } else {
+              callback(false, "Haujafanikiwa kubadili nywila kuna tatizo.");
+            }
+          });
+        } else {
+          callback(false, `Neno la siri la sasa sio sahihi.`);
+        }
+      }
+    );
+  },
 };
-
