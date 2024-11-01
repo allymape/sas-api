@@ -278,7 +278,7 @@ module.exports = {
               if (error) {
                 console.log(error);
               }
-              if (createdUser.affectedRows > 0) {
+              if (createdUser && createdUser.affectedRows > 0) {
                 success = true;
               }
               callback(success, createdUser);
