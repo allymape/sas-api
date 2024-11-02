@@ -210,14 +210,18 @@ userRouter.post("/create-user", isAuth, (req, res, next) => {
                 region: req.body.region,
                 sign: req.body.selectedFile,
               };
-              userModal.createUser(userData, (success, user , duplicateCheo = false) => {
+              userModal.createUser(userData, (success, user , duplicateCheo = false , emailExists) => {
                 res.send({
                   error: success ? false : true,
                   statusCode: success ? 300 : 306,
                   data: success ? user : [],
-                  message: duplicateCheo? 'Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa.' : (success 
+                  message: duplicateCheo
+                    ? "Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa."
+                    : emailExists
+                    ? "Baruapepe ya mtumiaji huyu imeshatumika, Tafadhali hakiki ili uendelee."
+                    : success
                     ? "Umefanikiwa kutengeneza akaunti ya Mtumiaji."
-                    : "Haujafanikiwa kutengeneza Akaunti kuna tatizo limetokea"),
+                    : "Haujafanikiwa kutengeneza Akaunti kuna tatizo limetokea",
                 });
               });
           }else{
@@ -251,7 +255,7 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
   if (req.body.has_to_change_password_changed) {
     userData.has_to_change_password_changed = true;
   }
-  userModal.updateUser(userId, userData, (success, user , duplicateCheo = false , emailExist = false) => {
+  userModal.updateUser(userId, userData, (success, user , duplicateCheo = false , emailExists = false) => {
     res.send({
       error: success ? false : true,
       statusCode: success ? 300 : 306,
@@ -259,7 +263,7 @@ userRouter.put("/update-user/:id", isAuth, (req, res, next) => {
       message: duplicateCheo
         ? "Whoops! Mtumiaji mwenye cheo hiki ameshasajiliwa."
         :
-        emailExist
+        emailExists
         ? "Baruapepe ya mtumiaji huyu imeshatumika, Tafadhali hakiki ili uendelee."
         : (success
         ? "Umefanikiwa kubadili taarifa za akaunti ya Mtumiaji."

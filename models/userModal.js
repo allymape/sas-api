@@ -37,12 +37,13 @@ module.exports = {
             INNER JOIN role_management rm ON rm.id = s.new_role_id
             LEFT JOIN ranks rnk ON rnk.id = v.rank_level
             LEFT JOIN zones z ON z.id = s.zone_id
-            WHERE username = ? AND user_status = 1`,
+            WHERE email = ? AND user_status = 1`,
         [username],
         (error, user) => {
           if (error) {
             console.log("Query Error: ", error, user);
           }
+          console.log(user.length);
           if (user && user.length == 1) {
             db.query(
               `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
@@ -253,42 +254,42 @@ module.exports = {
     if (user.sign) {
       userData.push(user.sign);
     }
-    db.query(
-      `SELECT * 
-      FROM staffs 
-      WHERE user_level = ? AND 
-      ${
-        userData[9] ? "zone_id=" + userData[9] : "zone_id IS NULL"
-      } AND  user_status = 1 AND
-      ${
-        userData[11]
-          ? "district_code='" + userData[11] + "'"
-          : "district_code IS NULL"
-      }`,
-      [userData[3], userData[9], userData[11]],
-      (err, result) => {
-        if (err) console.log(err);
-        if (result.length == 0) {
-          db.query(
-            `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
+    module.exports.checkEmailExists(email).then((emailExists) => {
+      if(emailExists){
+        callback(false , false , false , true)
+      }else{
+        module.exports
+          .checkUserCheoExists(userData[3], userData[9], userData[11])
+          .then((cheoExists) => {
+            if (cheoExists) {
+              callback(false, false, true); // cheo exists
+            } else {
+              db.query(
+                `INSERT INTO staffs(secure_token , username,email,user_level,name,phone_no,office, 
                     new_role_id, password , zone_id, region_code, district_code, user_status , created_at
                     ${user.sign ? ",signature" : ""}) VALUES ?`,
-            [[userData]],
-            (error, createdUser) => {
-              if (error) {
-                console.log(error);
-              }
-              if (createdUser && createdUser.affectedRows > 0) {
-                success = true;
-              }
-              callback(success, createdUser);
+                [[userData]],
+                (error, createdUser) => {
+                  if (error) {
+                    console.log(error);
+                  }
+                  if (createdUser && createdUser.affectedRows > 0) {
+                    success = true;
+                  }
+                  callback(success, createdUser);
+                }
+              );
             }
-          );
-        } else {
-          callback(false, null, true);
-        }
+          })
+          .catch((error) => {
+            console.error("Error: ", error);
+            callback(false, false, false, false);
+          });
       }
-    );
+    }).catch((error) => {
+      console.error("Error" , error);
+      callback(false , false , false , false)
+    })
   },
 
   findUserByEmail: (email, callback) => {
@@ -306,22 +307,60 @@ module.exports = {
       }
     );
   },
+  //Check if email exists
+  checkEmailExists: (email, userId = null) => {
+    return new Promise((resolve, reject) => {
+      let query = "SELECT COUNT(*) AS count FROM staffs WHERE email = ?";
+      const params = [email];
+      if (userId) {
+        query += " AND id <> ?";
+        params.push(userId);
+      }
+      db.query(query, params, (error, results) => {
+        if (error) return reject(error);
+        resolve(results[0].count);
+      });
+    });
+  },
+  //Check if user cheo exist for active user
+  checkUserCheoExists: (user_level, zone_id = null, district_code = null, userId = null) => {
+    return new Promise((resolve, reject) => {
+      let query = `SELECT COUNT(*) AS count FROM staffs WHERE user_level = ? AND user_status = 1 `;
+      const params = [user_level];
+      if (zone_id) {
+        query += `AND zone_id = ? `;
+        params.push(Number(zone_id));
+      } 
+      if (district_code) {
+        query += `AND district_code = ? `;
+        params.push(district_code);
+      }
+      if (userId) {
+        query += `AND id <> ? `;
+        params.push(Number(userId));
+      }
+      db.query(query, params, (error, results) => {
+        if (error) return reject(error);
+        resolve(results[0].count);
+      });
+    });
+  },
   //******** UPDATE USER *******************************
   updateUser: (userId, user, callback) => {
     var success = false;
     var userData = [
-      lowerCase(user.username),
-      lowerCase(user.email),
-      Number(user.levelId),
-      titleCase(user.fullname),
-      user.phoneNumber,
-      user.lgas ? user.lgas : user.zone ? user.zone : null,
-      user.roleId,
-      user.zone ? user.zone : null,
-      user.region ? user.region : null,
-      user.lgas ? user.lgas : null,
-      formatDate(new Date()),
-    ];
+          lowerCase(user.username),
+          lowerCase(user.email),
+          Number(user.levelId),
+          titleCase(user.fullname),
+          user.phoneNumber,
+          user.lgas ? user.lgas : user.zone ? user.zone : null,
+          user.roleId,
+          user.zone ? user.zone : null,
+          user.region ? user.region : null,
+          user.lgas ? user.lgas : null,
+          formatDate(new Date()),
+        ];
     // Set signature if uploaded
     if (user.sign) {
       userData.push(user.sign);
@@ -331,39 +370,29 @@ module.exports = {
     }
     userData.push(Number(userId));
     const email = userData[1];
-    db.query(
-      `SELECT id 
-              FROM staffs  
-              WHERE email = ? AND id <> ?`,
-      [email, Number(userId)],
-      (errorExist, emailExistResults) => {
-        if (errorExist) console.log("Exist Email: ", errorExist);
-        if (emailExistResults.length == 0) {
-          // Npw check if cheo exists
-          db.query(
-            `SELECT * FROM staffs WHERE user_level = ? AND id <> ? AND 
-          ${
-            userData[7] ? "zone_id=" + userData[7] : "zone_id IS NULL"
-          } AND  user_status = 1 AND
-          ${
-            userData[9]
-              ? "district_code='" + userData[9] + "'"
-              : "district_code IS NULL"
-          } `,
-            [userData[2], Number(userId)],
-            (err, result) => {
-              if (err) console.log(err);
-              if (result.length == 0) {
+    module.exports
+      .checkEmailExists(email, userId)
+      .then((emailExists) => {
+        if (emailExists) {
+          callback(false, null, false, true); //return email exist
+        } else {
+          // Now check if cheo exists
+          module.exports
+            .checkUserCheoExists(userData[2],userData[7], userData[9], userId)
+            .then((cheoExists) => {
+              if (cheoExists) {
+                callback(false, null, true); //return cheo exist
+              } else {
                 db.query(
                   `UPDATE staffs SET username = ?,email=?, user_level=?, name = ?, phone_no = ?  ,office = ?, 
-              new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
-              ${user.sign ? ", signature = ?" : ""}
-              ${
-                user.has_to_change_password_changed
-                  ? ", is_password_changed = ?"
-                  : ""
-              }
-              WHERE id = ?`,
+                    new_role_id = ?, zone_id=?, region_code=?, district_code=?, updated_at = ?
+                    ${user.sign ? ", signature = ?" : ""}
+                    ${
+                      user.has_to_change_password_changed
+                        ? ", is_password_changed = ?"
+                        : ""
+                    }
+                    WHERE id = ?`,
                   userData,
                   (error, updatedUser) => {
                     if (error) {
@@ -392,16 +421,18 @@ module.exports = {
                     }
                   }
                 );
-              } else {
-                callback(false, null, true); //return cheo exist
               }
-            }
-          );
-        } else {
-          callback(false, null, false, true); //return email exist
+            })
+            .catch((error) => {
+              console.error("There an error ", error);
+              callback(false, false, false, false);
+            });
         }
-      }
-    );
+      })
+      .catch((error) => {
+        console.error("There an error ", error);
+        callback(false, false, false, false);
+      });
   },
 
   // DISABLE USER ACCOUNT
