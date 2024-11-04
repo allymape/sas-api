@@ -31,7 +31,7 @@ module.exports = {
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
                         applications.created_at as created_at,is_approved, applications.registry_type_id as registry_type_id,  
                         applications.user_id as user_id, applications.foreign_token as foreign_token,  
-                        establishing_schools.school_name as school_name, regions.RegionName as RegionName,  
+                        UPPER(establishing_schools.school_name) as school_name, regions.RegionName as RegionName,  
                         districts.LgaName as LgaName, registry_types.registry as registry, folio`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?, ?`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`

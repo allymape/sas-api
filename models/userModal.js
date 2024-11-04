@@ -312,7 +312,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
       let query = "SELECT COUNT(*) AS count FROM staffs WHERE email = ?";
       const params = [email];
-      if (userId) {
+      if (userId) { 
         query += " AND id <> ?";
         params.push(userId);
       }
