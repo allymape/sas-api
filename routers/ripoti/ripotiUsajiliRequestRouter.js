@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const ripotiUsajiliRequestRouter = express.Router();
-const { isAuth, formatDate } = require("../../utils");
+const { isAuth, formatDate, auditTrail, auditMiddleware } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 const schoolModel = require("../../models/schoolModel");
 // List of
@@ -113,7 +113,10 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
     });
   });
 });
-ripotiUsajiliRequestRouter.post("/rekebisha-usajili-shule/:tracking_number",isAuth,(req, res) => {
+ripotiUsajiliRequestRouter.post("/rekebisha-usajili-shule/:tracking_number",
+  isAuth ,   
+  auditMiddleware('school_verifications' , 'create' , 'Kurekebisha Taarifa'), 
+  (req, res) => {
   const {description} = req.body
   const {id} = req.user
   const tracking_number = req.params.tracking_number
@@ -139,6 +142,7 @@ ripotiUsajiliRequestRouter.post("/rekebisha-usajili-shule/:tracking_number",isAu
 ripotiUsajiliRequestRouter.post(
   "/thibitisha-usajili-shule/:tracking_number",
   isAuth,
+  auditMiddleware('school_verifications' , 'update' , 'Kuthibitisha Taarifa'),
   (req, res) => {
     const tracking_number = req.params.tracking_number;
     schoolModel.verifySchool(tracking_number, (success) => {
