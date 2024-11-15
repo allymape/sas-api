@@ -20,6 +20,7 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
   const invalid_or_no_reg = req.body.invalid_or_no_reg !== undefined || req.body.invalid_or_no_reg != "" ? Number(req.body.invalid_or_no_reg) : null;
   const geolocation = req.body.geolocation !== undefined || req.body.geolocation != "" ? Number(req.body.geolocation) : null;
   const duplicate_reg = req.body.duplicate_reg !== undefined || req.body.duplicate_reg != "" ? Number(req.body.duplicate_reg): null;
+  const correction = req.body.correction !== undefined || req.body.correction != "" ? Number(req.body.correction): null;
 
   schoolModel.getAllSchools(offset, 
           per_page, 
@@ -28,6 +29,7 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
           invalid_or_no_reg,
           geolocation,
           duplicate_reg,
+          correction,
           search_value,
           (error, schools, numRows) => {
     return res.send({

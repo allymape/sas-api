@@ -3,6 +3,7 @@ const express = require("express");
 const ripotiUsajiliRequestRouter = express.Router();
 const { isAuth, formatDate } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
+const schoolModel = require("../../models/schoolModel");
 // List of
 ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
   const user = req.user;
@@ -30,7 +31,6 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
               : req.body.status == "approved"
               ? 2
               : "";
-          //  console.log(formatDate(date_range.split("to")[1], "YYYY-MM-DD"));
           let start_date = "";
           let end_date = "";
           if (date_range) {
@@ -38,7 +38,8 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
             end_date = formatDate(date_range.split("to")[1], "YYYY-MM-DD");
           }
 
-          const from = `FROM registered_schools_view
+          const from = `FROM registered_schools_view rsv
+                        LEFT JOIN school_verifications sv ON rsv.tracking_number = sv.tracking_number
                         WHERE is_approved ${status ? "=" + status : " IN (2,3) "}
                         ${ sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
                         ${ sehemu == "w1" ? "AND district_code = '" + district_code+"'" : ""}
@@ -67,19 +68,25 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
                         ${ district ? " AND district_code = '" + district +"'" : ""} 
                         ${ ward ? " AND ward_code = '" + ward + "'" : ""} 
                         ${ street ? " AND street_code = '" + street + "'" : ""} 
+                        AND registration_number IS NOT NULL
                   `;
 
-          const sqlRows = `SELECT tracking_number AS tracking_number,school_name, registration_number, registration_date, is_seminary,subcategory, language, gender_type, stream , category, structure, 
+          const sqlRows = `SELECT rsv.tracking_number AS tracking_number,school_name, registration_number, registration_date, is_seminary,subcategory, language, gender_type, stream , category, structure, 
                             registry , region, district , ward , street , is_approved AS status, 
                             CASE WHEN is_approved=2 THEN 'Ndio'
                                  WHEN is_approved=3 THEN 'Hapana'
                                  ELSE ''
                             END AS approved,
-                            approved_at
+                            approved_at,
+                            is_verified,
+                            registration_id,
+                            sv.description AS description,
+                            sv.corrected AS corrected
                      ${from} 
                      ORDER BY approved_at DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
+          // console.log(sqlRows);
           sharedModel.paginate(
             sqlRows,
             sqlCount,
@@ -106,5 +113,42 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
     });
   });
 });
+ripotiUsajiliRequestRouter.post("/rekebisha-usajili-shule/:tracking_number",isAuth,(req, res) => {
+  const {description} = req.body
+  const {id} = req.user
+  const tracking_number = req.params.tracking_number
+  const data = [];
+        data.push(
+          tracking_number,
+          description,
+          id,
+          0,
+          formatDate(new Date()),
+          formatDate(new Date()),
+        );
+  schoolModel.ombiRekebishaShule(tracking_number, data, (success) => {
+    res.send({
+      statusCode: success ? 300 : 306,
+      message: success
+        ? "Ombi lako limewasilishwa"
+        : "Imeshindikana kuwasilisha, Kuna tatizo!",
+    });
+   });
+  });
 
+ripotiUsajiliRequestRouter.post(
+  "/thibitisha-usajili-shule/:tracking_number",
+  isAuth,
+  (req, res) => {
+    const tracking_number = req.params.tracking_number;
+    schoolModel.verifySchool(tracking_number, (success) => {
+      res.send({
+        statusCode: success ? 300 : 306,
+        message: success
+          ? "Umefanikiwa kuthinitisha taarifa hizi."
+          : "Imeshindikana kuthibitisha, Kuna tatizo!",
+      });
+    });
+  }
+);
 module.exports = ripotiUsajiliRequestRouter;

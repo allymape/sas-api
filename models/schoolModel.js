@@ -11,6 +11,7 @@ module.exports = {
     invalid_or_no_reg_search,
     geolocation_search,
     duplicate_reg_search,
+    correction,
     search_value,
     callback
   ) => {
@@ -51,6 +52,10 @@ module.exports = {
     if (geolocation_search == 1) {
       searchQuery += ` AND latitude IS NOT NULL AND longitude IS NOT NULL`;
     }
+   
+    if (correction == 1) {
+      searchQuery += ` AND is_verified = 0  AND corrected = 0`;
+    }
     if (geolocation_search == 2) {
       searchQuery += ` AND (latitude IS NULL OR longitude IS NULL)`;
     }
@@ -71,6 +76,7 @@ module.exports = {
                       JOIN applications a ON a.tracking_number = s.tracking_number
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
+                      LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
                       ${schoolLocationsSqlJoin()}
                       WHERE  s.reg_status IN (1)
                       ${searchQuery}
@@ -95,6 +101,9 @@ module.exports = {
                   WHEN s.reg_status = 0 THEN 'Imefutiwa Usajili'
                   ELSE 'Unknown'
               END AS status,
+              s.is_verified AS is_verified,
+              sv.corrected AS corrected,
+              sv.description AS description,
               reg_status
               ${sql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
@@ -255,10 +264,11 @@ module.exports = {
                   IFNULL(DATE(s.registration_date) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
-                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region 
+                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region , description
                   FROM school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}
                   ${schoolLocationsSqlJoin()}
+                  LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
                   WHERE s.tracking_number = ? `,
       [tracking_number],
       (error, school) => {
@@ -305,6 +315,7 @@ module.exports = {
             ownership,
             registration_number,
             registration_date,
+            1,
             currentDate,
             currentDate,
             currentDate,
@@ -315,6 +326,7 @@ module.exports = {
           db.query(
             `UPDATE  school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}
+                  LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
                   SET e.school_name = ?,
                       e.latitude = ?,
                       e.longitude = ?,
@@ -325,6 +337,7 @@ module.exports = {
                       a.registry_type_id = ?,
                       s.registration_number = ?,
                       s.registration_date = ?,
+                      sv.corrected = ?,
                       s.created_at = ?,
                       s.updated_at = ?,
                       e.updated_at = ?,
@@ -415,5 +428,50 @@ module.exports = {
       }
     );
 
+  },
+  verifySchool : (tracking_number , callback) => {
+      var success = false;
+      db.query(
+        `UPDATE school_registrations SET is_verified = 1 WHERE tracking_number = ?`,
+        [tracking_number],
+        (err, result) => {
+          if (err) {
+            console.log(err);
+          }
+          success = result.affectedRows > 0; 
+          callback(success);
+        }
+      );
+  },
+  ombiRekebishaShule : (tracking_number , data , callback) => {
+      var success = false;
+      db.query(
+        `INSERT INTO school_verifications 
+                       SET tracking_number = ? , description = ? , created_by = ? , corrected = ? , created_at = ? , updated_at = ?
+                       ON DUPLICATE KEY UPDATE description = VALUES(description) ,corrected = VALUES(corrected), created_by =  VALUES(created_by) , updated_at = VALUES(updated_at) `,
+        data,
+        (error, result) => {
+          if (error) {
+            console.log(error);
+          } else {
+            success = result.affectedRows > 0;
+            if (success) {
+              db.query(
+                `UPDATE school_registrations SET is_verified = 0 WHERE tracking_number = ?`,
+                [tracking_number],
+                (err, result2) => {
+                  if (err) {
+                    success = false;
+                    console.log(err);
+                  }
+                  callback(success);
+                }
+              );
+            } else {
+              callback(success);
+            }
+          }
+        }
+      );
   }
 };
