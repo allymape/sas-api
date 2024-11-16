@@ -410,7 +410,6 @@ module.exports = {
   deleteDuplicateSchools: () => {
     db.query(
       `
-      SET SESSION sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));
       SELECT id, establishing_school_id, tracking_number 
       FROM school_registrations 
       WHERE registration_number IS NOT NULL 
