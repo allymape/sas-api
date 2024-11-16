@@ -43,7 +43,6 @@ module.exports = {
           if (error) {
             console.log("Query Error: ", error, user);
           }
-          console.log(user.length);
           if (user && user.length == 1) {
             db.query(
               `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,

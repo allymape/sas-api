@@ -20,6 +20,10 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
   const invalid_or_no_reg = req.body.invalid_or_no_reg !== undefined || req.body.invalid_or_no_reg != "" ? Number(req.body.invalid_or_no_reg) : null;
   const geolocation = req.body.geolocation !== undefined || req.body.geolocation != "" ? Number(req.body.geolocation) : null;
   const duplicate_reg = req.body.duplicate_reg !== undefined || req.body.duplicate_reg != "" ? Number(req.body.duplicate_reg): null;
+  const delete_duplicate =
+    req.body.delete_duplicate !== undefined || req.body.delete_duplicate != ""
+      ? Number(req.body.delete_duplicate)
+      : null;
   const correction = req.body.correction !== undefined || req.body.correction != "" ? Number(req.body.correction): null;
 
   schoolModel.getAllSchools(offset, 
@@ -29,6 +33,7 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
           invalid_or_no_reg,
           geolocation,
           duplicate_reg,
+          delete_duplicate,
           correction,
           search_value,
           (error, schools, numRows) => {
@@ -39,7 +44,7 @@ schoolRouter.get("/all-schools", isAuth, (req, res) => {
       numRows: numRows,
       message: "Orodha ya Shule.",
     });
-  });
+  } , req);
 });
 // School Filters
 schoolRouter.get("/school-filters", isAuth, function (req, res) {

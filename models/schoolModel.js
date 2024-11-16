@@ -1,5 +1,5 @@
 const db = require("../dbConnection");
-const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate, registeredSchoolsEstablishedApplicationSqlJoin } = require("../utils");
+const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate, registeredSchoolsEstablishedApplicationSqlJoin, auditMiddleware, insertAudit, formatIp } = require("../utils");
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
@@ -11,9 +11,11 @@ module.exports = {
     invalid_or_no_reg_search,
     geolocation_search,
     duplicate_reg_search,
+    delete_duplicate,
     correction,
     search_value,
-    callback
+    callback,
+    req = null
   ) => {
     var searchQuery = "";
     var queryParams = [];
@@ -118,7 +120,32 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            // console.log(regions);
+            if(schools.length > 0){
+               if (delete_duplicate == 1) {
+                const msg = "Amefuta taarifa za shule zinazojirudia.";
+                const { user, body, url } = req;
+                const { id, user_level } = user;
+                const { clientInfo } = body;
+                delete body.clientInfo;
+                const { ip, browserInfo } = clientInfo;
+                const { os, browser, platform } = browserInfo;
+                const browser_used = `${os} ${browser} ${platform}`;
+                const ip_address = formatIp(ip);
+                insertAudit(
+                  id,
+                  "Delete",
+                  null,
+                  null,
+                  url,
+                  browser_used,
+                  user_level,
+                  msg,
+                  ip_address,
+                  "school_registrations"
+                );
+                 module.exports.deleteDuplicateSchools()
+               }
+            }
             callback(error, schools, result2[0].num_rows);
           }
         );
@@ -264,7 +291,7 @@ module.exports = {
                   IFNULL(DATE(s.registration_date) , null) AS registration_date,
                   a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
                   s.registration_number AS registration_number, e.village_id AS street, 
-                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region , description
+                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region , description, s.is_verified AS is_verified
                   FROM school_registrations s
                   ${registeredSchoolsEstablishedApplicationSqlJoin()}
                   ${schoolLocationsSqlJoin()}

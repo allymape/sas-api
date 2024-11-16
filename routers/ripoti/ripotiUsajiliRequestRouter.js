@@ -18,13 +18,13 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
           const tracking_number = req.body.tracking_number;
           const date_range = req.body.date_range;
           const category = Number(req.body.category);
+          const verified = Number(req.body.verified);
           const ownership = Number(req.body.ownership);
           const structure = Number(req.body.structure);
           const region = req.body.region;
           const district = req.body.district;
           const ward = req.body.ward;
           const street = req.body.street;
-          
           const status =
             req.body.status == "rejected"
               ? 3
@@ -37,15 +37,27 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
             start_date = formatDate(date_range.split("to")[0], "YYYY-MM-DD");
             end_date = formatDate(date_range.split("to")[1], "YYYY-MM-DD");
           }
+          let verifiedSql = '';
+          if(verified){
+            verifiedSql = ` AND is_verified = ${Number(verified) == 1} `;
+          }
 
           const from = `FROM registered_schools_view rsv
                         LEFT JOIN school_verifications sv ON rsv.tracking_number = sv.tracking_number
-                        WHERE is_approved ${status ? "=" + status : " IN (2,3) "}
-                        ${ sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
-                        ${ sehemu == "w1" ? "AND district_code = '" + district_code+"'" : ""}
+                        WHERE is_approved ${
+                          status ? "=" + status : " IN (2,3) "
+                        }
+                        ${sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
+                        ${
+                          sehemu == "w1"
+                            ? "AND district_code = '" + district_code + "'"
+                            : ""
+                        }
                         ${
                           tracking_number
-                            ? " AND tracking_number LIKE '%" + tracking_number + "%'"
+                            ? " AND tracking_number LIKE '%" +
+                              tracking_number +
+                              "%'"
                             : ""
                         } 
                         ${
@@ -57,17 +69,30 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
                               "'"
                             : ""
                         }
-                        ${category ? " AND school_category_id = " + category : ""} 
+                        ${verifiedSql}
+                        ${
+                          category
+                            ? " AND school_category_id = " + category
+                            : ""
+                        } 
                         ${
                           structure
                             ? " AND registration_structure_id = " + structure
                             : ""
                         } 
-                        ${ ownership ? " AND registry_type_id = " + ownership : ""} 
-                        ${ region ? " AND region_code = '" + region + "'" : ""} 
-                        ${ district ? " AND district_code = '" + district +"'" : ""} 
-                        ${ ward ? " AND ward_code = '" + ward + "'" : ""} 
-                        ${ street ? " AND street_code = '" + street + "'" : ""} 
+                        ${
+                          ownership
+                            ? " AND registry_type_id = " + ownership
+                            : ""
+                        } 
+                        ${region ? " AND region_code = '" + region + "'" : ""} 
+                        ${
+                          district
+                            ? " AND district_code = '" + district + "'"
+                            : ""
+                        } 
+                        ${ward ? " AND ward_code = '" + ward + "'" : ""} 
+                        ${street ? " AND street_code = '" + street + "'" : ""} 
                         AND registration_number IS NOT NULL
                   `;
 

@@ -795,8 +795,10 @@ const ObjectFuctions = {
       const event_type = action == "create" ? "created" : "updated";
       const message = messageText
         ? messageText
-        : action == "create"
+        : action == "create" 
         ? "Ameingiza taarifa mpya"
+        : action == "delete" 
+        ? 'Amefuta taarifa' 
         : "Amesasisha taarifa";
       const new_body = action == "create" ? body : null;
       const old_body = action == "update" ? body : null;
