@@ -119,8 +119,9 @@ module.exports = {
               error = error2;
               console.log(error);
             }
-            console.log(schools.length , delete_duplicate);
+            
             if(schools.length > 0){
+              console.log(schools.length, delete_duplicate);
                if (delete_duplicate == 1) {
                 const msg = "Amefuta taarifa za shule zinazojirudia.";
                 const { user, body, url } = req;
