@@ -121,30 +121,29 @@ module.exports = {
             }
             
             if(schools.length > 0){
-              console.log(schools.length, delete_duplicate);
-               if (delete_duplicate == 1) {
-                const msg = "Amefuta taarifa za shule zinazojirudia.";
-                const { user, body, url } = req;
-                const { id, user_level } = user;
-                const { clientInfo } = body;
-                delete body.clientInfo;
-                const { ip, browserInfo } = clientInfo;
-                const { os, browser, platform } = browserInfo;
-                const browser_used = `${os} ${browser} ${platform}`;
-                const ip_address = formatIp(ip);
-                insertAudit(
-                  id,
-                  "Delete",
-                  null,
-                  null,
-                  url,
-                  browser_used,
-                  user_level,
-                  msg,
-                  ip_address,
-                  "school_registrations"
-                );
-                 module.exports.deleteDuplicateSchools()
+               if (delete_duplicate && Number(delete_duplicate) == 1) {
+                 const msg = "Amefuta taarifa za shule zinazojirudia.";
+                 const { user, body, url } = req;
+                 const { id, user_level } = user;
+                 const { clientInfo } = body;
+                 delete body.clientInfo;
+                 const { ip, browserInfo } = clientInfo;
+                 const { os, browser, platform } = browserInfo;
+                 const browser_used = `${os} ${browser} ${platform}`;
+                 const ip_address = formatIp(ip);
+                 insertAudit(
+                   id,
+                   "Delete",
+                   null,
+                   null,
+                   url,
+                   browser_used,
+                   user_level,
+                   msg,
+                   ip_address,
+                   "school_registrations"
+                 );
+                 module.exports.deleteDuplicateSchools();
                }
             }
             callback(error, schools, result2[0].num_rows);
