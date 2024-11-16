@@ -418,11 +418,11 @@ module.exports = {
       HAVING COUNT(*) > 1;`,
       (error, results) => {
         if (error) return console.log(error);
-        console.log(results.length)
         if (results.length > 0) {
           results.forEach((result) => {
             const { id, establishing_school_id, tracking_number } = result;
             // Delete from `school_registrations`
+            console.log(tracking_number)
             db.query(
               `DELETE FROM school_registrations WHERE id = ?`,
               [id],
