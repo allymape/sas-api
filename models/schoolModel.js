@@ -123,7 +123,7 @@ module.exports = {
             if(schools.length > 0){
                if (delete_duplicate && Number(delete_duplicate) == 1) {
                  const msg = "Amefuta taarifa za shule zinazojirudia.";
-                 console.log(message)
+                 console.log(msg)
                  const { user, body, url } = req;
                  const { id, user_level } = user;
                  const { clientInfo } = body;
