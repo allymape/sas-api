@@ -70,7 +70,6 @@ module.exports = {
                     GROUP BY sr2.registration_number
                     HAVING COUNT(*) > 1
                   )`;
-                  // module.exports.deleteDuplicateSchools();
     }
 
     let sql = `FROM school_registrations s 
@@ -120,6 +119,7 @@ module.exports = {
               error = error2;
               console.log(error);
             }
+            console.log(schools.length , delete_duplicate);
             if(schools.length > 0){
                if (delete_duplicate == 1) {
                 const msg = "Amefuta taarifa za shule zinazojirudia.";
