@@ -422,7 +422,7 @@ module.exports = {
           results.forEach((result) => {
             const { id, establishing_school_id, tracking_number } = result;
             // Delete from `school_registrations`
-            console.log(tracking_number)
+            console.log(result)
             db.query(
               `DELETE FROM school_registrations WHERE id = ?`,
               [id],
