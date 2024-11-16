@@ -408,11 +408,13 @@ module.exports = {
   },
   deleteDuplicateSchools: () => {
     db.query(
-      `SELECT id, establishing_school_id, tracking_number , registration_number
+      `
+      SET SESSION sql_mode = (SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));
+      SELECT id, establishing_school_id, tracking_number 
       FROM school_registrations 
       WHERE registration_number IS NOT NULL 
       GROUP BY registration_number 
-      HAVING COUNT(*) > 1`,
+      HAVING COUNT(*) > 1;`,
       (error, results) => {
         if (error) return console.log(error);
         if (results.length > 0) {
