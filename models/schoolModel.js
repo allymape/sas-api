@@ -408,7 +408,7 @@ module.exports = {
   },
   deleteDuplicateSchools: () => {
     db.query(
-      `SELECT id, establishing_school_id, tracking_number 
+      `SELECT id, establishing_school_id, tracking_number , registration_number
       FROM school_registrations 
       WHERE registration_number IS NOT NULL 
       GROUP BY registration_number 
