@@ -421,30 +421,47 @@ module.exports = {
           results.forEach((result) => {
             const { id, establishing_school_id, tracking_number } = result;
             // Delete from `school_registrations`
-            console.log(result['id'], result.id)
             db.query(
               `DELETE FROM school_registrations WHERE id = ?`,
               [id],
-              (error2) => {
+              (error2 , deletedRegistration) => {
                 if (error2) console.log(error2);
                 // Delete from `owners`
+                if (deletedRegistration.affectedRows > 0) {
+                  console.log("School registration record deleted successfully.");
+                }
                 db.query(
                   `DELETE FROM owners WHERE establishing_school_id = ?`,
                   [establishing_school_id],
-                  (error3) => {
+                  (error3 , deleteOwners) => {
                     if (error3) console.log(error3);
                     // Delete from `establishing_schools`
+                    if (deleteOwners.affectedRows > 0) {
+                      console.log(
+                        "School owners record deleted successfully."
+                      );
+                    }
                     db.query(
                       `DELETE FROM establishing_schools WHERE id = ?`,
                       [establishing_school_id],
-                      (error4) => {
+                      (error4, deleteEstablishing) => {
                         if (error4) console.log(error4);
                         // Delete from `applications`
+                        if (deleteEstablishing.affectedRows > 0) {
+                          console.log(
+                            "School establishment record deleted successfully."
+                          );
+                        }
                         db.query(
                           `DELETE FROM applications WHERE tracking_number = ?`,
                           [tracking_number],
-                          (error5) => {
+                          (error5, deleteApplications) => {
                             if (error5) console.log(error5);
+                            if (deleteApplications.affectedRows > 0) {
+                              console.log(
+                                "Application record deleted successfully."
+                              );
+                            }
                           }
                         );
                       }
