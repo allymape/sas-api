@@ -42,56 +42,59 @@ module.exports = {
         (error, user) => {
           if (error) {
             console.log("Query Error: ", error, user);
-          }
-          if (user && user.length == 1) {
-            db.query(
-              `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
-              (error2, permissions) => {
-                if (error2) {
-                  console.log(error2);
-                }
-                if (bcrypt.compareSync(password, user[0].password)) {
-                  console.log(`User found ${username}`);
-                  // console.log(permissions)
-                  message = "Logged in!";
-                  const login_datetime = formatDate(new Date());
-                  const user_id = user[0].id;
-                  db.query(
-                    `UPDATE staffs SET last_login = ? WHERE id = ?`,
-                    [login_datetime, user_id],
-                    (err) => {
-                      if (err) console.log(err);
+          }else{
+            if (user && user.length == 1) {
+              db.query(
+                `SELECT permission_id , permission_name FROM permissions, permission_role WHERE permission_role.permission_id = permissions.id AND permission_role.role_id = ${user[0]["new_role_id"]}`,
+                (error2, permissions) => {
+                  if (error2) {
+                    console.log(error2);
+                     message = "Kuna tatizo, wasiliana na msimamizi wa mfumo.";
+                     callback(false, [], [], message);
+                  }
+                  if (bcrypt.compareSync(password, user[0].password)) {
+                    console.log(`User found ${username}`);
+                    // console.log(permissions)
+                    message = "Logged in!";
+                    const login_datetime = formatDate(new Date());
+                    const user_id = user[0].id;
+                    db.query(
+                      `UPDATE staffs SET last_login = ? WHERE id = ?`,
+                      [login_datetime, user_id],
+                      (err) => {
+                        if (err) console.log(err);
 
-                      db.query(
-                        `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
-                        [
+                        db.query(
+                          `INSERT INTO login_activity(staff_id , ip , device , browser , created_at , updated_at) VALUES(?)`,
                           [
-                            user_id,
-                            formatIp(clientIp),
-                            upperCaseFirst(device),
-                            browser,
-                            login_datetime,
-                            login_datetime,
-                          ],
-                        ]
-                      );
-                      callback(true, user, permissions, message);
-                    }
-                  );
-                  // return;
-                } else {
-                  console.log(`Compare password for username ${username}`);
-                  message = "Wrong username or password.";
-                  callback(false, [], [], message);
-                  // return;
+                            [
+                              user_id,
+                              formatIp(clientIp),
+                              upperCaseFirst(device),
+                              browser,
+                              login_datetime,
+                              login_datetime,
+                            ],
+                          ]
+                        );
+                        callback(true, user, permissions, message);
+                      }
+                    );
+                    // return;
+                  } else {
+                    console.log(`Compare password for username ${username}`);
+                    message = "Wrong username or password.";
+                    callback(false, [], [], message);
+                    // return;
+                  }
                 }
-              }
-            );
-          } else {
-            console.log(`Username not found ${username}`);
-            message = "Wrong username or password.";
-            callback(false, [], [], message);
-            // return;
+              );
+            } else {
+              console.log(`Username not found ${username}`);
+              message = "Wrong username or password.";
+              callback(false, [], [], message);
+              // return;
+            }
           }
         }
       );
