@@ -18,7 +18,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                        const registry_type = application[0].registry_type_id
                       //  console.log(registry_type)
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
-                        // console.log(main_table)
+                        console.log(main_table)
                         db.query(
                           `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
