@@ -54,7 +54,8 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                           LEFT JOIN administration_areas_view aav ON aav.ward_code = i.ward_id`
                                        : `LEFT JOIN administration_areas_view aav ON aav.ward_code = e.ward_id`
                                    }
-                                   WHERE v.tracking_number = ? AND a.folio IS NOT NULL`,
+                                   WHERE v.tracking_number = ? AND a.folio IS NOT NULL
+                                   LIMIT 1`,
                           [tracking_number],
                           (error2, results) => {
                             if (error2) console.log(error2);
