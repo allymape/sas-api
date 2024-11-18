@@ -44,7 +44,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                    LEFT JOIN school_registrations s ON s.establishing_school_id = e.id
                                    LEFT JOIN certificate_types c on c.id = e.certificate_type_id
                                    LEFT JOIN staffs u ON a.approved_by = u.id 
-                                   LEFT JOIN roles r ON r.id = u.user_leve
+                                   LEFT JOIN roles r ON r.id = u.user_level
                                    ${
                                      registry_type == 1
                                        ? `JOIN personal_infos p ON p.secure_token = a.foreign_token
@@ -59,6 +59,7 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                           (error2, results) => {
                             if (error2) console.log(error2);
                             const data = results.length > 0 ? results[0] : null;
+                            console.log(results[0])
                             db.query(
                               `SELECT r.RegionName AS sqa_zone_region 
                                       FROM regions r
