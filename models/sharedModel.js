@@ -814,7 +814,7 @@ module.exports = {
               [0,1].includes(Number(haliombi))
             ) {
               console.log("Kuna shida hakuna id ya staff wa kutumiwa");
-              callback(success);
+              callback(success , 'Kuna tatizo, Hakuna muhusika wa kuwasilishiwa.');
             } else {
               if([0,1 , 4].includes(Number(haliombi))){
                 console.log(

@@ -13,7 +13,7 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
     if (app_category) {
       sharedModel.getSchoolCategoryForRegistration(tracking_number , (schoolCatId) => {
          if(schoolCatId){
-               sharedModel.tumaMaoni(req, app_category, (isSuccess) => {
+               sharedModel.tumaMaoni(req, app_category, (isSuccess , message = null) => {
                  success = isSuccess;
                  if (req.body.haliombi == 2) {
                    sharedModel.updateOrCreateRegistrationNumber(
@@ -30,7 +30,7 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
                  }
                  //  Insert sharti la usajili
                  console.log(tracking_number, conditions);
-                 if (isSuccess) {
+                 if (isSuccess && conditions) {
                    sharedModel.updateSharti(tracking_number, conditions);
                  }
                  return res.send({
@@ -39,11 +39,14 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
                    data: success ? "success" : "fail",
                    message: success
                      ? "Majibu Successfully Recorded."
+                     : message 
+                     ?message 
                      : "Kuna tatizo",
                  });
                });
               
          }else{
+          console.log("Kuna tatizo no schoolCatId");
            return res.send({
              error: false,
              statusCode:  306,
