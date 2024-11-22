@@ -393,19 +393,37 @@ module.exports = {
       }
     );
   },
-
   changeSchoolName: (req, callback) => {
-    db.query(
-      "UPDATE establishing_schools SET school_name = ? WHERE tracking_number = ?",
-      [req.body.newName, req.body.trackingId],
-      function (error, results, fields) {
-        if (error) {
-          console.log(error);
+    const { application_category, newName, trackingId } = req.body;
+    if (application_category == 'usajili') {
+      console.log('Usajili ...')
+      db.query(
+        `UPDATE establishing_schools es
+           JOIN school_registrations sr ON sr.establishing_school_id = es.id
+           SET es.school_name = ? WHERE sr.tracking_number = ?`,
+        [newName, trackingId],
+        function (error, results) {
+          if (error) {
+            console.log(error);
+          }
+          const success = results.affectedRows > 0;
+          callback(success);
         }
-        const success = results.affectedRows > 0;
-        callback(success);
-      }
-    );
+      );
+    } else {
+      console.log('Kuanzisha shule ...')
+      db.query(
+        "UPDATE establishing_schools SET school_name = ? WHERE tracking_number = ?",
+        [newName, trackingId],
+        function (error, results) {
+          if (error) {
+            console.log(error);
+          }
+          const success = results.affectedRows > 0;
+          callback(success);
+        }
+      );
+    }
   },
   deleteDuplicateSchools: () => {
     db.query(

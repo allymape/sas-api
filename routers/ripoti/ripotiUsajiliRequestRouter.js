@@ -55,7 +55,7 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
                         }
                         ${
                           tracking_number
-                            ? " AND tracking_number LIKE '%" +
+                            ? " AND rsv.tracking_number LIKE '%" +
                               tracking_number +
                               "%'"
                             : ""
