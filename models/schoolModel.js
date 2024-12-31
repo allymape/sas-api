@@ -289,15 +289,15 @@ module.exports = {
   editSchool: (tracking_number, callback) => {
     db.query(
       `SELECT e.id AS id, e.school_name AS name, e.school_category_id AS category,latitude,longitude, 
-                  IFNULL(DATE(s.registration_date) , null) AS registration_date,
-                  a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
-                  s.registration_number AS registration_number, e.village_id AS street, 
-                  w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region , description, s.is_verified AS is_verified
-                  FROM school_registrations s
-                  ${registeredSchoolsEstablishedApplicationSqlJoin()}
-                  ${schoolLocationsSqlJoin()}
-                  LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
-                  WHERE s.tracking_number = ? `,
+        IFNULL(DATE(s.registration_date) , null) AS registration_date,
+        a.registry_type_id AS ownership, e.tracking_number AS tracking_number,
+        s.registration_number AS registration_number, e.village_id AS street, 
+        w.WardCode AS ward, d.LgaCode AS lga, r.RegionCode AS region , sv.description AS description, s.is_verified AS is_verified
+        FROM school_registrations s
+        ${registeredSchoolsEstablishedApplicationSqlJoin()}
+        ${schoolLocationsSqlJoin()}
+        LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
+        WHERE s.tracking_number = ?`,
       [tracking_number],
       (error, school) => {
         if (error) {
