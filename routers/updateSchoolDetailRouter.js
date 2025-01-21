@@ -8,7 +8,7 @@ const sharedModel = require("../models/sharedModel.js");
 
 // Edit Shule
 updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth, (req, res) => {
-    updateSchoolDetailModel.getSchoolInfo(req.params.tracking_number , (school_info) => {
+    updateSchoolDetailModel.getSchoolInfo(req.params.tracking_number , (school_info , owner ,manager) => {
         sharedModel.getSchoolCategories((school_categories) => {
               sharedModel.getLanguages((languages) => {
                    sharedModel.getSchoolSubCategories((school_sub_categories) => {
@@ -21,19 +21,27 @@ updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth
                                                   (sect_names) => {
                                                     sharedModel.getRegistrationStructures(
                                                       (registration_structures) => {
-                                                        res.send({
-                                                          school_info,
-                                                          languages,
-                                                          school_categories,
-                                                          school_sub_categories,
-                                                          building_structures,
-                                                          genders,
-                                                          specializations,
-                                                          registration_structures,
-                                                          curriculums,
-                                                          certificates,
-                                                          sect_names,
-                                                        });
+                                                        sharedModel.getOwnershipSubType((ownership_sub_types) => {
+                                                          sharedModel.getDenominations((denominations) => {
+                                                                  res.send({
+                                                                    school_info,
+                                                                    owner,
+                                                                    manager,
+                                                                    languages,
+                                                                    school_categories,
+                                                                    school_sub_categories,
+                                                                    building_structures,
+                                                                    genders,
+                                                                    specializations,
+                                                                    registration_structures,
+                                                                    curriculums,
+                                                                    certificates,
+                                                                    sect_names,
+                                                                    ownership_sub_types,
+                                                                    denominations,
+                                                                  });
+                                                          })
+                                                        })
                                                       }
                                                     );
                                                   }

@@ -42,7 +42,7 @@ module.exports = {
   },
   // 
   updateSchoolInfo: (tracking_number, data, callback) => {
-    console.log(data)
+    // console.log(data)
     const {
       school_sub_category_id,
       registration_structure_id,
@@ -54,8 +54,19 @@ module.exports = {
       certificate_id,
       sect_name_id,
       stream,
+      school_size,
+      area,
+      is_for_disabled,
+      is_seminary,
+      website,
+      school_phone,
+      school_address,
+      po_box,
+      number_of_students,
+      number_of_teachers,
       is_hostel,
     } = data;
+
     var success = false
       db.query(
         `UPDATE school_registrations AS s 
@@ -70,6 +81,16 @@ module.exports = {
                     e.certificate_type_id = ?, 
                     e.sect_name_id = ?,
                     e.stream = ?,
+                    e.school_size = ?,
+                    e.area = ?,
+                    e.is_for_disabled = ?,
+                    s.is_seminary = ?,
+                    e.website = ?,
+                    e.school_phone = ?,
+                    e.school_address = ?,
+                    e.po_box = ?,
+                    e.number_of_students = ?,
+                    e.number_of_teachers = ?,
                     e.is_hostel = ?
                 WHERE s.tracking_number = ?`,
         [
@@ -83,6 +104,16 @@ module.exports = {
           certificate_id ? certificate_id : null,
           sect_name_id ? sect_name_id : null,
           stream,
+          school_size ? school_size : null,
+          area ? area : null,
+          is_for_disabled == "on" ? 1 : 0,
+          is_seminary == "on" ? 1 : 0,
+          website,
+          school_phone,
+          school_address,
+          po_box,
+          number_of_students ? number_of_students : null,
+          number_of_teachers ? number_of_teachers : null,
           is_hostel == "on" ? 1 : 0,
           tracking_number,
         ],
@@ -92,6 +123,186 @@ module.exports = {
           }
           if (result.affectedRows > 0) {
             success = true;
+            db.query(`SELECT establishing_school_id AS school_id FROM school_registrations s WHERE s.tracking_number = ?` , 
+              [tracking_number] , (error2 , school) => {
+                if(error2) {
+                  console.log(error2);
+                  error = error2
+                }
+                const school_id = school[0].school_id;
+                const { owner_name , authorized_person, title , owner_email , phone_number, is_manager , ownership_sub_type_id, denomination_id} = data
+                const { manager_first_name , manager_middle_name,manager_last_name ,occupation, manager_email , manager_phone_number} = data
+                if(school.length > 0){
+                   //check if owner exist
+                   db.query(`SELECT * FROM owners WHERE establishing_school_id = ?` , [school_id] , (error3 , existOwner) => {
+                        if(error3){
+                          error = error3
+                          console.log(error3)
+                        }
+                        if(existOwner.length > 0){
+                          //update owner
+                          db.query(
+                            `UPDATE owners 
+                              SET 
+                              owner_name = ?,
+                              authorized_person = ?,
+                              title = ?,
+                              owner_email = ?,
+                              phone_number = ?,
+                              is_manager = ?,
+                              ownership_sub_type_id = ?,
+                              denomination_id = ?
+                              WHERE establishing_school_id = ?`,
+                            [
+                              owner_name,
+                              authorized_person,
+                              title,
+                              owner_email,
+                              phone_number,
+                              is_manager == "on" ? 1 : 0,
+                              ownership_sub_type_id ? ownership_sub_type_id : null,
+                              denomination_id ? denomination_id : null,
+                              school_id,
+                            ],
+                            (error4 , updateOwner) => {
+                              if (error4) {
+                                console.log(
+                                  "Unable to update owners due to " + error4
+                                );
+                                error = error4;
+                              }else{
+                                if (updateOwner.affectedRows) {
+                                  console.log("Manager updated successfully");
+                                }
+                              }
+                            }
+                          );
+                        }else{
+                          //insert owner
+                          db.query(
+                            `INSERT INTO owners (establishing_school_id, 
+                                      owner_name,
+                                      authorized_person, 
+                                      title, owner_email ,
+                                      phone_number,
+                                      is_maneger,
+                                      ownership_sub_type_id,
+                                      denomination_id) VALUES(?)`,
+                            [
+                              school_id,
+                              owner_name,
+                              authorized_person,
+                              title,
+                              owner_email,
+                              phone_number,
+                              is_manager,
+                              ownership_sub_type_id,
+                              denomination_id,
+                            ],
+                            (error5 , insertOwner) => {
+                              if (error5) {
+                                console.log(
+                                  "Unable to insert owner due to " + error5
+                                );
+                                error = error5;
+                              }else{
+                                if (insertOwner.affectedRows) {
+                                  console.log("Owner inserted successfully");
+                                }
+                              }
+                              
+                            }
+                          );
+                        }
+                   })
+                   //check if manager exist
+                   db.query(
+                     `SELECT * FROM managers WHERE establishing_school_id = ?`,
+                     [school_id],
+                     (error3, existManager) => {
+                       if (error3) {
+                         error = error3;
+                         console.log(error3);
+                       }
+                       if (existManager.length > 0) {
+                         //update owner
+                         db.query(
+                           `UPDATE managers 
+                              SET 
+                              manager_first_name = ?,
+                              manager_middle_name = ?,
+                              manager_last_name = ?,
+                              occupation = ?,
+                              manager_phone_number = ?,
+                              manager_email = ?
+                              WHERE establishing_school_id = ?`,
+                           [
+                             manager_first_name,
+                             manager_middle_name,
+                             manager_last_name,
+                             occupation,
+                             manager_phone_number,
+                             manager_email,
+                             school_id,
+                           ],
+                           (error6, updateManager) => {
+                             if (error6) {
+                               console.log(
+                                 "Unable to update manager due to " + error4
+                               );
+                               error = error6;
+                             }else{
+                              if (updateManager.affectedRows) {
+                                console.log("Manager updated successfully");
+                              }
+                             }
+                             
+                           }
+                         );
+                       } else {
+                         //insert owner
+                         db.query(
+                           `INSERT INTO managers (
+                                    establishing_school_id, 
+                                    manager_first_name,
+                                    manager_middle_name, 
+                                    manager_last_name, 
+                                    occupation ,
+                                    manager_phone_number,
+                                    manager_email) VALUES (?)`,
+                           [
+                             [
+                               school_id,
+                               manager_first_name,
+                               manager_middle_name,
+                               manager_last_name,
+                               occupation,
+                               manager_phone_number,
+                               manager_email,
+                             ]
+                           ],
+                           (error7, insertManager) => {
+                             if (error7) {
+                               console.log(error7);
+                               console.log(
+                                 "Unable to insert manager due to " + error7
+                               );
+                               error = error7;
+                             } else {
+                               if (insertManager.affectedRows > 0) {
+                                 console.log("Manager inserted successfully");
+                               }
+                             }
+                           }
+                         );
+                       }
+                     }
+                   );
+                }else{
+                  success = false
+                  error = true
+                }
+            });
           }
           callback(error, success);
         }

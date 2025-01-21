@@ -70,6 +70,42 @@ module.exports = {
       }
     );
   },
+  //get owner of school
+  getCurrentSchoolOwner : (school_id , callback) => {
+    db.query(
+      `SELECT * FROM owners WHERE school_id = ?`, [school_id],
+      (error, owner) => {
+        if (error) {
+          console.log("Can't get owner of school due to ", error);
+        }
+        callback(owner);
+      }
+    );
+  },
+  // Ownership sub types
+  getOwnershipSubType: (callback) => {
+    db.query(
+      `SELECT id, sub_type AS name FROM ownership_sub_types`,
+      (error2, sub_types) => {
+        if (error2) {
+          console.log("Can't get ownership sub types due to ", error2);
+        }
+        callback(sub_types);
+      }
+    );
+  },
+  // Denominations
+  getDenominations: (callback) => {
+    db.query(
+      `SELECT id, denomination AS name FROM denominations`,
+      (error2, denominations) => {
+        if (error2) {
+          console.log("Can't get denominations due to ", error2);
+        }
+        callback(denominations);
+      }
+    );
+  },
   // Teaching Languages
   getLanguages: (callback) => {
     db.query(
@@ -301,7 +337,7 @@ module.exports = {
             created_at: maoniTime,
             rank_name: rank_name,
             rank_name_to: rank_name_to,
-            title : title
+            title: title,
           });
         }
         callback(obj);
@@ -742,11 +778,14 @@ module.exports = {
   },
 
   // Business Flow base on application category
-  getMyNextBoss: (haliombi , user, application_category, staff_id, callback) => {
+  getMyNextBoss: (haliombi, user, application_category, staff_id, callback) => {
     var str = (str = ` AND s.id < -1`);
     const { cheo_office, zone_id } = user;
 
-    if (haliombi != 4 && (staff_id == 0 || staff_id == "" || staff_id == null)) {
+    if (
+      haliombi != 4 &&
+      (staff_id == 0 || staff_id == "" || staff_id == null)
+    ) {
       db.query(
         `SELECT LOWER(rank_name) AS rank_name , rank_level
           FROM work_flow w
@@ -811,12 +850,15 @@ module.exports = {
             if (
               (user.cheo != "ke" || user.cheo != "kke") &&
               !user_to &&
-              [0,1].includes(Number(haliombi))
+              [0, 1].includes(Number(haliombi))
             ) {
               console.log("Kuna shida hakuna id ya staff wa kutumiwa");
-              callback(success , 'Kuna tatizo, Hakuna muhusika wa kuwasilishiwa.');
+              callback(
+                success,
+                "Kuna tatizo, Hakuna muhusika wa kuwasilishiwa."
+              );
             } else {
-              if([0,1 , 4].includes(Number(haliombi))){
+              if ([0, 1, 4].includes(Number(haliombi))) {
                 console.log(
                   `inatumwa kwa ${
                     haliombi == 4
@@ -826,8 +868,15 @@ module.exports = {
                       : ""
                   }`
                 );
-              }else{
-                console.log(Number(haliombi) == 2 ? 'Ombi limethibitishwa' : (Number(haliombi) == 3) ? 'Ombi limekataliwa' : 'Ombi halijulikani limefanyiwa nini: haliombi ='+ haliombi)
+              } else {
+                console.log(
+                  Number(haliombi) == 2
+                    ? "Ombi limethibitishwa"
+                    : Number(haliombi) == 3
+                    ? "Ombi limekataliwa"
+                    : "Ombi halijulikani limefanyiwa nini: haliombi =" +
+                      haliombi
+                );
               }
               // console.log(haliombi, user_to);
               // return haliombi;
@@ -1488,7 +1537,6 @@ module.exports = {
     }
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
-   
     db.query(`${sql_rows}`, parameters, (error, data) => {
       if (error) console.log(error);
       // sql query to count number of rows
