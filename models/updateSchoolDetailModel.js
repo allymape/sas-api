@@ -33,7 +33,28 @@ module.exports = {
                                         [tracking_number],
                                         (error2, managers) => {
                                           if (error2) console.log(error2);
-                                          callback(results[0], owners[0], managers[0]);
+                                          db.query(`SELECT combination_id
+                                                    FROM school_combinations  sc
+                                                    INNER JOIN school_registrations s ON sc.school_registration_id = s.id
+                                                    WHERE s.tracking_number = ?` , 
+                                                    [tracking_number] , 
+                                                    (error3 , school_combinations) => {
+                                                          if(error3) console.log(error3)
+                                                            const combinationIds =
+                                                              school_combinations.map(
+                                                                (row) =>
+                                                                  row.combination_id
+                                                              );
+                                                            console.log(
+                                                              combinationIds
+                                                            );
+                                                            callback(
+                                                              results[0],
+                                                              owners[0],
+                                                              managers[0],
+                                                              combinationIds
+                                                            );
+                                                    })
                                         }
                                       );
                       });
@@ -49,7 +70,6 @@ module.exports = {
       building_structure_id,
       school_gender_id,
       language_id,
-      school_specialization_id,
       curriculum_id,
       certificate_id,
       sect_name_id,
@@ -66,6 +86,8 @@ module.exports = {
       number_of_teachers,
       is_hostel,
     } = data;
+
+    const {combinations , school_specialization_id,} = data
 
     var success = false
       db.query(
@@ -123,13 +145,40 @@ module.exports = {
           }
           if (result.affectedRows > 0) {
             success = true;
-            db.query(`SELECT establishing_school_id AS school_id FROM school_registrations s WHERE s.tracking_number = ?` , 
+            //insert combinations
+            db.query(`SELECT id AS school_registration_id , establishing_school_id AS school_id FROM school_registrations s WHERE s.tracking_number = ?` , 
               [tracking_number] , (error2 , school) => {
                 if(error2) {
                   console.log(error2);
                   error = error2
                 }
                 const school_id = school[0].school_id;
+                const school_registration_id = school[0].school_registration_id;
+                db.query(`DELETE FROM school_combinations WHERE school_registration_id = ?` , [school_registration_id] , (errDelete) => {
+                    if(errDelete) console.log('Unable to delete school combinations due to '.errDelete)
+                      if(Array.isArray(combinations) && combinations.length > 0){
+                        const school_combination_values = combinations.map(
+                          (combination_id) => [
+                            school_registration_id,
+                            Number(combination_id),
+                            formatDate(new Date()),
+                            formatDate(new Date())
+                          ]
+                        );
+                        db.query(
+                          `INSERT INTO school_combinations (school_registration_id , combination_id , created_at, updated_at) VALUES ? `,
+                          [school_combination_values],
+                          (combError) => {
+                            if (combError)
+                              console.log(
+                                "Unable to insert combinations due to "
+                                  .combError
+                              );
+                          }
+                        );
+                      }
+                    // db.query(`INSERT INTO school_combinations VALUES(?)` , )
+                })
                 const { owner_name , authorized_person, title , owner_email , phone_number, is_manager , ownership_sub_type_id, denomination_id} = data
                 const { manager_first_name , manager_middle_name,manager_last_name ,occupation, manager_email , manager_phone_number} = data
                 if(school.length > 0){

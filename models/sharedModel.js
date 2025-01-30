@@ -71,9 +71,10 @@ module.exports = {
     );
   },
   //get owner of school
-  getCurrentSchoolOwner : (school_id , callback) => {
+  getCurrentSchoolOwner: (school_id, callback) => {
     db.query(
-      `SELECT * FROM owners WHERE school_id = ?`, [school_id],
+      `SELECT * FROM owners WHERE school_id = ?`,
+      [school_id],
       (error, owner) => {
         if (error) {
           console.log("Can't get owner of school due to ", error);
@@ -166,6 +167,18 @@ module.exports = {
       }
     );
   },
+  //Combonations
+  getCombinations: (callback) => {
+    db.query(
+      `SELECT id, combination AS name FROM combinations`,
+      (error, combinations) => {
+        if (error) {
+          console.log("Can't get combinations due to ", error);
+        }
+        callback(combinations);
+      }
+    );
+  },
   getCurriculum: (callback) => {
     db.query(
       `SELECT id, curriculum AS name FROM curricula`,
@@ -180,7 +193,8 @@ module.exports = {
   getLevels: (callback) => {
     db.query(
       `SELECT vyeo.id as id, vyeo.rank_name as name 
-          FROM vyeo where status_id = 1`,
+          FROM vyeo 
+          WHERE status_id = 1`,
       (error2, levels) => {
         if (error2) {
           console.log(error2);
@@ -199,7 +213,7 @@ module.exports = {
   },
   getCertificates: (callback) => {
     db.query(
-      `SELECT id, certificate AS name FROM certificate_types`,
+      `SELECT id, certificate AS name FROM certificate_types ORDER BY certificate ASC`,
       (error, certificate_types) => {
         if (error) {
           console.log("Can't get certificate_types due to ", error);

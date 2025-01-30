@@ -8,13 +8,14 @@ const sharedModel = require("../models/sharedModel.js");
 
 // Edit Shule
 updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth, (req, res) => {
-    updateSchoolDetailModel.getSchoolInfo(req.params.tracking_number , (school_info , owner ,manager) => {
+    updateSchoolDetailModel.getSchoolInfo(req.params.tracking_number , (school_info , owner ,manager , school_combinations) => {
         sharedModel.getSchoolCategories((school_categories) => {
               sharedModel.getLanguages((languages) => {
                    sharedModel.getSchoolSubCategories((school_sub_categories) => {
                         sharedModel.getBuildingStructures((building_structures) => {
                             sharedModel.getSchoolGender((genders) => {
                                 sharedModel.getSchoolSpecialization((specializations) => {
+                                   sharedModel.getCombinations((combinations) => {
                                     sharedModel.getCurriculum((curriculums) => {
                                           sharedModel.getCertificates((certificates) => {
                                                 sharedModel.getSectNames(
@@ -27,12 +28,14 @@ updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth
                                                                     school_info,
                                                                     owner,
                                                                     manager,
+                                                                    school_combinations,
                                                                     languages,
                                                                     school_categories,
                                                                     school_sub_categories,
                                                                     building_structures,
                                                                     genders,
                                                                     specializations,
+                                                                    combinations,
                                                                     registration_structures,
                                                                     curriculums,
                                                                     certificates,
@@ -48,6 +51,7 @@ updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth
                                                 );
                                             });
                                           });
+                                        });
                                       });
                                   });
                               });
