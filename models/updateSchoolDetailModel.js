@@ -3,10 +3,13 @@ const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, 
 
 module.exports = {
   //******** GET A LIST OF REGISTERED SCHOOLS *******************************
-  getSchoolInfo: (tracking_number, callback) => {
+  getSchoolInfo: (req, callback) => {
+     const tracking_number = req.params.tracking_number; 
+     const { sehemu, zone_id, district_code } = req.user;
         db.query(
-          `SELECT s.id AS id,s.tracking_number AS tracking_number,school_opening_date,registration_date,
+          `SELECT s.id AS id,s.tracking_number AS tracking_number,school_opening_date,registration_date,registry_type_id,
                   level_of_education,is_seminary,registration_number,reg_status,sharti,
+                  r.RegionName AS region, d.LgaName AS district, w.WardName AS ward, st.StreetName AS street,
                   school_category_id, language_id,certificate_type_id, school_sub_category_id,school_name,school_size,area,stream,website,language_id,building_structure_id,
                   school_gender_type_id,school_specialization_id,ward_id,village_id,registration_structure_id,curriculum_id,
                   certificate_type_id,sect_name_id,school_phone,school_email,po_box,school_address,number_of_students,
@@ -14,50 +17,61 @@ module.exports = {
                   is_hostel,file_number,school_folio,max_folio
                   FROM school_registrations s 
                   INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
-                  WHERE s.tracking_number = ?`,
+                  INNER JOIN applications a ON a.tracking_number = s.tracking_number
+                  ${schoolLocationsSqlJoin()}
+                  WHERE  s.reg_status IN (1)
+                  ${sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
+                        ${
+                          sehemu == "w1"
+                            ? "AND d.LgaCode = '" + district_code + "'"
+                            : ""
+                        }
+                  AND s.tracking_number = ?`,
           [tracking_number],
           (error, results) => {
             if (error) console.log(error);
-            db.query(`SELECT o.*
+            db.query(
+              `SELECT o.*
                       FROM school_registrations s 
                       INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
                       INNER JOIN owners o ON o.establishing_school_id = e.id
-                      WHERE s.tracking_number = ?` , [tracking_number] , (error2 , owners) => {
-                        if (error2) console.log(error2);
-                              db.query(
-                                `SELECT m.*
+                      WHERE s.tracking_number = ?`,
+              [tracking_number],
+              (error2, owners) => {
+                if (error2) console.log(error2);
+                db.query(
+                  `SELECT m.*
                                     FROM school_registrations s 
                                     INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
                                     INNER JOIN managers m ON m.establishing_school_id = e.id
                                     WHERE s.tracking_number = ?`,
-                                        [tracking_number],
-                                        (error2, managers) => {
-                                          if (error2) console.log(error2);
-                                          db.query(`SELECT combination_id
+                  [tracking_number],
+                  (error2, managers) => {
+                    if (error2) console.log(error2);
+                    db.query(
+                      `SELECT combination_id
                                                     FROM school_combinations  sc
                                                     INNER JOIN school_registrations s ON sc.school_registration_id = s.id
-                                                    WHERE s.tracking_number = ?` , 
-                                                    [tracking_number] , 
-                                                    (error3 , school_combinations) => {
-                                                          if(error3) console.log(error3)
-                                                            const combinationIds =
-                                                              school_combinations.map(
-                                                                (row) =>
-                                                                  row.combination_id
-                                                              );
-                                                            console.log(
-                                                              combinationIds
-                                                            );
-                                                            callback(
-                                                              results[0],
-                                                              owners[0],
-                                                              managers[0],
-                                                              combinationIds
-                                                            );
-                                                    })
-                                        }
-                                      );
-                      });
+                                                    WHERE s.tracking_number = ?`,
+                      [tracking_number],
+                      (error3, school_combinations) => {
+                        if (error3) console.log(error3);
+                        const combinationIds = school_combinations.map(
+                          (row) => row.combination_id
+                        );
+                        console.log(combinationIds);
+                        callback(
+                          results[0],
+                          owners[0],
+                          managers[0],
+                          combinationIds
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
           }
         );
   },
@@ -74,7 +88,7 @@ module.exports = {
       certificate_id,
       sect_name_id,
       stream,
-      school_size,
+      // school_size,
       area,
       is_for_disabled,
       is_seminary,
@@ -103,7 +117,6 @@ module.exports = {
                     e.certificate_type_id = ?, 
                     e.sect_name_id = ?,
                     e.stream = ?,
-                    e.school_size = ?,
                     e.area = ?,
                     e.is_for_disabled = ?,
                     s.is_seminary = ?,
@@ -116,17 +129,17 @@ module.exports = {
                     e.is_hostel = ?
                 WHERE s.tracking_number = ?`,
         [
-          school_sub_category_id,
-          registration_structure_id,
-          building_structure_id,
-          school_gender_id,
+          school_sub_category_id ? school_sub_category_id : null,
+          registration_structure_id ? registration_structure_id : null,
+          building_structure_id ? building_structure_id : null,
+          school_gender_id ? school_gender_id : null,
           language_id ? language_id : null,
-          school_specialization_id ? school_specialization_id : null,
+          school_specialization_id && [2,6].includes(Number(certificate_id)) ? school_specialization_id : null,
           curriculum_id ? curriculum_id : null,
           certificate_id ? certificate_id : null,
           sect_name_id ? sect_name_id : null,
-          stream,
-          school_size ? school_size : null,
+          stream ? stream : null,
+          // school_size ? school_size : null,
           area ? area : null,
           is_for_disabled == "on" ? 1 : 0,
           is_seminary == "on" ? 1 : 0,
@@ -165,17 +178,19 @@ module.exports = {
                             formatDate(new Date())
                           ]
                         );
-                        db.query(
-                          `INSERT INTO school_combinations (school_registration_id , combination_id , created_at, updated_at) VALUES ? `,
-                          [school_combination_values],
-                          (combError) => {
-                            if (combError)
-                              console.log(
-                                "Unable to insert combinations due to "
-                                  .combError
-                              );
-                          }
-                        );
+                        if ([2, 6].includes(Number(certificate_id))) {
+                          db.query(
+                            `INSERT INTO school_combinations (school_registration_id , combination_id , created_at, updated_at) VALUES ? `,
+                            [school_combination_values],
+                            (combError) => {
+                              if (combError)
+                                console.log(
+                                  "Unable to insert combinations due to "
+                                    .combError
+                                );
+                            }
+                          );
+                        }
                       }
                     // db.query(`INSERT INTO school_combinations VALUES(?)` , )
                 })

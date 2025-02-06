@@ -17,6 +17,7 @@ module.exports = {
     callback,
     req = null
   ) => {
+    const { sehemu, zone_id, district_code } = req.user;
     var searchQuery = "";
     var queryParams = [];
     if (search_value) {
@@ -80,6 +81,12 @@ module.exports = {
                       LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
                       ${schoolLocationsSqlJoin()}
                       WHERE  s.reg_status IN (1)
+                      ${sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
+                        ${
+                          sehemu == "w1"
+                            ? "AND d.LgaCode = '" + district_code + "'"
+                            : ""
+                        }
                       ${searchQuery}
                       ORDER BY school_name ASC`;
 

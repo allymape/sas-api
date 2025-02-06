@@ -211,9 +211,12 @@ module.exports = {
       callback(sect_names);
     });
   },
-  getCertificates: (callback) => {
+  getCertificates: (callback , school_category_id) => {
     db.query(
-      `SELECT id, certificate AS name FROM certificate_types ORDER BY certificate ASC`,
+      `SELECT id, certificate AS name , level 
+       FROM certificate_types 
+       ${school_category_id ? ' WHERE school_category_id =  '+db.escape(school_category_id) : ''}
+       ORDER BY certificate ASC`,
       (error, certificate_types) => {
         if (error) {
           console.log("Can't get certificate_types due to ", error);
