@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const updateSchoolDetailRouter = express.Router();
-const { isAuth } = require("../utils.js");
+const { isAuth, auditMiddleware } = require("../utils.js");
 
 const updateSchoolDetailModel = require("../models/updateSchoolDetailModel.js");
 const sharedModel = require("../models/sharedModel.js");
@@ -87,7 +87,7 @@ updateSchoolDetailRouter.get("/edit-school-detail/:tracking_number/edit", isAuth
           })
 });
 // Update Shule Details
-updateSchoolDetailRouter.put("/update-school-detail/:tracking_number", isAuth, (req, res) => {
+updateSchoolDetailRouter.put("/update-school-detail/:tracking_number", isAuth, auditMiddleware('school_registration' , 'update' , `Shule imesasishwa kikamilifu`), (req, res) => {
     updateSchoolDetailModel.updateSchoolInfo(req.params.tracking_number , req.body , (error , success) => {
         // console.log(success)
         res.send({
