@@ -778,7 +778,6 @@ const ObjectFuctions = {
       sqlJoin = `LEFT JOIN former_school_infos fsi ON fsi.tracking_number = a.tracking_number 
                       LEFT JOIN establishing_schools e ON fsi.establishing_school_id = e.id`;
     }
-    console.log(category);
     return sqlJoin;
   },
   auditMiddleware: (tableName = "", action = "create", messageText = "") => {
