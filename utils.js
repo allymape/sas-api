@@ -791,7 +791,7 @@ const ObjectFuctions = {
       const api_router = url;
       const rollId = user_level;
       const tableId = tableName;
-      const event_type = action == "create" ? "created" : "updated";
+      const event_type = action == "create" ? "created" :( action == 'delete' ? 'delete' :"updated");
       const message = messageText
         ? messageText
         : action == "create" 

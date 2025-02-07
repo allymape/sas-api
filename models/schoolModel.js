@@ -545,5 +545,46 @@ module.exports = {
           }
         }
       );
+  },
+  // Reg status 0 imefutiwa usajili, 1 imesajiliwa, 2 iko kwenye mchakato wa kusajiliwa, 3 imefutwa manually, reason duplicates
+  deleteSchool : (tracking_number , callback) => {
+    var success = false
+    db.query(
+      `UPDATE school_registrations s
+       JOIN applications a ON s.tracking_number = a.tracking_number
+       SET a.is_approved = 5, s.reg_status = 3, s.deleted_at = ?
+       WHERE s.tracking_number = ?`,
+      [formatDate(new Date()), tracking_number],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+          callback(success);
+        } else {
+          console.log(tracking_number);
+          success = result.affectedRows;
+          callback(success);
+        }
+      }
+    );
+  },
+  deregisterSchool : (tracking_number , callback) => {
+    var success = false
+    db.query(
+      `UPDATE school_registrations s
+       JOIN applications a ON s.tracking_number = a.tracking_number
+       SET a.application_category_id = 11, s.reg_status = 0, a.approved_at = ?
+       WHERE s.tracking_number = ?`,
+      [ formatDate(new Date) , tracking_number],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+          callback(success);
+        } else {
+          console.log(tracking_number);
+          success = result.affectedRows;
+          callback(success);
+        }
+      }
+    );
   }
 };

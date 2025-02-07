@@ -3,7 +3,7 @@ const express = require("express");
 const request = require("request");
 const schoolRouter = express.Router();
 var admin_area_url = process.env.LOCATIONS_API_BASE_URL;
-const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission, validateRegistrationNumber } = require("../utils.js");
+const { isAuth, isAdmin, formatDate, promiseRequest, generateRandomInt, generateRandomText, randomString, permission, validateRegistrationNumber, auditMiddleware } = require("../utils.js");
 const schoolModel = require("../models/schoolModel.js");
 const sharedModel = require("../models/sharedModel.js");
 const algorithmModel = require("../models/algorithmModel.js");
@@ -451,6 +451,35 @@ schoolRouter.post("/existing_schools", isAuth, async (req, res, next) => {
            }
 });
 
+// delete school 
+schoolRouter.post(
+  "/delete-shule/:tracking_number",
+  isAuth,
+  permission("delete-school"),
+  auditMiddleware("school_registrations", "delete", "Kufuta Shule (Soft Delete)"),
+  (req, res) => {
+    schoolModel.deleteSchool(req.params.tracking_number, (success) => {
+      res.send({
+        success: success,
+        statusCode: success ? 300 : 306,
+        message: success
+          ? "Umefanikiwa kufuta shule"
+          : "Haujafanikiwa kufuta shule.",
+      });
+    });
+  }
+);
+
+// Deregister school
+schoolRouter.post("/deregister-shule/:tracking_number", isAuth, permission('deregister-school'), auditMiddleware('school_registrations' , 'update' , 'Kufuta Usajili wa Shule.'), (req, res) => {
+  schoolModel.deregisterSchool(req.params.tracking_number , (success) => {
+      res.send({
+                success: success,
+                statusCode: success ? 300 : 306,
+                message: success ? "Umefanikiwa Kufutia usajili shule" : "Haujafanikiwa kufuta usajili wa shule",
+          });
+  })
+});
 
 
 module.exports = schoolRouter;
