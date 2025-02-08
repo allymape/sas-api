@@ -11,6 +11,7 @@ const {
   selectStaffsBySection,
   approvalStatuses,
   calculcateRemainDays,
+  topSearch,
 } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
@@ -23,9 +24,10 @@ sajiliSerikaliRequestRouter.post(
     const user = req.user;
     const status = req.body.status ?  req.body.status : "pending";
     const approvedStatus = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${
+    let sqlFilter = ` AND is_approved IN ${
       approvedStatus ? approvedStatus : "(0,1)"
     }`;
+    sqlFilter = topSearch(req, sqlFilter);
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -51,7 +53,7 @@ sajiliSerikaliRequestRouter.post(
                       user.ngazi.toLowerCase() != "wizara"
                         ? selectConditionByTitle(user, false, false, status)
                         : ""
-                    }  ${sqlStatus}
+                    }  ${sqlFilter}
                     ORDER BY applications.id DESC `;
 
         sharedModel.paginate(

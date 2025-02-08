@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const db = require('../../dbConnection');
 const umilikiNaMenejaRequestRouter = express.Router();
-const { isAuth, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
+const { isAuth, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays, topSearch } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('view-school-owners-and-managers'), (req, res) => {
@@ -13,9 +13,10 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
   const user = req.user;
   const status = req.body.status ?  req.body.status : "pending";
   const approvedStatus = approvalStatuses(req.body.status);
-  const sqlStatus = ` AND is_approved IN ${
+  let sqlFilter = ` AND is_approved IN ${
     approvedStatus ? approvedStatus : "(0,1)"
   }`;
+  sqlFilter = topSearch(req, sqlFilter);
   // console.log(status);
   sharedModel.maombiSummaryByCategoryAndStatus(user, 2, null, (summaries) => {
     const sqlSelect = `SELECT   applications.tracking_number as tracking_number,
@@ -34,7 +35,7 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
         ["pending", ""].includes(status) || user.ngazi.toLowerCase() != "wizara"
           ? selectConditionByTitle(user, false, false, status)
           : ""
-      }  ${sqlStatus}
+      }  ${sqlFilter}
       ORDER BY applications.created_at DESC`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;
     const sqlCount = `SELECT count(*) AS num_rows ${sqlFrom}`
@@ -42,13 +43,6 @@ umilikiNaMenejaRequestRouter.post("/maombi-mmiliki-shule", isAuth, permission('v
     sharedModel.paginate(sqlRows , sqlCount , function (error, results , numRows) {
         if (error) {
           console.log(error);
-          // return res.send({
-          //   error: true,
-          //   statusCode: 300,
-          //   dataList: [],
-          //   dataSummary: null,
-          //   message: "List of maombi kuanzisha shule.",
-          // });
         }
         
         for (var i = 0; i < results.length; i++) {

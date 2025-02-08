@@ -168,6 +168,30 @@ const ObjectFuctions = {
     }
     return i;
   },
+  //filter, search maombi
+  topSearch : (req , sql) => {
+        const keyword = req.body.keyword;
+        const date_range = req.body.date_range;
+        let start_date = "";
+        let end_date = "";
+        // console.log(keyword.length)
+        sql +=  keyword ? ` AND (school_name LIKE ${db.escape("%" + keyword + "%")}) 
+                   OR  (applications.tracking_number LIKE ${db.escape(
+                     "%" + keyword + "%"
+                )} )` : '';
+        if (date_range) {
+          let dates = date_range.split("to").map((date) => date.trim()); // Split and trim spaces
+          let start_date = ObjectFuctions.formatDate(dates[0], "YYYY-MM-DD");
+          let end_date = dates[1]
+            ? ObjectFuctions.formatDate(dates[1], "YYYY-MM-DD")
+            : start_date; // Use start_date if there's no end_date
+
+          sql += start_date
+            ? ` AND DATE(applications.created_at) BETWEEN '${start_date}' AND '${end_date}'`
+            : "";
+        }
+        return sql;
+  },
   // notify
   notifyStaff: (userTo, application_category, sender, tracking_number) => {
     console.log(`Start Email Notification`);

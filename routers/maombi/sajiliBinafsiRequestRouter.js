@@ -4,7 +4,7 @@ const db = require('../../dbConnection');
 const request = require("request");
 const sajiliBinafsiRequestRouter = express.Router();
 const dateandtime = require("date-and-time");
-const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays } = require("../../utils");
+const { isAuth, formatDate, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays, topSearch } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 sajiliBinafsiRequestRouter.post(
@@ -15,9 +15,10 @@ sajiliBinafsiRequestRouter.post(
     const user = req.user;
     const status = req.body.status ?  req.body.status : "pending";
     const approvedStatus = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${
+    let sqlFilter = ` AND is_approved IN ${
       approvedStatus ? approvedStatus : "(0,1)"
     }`;
+    sqlFilter = topSearch(req, sqlFilter);
     const per_page = parseInt(req.body.per_page);
     const page = parseInt(req.body.page);
     const offset = (page - 1) * per_page;
@@ -41,9 +42,14 @@ sajiliBinafsiRequestRouter.post(
                             ${
                               ["pending", ""].includes(status) ||
                               user.ngazi.toLowerCase() != "wizara"
-                                ? selectConditionByTitle(user, false, false, status)
+                                ? selectConditionByTitle(
+                                    user,
+                                    false,
+                                    false,
+                                    status
+                                  )
                                 : ""
-                            } ${sqlStatus}
+                            } ${sqlFilter}
                         ORDER BY applications.created_at DESC`;
     const sqlCount = `SELECT COUNT(*) AS num_rows ${sqlFrom}`;
     const sqlRows = `${sqlSelect} ${sqlFrom} LIMIT ?,?`;

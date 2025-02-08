@@ -5,14 +5,15 @@ const request = require("request");
 const anzishaShuleRequestRouter = express.Router();
 const model = require("../../models/maombi/anzishaShuleRequestModel")
 const dateandtime = require("date-and-time");
-const { isAuth, formatDate, approvalStatuses } = require("../../utils");
+const { isAuth, formatDate, approvalStatuses, topSearch } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 
 // List of 
 anzishaShuleRequestRouter.post("/maombi-kuanzisha-shule", isAuth,(req, res) => {
     const status = approvalStatuses(req.body.status);
-    const sqlStatus = ` AND is_approved IN ${status ? status : "(0,1)"}`;
-    model.anzishaShuleRequestList(req , sqlStatus, (error, data, numRows) => {
+    let sql = ` AND is_approved IN ${status ? status : "(0,1)"}`;
+        sql = topSearch(req, sql);
+    model.anzishaShuleRequestList(req , sql, (error, data, numRows) => {
       // console.log(numRows)
             return res.send({
                     error: error ? true : false,
