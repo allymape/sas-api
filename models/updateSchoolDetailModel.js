@@ -59,7 +59,7 @@ module.exports = {
                         const combinationIds = school_combinations.map(
                           (row) => row.combination_id
                         );
-                        console.log(results);
+                        // console.log(results);
                         callback(
                           results[0],
                           owners[0],
