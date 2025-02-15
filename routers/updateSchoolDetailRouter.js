@@ -7,7 +7,7 @@ const updateSchoolDetailModel = require("../models/updateSchoolDetailModel.js");
 
 // Edit Shule
 updateSchoolDetailRouter.get(
-  "/edit-school-detail/:tracking_number/edit",
+  "/get-school-detail/:tracking_number",
   isAuth,
   (req, res) => {
     updateSchoolDetailModel.getSchoolInfo(
@@ -30,30 +30,36 @@ updateSchoolDetailRouter.get(
                                     (ownership_sub_types) => {
                                       sharedModel.getDenominations(
                                         (denominations) => {
-                                          sharedModel.getSchoolOwnerships(
-                                            (registry_types) => {
-                                              res.send({
-                                                statusCode: 300,
-                                                message: "Success",
-                                                school_info,
-                                                owner,
-                                                manager,
-                                                school_combinations,
-                                                languages,
-                                                school_categories,
-                                                school_sub_categories,
-                                                building_structures,
-                                                registry_types,
-                                                genders,
-                                                specializations,
-                                                combinations,
-                                                registration_structures,
-                                                curriculums,
-                                                certificates,
-                                                sect_names,
-                                                ownership_sub_types,
-                                                denominations,
-                                              });
+                                          sharedModel.getInstituteInfo(
+                                            school_info.establish_tracking_number,
+                                            (institute_info) => {
+                                              sharedModel.getSchoolOwnerships(
+                                                (registry_types) => {
+                                                  res.send({
+                                                    statusCode: 300,
+                                                    message: "Success",
+                                                    school_info,
+                                                    institute_info,
+                                                    owner,
+                                                    manager,
+                                                    school_combinations,
+                                                    languages,
+                                                    school_categories,
+                                                    school_sub_categories,
+                                                    building_structures,
+                                                    registry_types,
+                                                    genders,
+                                                    specializations,
+                                                    combinations,
+                                                    registration_structures,
+                                                    curriculums,
+                                                    certificates,
+                                                    sect_names,
+                                                    ownership_sub_types,
+                                                    denominations,
+                                                  });
+                                                }
+                                              );
                                             }
                                           );
                                         }

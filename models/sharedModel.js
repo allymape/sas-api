@@ -14,6 +14,21 @@ const {
 } = require("../utils");
 
 module.exports = {
+  getInstituteInfo: (establish_tracking_number, callback) => {
+    db.query(
+      `SELECT name, box, registration_number 
+       FROM establishing_schools e
+       JOIN applications a ON a.tracking_number = e.tracking_number
+       JOIN institute_infos i ON i.secure_token = a.foreign_token 
+       WHERE e.tracking_number = ?`,
+      [establish_tracking_number],
+      (error, results) => {
+        if (error) console.log("Error fetching institutes infos" + error);
+        // console.log(results[0] || []);
+        callback(results[0] || []);
+      }
+    );
+  },
   getHierarchies: (callback) => {
     db.query(
       `SELECT id, rank_name AS name 
