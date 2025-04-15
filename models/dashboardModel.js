@@ -55,7 +55,7 @@ module.exports = {
               }
               console.log("THIRD", formatDate(new Date()));
               db.query(
-                `SELECT rs.structure AS label,
+                `SELECT rs.id AS id, rs.structure AS label,
                                 COUNT(*) AS total
                                 FROM registration_structures rs
                                 LEFT JOIN establishing_schools e ON e.registration_structure_id = rs.id
