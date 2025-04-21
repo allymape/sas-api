@@ -78,7 +78,6 @@ badiliMenejaRequestRouter.post(
     // console.log(req.body);
     var obj = [];
     var objMess = [];
-    var objStaffs = [];
     var objApps = [];
     var objAttachment = [];
     var objAttachment1 = [];
@@ -230,90 +229,88 @@ badiliMenejaRequestRouter.post(
           objAttachment1 = attachments;
         });
         sharedModel.myStaffs(user, (staffs) => {
-          objStaffs = staffs;
-        });
-        var remain_days = calculcateRemainDays(created_at);
-        db.query(
-          "select * from managers " + " WHERE establishing_school_id = ?",
-          [establishing_school_id],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
+          var remain_days = calculcateRemainDays(created_at);
+          db.query(
+            "select * from managers " + " WHERE establishing_school_id = ?",
+            [establishing_school_id],
+            function (error1, results1, fields1) {
+              if (error1) {
+                console.log(error1);
+              }
+              var personal_address = results1[0] ? results1[0].id : "";
+              var personal_phone_number = results1[0] ? results1[0].id : "";
+              var personal_email = results1[0] ? results1[0].manager_email : "";
+              var WardNameMtu = results1[0] ? results1[0].id : "";
+              var LgaNameMtu = results1[0] ? results1[0].id : "";
+              var RegionNameMtu = results1[0] ? results1[0].id : "";
+              obj.push({
+                manager_full_name: manager_full_name,
+                former_manager_full_name: former_manager_full_name,
+                manager_phone_no: manager_phone_no,
+                manager_email: manager_email,
+                is_approved,
+                former_manager_phone_no: former_manager_phone_no,
+                former_manager_email: former_manager_email,
+                manager_cv: manager_cv,
+                former_manager_cv: former_manager_cv,
+                manager_certificate: manager_certificate,
+                former_manager_certificate: former_manager_certificate,
+                tracking_number: tracking_number,
+                school_name: school_name,
+                authorized_person: authorized_person,
+                title: title,
+                LgaName: LgaName,
+                RegionName: "",
+                user_id: user_id,
+                manager_email: manager_email,
+                purpose: purpose,
+                expertise_level: expertise_level,
+                registry_type_id: "",
+                registry: "",
+                manager_first_name: manager_first_name,
+                manager_first_name: manager_first_name,
+                education_level: education_level,
+                created_at: created_at,
+                remain_days: remain_days,
+                manager_email: manager_email,
+                schoolCategory: "",
+                occupation: "",
+                occupationManager: occupationManager,
+                mwombajiAddress: personal_address,
+                mwombajiPhoneNo: personal_phone_number,
+                old_tracking_number: old_tracking_number,
+                baruaPepe: personal_email,
+                language: "",
+                school_size: school_size,
+                managerRegionName: managerRegionName,
+                area: area,
+                WardName: WardName,
+                structure: structure,
+                manager_street: manager_street,
+                subcategory: subcategory,
+                WardNameMtu: WardNameMtu,
+                LgaNameMtu: LgaNameMtu,
+                RegionNameMtu: RegionNameMtu,
+                manager_phone_no: manager_phone_no,
+              });
+
+              // console.log(obj);
+              return res.send({
+                error: false,
+                statusCode: 300,
+                data: obj,
+                maoni: objMess,
+                staffs: staffs,
+                status: objApps,
+                Maoni: objMaoni,
+                objAttachment: objAttachment,
+                objAttachment1: objAttachment1,
+                Refferes: objRef,
+                message: "Taarifa za ombi kuanzisha shule.",
+              });
             }
-            var personal_address = results1[0] ? results1[0].id : "";
-            var personal_phone_number = results1[0] ? results1[0].id : "";
-            var personal_email = results1[0] ? results1[0].manager_email : "";
-            var WardNameMtu = results1[0] ? results1[0].id : "";
-            var LgaNameMtu = results1[0] ? results1[0].id : "";
-            var RegionNameMtu = results1[0] ? results1[0].id : "";
-            obj.push({
-              manager_full_name: manager_full_name,
-              former_manager_full_name: former_manager_full_name,
-              manager_phone_no: manager_phone_no,
-              manager_email: manager_email,
-              is_approved,
-              former_manager_phone_no: former_manager_phone_no,
-              former_manager_email: former_manager_email,
-              manager_cv: manager_cv,
-              former_manager_cv: former_manager_cv,
-              manager_certificate: manager_certificate,
-              former_manager_certificate: former_manager_certificate,
-              tracking_number: tracking_number,
-              school_name: school_name,
-              authorized_person: authorized_person,
-              title: title,
-              LgaName: LgaName,
-              RegionName: "",
-              user_id: user_id,
-              manager_email: manager_email,
-              purpose: purpose,
-              expertise_level: expertise_level,
-              registry_type_id: "",
-              registry: "",
-              manager_first_name: manager_first_name,
-              manager_first_name: manager_first_name,
-              education_level: education_level,
-              created_at: created_at,
-              remain_days: remain_days,
-              manager_email: manager_email,
-              schoolCategory: "",
-              occupation: "",
-              occupationManager: occupationManager,
-              mwombajiAddress: personal_address,
-              mwombajiPhoneNo: personal_phone_number,
-              old_tracking_number: old_tracking_number,
-              baruaPepe: personal_email,
-              language: "",
-              school_size: school_size,
-              managerRegionName: managerRegionName,
-              area: area,
-              WardName: WardName,
-              structure: structure,
-              manager_street: manager_street,
-              subcategory: subcategory,
-              WardNameMtu: WardNameMtu,
-              LgaNameMtu: LgaNameMtu,
-              RegionNameMtu: RegionNameMtu,
-              manager_phone_no: manager_phone_no,
-            });
-
-            // console.log(obj);
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              maoni: objMess,
-              staffs: objStaffs,
-              status: objApps,
-              Maoni: objMaoni,
-              objAttachment: objAttachment,
-              objAttachment1 : objAttachment1,
-              Refferes: objRef,
-              message: "Taarifa za ombi kuanzisha shule.",
-            });
-          }
-        );
-
+          );
+        });
         // });
       }
     );
