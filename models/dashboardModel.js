@@ -63,7 +63,7 @@ module.exports = {
                                 ${schoolLocationsSqlJoin()}
                                 WHERE a.is_approved = 2 AND a.application_category_id = 1 AND a.is_complete = 1
                                 ${filterByUserOffice(user, "AND")}
-                                GROUP BY label
+                                GROUP BY label, id
                                 ORDER BY label ASC`,
                 (error4, summaryStructures) => {
                   // console.log("structure: ", summaryStructures);

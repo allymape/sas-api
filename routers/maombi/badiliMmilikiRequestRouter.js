@@ -201,150 +201,147 @@ badiliMmilikiRequestRouter.post(
         );
 
         sharedModel.myStaffs(user, (staffs) => {
-          objStaffs = staffs;
-        });
+          // objStaffs = staffs;
+          sharedModel.myMaoni(trackingNumber, (maoni) => {
+            // objMaoni = maoni;
 
-        sharedModel.myMaoni(trackingNumber, (maoni) => {
-          objMaoni = maoni;
-        });
+            db.query(
+              "SELECT * from former_owner_referees, former_owners, wards, districts, " +
+                " regions WHERE regions.RegionCode = districts.RegionCode AND " +
+                " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.WardCode " +
+                " AND former_owners.id = former_owner_referees.former_owner_id AND tracking_number = ?",
+              [trackingNumber],
+              function (error, results, fields) {
+                if (error) {
+                  console.log(error);
+                }
+                for (var i = 0; i < results.length; i++) {
+                  var first_name = results[i].first_name;
+                  var middle_name = results[i].middle_name;
+                  var last_name = results[i].last_name;
+                  var occupation = results[i].occupation;
+                  var address = results[i].address;
+                  var phone_number = results[i].phone_number;
+                  var email = results[i].email;
+                  var WardName = results[i].WardName;
+                  var LgaName = results[i].LgaName;
+                  var RegionName = results[i].RegionName;
+                  var ref_full_name =
+                    first_name + " " + middle_name + " " + last_name;
+                  objRef.push({
+                    ref_full_name: ref_full_name,
+                    occupation: occupation,
+                    address: address,
+                    phone_number: phone_number,
+                    email: email,
+                    WardName: WardName,
+                    LgaName: LgaName,
+                    RegionName: RegionName,
+                  });
+                }
+              }
+            );
 
-        db.query(
-          "SELECT * from former_owner_referees, former_owners, wards, districts, " +
-            " regions WHERE regions.RegionCode = districts.RegionCode AND " +
-            " districts.LgaCode = wards.LgaCode AND former_owner_referees.ward_id = wards.WardCode " +
-            " AND former_owners.id = former_owner_referees.former_owner_id AND tracking_number = ?",
-          [trackingNumber],
-          function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            for (var i = 0; i < results.length; i++) {
-              var first_name = results[i].first_name;
-              var middle_name = results[i].middle_name;
-              var last_name = results[i].last_name;
-              var occupation = results[i].occupation;
-              var address = results[i].address;
-              var phone_number = results[i].phone_number;
-              var email = results[i].email;
-              var WardName = results[i].WardName;
-              var LgaName = results[i].LgaName;
-              var RegionName = results[i].RegionName;
-              var ref_full_name =
-                first_name + " " + middle_name + " " + last_name;
-              objRef.push({
-                ref_full_name: ref_full_name,
-                occupation: occupation,
-                address: address,
-                phone_number: phone_number,
-                email: email,
-                WardName: WardName,
-                LgaName: LgaName,
-                RegionName: RegionName,
-              });
-            }
-          }
-        );
+            sharedModel.getAttachmentTypes(
+              registry_type_id,
+              application_category_id,
+              "",
+              (attachment_types) => {
+                objAttachment = attachment_types;
+              }
+            );
 
-        sharedModel.getAttachmentTypes(
-          registry_type_id,
-          application_category_id,
-          "",
-          (attachment_types) => {
-            objAttachment = attachment_types;
-          }
-        );
-
-        sharedModel.getAttachments(trackingNumber, (attachments) => {
-          objAttachment1 = attachments;
-        });
-      
-        db.query(
-          "select * from owners " + " WHERE establishing_school_id = ?",
-          [establishing_school_id],
-          function (error1, results1, fields1) {
-            if (error1) {
-              console.log(error1);
-            }
-
-            var owner_name_old = results1[0].owner_name;
-            var authorized_person_old = results1[0].authorized_person;
-            var owner_email_old = results1[0].owner_email;
-            var phone_number_old = results1[0].phone_number;
-            var personal_address = results1[0].id;
-            var personal_phone_number = results1[0].id;
-            var personal_email = results1[0].id;
-            var WardNameMtu = results1[0].id;
-            var LgaNameMtu = results1[0].id;
-            var RegionNameMtu = results1[0].id;
-            var fullname = owner_name_old;
-            obj.push({
-              owner_name_old: owner_name_old,
-              is_approved,
-              tracking_number: tracking_number,
-              school_name: school_name,
-              authorized_person: authorized_person,
-              title: title,
-              LgaName: LgaName,
-              RegionName: "",
-              user_id: user_id,
-              owner_email_old: owner_email_old,
-              owner_email: owner_email,
-              purpose: purpose,
-              expertise_level: expertise_level,
-              registry_type_id: "",
-              registry: "",
-              owner_name: owner_name,
-              manager_name: manager_name,
-              education_level: education_level,
-              created_at: created_at,
-              remain_days: "",
-              manager_phone_number: manager_phone_number,
-              manager_email: manager_email,
-              fullname: fullname,
-              schoolCategory: "",
-              occupation: "",
-              phone_number_old: phone_number_old,
-              occupationManager: occupationManager,
-              owner_email_old: owner_email_old,
-              mwombajiAddress: personal_address,
-              mwombajiPhoneNo: personal_phone_number,
-              old_tracking_number: old_tracking_number,
-              baruaPepe: personal_email,
-              language: "",
-              school_size: school_size,
-              managerRegionName: managerRegionName,
-              area: area,
-              WardName: WardName,
-              structure: structure,
-              manager_street: manager_street,
-              authorized_person_old: authorized_person_old,
-              subcategory: subcategory,
-              WardNameMtu: WardNameMtu,
-              LgaNameMtu: LgaNameMtu,
-              RegionNameMtu: RegionNameMtu,
-              owner_phone_no: owner_phone_no,
+            sharedModel.getAttachments(trackingNumber, (attachments) => {
+              objAttachment1 = attachments;
             });
 
-            return res.send({
-              error: false,
-              statusCode: 300,
-              data: obj,
-              maoni: objMess,
-              staffs: objStaffs,
-              status: objApps,
-              Maoni: objMaoni,
-              objAttachment: objAttachment,
-              objAttachment1: objAttachment1,
-              Refferes: objRef,
-              message: "Taarifa za ombi kuanzisha shule.",
-            });
-          }
-        );
+            db.query(
+              "select * from owners " + " WHERE establishing_school_id = ?",
+              [establishing_school_id],
+              function (error1, results1, fields1) {
+                if (error1) {
+                  console.log(error1);
+                }
 
+                var owner_name_old = results1[0].owner_name;
+                var authorized_person_old = results1[0].authorized_person;
+                var owner_email_old = results1[0].owner_email;
+                var phone_number_old = results1[0].phone_number;
+                var personal_address = results1[0].id;
+                var personal_phone_number = results1[0].id;
+                var personal_email = results1[0].id;
+                var WardNameMtu = results1[0].id;
+                var LgaNameMtu = results1[0].id;
+                var RegionNameMtu = results1[0].id;
+                var fullname = owner_name_old;
+                obj.push({
+                  owner_name_old: owner_name_old,
+                  is_approved,
+                  tracking_number: tracking_number,
+                  school_name: school_name,
+                  authorized_person: authorized_person,
+                  title: title,
+                  LgaName: LgaName,
+                  RegionName: "",
+                  user_id: user_id,
+                  owner_email_old: owner_email_old,
+                  owner_email: owner_email,
+                  purpose: purpose,
+                  expertise_level: expertise_level,
+                  registry_type_id: "",
+                  registry: "",
+                  owner_name: owner_name,
+                  manager_name: manager_name,
+                  education_level: education_level,
+                  created_at: created_at,
+                  remain_days: "",
+                  manager_phone_number: manager_phone_number,
+                  manager_email: manager_email,
+                  fullname: fullname,
+                  schoolCategory: "",
+                  occupation: "",
+                  phone_number_old: phone_number_old,
+                  occupationManager: occupationManager,
+                  owner_email_old: owner_email_old,
+                  mwombajiAddress: personal_address,
+                  mwombajiPhoneNo: personal_phone_number,
+                  old_tracking_number: old_tracking_number,
+                  baruaPepe: personal_email,
+                  language: "",
+                  school_size: school_size,
+                  managerRegionName: managerRegionName,
+                  area: area,
+                  WardName: WardName,
+                  structure: structure,
+                  manager_street: manager_street,
+                  authorized_person_old: authorized_person_old,
+                  subcategory: subcategory,
+                  WardNameMtu: WardNameMtu,
+                  LgaNameMtu: LgaNameMtu,
+                  RegionNameMtu: RegionNameMtu,
+                  owner_phone_no: owner_phone_no,
+                });
+
+                return res.send({
+                  error: false,
+                  statusCode: 300,
+                  data: obj,
+                  maoni: objMess,
+                  staffs: staffs,
+                  status: objApps,
+                  Maoni: maoni,
+                  objAttachment: objAttachment,
+                  objAttachment1: objAttachment1,
+                  Refferes: objRef,
+                  message: "Taarifa za ombi kuanzisha shule.",
+                });
+              }
+            );
+          });
+        });
         // });
       }
-    );
-  }
+    );}
 );
 
 badiliMmilikiRequestRouter.post("/tuma-mmiliki-badili-majibu", isAuth, (req, res) => {
