@@ -1,5 +1,5 @@
 require('dotenv').config()
-var mysql = require('mysql');
+var mysql = require("mysql2");
 var conn = mysql.createConnection({
   host: process.env.DB_HOST || "localhost", // Replace with your host name
   user: process.env.DB_USERNAME, // Replace with your database username
@@ -12,7 +12,7 @@ var conn = mysql.createConnection({
  
 conn.connect((err) => {
   if (err) {
-    console.error("Error connecting to database:", err);
+    console.error(`Error connecting to database ${process.env.DB_DATABASE} host: ${process.env.DB_HOST} username: ${process.env.DB_USERNAME}:`, err);
     return;
   };
   console.info(`Database is connected successfully! Server: ${process.env.DB_HOST}`);

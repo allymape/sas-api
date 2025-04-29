@@ -115,7 +115,8 @@ ongezaTahasusiRequestRouter.post(
       var objAttachment2 = [];
       db.query(
         `SELECT  	school_registrations.id as school_id, registration_structures.structure as structure,  
-                  establishing_schools.id as establishId,  is_approved,
+                  establishing_schools.id as establishId,  is_approved, registration_number, 
+                  certificate_types.level AS certificate_level ,
                   school_sub_categories.subcategory as subcategory, combination as streamOld,  
                   former_school_combinations.combination_id as streamNew, establishing_schools.area as area,  
                   establishing_schools.school_size as school_size, languages.language as language,  
@@ -135,6 +136,7 @@ ongezaTahasusiRequestRouter.post(
        LEFT JOIN districts ON districts.LgaCode = wards.LgaCode
 		   LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id 
 		   LEFT JOIN languages ON languages.id = establishing_schools.language_id 
+		   LEFT JOIN certificate_types ON certificate_types.id = establishing_schools.certificate_type_id 
 		   LEFT JOIN regions  ON regions.RegionCode = districts.RegionCode
        WHERE application_category_id = 12 AND applications.tracking_number = ?`,
         [trackingNumber],
@@ -151,6 +153,8 @@ ongezaTahasusiRequestRouter.post(
             var streamOld = results[0].streamOld;
             var streamNew = results[0].streamNew;
             var school_id = results[0].school_id;
+            var certificate_level = results[0].certificate_level;
+            var registration_number = results[0].registration_number;
             var is_approved = results[0].is_approved;
             var school_name = results[0].school_name;
             var LgaName = results[0].LgaName;
@@ -166,111 +170,152 @@ ongezaTahasusiRequestRouter.post(
             var structure = results[0].structure;
             var subcategory = results[0].subcategory;
             var establishId = results[0].establishId;
-          }
-          var remain_days = calculcateRemainDays(created_at)
-          db.query(
-            "select * from maoni WHERE trackingNo = ?",
-            [trackingNumber],
-            function (error, resultsMaoni, fields) {
-              if (error) {
-                console.log(error);
+            var remain_days = calculcateRemainDays(created_at);
+            // sharedModel.getSchoolAdditionalCombinations("ES-20250427-908" , (sucess , additionalCombinations , school_registration_id) => {
+            //   const added_combinations = [];
+            //   console.log(school_registration_id);
+            //   additionalCombinations.forEach((comb) =>
+            //     added_combinations.push([
+            //       comb.combination_id,
+            //       school_registration_id,
+            //     ])
+            //   );
+            //   sharedModel.changeSchoolCombinations(
+            //     req,
+            //     added_combinations,
+            //     (updated) => {
+            //       if (updated) console.log("school combinations updated");
+            //     }
+            //   );
+            // });
+
+            db.query(
+              "select * from maoni WHERE trackingNo = ?",
+              [trackingNumber],
+              function (error, resultsMaoni, fields) {
+                if (error) {
+                  console.log(error);
+                }
+                if (resultsMaoni.length <= 0) {
+                  objMess.push({ count: 0 });
+                } else {
+                  for (var i = 0; i < resultsMaoni.length; i++) {
+                    // console.log(resultsMaoni)
+                    var coments = resultsMaoni[i].coments;
+                    objMess.push({
+                      count: resultsMaoni.length,
+                      coments: coments,
+                    });
+                  }
+                }
               }
-              if (resultsMaoni.length <= 0) {
-                objMess.push({ count: 0 });
-              } else {
-                for (var i = 0; i < resultsMaoni.length; i++) {
-                  // console.log(resultsMaoni)
-                  var coments = resultsMaoni[i].coments;
-                  objMess.push({
-                    count: resultsMaoni.length,
-                    coments: coments,
+            );
+            sharedModel.myStaffs(user, (staffs) => {
+              objStaffs = staffs;
+              sharedModel.myMaoni(trackingNumber, (maoni) => {
+                objMaoni = maoni;
+                sharedModel.getAttachmentTypes(
+                  registry_type_id,
+                  application_category_id,
+                  "",
+                  (attachment_types) => {
+                    objAttachment = attachment_types;
+                  }
+                );
+                sharedModel.getAttachments(trackingNumber, (attachments) => {
+                  objAttachment1 = attachments;
+                  var remain_days;
+                  var first_name = "";
+                  var middle_name = "";
+                  var last_name = "";
+                  var occupation = "";
+                  var personal_address = "";
+                  var personal_phone_number = "";
+                  var personal_email = "";
+                  var WardNameMtu = "";
+                  var LgaNameMtu = "";
+                  var RegionNameMtu = "";
+                  var fullname =
+                    first_name + " " + middle_name + " " + last_name;
+                  obj.push({
+                    tracking_number: tracking_number,
+                    school_name: school_name,
+                    LgaName: LgaName,
+                    RegionName: RegionName,
+                    user_id: user_id,
+                    registry_type_id: registry_type_id,
+                    registry: registry,
+                    registration_number: registration_number,
+                    certificate_level: certificate_level,
+                    establishId: establishId,
+                    created_at: created_at,
+                    remain_days: remain_days,
+                    streamOld: streamOld,
+                    streamNew: streamNew,
+                    fullname: fullname,
+                    schoolCategory: schoolCategory,
+                    occupation: occupation,
+                    mwombajiAddress: personal_address,
+                    mwombajiPhoneNo: personal_phone_number,
+                    baruaPepe: personal_email,
+                    language: language,
+                    school_size: school_size,
+                    area: area,
+                    WardName: WardName,
+                    structure: structure,
+                    school_id: school_id,
+                    subcategory: subcategory,
+                    WardNameMtu: WardNameMtu,
+                    LgaNameMtu: LgaNameMtu,
+                    RegionNameMtu: RegionNameMtu,
+                    is_approved,
                   });
-                }
-              }
-            }
-          );
-          sharedModel.myStaffs(user, (staffs) => {
-            objStaffs = staffs;
-            sharedModel.myMaoni(trackingNumber, (maoni) => {
-              objMaoni = maoni;
-              sharedModel.getAttachmentTypes(
-                registry_type_id,
-                application_category_id,
-                "",
-                (attachment_types) => {
-                  objAttachment = attachment_types;
-                }
-              );
-              sharedModel.getAttachments(trackingNumber, (attachments) => {
-                objAttachment1 = attachments;
-                var remain_days;
-                var first_name = "";
-                var middle_name = "";
-                var last_name = "";
-                var occupation = "";
-                var personal_address = "";
-                var personal_phone_number = "";
-                var personal_email = "";
-                var WardNameMtu = "";
-                var LgaNameMtu = "";
-                var RegionNameMtu = "";
-                var fullname = first_name + " " + middle_name + " " + last_name;
-                obj.push({
-                  tracking_number: tracking_number,
-                  school_name: school_name,
-                  LgaName: LgaName,
-                  RegionName: RegionName,
-                  user_id: user_id,
-                  registry_type_id: registry_type_id,
-                  registry: registry,
-                  establishId: establishId,
-                  created_at: created_at,
-                  remain_days: remain_days,
-                  streamOld: streamOld,
-                  streamNew: streamNew,
-                  fullname: fullname,
-                  schoolCategory: schoolCategory,
-                  occupation: occupation,
-                  mwombajiAddress: personal_address,
-                  mwombajiPhoneNo: personal_phone_number,
-                  baruaPepe: personal_email,
-                  language: language,
-                  school_size: school_size,
-                  area: area,
-                  WardName: WardName,
-                  structure: structure,
-                  school_id: school_id,
-                  subcategory: subcategory,
-                  WardNameMtu: WardNameMtu,
-                  LgaNameMtu: LgaNameMtu,
-                  RegionNameMtu: RegionNameMtu,
-                  is_approved
-                });
-                objAttachment2.push({
-                  file_format: "",
-                  attachment_name: "",
-                  registry_id: "",
-                  file_size: "",
-                  registry: "",
-                  application_name: "",
-                  created_at: "",
-                  attachment_path: "",
-                });
-                return res.send({
-                  error: false,
-                  statusCode: 300,
-                  data: obj,
-                  maoni: objMess,
-                  staffs: objStaffs,
-                  status: objApps,
-                  Maoni: objMaoni,
-                  objAttachment: objAttachment,
-                  objAttachment1: objAttachment1,
-                  message: "Taarifa za ombi kuanzisha shule.",
+                  objAttachment2.push({
+                    file_format: "",
+                    attachment_name: "",
+                    registry_id: "",
+                    file_size: "",
+                    registry: "",
+                    application_name: "",
+                    created_at: "",
+                    attachment_path: "",
+                  });
+                  db.query(
+                    `SELECT combination
+                  FROM former_school_combinations fc 
+                  INNER JOIN combinations c on c.id = fc.combination_id
+                  WHERE fc.establishing_school_id = ${establishId}`,
+                    (combination_err, additional_combinations) => {
+                      if (combination_err) console.log(combination_err);
+                      db.query(
+                        `SELECT combination
+                          FROM school_combinations sc
+                          INNER JOIN combinations c on c.id = sc.combination_id
+                          WHERE sc.school_registration_id = ${school_id}`,
+                        (current_combination_err, current_combinations) => {
+                          if (current_combination_err) console.log(current_combination_err);
+                          return res.send({
+                            error: false,
+                            statusCode: 300,
+                            data: obj,
+                            maoni: objMess,
+                            staffs: objStaffs,
+                            status: objApps,
+                            additional_combinations,
+                            current_combinations,
+                            Maoni: objMaoni,
+                            objAttachment: objAttachment,
+                            objAttachment1: objAttachment1,
+                            message: "Taarifa za ombi kuanzisha shule.",
+                          });
+                        }
+                      );
+                    }
+                  );
                 });
               });
             });
-          });
+          }
         }
       );
 });
@@ -280,22 +325,24 @@ ongezaTahasusiRequestRouter.post("/tuma-ongeza-tahasusi", isAuth, (req, res) => 
   sharedModel.findOneApplication(tracking_number, (app) => {
     const app_category = app["application_category_id"];
     if (app_category) {
-       sharedModel.getSchoolCombinations(tracking_number , (found , schoolCombinations) => {
+       sharedModel.getSchoolAdditionalCombinations(tracking_number , (found , additionalCombinations , school_registration_id ) => {
                 if(found){
                   sharedModel.tumaMaoni(req, app_category, (success) => {
-                    const new_combinations = [];
-                    const old_combinations = [];
-                    schoolCombinations.forEach((comb) =>
-                      new_combinations.push([
+                    const added_combinations = [];
+                    additionalCombinations.forEach((comb) =>
+                      added_combinations.push([
                         comb.combination_id,
-                        comb.school_registration_id,
+                        school_registration_id,
                       ])
                     );
                     // console.log(new_combinations);
-                    sharedModel.changeSchoolCombinations(req , new_combinations, old_combinations, 
-                    (updated) => {
-                        if(updated) console.log('school combinations updated')
-                    })
+                    sharedModel.changeSchoolCombinations(
+                      req,
+                      added_combinations,
+                      (updated) => {
+                        if (updated) console.log("school combinations updated");
+                      }
+                    );
                     return res.send({
                       error: success ? false : true,
                       statusCode: success ? 300 : 306,

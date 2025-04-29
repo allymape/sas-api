@@ -1230,49 +1230,53 @@ module.exports = {
       );
     }
   },
-  getSchoolCombinations: (tracking_number, callback) => {
+  getSchoolAdditionalCombinations: (tracking_number, callback) => {
     db.query(
-      `SELECT e.id AS school_id , s.id AS school_registration_id  , f.combination_id  AS combination_id 
+      `SELECT e.id AS school_id , s.id AS school_registration_id
         FROM applications a
         JOIN former_school_combinations f on f.tracking_number = a.tracking_number
         JOIN establishing_schools e ON e.id = f.establishing_school_id
         JOIN school_registrations s ON s.establishing_school_id = e.id
         WHERE a.tracking_number = ?`,
       [tracking_number],
-      (error, results) => {
+      (error, application_info) => {
         if (error) console.log(error);
-        const success = results.length > 0;
-        callback(success, success ? results : []);
+        if (application_info.length > 0)
+         {
+          var establishing_school_id = application_info[0].school_id;
+          var school_registration_id = application_info[0].school_registration_id;
+           db.query(
+             `SELECT combination_id 
+              FROM former_school_combinations 
+              WHERE  establishing_school_id = ?`,
+             [establishing_school_id],
+             (error, combinations) => {
+               if (error) console.log(error);
+               const success = combinations.length > 0;
+               callback(
+                 success,
+                 success ? combinations : [],
+                 school_registration_id
+               );
+             }
+           );
+         }else{
+           callback(false, []);
+         }
       }
     );
   },
-  changeSchoolCombinations: (req, newCombs = [], oldCombs = [], callback) => {
+  changeSchoolCombinations: (req, addedCombs = [], callback) => {
     const { haliombi } = req.body;
     if (haliombi == 2) {
       db.query(
-        `INSERT school_combinations(combination_id , school_registration_id) VALUES ?`,
-        [newCombs],
-        function (error, updated1) {
+        `INSERT IGNORE school_combinations(combination_id , school_registration_id) VALUES ?`,
+        [addedCombs],
+        function (error, updated) {
           if (error) console.log(error);
-          const successNewComb = updated1.affectedRows > 0;
+          const successAddedComb = updated.affectedRows > 0;
           // insert old school combination if exists
-          if (oldCombs.length > 0) {
-            db.query(
-              `INSERT former_school_combinations(combination_id , establishing_school_id) VALUES ?`,
-              [oldCombs],
-              function (error, updated2) {
-                if (error) console.log(error);
-                const successOldComb = updated2.affectedRows > 0;
-              }
-            );
-          }
-          // if(successNewComb){
-          //   // Delete former combinations
-          //    newCombs.forEach(item => {
-          //         db.query(`DELETE FROM former_school_combinations WHERE establishing_school_id = ? AND combination_id = ?` , [item[1] , item[0]])
-          //    })
-          // }
-          callback(successNewComb);
+          callback(successAddedComb);
         }
       );
     }
