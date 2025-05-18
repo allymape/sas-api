@@ -15,12 +15,17 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                     if(application.length > 0){
                         const type = req.body.type;
                         const application_category = application[0].application_category_id
-                       const registry_type = application[0].registry_type_id
-                      //  console.log(registry_type)
+                      //  console.log(application[0] , tracking_number);
                         const main_table = applicationView(application_category == 2 && type == 'meneja' ? 3 : application_category) //Twist category to 3 if category is 2 and type is Meneja
-                        console.log(main_table)
+                        // console.log(main_table)
                         db.query(
-                          `SELECT v.* , application_category_id, file_number, school_folio, folio , 
+                          `SELECT * FROM ${main_table} WHERE tracking_number = ?`,
+                          [tracking_number],
+                          (searchError, searchResult) => {
+                            if(searchError) console.log(searchError)
+                              const registry_type = searchResult[0].registry_type_id
+                            db.query(
+                              `SELECT v.* , application_category_id, file_number, school_folio, folio , 
                                          s.registration_number AS registration_number , 
                                          s.registration_date AS registration_date,
                                          c.level AS level, e.stream AS stream,
@@ -57,30 +62,33 @@ baruaRouter.post("/barua/:tracking_number",isAuth, permission('view-letters'), (
                                    }
                                    WHERE v.tracking_number = ? AND a.folio IS NOT NULL
                                    LIMIT 1`,
-                          [tracking_number],
-                          (error2, results) => {
-                            if (error2) console.log(error2);
-                            const data = results.length > 0 ? results[0] : null;
-                            db.query(
-                              `SELECT r.RegionName AS sqa_zone_region 
+                              [tracking_number],
+                              (error2, results) => {
+                                if (error2) console.log(error2);
+                                const data =
+                                  results.length > 0 ? results[0] : null;
+                                db.query(
+                                  `SELECT r.RegionName AS sqa_zone_region 
                                       FROM regions r
                                       WHERE r.zone_id = ${
                                         data ? data.zone_id : -1
                                       } AND sqa_zone = 1`,
-                              (error, result) => {
-                                if (error) console.log(error);
-                                const sqa_zone_region =
-                                  result.length > 0
-                                    ? result[0].sqa_zone_region
-                                    : null;
-                                console.log(registry_type);
-                                res.send({
-                                  error: false,
-                                  statusCode: data ? 300 : 306,
-                                  data: data,
-                                  sqa_zone_region: sqa_zone_region,
-                                  message: "Success",
-                                });
+                                  (error, result) => {
+                                    if (error) console.log(error);
+                                    const sqa_zone_region =
+                                      result.length > 0
+                                        ? result[0].sqa_zone_region
+                                        : null;
+                                    console.log(registry_type);
+                                    res.send({
+                                      error: false,
+                                      statusCode: data ? 300 : 306,
+                                      data: data,
+                                      sqa_zone_region: sqa_zone_region,
+                                      message: "Success",
+                                    });
+                                  }
+                                );
                               }
                             );
                           }

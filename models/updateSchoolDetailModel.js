@@ -8,7 +8,8 @@ module.exports = {
      const { sehemu, zone_id, district_code } = req.user;
         db.query(
           `SELECT s.id AS id, e.tracking_number AS establish_tracking_number, 
-                  s.tracking_number AS tracking_number,school_opening_date,registration_date,registry_type_id,
+                  s.tracking_number AS tracking_number,school_opening_date,registration_date,
+                  e.registry_type_id AS registry_type_id,
                   level_of_education,is_seminary,registration_number,reg_status,sharti,
                   r.RegionName AS region, d.LgaName AS district, w.WardName AS ward, st.StreetName AS street,
                   school_category_id, language_id,certificate_type_id, school_sub_category_id,school_name,school_size,area,stream,website,language_id,building_structure_id,
@@ -106,12 +107,14 @@ module.exports = {
     const {combinations , school_specialization_id,} = data
 
     var success = false
+    console.log("registry" , registry_type_id, tracking_number)
       db.query(
         `UPDATE school_registrations AS s 
                 INNER JOIN establishing_schools AS e ON e.id = s.establishing_school_id
                 INNER JOIN applications a ON a.tracking_number = e.tracking_number
                 SET e.school_sub_category_id = ?,
                     a.registry_type_id = ?,
+                    e.registry_type_id = ?,
                     e.registration_structure_id = ?,
                     e.building_structure_id = ?,
                     e.school_gender_type_id = ?, 
@@ -134,6 +137,7 @@ module.exports = {
                 WHERE s.tracking_number = ?`,
         [
           school_sub_category_id ? school_sub_category_id : null,
+          registry_type_id ? registry_type_id : null,
           registry_type_id ? registry_type_id : null,
           registration_structure_id ? registration_structure_id : null,
           building_structure_id ? building_structure_id : null,
@@ -181,19 +185,19 @@ module.exports = {
                 const school_id = school[0].school_id;
                 const secure_token = school[0].secure_token;
                 const school_registration_id = school[0].school_registration_id;
-                if(secure_token && registry_type_id == 2){
+                if (secure_token && registry_type_id == 2) {
                   const {
                     institution_name,
                     company_registration_number,
                     company_box,
                   } = data;
                   const institution_values = [
-                      [
-                        secure_token,
-                        institution_name || null,
-                        company_registration_number || null,
-                        company_box || null,
-                      ],
+                    [
+                      secure_token,
+                      institution_name || null,
+                      company_registration_number || null,
+                      company_box || null,
+                    ],
                   ];
                   db.query(
                     `INSERT INTO institute_infos(secure_token, name, registration_number, box) VALUES(?,?,?,?)
@@ -201,26 +205,26 @@ module.exports = {
                             name = VALUES(name), 
                             registration_number = VALUES(registration_number), 
                             box = VALUES(box)`,
-                            institution_values[0],
+                    institution_values[0],
                     (errInst, resInst) => {
-                      if (errInst)
-                        console.log(`${errInst}`);
-                      else 
-                        console.log(
-                          "Institution stored successfully:",
-                          institution_name,
-                          company_registration_number,
-                          company_box,
-                          secure_token
-                        );
+                      if (errInst) console.log(`${errInst}`);
+                      else
+                        if (institution_name)
+                          console.log(
+                            "Institution stored successfully:",
+                            institution_name,
+                            company_registration_number,
+                            company_box
+                          );
                     }
                   );
-                }else{
-                  if(secure_token){
+                } else {
+                  if (secure_token) {
                     db.query(
                       `DELETE FROM institute_infos WHERE secure_token = ?`,
-                      [secure_token], (errDelIns , deletInstRes) => {
-                         if(errDelIns) console.log(errDelIns);
+                      [secure_token],
+                      (errDelIns, deletInstRes) => {
+                        if (errDelIns) console.log(errDelIns);
                       }
                     );
                   }

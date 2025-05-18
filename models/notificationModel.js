@@ -11,7 +11,7 @@ module.exports = {
   //******** GET ALL MY NOTIFICATIONS *******************************
   getNotifications: (user, callback) => {
     //    count all my notifications
-    const selectSql = `SELECT a.tracking_number AS tracking_number, app_name AS task, registry_type_id , application_category_id , 
+    const selectSql = `SELECT a.tracking_number AS tracking_number, app_name AS task, e.registry_type_id AS registry_type_id , application_category_id , 
                               e.school_name AS school_name, IFNULL(m.created_at , a.created_at) AS created_at, 
                               m.coments AS comments, u.name AS staff_name , rl.name AS title`;
     const sqlfrom = `FROM applications a`;

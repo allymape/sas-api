@@ -324,9 +324,12 @@ module.exports = {
       registration_date,
       registration_number,
       ownership,
+      file_number,
+      max_folio,
       latitude,
       longitude,
     } = data;
+  
     var message = "";
     registration_number = registration_number.replace(/\s+/g, "");
     db.query(
@@ -350,6 +353,8 @@ module.exports = {
             ownership,
             registration_number,
             registration_date,
+            file_number,
+            max_folio,
             1,
             currentDate,
             currentDate,
@@ -372,6 +377,8 @@ module.exports = {
                       a.registry_type_id = ?,
                       s.registration_number = ?,
                       s.registration_date = ?,
+                      e.file_number = ?,
+                      e.max_folio = ?,
                       sv.corrected = ?,
                       s.created_at = ?,
                       s.updated_at = ?,
