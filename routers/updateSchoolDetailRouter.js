@@ -33,6 +33,7 @@ updateSchoolDetailRouter.get(
                                           sharedModel.getInstituteInfo(
                                             school_info.establish_tracking_number,
                                             (institute_info) => {
+                                              sharedModel.getAllRegions((regions) => {
                                               sharedModel.getSchoolOwnerships(
                                                 (registry_types) => {
                                                   res.send({
@@ -49,6 +50,7 @@ updateSchoolDetailRouter.get(
                                                     building_structures,
                                                     registry_types,
                                                     genders,
+                                                    regions,
                                                     specializations,
                                                     combinations,
                                                     registration_structures,
@@ -62,6 +64,7 @@ updateSchoolDetailRouter.get(
                                               );
                                             }
                                           );
+                                         });
                                         }
                                       );
                                     }

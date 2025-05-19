@@ -761,6 +761,13 @@ const ObjectFuctions = {
             LEFT JOIN zones z ON  z.id = r.zone_id`;
     // this need  to be reviewed wardCode
   },
+  instituteLocationsSqlJoin: () => {
+    return `LEFT JOIN streets   st ON st.StreetCode = i.street
+            LEFT JOIN wards      w ON w.WardCode = i.ward_id
+            LEFT JOIN districts  d ON d.LgaCode = w.LgaCode
+            LEFT JOIN regions    r ON r.RegionCode = d.RegionCode
+            LEFT JOIN zones z ON  z.id = r.zone_id`;
+  },
   establishedApplicationRegisteredSchoolsSqlJoin: () => {
     return `JOIN applications a ON a.tracking_number = e.tracking_number
             JOIN school_registrations s ON s.establishing_school_id = e.id`;

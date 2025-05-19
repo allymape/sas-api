@@ -190,6 +190,8 @@ module.exports = {
                     institution_name,
                     company_registration_number,
                     company_box,
+                    ward,
+                    street
                   } = data;
                   const institution_values = [
                     [
@@ -197,14 +199,18 @@ module.exports = {
                       institution_name || null,
                       company_registration_number || null,
                       company_box || null,
+                      ward || null,
+                      street || null
                     ],
                   ];
                   db.query(
-                    `INSERT INTO institute_infos(secure_token, name, registration_number, box) VALUES(?,?,?,?)
+                    `INSERT INTO institute_infos(secure_token, name, registration_number, box , ward_id , street) VALUES(?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE 
                             name = VALUES(name), 
                             registration_number = VALUES(registration_number), 
-                            box = VALUES(box)`,
+                            box = VALUES(box),
+                            ward_id = VALUES(ward_id),
+                            street = VALUES(street)`,
                     institution_values[0],
                     (errInst, resInst) => {
                       if (errInst) console.log(`${errInst}`);

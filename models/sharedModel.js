@@ -10,21 +10,25 @@ const {
   filterByUserOffice,
   schoolLocationsSqlJoin,
   notifyStaff,
-  notifyMwombaji
+  notifyMwombaji,
+  instituteLocationsSqlJoin
 } = require("../utils");
 
 module.exports = {
   getInstituteInfo: (establish_tracking_number, callback) => {
     db.query(
-      `SELECT name, box, registration_number 
+      `SELECT name, i.box AS box, registration_number, r.RegionCode AS region, 
+              d.LgaCode AS district, w.WardCode AS ward, st.StreetCode AS street
        FROM establishing_schools e
        JOIN applications a ON a.tracking_number = e.tracking_number
        JOIN institute_infos i ON i.secure_token = a.foreign_token 
+        ${instituteLocationsSqlJoin()}
        WHERE e.tracking_number = ?`,
       [establish_tracking_number],
       (error, results) => {
         if (error) console.log("Error fetching institutes infos" + error);
         // console.log(results[0] || []);
+        // console.log(results)
         callback(results[0] || []);
       }
     );
@@ -1536,6 +1540,17 @@ module.exports = {
                    ? "WHERE RegionCode = '" + region_code + "'"
                    : ""
                }
+               ORDER BY RegionName ASC`,
+      (error, regions) => {
+        if (error) console.log(error);
+        callback(regions);
+      }
+    );
+  },
+  getAllRegions: (callback) => {
+    db.query(
+      `SELECT RegionCode AS id , RegionName AS name 
+               FROM regions 
                ORDER BY RegionName ASC`,
       (error, regions) => {
         if (error) console.log(error);
