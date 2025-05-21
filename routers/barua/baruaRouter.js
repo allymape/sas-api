@@ -142,7 +142,7 @@ const getExtraColumns  = (application_category_id , registry_type) => {
       columns += "";
       break;
     case 12:
-      columns += ", v.old_combinations AS old_combinations";
+      columns += ", v.combinations AS combinations";
       break;
     case 13:
       columns += ", v.is_hostel AS is_hostel, v.was_hostel AS was_hostel";
