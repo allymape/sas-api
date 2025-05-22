@@ -45,7 +45,7 @@ sajiliSerikaliRequestRouter.post(
                       LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
                       LEFT JOIN regions ON  regions.RegionCode = districts.RegionCode
                       WHERE application_category_id = 4 AND 
-                            applications.registry_type_id = 3 AND 
+                            establishing_schools.registry_type_id = 3 AND 
                             payment_status_id = 2 AND 
                             is_complete = 1
                     ${
@@ -152,7 +152,7 @@ sajiliSerikaliRequestRouter.post(
         school_categories.id as schoolCategoryID, school_categories.category as schoolCategory,
         applications.tracking_number as tracking_number, is_seminary,
         applications.created_at as created_at, teacher_information,
-        applications.registry_type_id as registry_type_id, application_category_id, applications.user_id as user_id, stream,
+        establishing_schools.registry_type_id AS registry_type_id, application_category_id, applications.user_id as user_id, stream,
         applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
         wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName
         FROM managers
@@ -378,7 +378,8 @@ sajiliSerikaliRequestRouter.post(
             });
           }
         );
-    });
+      }
+    );
   }
 );
 

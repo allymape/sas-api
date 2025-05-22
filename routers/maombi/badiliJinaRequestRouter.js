@@ -126,7 +126,7 @@ badiliJinaRequestRouter.post(
 				   establishing_schools.school_size as school_size, languages.language as language,  
 				   school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
 				   applications.tracking_number as tracking_number, applications.created_at as created_at,  
-				   applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
+				   establishing_schools.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
 				   applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
 				   wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName 
       FROM former_school_infos
@@ -172,7 +172,7 @@ badiliJinaRequestRouter.post(
             var establishId = results[0].establishId;
           }
 
-          var remain_days = calculcateRemainDays(created_at)
+          var remain_days = calculcateRemainDays(created_at);
 
           // db.query(
           //   "select * from maoni WHERE trackingNo = ?",
@@ -305,7 +305,8 @@ badiliJinaRequestRouter.post(
               );
             });
           });
-        });
+        }
+      );
   });
 
 badiliJinaRequestRouter.post(

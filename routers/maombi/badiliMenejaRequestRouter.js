@@ -91,7 +91,7 @@ badiliMenejaRequestRouter.post(
                m.manager_phone_number as old_manager_phone_no , m.manager_email as old_manager_email, m.manager_cv as manager_cv , fm.manager_cv as old_manager_cv, 
                m.manager_certificate AS manager_certificate, fm.manager_certificate as old_manager_certificate,
               fm.manager_first_name AS manager_first_name, fm.manager_middle_name AS manager_middle_name , fm.manager_last_name AS manager_last_name,
-              registry_type_id , application_category_id,  is_approved,
+              e.registry_type_id AS registry_type_id , application_category_id,  is_approved,
               e.area as area, fm.establishing_school_id as establishing_school_id,  
               e.tracking_number as old_tracking_number, e.school_size as school_size,  
               applications.tracking_number as tracking_number,  

@@ -123,7 +123,7 @@ badiliMkondoRequestRouter.post(
               establishing_schools.school_size as school_size, languages.language as language,  
               school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
               applications.tracking_number as tracking_number, applications.created_at as created_at,  
-              applications.registry_type_id as registry_type_id,applications.user_id as user_id,  
+              establishing_schools.registry_type_id as registry_type_id,applications.user_id as user_id,  
               applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
               wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName  
         FROM former_school_infos
@@ -172,8 +172,6 @@ badiliMkondoRequestRouter.post(
           //  console.log(created_at);
         }
 
-        
-  
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [trackingNumber],
@@ -340,7 +338,7 @@ badiliMkondoRequestRouter.post(
                   WardNameMtu: WardNameMtu,
                   LgaNameMtu: LgaNameMtu,
                   RegionNameMtu: RegionNameMtu,
-                  is_approved
+                  is_approved,
                 });
                 objAttachment2.push({
                   file_format: "",

@@ -15,7 +15,7 @@ module.exports = {
             LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
             LEFT JOIN streets ON streets.StreetCode = establishing_schools.village_id  
             LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
-            LEFT JOIN registry_types ON registry_types.id = applications.registry_type_id 
+            LEFT JOIN registry_types ON registry_types.id = establishing_schools.registry_type_id 
             LEFT JOIN regions ON regions.RegionCode = districts.RegionCode 
             LEFT JOIN staffs ON applications.staff_id = staffs.id
             WHERE  application_category_id = 1  AND payment_status_id = 2 AND is_complete = 1
@@ -29,7 +29,7 @@ module.exports = {
             ORDER BY applications.created_at DESC`;
           //  console.log(selectConditionByTitle(user, false, false, status));
     const sqlSelect = `SELECT school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
-                        applications.created_at as created_at,is_approved, applications.registry_type_id as registry_type_id,  
+                        applications.created_at as created_at,is_approved, establishing_schools.registry_type_id as registry_type_id,  
                         applications.user_id as user_id, applications.foreign_token as foreign_token,  
                         UPPER(establishing_schools.school_name) as school_name, regions.RegionName as RegionName,  
                         districts.LgaName as LgaName, registry_types.registry as registry, folio`;
@@ -50,7 +50,7 @@ module.exports = {
               establishing_schools.area as area, establishing_schools.school_size as school_size,
               languages.language as language, school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
               applications.tracking_number as tracking_number,
-              applications.created_at as created_at, applications.registry_type_id as registry_type_id,
+              applications.created_at as created_at, establishing_schools.registry_type_id as registry_type_id,
               applications.user_id as user_id, applications.foreign_token as foreign_token,
               establishing_schools.school_name as school_name, wards.WardName as WardName, regions.RegionName as RegionName,
               districts.LgaName as LgaName, registry_types.registry as registry
@@ -60,7 +60,7 @@ module.exports = {
               school_categories.id = establishing_schools.school_category_id AND regions.RegionCode = districts.RegionCode AND
               districts.LgaCode = wards.LgaCode AND wards.WardCode = establishing_schools.ward_id
               AND establishing_schools.tracking_number = applications.tracking_number AND
-              registry_types.id = applications.registry_type_id AND registration_structures.id = establishing_schools.registration_structure_id AND application_category_id = ? AND applications.tracking_number = ?`,
+              registry_types.id = establishing_schools.registry_type_id AND registration_structures.id = establishing_schools.registration_structure_id AND application_category_id = ? AND applications.tracking_number = ?`,
       [1, trackingNumber],
       function (error, obj) {
         if (error) {

@@ -116,7 +116,8 @@ badiliUsajiliRequestRouter.post(
     var objAttachment1 = [];
     var objAttachment2 = [];
     
-    db.query(`
+    db.query(
+      `
       SELECT school_registrations.registration_number as registration_number, is_approved,
          registration_structures.structure as structure, establishing_schools.id as establishId,  
          establishing_schools.school_category_id as school_category_id_old,  
@@ -126,7 +127,7 @@ badiliUsajiliRequestRouter.post(
          establishing_schools.school_size as school_size, languages.language as language,  
          school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
          applications.tracking_number as tracking_number, applications.created_at as created_at,  
-         applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
+         establishing_schools.registry_type_id AS registry_type_id,application_category_id,applications.user_id as user_id,  
          applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
          wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName 
       FROM former_school_infos
@@ -146,7 +147,7 @@ badiliUsajiliRequestRouter.post(
         if (error) {
           console.log(error);
         }
-       
+
         if (results.length > 0) {
           var tracking_number = results[0].tracking_number;
           var registry_type_id = results[0].registry_type_id;
@@ -174,7 +175,7 @@ badiliUsajiliRequestRouter.post(
           var establishId = results[0].establishId;
         }
 
-        var remain_days = calculcateRemainDays(created_at)
+        var remain_days = calculcateRemainDays(created_at);
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -216,7 +217,6 @@ badiliUsajiliRequestRouter.post(
           objAttachment1 = attachments;
         });
 
-       
         db.query(
           "SELECT school_categories.category as schoolCategoryNew FROM " +
             " former_school_infos, school_sub_categories, establishing_schools, applications, " +

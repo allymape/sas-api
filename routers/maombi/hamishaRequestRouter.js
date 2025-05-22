@@ -124,7 +124,7 @@ hamishaRequestRouter.post(
          establishing_schools.school_size as school_size, languages.language as language,  
          school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
          applications.tracking_number as tracking_number, applications.created_at as created_at,  
-         applications.registry_type_id as registry_type_id, application_category_id, establishing_schools.ward_id as WardIdOld, applications.user_id as user_id,  
+         establishing_schools.registry_type_id AS registry_type_id, application_category_id, establishing_schools.ward_id as WardIdOld, applications.user_id as user_id,  
          applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
          streets.StreetName AS StreetName,
          wards.WardName as WardName, 
@@ -176,7 +176,7 @@ hamishaRequestRouter.post(
           var language = results[0].language;
           var school_size = results[0].school_size;
           var area = results[0].area;
-          
+
           var structure = results[0].structure;
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
@@ -191,7 +191,6 @@ hamishaRequestRouter.post(
           var WardNameNew = results[0].WardNameNew;
           var LgaNameNew = results[0].LgaNameNew;
           var RegionNameNew = results[0].RegionNameNew;
-        
         }
         var remain_days = calculcateRemainDays(created_at);
         // console.log("", created_at, trackingNumber);
@@ -247,11 +246,11 @@ hamishaRequestRouter.post(
                 tracking_number: tracking_number,
                 is_approved,
                 school_name: school_name,
-                StreetNameNew : StreetNameNew,
+                StreetNameNew: StreetNameNew,
                 WardNameNew: WardNameNew,
                 LgaNameNew: LgaNameNew,
                 RegionNameNew: RegionNameNew,
-                StreetName : StreetName,
+                StreetName: StreetName,
                 WardName: WardName,
                 LgaName: LgaName,
                 RegionName: RegionName,

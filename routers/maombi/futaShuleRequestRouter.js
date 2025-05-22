@@ -122,7 +122,7 @@ futaShuleRequestRouter.post("/view-ombi-futa-details",isAuth,
   
   db.query(
     `SELECT establishing_schools.id as schoolId, school_sub_categories.subcategory as subcategory,  
-            establishing_schools.area as area,registry_type_id,application_category_id, establishing_schools.school_size as school_size,  
+            establishing_schools.area as area,establishing_schools.registry_type_id AS registry_type_id,application_category_id, establishing_schools.school_size as school_size,  
             languages.language as language, school_categories.category as schoolCategory, is_approved, 
             applications.tracking_number as tracking_number, applications.tracking_number as tracking_number,  
             applications.created_at as created_at, applications.user_id as user_id,  
@@ -167,7 +167,7 @@ futaShuleRequestRouter.post("/view-ombi-futa-details",isAuth,
         var subcategory = results[0].subcategory;
       }
 
-      var remain_days = calculcateRemainDays(created_at)
+      var remain_days = calculcateRemainDays(created_at);
 
       db.query(
         "select * from maoni WHERE trackingNo = ?",
@@ -203,7 +203,7 @@ futaShuleRequestRouter.post("/view-ombi-futa-details",isAuth,
           objAttachment = attachment_types;
           sharedModel.getAttachments(trackingNumber, (attachments) => {
             objAttachment1 = attachments;
-          
+
             obj.push({
               tracking_number: tracking_number,
               is_approved,

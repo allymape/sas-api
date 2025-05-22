@@ -118,7 +118,7 @@ badiliMmilikiRequestRouter.post(
     var objRef = [];
   
     db.query(
-      `SELECT authorized_person, title, registry_type_id, application_category_id,  
+      `SELECT authorized_person, title, establishing_schools.registry_type_id AS registry_type_id, application_category_id,  
 				 establishing_schools.area as area, former_owners.establishing_school_id as establishing_school_id,  
 				 establishing_schools.tracking_number as old_tracking_number, establishing_schools.school_size as school_size,  
 				 applications.tracking_number as tracking_number, owner_email, purpose,  
@@ -180,7 +180,7 @@ badiliMmilikiRequestRouter.post(
           var subcategory = results[0].subcategory;
         }
 
-        var remain_days = calculcateRemainDays(created_at)
+        var remain_days = calculcateRemainDays(created_at);
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",

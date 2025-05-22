@@ -122,7 +122,7 @@ ongezaTahasusiRequestRouter.post(
                   establishing_schools.school_size as school_size, languages.language as language,  
                   school_categories.category as schoolCategory, applications.tracking_number as tracking_number,  
                   applications.tracking_number as tracking_number, applications.created_at as created_at,  
-                  applications.registry_type_id as registry_type_id,application_category_id,applications.user_id as user_id,  
+                  establishing_schools.registry_type_id AS registry_type_id,application_category_id,applications.user_id as user_id,  
                   applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,  
                   wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName  
       FROM school_registrations
@@ -293,7 +293,8 @@ ongezaTahasusiRequestRouter.post(
                           INNER JOIN combinations c on c.id = sc.combination_id
                           WHERE sc.school_registration_id = ${school_id}`,
                         (current_combination_err, current_combinations) => {
-                          if (current_combination_err) console.log(current_combination_err);
+                          if (current_combination_err)
+                            console.log(current_combination_err);
                           return res.send({
                             error: false,
                             statusCode: 300,

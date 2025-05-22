@@ -36,7 +36,7 @@ sajiliBinafsiRequestRouter.post(
                       LEFT JOIN districts ON districts.LgaCode = wards.LgaCode 
                       LEFT JOIN school_categories ON school_categories.id = establishing_schools.school_category_id
                       LEFT JOIN regions ON  regions.RegionCode = districts.RegionCode
-                      WHERE  application_category_id = 4 AND applications.registry_type_id <> 3 
+                      WHERE  application_category_id = 4 AND establishing_schools.registry_type_id <> 3 
                             AND payment_status_id = 2
                             AND is_complete = 1
                             ${
@@ -152,7 +152,7 @@ sajiliBinafsiRequestRouter.post(
           applications.tracking_number as tracking_number, is_seminary,applications.tracking_number as tracking_number, 
           applications.created_at AS created_at, 
           teacher_information,
-          applications.registry_type_id AS registry_type_id, applications.user_id AS user_id, stream,
+          establishing_schools.registry_type_id AS registry_type_id, applications.user_id AS user_id, stream,
           applications.foreign_token as foreign_token, 
           establishing_schools.school_name as school_name,
           streets.StreetName as StreetName, 

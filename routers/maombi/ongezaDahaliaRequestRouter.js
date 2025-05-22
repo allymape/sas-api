@@ -122,7 +122,7 @@ ongezaDahaliaRequestRouter.post(
          establishing_schools.school_size as school_size, languages.language as language,
          school_categories.category as schoolCategory, applications.tracking_number as tracking_number,
          applications.tracking_number as tracking_number, applications.created_at as created_at,
-         applications.registry_type_id as registry_type_id,applications.user_id as user_id,
+         establishing_schools.registry_type_id AS registry_type_id,applications.user_id as user_id,
          applications.foreign_token as foreign_token, establishing_schools.school_name as school_name,
          wards.WardName as WardName, regions.RegionName as RegionName, districts.LgaName as LgaName,
          establishing_schools.is_hostel AS oldIsHostel,
@@ -168,7 +168,7 @@ ongezaDahaliaRequestRouter.post(
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
         }
-        var remain_days = calculcateRemainDays(created_at)
+        var remain_days = calculcateRemainDays(created_at);
 
         db.query(
           "select * from maoni WHERE trackingNo = ?",
@@ -207,7 +207,7 @@ ongezaDahaliaRequestRouter.post(
 
           sharedModel.getAttachments(trackingNumber, function (attachments) {
             objAttachment1 = attachments;
-           
+
             var first_name = "";
             var middle_name = "";
             var last_name = "";
@@ -233,8 +233,8 @@ ongezaDahaliaRequestRouter.post(
               remain_days: remain_days,
               streamOld: streamOld,
               streamNew: streamNew,
-              oldIsHostel : oldIsHostel,
-              newIsHostel : newIsHostel,
+              oldIsHostel: oldIsHostel,
+              newIsHostel: newIsHostel,
               fullname: fullname,
               schoolCategory: schoolCategory,
               occupation: occupation,
