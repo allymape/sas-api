@@ -32,6 +32,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
       // console.log("ni",req.body);
       var trackingNumber = req.body.TrackingNumber;
       var user = req.user;
+      console.log("Nafika" , trackingNumber)
       sharedModel.findApplicationDetails(trackingNumber , (obj ,objAttachment, objAttachment1 , objAttachment2 , objMess, results) => {
       sharedModel.myMaoni(trackingNumber, (objMaoni) => {
            const {application_category_id , zone_id , district_code} = results[0]
