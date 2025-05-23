@@ -77,7 +77,7 @@ ripotiKufutaChangeRequestRouter.get("/ripoti-kufuta-shule", isAuth, (req, res) =
                                  ELSE ''
                             END AS approved,
                             approved_at
-                     ${from} ORDER BY approved_at DESC
+                     ${from} ORDER BY school_name DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
           // console.log(sqlRows)

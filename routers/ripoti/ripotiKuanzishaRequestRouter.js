@@ -79,7 +79,7 @@ ripotiKuanzishaRequestRouter.get("/ripoti-kuanzisha-shule", isAuth, (req, res) =
                             END AS approved,
                             approved_at
                      ${from} 
-                     ORDER BY approved_at DESC
+                     ORDER BY school_name DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
           sharedModel.paginate(

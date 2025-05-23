@@ -118,7 +118,7 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule", isAuth, (req, res) => {
                             sv.description AS description,
                             sv.corrected AS corrected
                      ${from} 
-                     ORDER BY approved_at DESC
+                     ORDER BY school_name DESC
                      LIMIT ?, ?`;
             const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
             sharedModel.paginate(

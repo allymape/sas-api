@@ -79,7 +79,7 @@ ripotiWamilikiChangeRequestRouter.get("/ripoti-badili-umiliki", isAuth, (req, re
                             END AS approved,
                             approved_at
                      ${from} 
-                     ORDER BY approved_at DESC
+                     ORDER BY school_name DESC
                      LIMIT ?, ?`;
           const sqlCount = `SELECT COUNT(*) AS num_rows ${from}`;
           sharedModel.paginate(
