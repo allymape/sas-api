@@ -35,7 +35,7 @@ anzishaShuleRequestRouter.post("/view-ombi-details", isAuth, (req, res) => {
       sharedModel.findApplicationDetails(trackingNumber , (obj ,objAttachment, objAttachment1 , objAttachment2 , objMess, results) => {
       sharedModel.myMaoni(trackingNumber, (objMaoni) => {
            const {application_category_id , zone_id , district_code} = results[0]
-           console.log(application_category_id , zone_id , district_code)
+          //  console.log(application_category_id , zone_id , district_code)
         sharedModel.myStaffs(user, (objStaffs) => { 
              return res.send({
                error: false,

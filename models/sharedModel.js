@@ -535,7 +535,7 @@ module.exports = {
           var is_approved = "";
         }
         var remain_days = calculcateRemainDays(created_at);
-
+        console.log("remain_days" , remain_days)
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
