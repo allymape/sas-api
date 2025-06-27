@@ -8,12 +8,21 @@ module.exports = {
     var queryParams = [];
     if (search_value) {
       searchQuery += ` AND (u.email LIKE ? OR 
-                            u.name LIKE ? 
+                            u.name LIKE ? OR
+                            es.school_name LIKE ? OR
+                            sr.registration_number LIKE ?
                           )`;
-      queryParams.push(`%${search_value}%`, `%${search_value}%`);
+      queryParams.push(
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`,
+        `%${search_value}%`
+      );
     }
     let sql = `FROM users u 
                 LEFT JOIN applications a ON a.user_id = u.id
+                LEFT JOIN school_registrations sr ON sr.tracking_number = a.tracking_number
+                LEFT JOIN establishing_schools es ON es.id = sr.establishing_school_id
                 WHERE 1 = 1
                 ${searchQuery}
                 `;

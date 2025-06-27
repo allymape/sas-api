@@ -79,6 +79,7 @@ module.exports = {
                       JOIN school_categories sc ON sc.id = e.school_category_id
                       LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
                       LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
+                      LEFT JOIN users u ON u.id = a.user_id
                       ${schoolLocationsSqlJoin()}
                       WHERE  s.reg_status IN (1)
                       ${sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
@@ -99,6 +100,8 @@ module.exports = {
               IFNULL(school_opening_date , '') AS opening_date, 
               r.RegionName AS region, 
               latitude,longitude,
+              u.name AS applicant_name,
+              u.email AS applicant_email,
               d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
@@ -118,6 +121,8 @@ module.exports = {
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, schools) => {
         if (error) console.log(error);
+
+        console.log(schools)
         db.query(
           `SELECT COUNT(*) AS num_rows  ${sql}`,
           queryParams,

@@ -2,9 +2,10 @@
 	"folders": [
 		{
 			"path": ".."
+		},
+		{
+			"path": "../../../../Sites/mitaa-app"
 		}
 	],
-	"settings": {
-		"liveServer.settings.multiRootWorkspaceName": "SAS"
-	}
+	"settings": {}
 }
