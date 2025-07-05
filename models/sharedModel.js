@@ -230,11 +230,15 @@ module.exports = {
       callback(sect_names);
     });
   },
-  getCertificates: (callback , school_category_id) => {
+  getCertificates: (callback, school_category_id) => {
     db.query(
       `SELECT id, certificate AS name , level 
        FROM certificate_types 
-       ${school_category_id ? ' WHERE school_category_id =  '+db.escape(school_category_id) : ''}
+       ${
+         school_category_id
+           ? " WHERE school_category_id =  " + db.escape(school_category_id)
+           : ""
+       }
        ORDER BY certificate ASC`,
       (error, certificate_types) => {
         if (error) {
@@ -535,7 +539,7 @@ module.exports = {
           var is_approved = "";
         }
         var remain_days = calculcateRemainDays(created_at);
-        console.log("remain_days" , remain_days)
+        console.log("remain_days", remain_days);
         db.query(
           "select * from maoni WHERE trackingNo = ?",
           [tracking_number],
@@ -929,11 +933,12 @@ module.exports = {
                 )`,
                 function (error, results) {
                   if (error) {
+                    callback(false)
                     console.log(error);
                   } else {
                     if (results.affectedRows > 0) {
                       success = true;
-                      //sendMail notify
+                      // sendMail notify
                       notifyStaff(
                         user_to,
                         application_category,
@@ -941,7 +946,6 @@ module.exports = {
                         trackerId
                       );
                       notifyMwombaji(trackerId, haliombi);
-                    }
                     db.query(
                       "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
                       [
@@ -984,11 +988,31 @@ module.exports = {
                                 "maoni"
                               );
                             }
-                            callback(success);
+                            if (
+                              Number(haliombi) == 2 &&
+                              Number(application_category) > 3
+                            ) {
+                              // Ombi ni usajili na change requests na limekuwa approved
+                              console.log("Start Creating event queue")
+                              module.exports.createEventQueue(
+                                trackerId,
+                                application_category,
+                                null,
+                                (queueSuccess) => {
+                                  callback(queueSuccess);
+                                }
+                              );
+                            } else {
+                              // Ombi likiwa linaendelea kushughulikiwa
+                              callback(success);
+                            }
                           }
                         );
                       }
                     );
+                   }else{
+                    callback(false)
+                   }
                   }
                 }
               );
@@ -1137,6 +1161,48 @@ module.exports = {
       );
     }
   },
+  createEventQueue: (
+    tracking_number,
+    application_category_id,
+    registration_number,
+    callback
+  ) => {
+    db.query(
+      `
+      INSERT INTO school_event_queue (
+        reg_no,
+        application_category_id,
+        tracking_number,
+        created_at,
+        approved_at
+      ) VALUES (?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        reg_no = VALUES(reg_no),
+        application_category_id = VALUES(application_category_id),
+        approved_at = VALUES(approved_at),
+        updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        registration_number,
+        application_category_id,
+        tracking_number,
+        formatDate(new Date()),
+        formatDate(new Date())
+      ],
+      (error, result) => {
+        if (error) {
+          callback(false);
+          console.error(
+            "❌ Error inserting/updating school_event_queue:",
+            error.message
+          );
+        } else {
+          console.log("✅ Upsert successful:", result);
+          callback(true);
+        }
+      }
+    );
+  },
   getFormerOwners: (tracking_number, callback) => {
     db.query(
       `SELECT f.id AS former_owner_id , o.id AS owner_id, 
@@ -1245,28 +1311,28 @@ module.exports = {
       [tracking_number],
       (error, application_info) => {
         if (error) console.log(error);
-        if (application_info.length > 0)
-         {
+        if (application_info.length > 0) {
           var establishing_school_id = application_info[0].school_id;
-          var school_registration_id = application_info[0].school_registration_id;
-           db.query(
-             `SELECT combination_id 
+          var school_registration_id =
+            application_info[0].school_registration_id;
+          db.query(
+            `SELECT combination_id 
               FROM former_school_combinations 
               WHERE  establishing_school_id = ?`,
-             [establishing_school_id],
-             (error, combinations) => {
-               if (error) console.log(error);
-               const success = combinations.length > 0;
-               callback(
-                 success,
-                 success ? combinations : [],
-                 school_registration_id
-               );
-             }
-           );
-         }else{
-           callback(false, []);
-         }
+            [establishing_school_id],
+            (error, combinations) => {
+              if (error) console.log(error);
+              const success = combinations.length > 0;
+              callback(
+                success,
+                success ? combinations : [],
+                school_registration_id
+              );
+            }
+          );
+        } else {
+          callback(false, []);
+        }
       }
     );
   },
