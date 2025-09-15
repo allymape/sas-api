@@ -16,7 +16,7 @@ module.exports = {
                   school_gender_type_id,school_specialization_id,ward_id,village_id,registration_structure_id,curriculum_id,
                   certificate_type_id,sect_name_id,school_phone,school_email,po_box,school_address,number_of_students,
                   lessons_and_courses,number_of_teachers,teacher_student_ratio_recommendation,teacher_information,is_for_disabled,
-                  is_hostel,file_number,school_folio,max_folio
+                  is_hostel,file_number,school_folio,max_folio, male_capacity, female_capacity
                   FROM school_registrations s 
                   INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
                   INNER JOIN applications a ON a.tracking_number = s.tracking_number
@@ -43,18 +43,18 @@ module.exports = {
                 if (error2) console.log(error2);
                 db.query(
                   `SELECT m.*
-                                    FROM school_registrations s 
-                                    INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
-                                    INNER JOIN managers m ON m.establishing_school_id = e.id
-                                    WHERE s.tracking_number = ?`,
+                    FROM school_registrations s 
+                    INNER JOIN establishing_schools e ON e.id = s.establishing_school_id
+                    INNER JOIN managers m ON m.establishing_school_id = e.id
+                    WHERE s.tracking_number = ?`,
                   [tracking_number],
                   (error2, managers) => {
                     if (error2) console.log(error2);
                     db.query(
                       `SELECT combination_id
-                                                    FROM school_combinations  sc
-                                                    INNER JOIN school_registrations s ON sc.school_registration_id = s.id
-                                                    WHERE s.tracking_number = ?`,
+                      FROM school_combinations  sc
+                      INNER JOIN school_registrations s ON sc.school_registration_id = s.id
+                      WHERE s.tracking_number = ?`,
                       [tracking_number],
                       (error3, school_combinations) => {
                         if (error3) console.log(error3);
@@ -102,6 +102,8 @@ module.exports = {
       number_of_students,
       number_of_teachers,
       is_hostel,
+      male_capacity,
+      female_capacity,
     } = data;
 
     const {combinations , school_specialization_id,} = data
@@ -133,7 +135,9 @@ module.exports = {
                     e.po_box = ?,
                     e.number_of_students = ?,
                     e.number_of_teachers = ?,
-                    e.is_hostel = ?
+                    e.is_hostel = ?,
+                    e.male_capacity = ?,
+                    e.female_capacity = ?
                 WHERE s.tracking_number = ?`,
         [
           school_sub_category_id ? school_sub_category_id : null,
@@ -161,6 +165,8 @@ module.exports = {
           number_of_students ? number_of_students : null,
           number_of_teachers ? number_of_teachers : null,
           is_hostel == "on" ? 1 : 0,
+          male_capacity ? male_capacity : null,
+          female_capacity ? female_capacity : null,
           tracking_number,
         ],
         (error, result) => {
@@ -191,7 +197,7 @@ module.exports = {
                     company_registration_number,
                     company_box,
                     ward,
-                    street
+                    street,
                   } = data;
                   const institution_values = [
                     [
@@ -200,7 +206,7 @@ module.exports = {
                       company_registration_number || null,
                       company_box || null,
                       ward || null,
-                      street || null
+                      street || null,
                     ],
                   ];
                   db.query(
@@ -214,14 +220,13 @@ module.exports = {
                     institution_values[0],
                     (errInst, resInst) => {
                       if (errInst) console.log(`${errInst}`);
-                      else
-                        if (institution_name)
-                          console.log(
-                            "Institution stored successfully:",
-                            institution_name,
-                            company_registration_number,
-                            company_box
-                          );
+                      else if (institution_name)
+                        console.log(
+                          "Institution stored successfully:",
+                          institution_name,
+                          company_registration_number,
+                          company_box
+                        );
                     }
                   );
                 } else {

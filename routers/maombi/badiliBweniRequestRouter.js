@@ -24,7 +24,7 @@ badiliBweniRequestRouter.post(
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, folio, applications.tracking_number as tracking_number, 
         applications.created_at as created_at, applications.user_id as user_id, 
-        applications.foreign_token as foreign_token, is_approved,
+        applications.foreign_token as foreign_token, is_approved,male_capacity, female_capacity, school_sub_category_id,
         establishing_schools.school_name AS school_name, regions.RegionName AS RegionName, 
         districts.LgaName as LgaName`;
 
@@ -67,6 +67,9 @@ badiliBweniRequestRouter.post(
               var schoolCategory = results[i].schoolCategory;
               var folio = results[i].folio;
               var is_approved = results[i].is_approved;
+              var male_capacity = results[i].male_capacity;
+              var female_capacity = results[i].female_capacity;
+              var school_sub_category_id = results[i].school_sub_category_id;
               var remain_days = calculcateRemainDays(created_at)
               obj.push({
                 tracking_number: tracking_number,
@@ -80,7 +83,10 @@ badiliBweniRequestRouter.post(
                 remain_days: remain_days,
                 schoolCategory: schoolCategory,
                 folio,
-                is_approved
+                is_approved,
+                male_capacity,
+                female_capacity,
+                school_sub_category_id
               });
             }
             // console.log(obj)
@@ -131,6 +137,9 @@ badiliBweniRequestRouter.post(
               applications.tracking_number as tracking_number, applications.tracking_number as tracking_number,  
               applications.created_at as created_at, establishing_schools.registry_type_id as registry_type_id, application_category_id,  
               applications.user_id as user_id,  applications.foreign_token as foreign_token,  
+              establishing_schools.male_capacity as male_capacity, 
+              establishing_schools.female_capacity as female_capacity, 
+              establishing_schools.school_sub_category_id as school_sub_category_id,
               establishing_schools.school_name as school_name, wards.WardName as WardName,  
               regions.RegionName as RegionName, districts.LgaName as LgaName  
       FROM former_school_infos
@@ -174,6 +183,9 @@ badiliBweniRequestRouter.post(
           var subcategory = results[0].subcategory;
           var establishId = results[0].establishId;
           var Oldsubcategory = results[0].subcategory;
+          var male_capacity = results[0].male_capacity;
+          var female_capacity = results[0].female_capacity;
+          var school_sub_category_id = results[0].school_sub_category_id;
           // var Oldsubcategory = results[0].subcategory;
         }
         var remain_days = calculcateRemainDays(created_at);
@@ -226,6 +238,9 @@ badiliBweniRequestRouter.post(
                 LgaName: LgaName,
                 RegionName: RegionName,
                 is_approved,
+                male_capacity,
+                female_capacity,
+                school_sub_category_id,
                 user_id: user_id,
                 registry_type_id: registry_type_id,
                 registry: registry,
