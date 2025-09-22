@@ -136,7 +136,7 @@ const getExtraColumns  = (application_category_id , registry_type) => {
       columns += ", v.old_school_name AS old_school_name";
       break;
     case 10:
-      columns += ", v.old_region, old_district, old_ward, old_street";
+      columns += ", t_street, t_ward, t_district, t_region, t_old_region, t_old_district, t_old_ward, t_old_street";
       break;
     case 11:
       columns += "";
