@@ -57,7 +57,7 @@ sajiliSerikaliRequestRouter.post(
                     ORDER BY applications.id DESC `;
 
         sharedModel.paginate(
-          ` SELECT school_categories.category as schoolCategory, registration_number, applications.tracking_number as tracking_number, 
+          ` SELECT school_categories.category as schoolCategory, school_registrations.registration_number AS registration_number, applications.tracking_number as tracking_number, 
               applications.created_at as created_at, applications.user_id as user_id, 
               applications.foreign_token as foreign_token, folio, is_approved,
               establishing_schools.school_name as school_name, regions.RegionName as RegionName, 

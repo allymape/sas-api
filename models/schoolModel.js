@@ -94,10 +94,10 @@ module.exports = {
     db.query(
       `SELECT s.tracking_number AS id,
               school_name AS name, 
-              registration_number AS reg_no, 
+              s.registration_number AS reg_no, 
               rt.registry AS ownership,
               sc.category AS category,
-              IFNULL(school_opening_date , '') AS opening_date, 
+              IFNULL(s.school_opening_date , '') AS opening_date, 
               r.RegionName AS region, 
               latitude,longitude,
               u.name AS applicant_name,
@@ -105,7 +105,7 @@ module.exports = {
               d.LgaName AS lga,
               w.WardName AS ward, 
               st.StreetName AS street,
-              IFNULL(registration_date , '') AS reg_date, 
+              IFNULL(s.registration_date , '') AS reg_date, 
               DATE_FORMAT(s.updated_at , '%Y-%m-%d %H:%i:%s') AS updated_at, 
               CASE 
                   WHEN s.reg_status = 1 THEN 'Imesajiliwa'
@@ -115,7 +115,7 @@ module.exports = {
               s.is_verified AS is_verified,
               sv.corrected AS corrected,
               sv.description AS description,
-              reg_status
+              s.reg_status AS reg_status
               ${sql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
