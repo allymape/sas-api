@@ -11,7 +11,8 @@ const {
   schoolLocationsSqlJoin,
   notifyStaff,
   notifyMwombaji,
-  instituteLocationsSqlJoin
+  instituteLocationsSqlJoin,
+  randomInt
 } = require("../utils");
 
 module.exports = {
@@ -997,7 +998,7 @@ module.exports = {
                               module.exports.createEventQueue(
                                 trackerId,
                                 application_category,
-                                null,
+                                randomInt(0,1),
                                 (queueSuccess) => {
                                   callback(queueSuccess);
                                 }
@@ -1455,7 +1456,7 @@ module.exports = {
   ) => {
     //  Update registered schools
     const today = new Date();
-    console.log(code + "." + registration_number);
+    const final_registration_number = code + "." + registration_number;
     db.query(
       `UPDATE school_registrations SET registration_number = ?, registration_date = ? , updated_at = ? , reg_status = ?
                           WHERE ${
@@ -1464,7 +1465,7 @@ module.exports = {
                               : "tracking_number = ?"
                           }`,
       [
-        code + "." + registration_number,
+        final_registration_number,
         formatDate(today, "YYYY-MM-DD"),
         today,
         1,
@@ -1484,10 +1485,10 @@ module.exports = {
                 if (error) console.log(error);
                 if (updated) {
                   console.log(
-                    `Algorithm updated successfully  ${code}.${registration_number}`
+                    `Algorithm updated successfully  ${final_registration_number}`,
                   );
                 }
-              }
+              },
             );
           } else {
             //  INSERT IF NOT EXISTING
@@ -1496,12 +1497,12 @@ module.exports = {
               [id, code, last_number],
               (error) => {
                 if (error) console.log(error);
-              }
+              },
             );
           }
         }
-        __callback(registration_number);
-      }
+        __callback(final_registration_number);
+      },
     );
   },
   updateApplicationPayment: (tracking_number, callback) => {

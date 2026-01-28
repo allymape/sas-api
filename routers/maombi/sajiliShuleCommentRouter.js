@@ -19,6 +19,7 @@ sajiliShuleCommentRouter.post("/tuma-sajili-majibu", isAuth, (req, res) => {
                      schoolCatId,
                      null,
                      (created_registration_number) => {
+                      console.log("Reg number ni hii: " + created_registration_number);
                       sharedModel.createEventQueue(tracking_number , app_category , created_registration_number , (successQueue) => {
                          if(successQueue) console.log("Event Queue Registration number updated successfully")
                       })
