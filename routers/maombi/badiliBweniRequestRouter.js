@@ -24,7 +24,7 @@ badiliBweniRequestRouter.post(
     const offset = (page - 1) * per_page;
     const sqlSelect = `SELECT school_categories.category as schoolCategory, folio, applications.tracking_number as tracking_number, 
         applications.created_at as created_at, applications.user_id as user_id, 
-        applications.foreign_token as foreign_token, is_approved,male_capacity, female_capacity, school_sub_category_id,
+        applications.foreign_token as foreign_token, is_approved,male_capacity, female_capacity, establishing_schools.school_sub_category_id,
         establishing_schools.school_name AS school_name, regions.RegionName AS RegionName, 
         districts.LgaName as LgaName`;
 

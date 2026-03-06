@@ -69,15 +69,14 @@ baruaRouter.post(
                     break;
 
                   case 3: // School
-                    applicantJoinCondition = `
-                  LEFT JOIN applicants app ON app.id = e.applicant_id COLLATE utf8mb4_unicode_ci
-                `;
+                //     applicantJoinCondition = `
+                //   LEFT JOIN applicants app ON app.id = e.applicant_id COLLATE utf8mb4_unicode_ci
+                // `;
                     // addressColumns =
                     //   ", CONCAT('Mkurugenzi' ,' ', v.district) AS address_name, aav.ded_box AS address_box, v.region AS address_region";
                     break;
                   default:
                     applicantJoinCondition = `
-                    LEFT JOIN applicants app ON app.id = e.applicant_id COLLATE utf8mb4_unicode_ci
                     LEFT JOIN administration_areas_view aav ON aav.ward_code = e.ward_id COLLATE utf8mb4_unicode_ci
                   `;
                 }
