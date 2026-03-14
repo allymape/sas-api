@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const {
@@ -214,7 +214,7 @@ module.exports = {
         if (error) {
           console.log(error);
         }
-        if (user) {
+        if (Array.isArray(user) && user.length > 0) {
           success = true;
         }
         callback(error, success, user);

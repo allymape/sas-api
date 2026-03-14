@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const { schoolLocationsSqlJoin, applicationView } = require("../utils");
 
 module.exports = {

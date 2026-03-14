@@ -38,9 +38,10 @@ districtRouter.get("/allDistricts", isAuth, (req, res, next) => {
 });
 
 districtRouter.get("/lookup-districts", isAuth, (req, res) => {
-  var region_code  = req.body.region_code;
+  var region_code  = req.query.region_code || req.body?.region_code;
+  var keyword = req.query.q || req.body?.q || "";
   const {user} = req;
-  districtModel.lookupDistricts(user, region_code, (error, districts) => {
+  districtModel.lookupDistricts(user, region_code, keyword, (error, districts) => {
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,

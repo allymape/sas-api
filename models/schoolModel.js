@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const { schoolLocationsSqlJoin, establishedApplicationRegisteredSchoolsSqlJoin, applicationEstablishedRegisteredSchoolsSqlJoin, formatDate, registeredSchoolsEstablishedApplicationSqlJoin, auditMiddleware, insertAudit, formatIp } = require("../utils");
 
 module.exports = {
@@ -18,16 +18,21 @@ module.exports = {
     req = null
   ) => {
     const { sehemu, zone_id, district_code } = req.user;
-    var searchQuery = "";
-    var queryParams = [];
+    const searchParts = [];
+    const queryParams = [];
+    const needsLocationFilter = sehemu == "k1" || sehemu == "w1";
+    const hasSearch = Boolean(String(search_value || "").trim());
+    const needsVerificationJoin = correction == 1;
+    const needsLocationSearch = hasSearch;
+
     if (search_value) {
-      searchQuery += ` AND (school_name LIKE ? OR 
-                              registration_number LIKE ? OR 
-                              RegionName LIKE ? OR 
-                              LgaName LIKE ? OR 
-                              WardName LIKE ? OR 
-                              StreetName LIKE ?
-                            )`;
+      searchParts.push(`(e.school_name LIKE ? OR 
+                              s.registration_number LIKE ? OR 
+                              r.RegionName LIKE ? OR 
+                              d.LgaName LIKE ? OR 
+                              w.WardName LIKE ? OR 
+                              st.StreetName LIKE ?
+                            )`);
       queryParams.push(
         `%${search_value}%`,
         `%${search_value}%`,
@@ -38,42 +43,52 @@ module.exports = {
       );
     }
     if (type_search) {
-      searchQuery += ` AND e.school_category_id = ?`;
+      searchParts.push(`e.school_category_id = ?`);
       queryParams.push(Number(type_search));
     }
     if (owner_search) {
-      searchQuery += ` AND a.registry_type_id = ?`;
+      searchParts.push(`a.registry_type_id = ?`);
       queryParams.push(Number(owner_search));
     }
     if (invalid_or_no_reg_search == 1) {
-      searchQuery += ` AND  s.registration_number NOT LIKE "EA.%" AND 
+      searchParts.push(`s.registration_number NOT LIKE "EA.%" AND 
                              s.registration_number NOT LIKE "EM.%" AND
                              s.registration_number NOT LIKE "S.%"  AND
                              s.registration_number NOT LIKE "CU.%" AND
-                             registration_number NOT LIKE '% %'`;
+                             s.registration_number NOT LIKE '% %'`);
     }
     if (geolocation_search == 1) {
-      searchQuery += ` AND latitude IS NOT NULL AND longitude IS NOT NULL`;
+      searchParts.push(`e.latitude IS NOT NULL AND e.longitude IS NOT NULL`);
     }
    
     if (correction == 1) {
-      searchQuery += ` AND is_verified = 0  AND corrected = 0`;
+      searchParts.push(`s.is_verified = 0  AND sv.corrected = 0`);
     }
     if (geolocation_search == 2) {
-      searchQuery += ` AND (latitude IS NULL OR longitude IS NULL)`;
+      searchParts.push(`(e.latitude IS NULL OR e.longitude IS NULL)`);
     }
     if (duplicate_reg_search == 1) {
-      searchQuery += `
-                  AND EXISTS (
+      searchParts.push(`EXISTS (
                     SELECT 1
                     FROM school_registrations sr2
                     WHERE sr2.registration_number = s.registration_number
                     GROUP BY sr2.registration_number
                     HAVING COUNT(*) > 1
-                  )`;
+                  )`);
     }
 
-    let sql = `FROM school_registrations s 
+    const whereParts = [`s.reg_status IN (1)`];
+    if (sehemu == "k1") {
+      whereParts.push(`r.zone_id = ${Number(zone_id) || 0}`);
+    }
+    if (sehemu == "w1") {
+      whereParts.push(`d.LgaCode = ${db.escape(district_code)}`);
+    }
+    if (searchParts.length > 0) {
+      whereParts.push(...searchParts);
+    }
+
+    const dataFromSql = `FROM school_registrations s 
                       JOIN establishing_schools e ON s.establishing_school_id = e.id
                       JOIN applications a ON a.tracking_number = s.tracking_number
                       JOIN school_categories sc ON sc.id = e.school_category_id
@@ -81,15 +96,25 @@ module.exports = {
                       LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number
                       LEFT JOIN users u ON u.id = a.user_id
                       ${schoolLocationsSqlJoin()}
-                      WHERE  s.reg_status IN (1)
-                      ${sehemu == "k1" ? "AND zone_id = " + zone_id : ""}
-                        ${
-                          sehemu == "w1"
-                            ? "AND d.LgaCode = '" + district_code + "'"
-                            : ""
-                        }
-                      ${searchQuery}
-                      ORDER BY school_name ASC`;
+                      WHERE ${whereParts.join("\n                      AND ")}
+                      ORDER BY e.school_name ASC`;
+
+    const countJoins = [
+      `FROM school_registrations s`,
+      `JOIN establishing_schools e ON s.establishing_school_id = e.id`,
+      `JOIN applications a ON a.tracking_number = s.tracking_number`,
+    ];
+
+    if (needsVerificationJoin) {
+      countJoins.push(`LEFT JOIN school_verifications sv ON sv.tracking_number = s.tracking_number`);
+    }
+
+    if (needsLocationFilter || needsLocationSearch) {
+      countJoins.push(schoolLocationsSqlJoin());
+    }
+
+    const countSql = `${countJoins.join("\n                      ")}
+                      WHERE ${whereParts.join("\n                      AND ")}`;
 
     db.query(
       `SELECT s.tracking_number AS id,
@@ -116,15 +141,14 @@ module.exports = {
               sv.corrected AS corrected,
               sv.description AS description,
               s.reg_status AS reg_status
-              ${sql}
+              ${dataFromSql}
               ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, schools) => {
         if (error) console.log(error);
-
-        console.log(schools)
+        const schoolRows = Array.isArray(schools) ? schools : [];
         db.query(
-          `SELECT COUNT(*) AS num_rows  ${sql}`,
+          `SELECT COUNT(*) AS num_rows ${countSql}`,
           queryParams,
           (error2, result2) => {
             if (error2) {
@@ -132,7 +156,7 @@ module.exports = {
               console.log(error);
             }
             
-            if(schools.length > 0){
+            if (schoolRows.length > 0) {
                if (delete_duplicate && Number(delete_duplicate) == 1) {
                  const msg = "Amefuta taarifa za shule zinazojirudia.";
                  console.log(msg)
@@ -159,7 +183,7 @@ module.exports = {
                  module.exports.deleteDuplicateSchools();
                }
             }
-            callback(error, schools, result2[0].num_rows);
+            callback(error, schoolRows, result2?.[0]?.num_rows || 0);
           }
         );
       }
@@ -169,7 +193,7 @@ module.exports = {
   lookForSchools: (offset, per_page, search, callback) => {
     const keyword = db.escape(`%${search}%`);
     const searchSql = search
-      ? ` AND (e.school_name LIKE ${keyword} OR s.registration_number LIKE ${keyword} OR e.tracking_number LIKE ${keyword}) `
+      ? ` AND e.school_name LIKE ${keyword} `
       : "";
     const sql = `SELECT e.tracking_number AS id, e.school_name AS text , s.registration_number AS registration_number,
                     r.RegionName AS region, d.LgaName AS district, w.WardName AS ward

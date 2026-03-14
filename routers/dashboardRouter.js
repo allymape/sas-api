@@ -91,6 +91,30 @@ dashboardRouter.get("/number-of-schools-by-year-of-regitration", isAuth , (req, 
              });
       })
 })
+
+dashboardRouter.get("/registered-schools-by-period", isAuth, (req, res) => {
+  const { user } = req;
+  const period = String(req.query?.period || req.body?.period || "recent").toLowerCase();
+  const parsedLimit = Number.parseInt(req.query?.limit || req.body?.limit, 10);
+  const limit = Number.isFinite(parsedLimit) ? parsedLimit : 10;
+
+  dashboardModel.getRegisteredSchoolsByPeriod(
+    user,
+    { period, limit },
+    (error, rows, total) => {
+      return res.send({
+        error: Boolean(error),
+        statusCode: error ? 306 : 300,
+        data: {
+          period,
+          total,
+          rows: rows || [],
+        },
+        message: error ? "Error" : "Success",
+      });
+    },
+  );
+});
 // Change dashboard of school
 
 module.exports = dashboardRouter;

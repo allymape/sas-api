@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 
 module.exports = {
   //******** GET A LIST OF ZONES *******************************
@@ -92,7 +92,9 @@ module.exports = {
   updateZone: (zoneData, callback) => {
     var success = false;
     db.query(
-      `UPDATE  zones SET zone_name = ? , zone_code = ? , box = ? , status_id = ?  WHERE id = ?`,
+      `UPDATE zones 
+       SET zone_name = ?, zone_code = ?, box = ?, status_id = ?, updated_at = ?
+       WHERE id = ?`,
       zoneData,
       (error, zone, fields) => {
         if (error) {

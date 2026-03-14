@@ -19,6 +19,22 @@ const userModal = require("../models/userModal.js");
 const { resetPassword } = require("../templates/emailTemplate.js");
 const sharedModel = require("../models/sharedModel.js");
 const baruaSecret = process.env.BARUA_SECRET_KEY || 'MY-SECRET-KEY'
+
+const extractSearchValue = (req) => {
+  const querySearch = req.query.search;
+  if (typeof querySearch === "object" && querySearch !== null) {
+    return querySearch.value || "";
+  }
+
+  return (
+    req.query.search_value ||
+    querySearch ||
+    req.body?.search?.value ||
+    req.body?.search_value ||
+    ""
+  );
+};
+
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes
   max: 20, // Limit each IP to 5 requests per `window` (here, per 10 minutes)
@@ -146,12 +162,18 @@ userRouter.post('/refresh_token' , isAuth , (req , res) => {
 })
 //get list of users
 userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  var search_value = req.body.search.value; 
-  var user = req.user;
-  var inactive = req.body.inactive;
+  const per_page = Number.parseInt(req.query.per_page, 10) || 10;
+  const page = Number.parseInt(req.query.page, 10) || 1;
+  const offset = (page - 1) * per_page;
+  const search_value = extractSearchValue(req);
+  const user = req.user;
+  const inactiveRaw =
+    req.query.inactive !== undefined ? req.query.inactive : req.body?.inactive;
+  const inactive =
+    inactiveRaw === true ||
+    inactiveRaw === "true" ||
+    inactiveRaw === 1 ||
+    inactiveRaw === "1";
   userModal.getUsers(offset, per_page, search_value, user, inactive,(error, users, numRows) => {
     // console.log(users);
     return res.send({

@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const { formatDate, uniqueArray, mergeArray } = require("../utils");
 
 module.exports = {
@@ -72,11 +72,13 @@ module.exports = {
   },
 
   lookupRoles : (user,callback) => {
+    const safeUser = user && typeof user === "object" ? user : {};
+    const userNgazi = String(safeUser.ngazi || "").toLowerCase();
     db.query(
       `SELECT id as role_id, role_name
               FROM role_management
                ${
-                 ["kanda", "wilaya"].includes(user.ngazi)
+                 ["kanda", "wilaya"].includes(userNgazi)
                    ? "WHERE LOWER(role_name) IN ('user' , 'normal user' , 'normal-user')"
                    : ""
                }
@@ -335,6 +337,5 @@ const syncPermissions = (permissions , userId , roleId , callback) => {
                    });
           })
 }
-
 
 

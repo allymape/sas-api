@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const {
   selectStaffsBySection,
   formatDate,
@@ -36,7 +36,7 @@ module.exports = {
   },
   getHierarchies: (callback) => {
     db.query(
-      `SELECT id, rank_name AS name 
+      `SELECT id, rank_name AS name, rank_name AS unit_name
       FROM vyeo 
       WHERE status_id = 1
       ORDER BY id ASC`,
@@ -257,6 +257,11 @@ module.exports = {
     district_code = null
   ) => {
     const objStaffs = [];
+    const sectionId = Number.parseInt(user?.section_id, 10);
+    if (!Number.isFinite(sectionId) || sectionId <= 0) {
+      callback(objStaffs);
+      return;
+    }
     // Find previous boss who attended this request
     module.exports.getPreviousStaff(
       application_category_id,
@@ -269,13 +274,14 @@ module.exports = {
             FROM staffs s
             JOIN roles r ON r.id = s.user_level
             JOIN vyeo v ON v.id = r.vyeoId
-            WHERE s.user_status = 1 AND v.id = ${user.section_id}
+            WHERE s.user_status = 1 AND v.id = ?
             ${selectStaffsBySection(user)}
          )
          ${previous_office_boss}
          ORDER BY name ASC
          
          `,
+          [sectionId],
           (error, results) => {
             if (error) {
               console.log(error);
@@ -306,37 +312,75 @@ module.exports = {
     callback
   ) => {
     const { section_id, cheo } = user;
+    const finalizePreviousStaff = (result = []) => {
+      if (
+        result.length > 0 &&
+        (district_code || zone_id) &&
+        (cheo == "adsa" || cheo == "kadsa" || cheo == "mus" || cheo == "kmus")
+      ) {
+        const { id, rank_level } = result[0];
+        const sql = `UNION (SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name
+                                FROM staffs s
+                                JOIN roles r ON r.id = s.user_level
+                                JOIN vyeo v ON v.id = r.vyeoId
+                                WHERE s.user_status = 1 AND user_level = ${id} AND 
+                                ${
+                                  rank_level == 3
+                                    ? 'district_code="' + district_code + '"'
+                                    : "zone_id=" + zone_id
+                                }
+                              )`;
+        callback(sql);
+      } else {
+        callback("");
+      }
+    };
+
+    const runLegacyQuery = () => {
+      db.query(
+        `SELECT r.id AS id, v.rank_level
+         FROM work_flow w
+         JOIN vyeo v ON v.id = w.start_from
+         JOIN roles r ON r.vyeoId = v.id
+         WHERE LOWER(r.name) = LOWER(v.rank_name)
+           AND w.end_to = ?
+           AND w.application_category_id = ?
+         LIMIT 1`,
+        [section_id, application_category_id],
+        (legacyErr, legacyResult) => {
+          if (legacyErr) {
+            console.log(legacyErr);
+            callback("");
+            return;
+          }
+          finalizePreviousStaff(legacyResult || []);
+        }
+      );
+    };
+
     db.query(
-      `SELECT r.id AS id , rank_level
-              FROM work_flow w
-              JOIN vyeo v ON v.id = w.start_from
-              JOIN roles r ON r.vyeoId = v.id
-              WHERE LOWER(r.name) = LOWER(rank_name) AND end_to = ? AND application_category_id = ?
-              LIMIT 1`,
+      `SELECT r.id AS id, v.rank_level
+       FROM work_flow w_current
+       JOIN work_flow w_prev
+         ON w_prev.application_category_id = w_current.application_category_id
+        AND w_prev._order = (w_current._order - 1)
+       JOIN vyeo v ON v.id = w_prev.unit_id
+       JOIN roles r ON r.vyeoId = v.id
+       WHERE w_current.unit_id = ?
+         AND w_current.application_category_id = ?
+       LIMIT 1`,
       [section_id, application_category_id],
       (err, result) => {
-        if (err) console.log(err);
-        if (
-          result.length > 0 &&
-          (district_code || zone_id) &&
-          (cheo == "adsa" || cheo == "kadsa" || cheo == "mus" || cheo == "kmus")
-        ) {
-          const { id, rank_level } = result[0];
-          const sql = `UNION (SELECT s.id as userId, UPPER(s.name) as name,r.name as role_name
-                                  FROM staffs s
-                                  JOIN roles r ON r.id = s.user_level
-                                  JOIN vyeo v ON v.id = r.vyeoId
-                                  WHERE s.user_status = 1 AND user_level = ${id} AND 
-                                  ${
-                                    rank_level == 3
-                                      ? 'district_code="' + district_code + '"'
-                                      : "zone_id=" + zone_id
-                                  }
-                                )`;
-          callback(sql);
-        } else {
+        if (err) {
+          if (err.code === "ER_BAD_FIELD_ERROR") {
+            runLegacyQuery();
+            return;
+          }
+          console.log(err);
           callback("");
+          return;
         }
+        finalizePreviousStaff(result || []);
       }
     );
   },
@@ -1657,6 +1701,10 @@ module.exports = {
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
     db.query(`${sql_rows}`, parameters, (error, data) => {
       if (error) console.log(error);
+      if (!sql_count) {
+        callback(error, data, Array.isArray(data) ? data.length : 0);
+        return;
+      }
       // sql query to count number of rows
       db.query(`${sql_count}`, parameters, (error2, result) => {
         if (error2) {

@@ -8,23 +8,60 @@ const schoolModel = require("../models/schoolModel.js");
 const sharedModel = require("../models/sharedModel.js");
 const algorithmModel = require("../models/algorithmModel.js");
 
+const extractSearchValue = (req) => {
+  const querySearch = req.query.search;
+  if (typeof querySearch === "object" && querySearch !== null) {
+    return querySearch.value || "";
+  }
+
+  return (
+    req.query.search_value ||
+    querySearch ||
+    req.body?.search?.value ||
+    req.body?.search ||
+    ""
+  );
+};
+
 
 // List of schools
 schoolRouter.get("/all-schools", isAuth, (req, res) => {
   const per_page = parseInt(req.query.per_page);
   const page = parseInt(req.query.page);
   const offset = (page - 1) * per_page;
-  const search_value = req.body.search.value
-  const type = req.body.aina !== undefined ? req.body.aina : null;
-  const owner = req.body.umiliki !== undefined ? req.body.umiliki : null;
-  const invalid_or_no_reg = req.body.invalid_or_no_reg !== undefined || req.body.invalid_or_no_reg != "" ? Number(req.body.invalid_or_no_reg) : null;
-  const geolocation = req.body.geolocation !== undefined || req.body.geolocation != "" ? Number(req.body.geolocation) : null;
-  const duplicate_reg = req.body.duplicate_reg !== undefined || req.body.duplicate_reg != "" ? Number(req.body.duplicate_reg): null;
+  const search_value = extractSearchValue(req);
+  const type = req.query.aina !== undefined ? req.query.aina : req.body?.aina ?? null;
+  const owner = req.query.umiliki !== undefined ? req.query.umiliki : req.body?.umiliki ?? null;
+  const invalid_or_no_reg =
+    req.query.invalid_or_no_reg !== undefined && req.query.invalid_or_no_reg !== ""
+      ? Number(req.query.invalid_or_no_reg)
+      : req.body?.invalid_or_no_reg !== undefined && req.body?.invalid_or_no_reg !== ""
+        ? Number(req.body.invalid_or_no_reg)
+        : null;
+  const geolocation =
+    req.query.geolocation !== undefined && req.query.geolocation !== ""
+      ? Number(req.query.geolocation)
+      : req.body?.geolocation !== undefined && req.body?.geolocation !== ""
+        ? Number(req.body.geolocation)
+        : null;
+  const duplicate_reg =
+    req.query.duplicate_reg !== undefined && req.query.duplicate_reg !== ""
+      ? Number(req.query.duplicate_reg)
+      : req.body?.duplicate_reg !== undefined && req.body?.duplicate_reg !== ""
+        ? Number(req.body.duplicate_reg)
+        : null;
   const delete_duplicate =
-    req.body.delete_duplicate !== undefined || req.body.delete_duplicate != ""
+    req.query.delete_duplicate !== undefined && req.query.delete_duplicate !== ""
+      ? Number(req.query.delete_duplicate)
+      : req.body?.delete_duplicate !== undefined && req.body?.delete_duplicate !== ""
       ? Number(req.body.delete_duplicate)
       : null;
-  const correction = req.body.correction !== undefined || req.body.correction != "" ? Number(req.body.correction): null;
+  const correction =
+    req.query.correction !== undefined && req.query.correction !== ""
+      ? Number(req.query.correction)
+      : req.body?.correction !== undefined && req.body?.correction !== ""
+        ? Number(req.body.correction)
+        : null;
 
   schoolModel.getAllSchools(offset, 
           per_page, 

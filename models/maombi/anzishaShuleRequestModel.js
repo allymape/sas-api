@@ -1,4 +1,4 @@
-const db = require(`../../dbConnection`);
+const db = require(`../../config/database`);
 const { selectConditionByTitle } = require("../../utils");
 const sharedModel = require("../sharedModel");
 module.exports = {

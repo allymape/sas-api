@@ -39,9 +39,10 @@ regionRouter.get("/regions", isAuth, (req, res, next) => {
 });
 
 regionRouter.get("/lookup-regions", isAuth, (req, res, next) => {
-    var zone_id = req.body.zone_id;
+    var zone_id = req.query.zone_id || req.body?.zone_id;
+    var keyword = req.query.q || req.body?.q || "";
     const {user} = req
-    regionModel.lookupRegions(user, zone_id, (error, regions) => {
+    regionModel.lookupRegions(user, zone_id, keyword, (error, regions) => {
       return res.send({
           error: error ? true : false,
           statusCode: error ? 306 : 300,

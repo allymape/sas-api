@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const db = require("../../dbConnection");
+const db = require("../../config/database");
 const baruaRouter = express.Router();
 const {
   isAuth,

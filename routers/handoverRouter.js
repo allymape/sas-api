@@ -7,8 +7,8 @@ const handoverModel = require("../models/handoverModel");
 
 // List of
 handoverRouter.get("/handover-list", isAuth, (req, res) => {  
-    const per_page = parseInt(req.body.per_page);
-    const page = parseInt(req.body.page);
+    const per_page = Number.parseInt(req.query.per_page || req.body?.per_page, 10) || 10;
+    const page = Number.parseInt(req.query.page || req.body?.page, 10) || 1;
     const offset = (page - 1) * per_page;
     const {user} = req
     const sqlTables = `FROM handover h

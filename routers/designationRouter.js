@@ -5,13 +5,22 @@ const designationRouter = express.Router();
 const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.js");
 const designationModel = require("../models/designationModel.js");
 const sharedModel = require("../models/sharedModel.js");
+
+function getSearchValue(req) {
+  const rawSearch = req.query.search ?? req.body?.search ?? "";
+  if (rawSearch && typeof rawSearch === "object") {
+    return String(rawSearch.value || "").trim();
+  }
+  return String(rawSearch || "").trim();
+}
+
 // List of designations
 designationRouter.get("/lookup_designations", isAuth, permission('view-designations'), (req, res, next) => {
-  hierarchy_id = req.body.hierarchy_id;
+  const hierarchy_id = req.query.hierarchy_id || req.body?.hierarchy_id || null;
   designationModel.lookupDesignations(hierarchy_id, (error , designations) => {
             sharedModel.getLevels((levels) => {
               return res.send({
-                designations: designations,
+                designations: error ? [] : designations,
                 levels: levels,
               });
             });
@@ -23,10 +32,10 @@ designationRouter.get(
   isAuth,
   permission("view-designations"),
   (req, res) => {
-    var per_page = parseInt(req.query.per_page);
-    var page = parseInt(req.query.page);
+    var per_page = parseInt(req.query.per_page || 10);
+    var page = parseInt(req.query.page || 1);
     var offset = (page - 1) * per_page;
-    var search_value = req.body.search.value;
+    var search_value = getSearchValue(req);
     
     designationModel.getAllDesignations(
       offset,
@@ -46,12 +55,12 @@ designationRouter.get(
 );
 
 designationRouter.get("/designations_by_section", isAuth, (req, res, next) => {
-  var hierarchy_id = req.body.hierarchy_id
+  var hierarchy_id = req.query.hierarchy_id || req.body?.hierarchy_id || null;
   designationModel.lookupDesignations( hierarchy_id, (error, designations) => {
             return res.send({
                 error: error ? true : false,
                 statusCode: error ? 306 : 300,
-                designations: error ? null : designations,
+                designations: error ? [] : designations,
                 message: error ? "Something went wrong." : "List of designations.",
             });
   });
@@ -112,7 +121,7 @@ designationRouter.put("/update_designation/:id", isAuth, (req, res, next) => {
 // Store designation
 designationRouter.delete("/delete_designation/:id", isAuth, (req, res, next) => {
             var id = Number(req.params.id);
-            designationModel.deletedesignation(id , (error , success , designation) => {
+            designationModel.deleteDesignation(id , (error , success , designation) => {
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,

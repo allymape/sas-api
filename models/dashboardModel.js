@@ -1,42 +1,73 @@
-const db = require("../dbConnection");
-const { arraySum, schoolLocationsSqlJoin, filterByUserOffice, selectConditionByRanks, registeredSchoolsEstablishedApplicationSqlJoin, formatDate, extractDateRange } = require("../utils");
+const db = require("../config/database");
+const { schoolLocationsSqlJoin, filterByUserOffice, extractDateRange } = require("../utils");
+
+const registeredSchoolsFromSql = `
+  FROM applications a
+  JOIN establishing_schools e ON e.id = a.establishing_school_id
+  JOIN school_registrations s ON s.establishing_school_id = e.id
+  LEFT JOIN school_categories sc ON sc.id = e.school_category_id
+  LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
+  ${schoolLocationsSqlJoin()}
+`;
+
+const registeredSchoolsWhereSql = (user, extraSql = "", includeOfficeFilter = true) => `
+  WHERE s.reg_status = 1
+  AND a.application_category_id = 4
+  AND a.is_approved = 2
+  ${includeOfficeFilter ? filterByUserOffice(user, "AND", "r.zone_id", "d.LgaCode") : ""}
+  ${extraSql}
+`;
+
+const labelSelectByOffice = (user = {}) => {
+  switch (Number(user.office)) {
+    case 1:
+      return "r.RegionName";
+    case 2:
+      return "d.LgaName";
+    case 3:
+      return "w.WardName";
+    default:
+      return "r.RegionName";
+  }
+};
 
 module.exports = {
   getAllSummaries: (user, callback) => {
-    const summaryCategoriesSql = `SELECT  sr.school_category_id AS id,
-                                    sr.category AS category, 
-                                    COUNT(*) AS total
-                                FROM registered_schools_view sr
-                                WHERE sr.reg_status = 1
-                                ${filterByUserOffice(
-                                  user,
-                                  "AND",
-                                  "sr.zone_id",
-                                  "sr.district_code"
-                                )}
-                                GROUP BY category , id
-                                ORDER BY id ASC`;
+    const summaryCategoriesSql = `
+      SELECT
+        e.school_category_id AS id,
+        sc.category AS category,
+        COUNT(*) AS total
+      ${registeredSchoolsFromSql}
+      ${registeredSchoolsWhereSql(user)}
+      GROUP BY e.school_category_id, sc.category
+      ORDER BY e.school_category_id ASC
+    `;
+
     db.query(summaryCategoriesSql, (error, summaryCategories) => {
       if (error) {
         console.log(error);
       }
-      console.log("FIRST", formatDate(new Date()));
+
       db.query(
-        `SELECT CASE 
-            WHEN sr.registry_type_id IN (1, 2) THEN 'Non Government'  
-            WHEN sr.registry_type_id = 3 THEN 'Government' 
-          END AS owner, 
-          COUNT(*) AS total
-          FROM registered_schools_view sr
-          WHERE sr.reg_status = 1
-          ${filterByUserOffice(user, "AND", "sr.zone_id", "sr.district_code")}
-          GROUP BY owner`,
+        `
+          SELECT
+            CASE
+              WHEN a.registry_type_id IN (1, 2) THEN 'Non Government'
+              WHEN a.registry_type_id = 3 THEN 'Government'
+              ELSE 'Unknown'
+            END AS owner,
+            COUNT(*) AS total
+          ${registeredSchoolsFromSql}
+          ${registeredSchoolsWhereSql(user)}
+          GROUP BY owner
+        `,
         (error2, summaryOwners) => {
           if (error2) {
             error = error2;
             console.log(error2);
           }
-          console.log("SECOND", formatDate(new Date()));
+
           // APPLICATIONS BASE ON APPLICATION CATEGORIES EXCEPT KUANZISHA
           db.query(
             `SELECT ac.app_name AS label, COUNT(a.application_category_id) AS total
@@ -53,7 +84,7 @@ module.exports = {
                 console.log(error3);
                 error = error3;
               }
-              console.log("THIRD", formatDate(new Date()));
+
               db.query(
                 `SELECT rs.id AS id, rs.structure AS label,
                                 COUNT(*) AS total
@@ -71,24 +102,20 @@ module.exports = {
                     console.log(error4);
                     error = error4;
                   }
-                  console.log("FOURTH", formatDate(new Date()));
+
                   // Registered schools
                   db.query(
-                    `SELECT COUNT(*) AS total FROM 
-                    registered_schools_view sr
-                    WHERE sr.reg_status = 1
-                    ${filterByUserOffice(
-                      user,
-                      "AND",
-                      "sr.zone_id",
-                      "sr.district_code"
-                    )}`,
+                    `
+                      SELECT COUNT(*) AS total
+                      ${registeredSchoolsFromSql}
+                      ${registeredSchoolsWhereSql(user)}
+                    `,
                     (error5, summaryRegisteredSchools) => {
                       if (error5) {
                         console.log(error5);
                         error = error5;
                       }
-                      console.log("FIRTH", formatDate(new Date()));
+
                       callback(
                         error,
                         summaryRegisteredSchools[0],
@@ -109,34 +136,31 @@ module.exports = {
   },
   //******** Schools by Regions and Categories *******************************
   getSchoolByRegionsAndCategories: (user, callback) => {
-    // region means label (it can be region_name , lga_name, ward_name and street_name)
-    // console.log('here again' , new Date())
+    const labelSql = labelSelectByOffice(user);
+
     db.query(
-      `SELECT ${selectConditionByRanks(
-        user,
-        "sr"
-      )} , sr.school_category_id AS category , 
-                COUNT(*) AS school_count
-                FROM registered_schools_view sr
-                WHERE sr.reg_status = 1
-                ${filterByUserOffice(
-                  user,
-                  "AND",
-                  "sr.zone_id",
-                  "sr.district_code"
-                )}
-                GROUP BY label , sr.school_category_id
-                ORDER BY label ASC`,
+      `
+        SELECT
+          ${labelSql} AS label,
+          e.school_category_id AS category,
+          COUNT(*) AS school_count
+        ${registeredSchoolsFromSql}
+        ${registeredSchoolsWhereSql(user)}
+        GROUP BY label, e.school_category_id
+        ORDER BY label ASC
+      `,
       function (error, results) {
-        //  console.log("Nimefika  muda huu", new Date());
         if (error) {
           console.log(error);
         }
+
         // Format the results
         const formattedResults = {};
+
         // Iterate over the query results
-        results.forEach((row) => {
+        (results || []).forEach((row) => {
           const { label, category, school_count } = row;
+
           // Check if the region exists in the formatted results
           if (!formattedResults[label]) {
             formattedResults[label] = {
@@ -175,37 +199,218 @@ module.exports = {
       }
     );
   },
-  // Registered schools by Year of registrations trend;
-  getTotalNumberOfSchoolByYearOfRegistration: (user, callback) => {
-    let sql = `SELECT IFNULL(YEAR(sr.registration_date) , 'NULL') AS label , COUNT(*) as total
-                FROM registered_schools_view sr
-                WHERE sr.reg_status = 1
-                ${filterByUserOffice(
-                  user,
-                  "AND",
-                  "sr.zone_id",
-                  "sr.district_code"
-                )}
-                GROUP BY label
-                ORDER BY label ASC
-                `;
+  // Registered schools by year with server-side pagination
+  getTotalNumberOfSchoolByYearOfRegistration: (user, options = {}, callback) => {
+    let isLegacyCall = false;
+    if (typeof options === "function") {
+      callback = options;
+      options = {};
+      isLegacyCall = true;
+    }
+    const callbackFn = typeof callback === "function" ? callback : () => {};
 
-    db.query(sql, function (error, individual) {
-      if (error) {
-        console.log(error);
+    const parsedLimit = Number.parseInt(options.limit, 10);
+    const parsedOffset = Number.parseInt(options.offset, 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(parsedLimit, 100)) : 10;
+    const offset = Number.isFinite(parsedOffset) ? Math.max(0, parsedOffset) : 0;
+
+    const yearlyAggregateSql = `
+      SELECT YEAR(s.registration_date) AS label, COUNT(*) AS total
+      ${registeredSchoolsFromSql}
+      ${registeredSchoolsWhereSql(user, "AND s.registration_date IS NOT NULL")}
+      GROUP BY YEAR(s.registration_date)
+    `;
+
+    // Keep old routes intact: old signature (user, callback) should return full data.
+    if (isLegacyCall) {
+      const legacySql = `
+        SELECT yearly.label, yearly.total
+        FROM (${yearlyAggregateSql}) yearly
+        ORDER BY yearly.label ASC
+      `;
+      db.query(legacySql, (legacyError, individual) => {
+        if (legacyError) {
+          console.log(legacyError);
+          callbackFn([], []);
+          return;
+        }
+        let runningTotal = 0;
+        const cumulative = (individual || []).map((row) => {
+          runningTotal += Number(row.total || 0);
+          return {
+            label: row.label,
+            total: runningTotal,
+          };
+        });
+        callbackFn(individual || [], cumulative);
+      });
+      return;
+    }
+
+    const totalYearsSql = `SELECT COUNT(*) AS totalYears FROM (${yearlyAggregateSql}) yearly`;
+    const paginatedYearsSql = `
+      SELECT yearly.label, yearly.total
+      FROM (${yearlyAggregateSql}) yearly
+      ORDER BY yearly.label DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    db.query(totalYearsSql, (countError, countRows) => {
+      if (countError) {
+        console.log(countError);
+        callbackFn([], [], {
+          limit,
+          offset,
+          totalYears: 0,
+          hasOlder: false,
+          hasNewer: false,
+        });
+        return;
       }
-      //Cumulative total
-      const cumulative = [];
-      const data = [];
-      individual.forEach((row) => {
-        const { label, total } = row;
-        data.push(total);
-        cumulative.push({
-          label,
-          total: arraySum(data),
+
+      const totalYears = Number(countRows?.[0]?.totalYears || 0);
+
+      db.query(paginatedYearsSql, [limit, offset], (dataError, yearsDesc) => {
+        if (dataError) {
+          console.log(dataError);
+          callbackFn([], [], {
+            limit,
+            offset,
+            totalYears,
+            hasOlder: false,
+            hasNewer: offset > 0,
+          });
+          return;
+        }
+
+        const individual = Array.isArray(yearsDesc) ? [...yearsDesc].reverse() : [];
+
+        if (!individual.length) {
+          callbackFn([], [], {
+            limit,
+            offset,
+            totalYears,
+            hasOlder: false,
+            hasNewer: offset > 0,
+          });
+          return;
+        }
+
+        const firstYearInWindow = Number(individual[0].label);
+        const baseCumulativeSql = `
+          SELECT IFNULL(SUM(yearly.total), 0) AS baseTotal
+          FROM (${yearlyAggregateSql}) yearly
+          WHERE yearly.label < ?
+        `;
+
+        db.query(baseCumulativeSql, [firstYearInWindow], (baseError, baseRows) => {
+          if (baseError) {
+            console.log(baseError);
+          }
+
+          let runningTotal = Number(baseRows?.[0]?.baseTotal || 0);
+          const cumulative = individual.map((row) => {
+            runningTotal += Number(row.total || 0);
+            return {
+              label: row.label,
+              total: runningTotal,
+            };
+          });
+
+          const loadedCount = individual.length;
+          callbackFn(individual, cumulative, {
+            limit,
+            offset,
+            totalYears,
+            hasOlder: offset + loadedCount < totalYears,
+            hasNewer: offset > 0,
+          });
         });
       });
-      callback(individual, cumulative);
+    });
+  },
+
+  // Registered schools by selected period (today, week, month, year, recent)
+  getRegisteredSchoolsByPeriod: (user, options = {}, callback) => {
+    const callbackFn = typeof callback === "function" ? callback : () => {};
+    const parsedLimit = Number.parseInt(options.limit, 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(parsedLimit, 100)) : 10;
+    const period = String(options.period || "recent").toLowerCase();
+
+    // Use range filters (instead of YEAR/MONTH/DATE wrappers on column)
+    // so MySQL can use registration_date indexes efficiently.
+    const periodConditions = {
+      today: `
+        AND s.registration_date >= CURDATE()
+        AND s.registration_date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+      `,
+      week: `
+        AND s.registration_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        AND s.registration_date < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+      `,
+      month: `
+        AND s.registration_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        AND s.registration_date < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+      `,
+      year: `
+        AND s.registration_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')
+        AND s.registration_date < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-01-01'), INTERVAL 1 YEAR)
+      `,
+      recent: ``,
+    };
+
+    const periodSql = periodConditions[period] ?? periodConditions.recent;
+    const baseFromSql = `
+      ${registeredSchoolsFromSql}
+      ${registeredSchoolsWhereSql(user, `AND s.registration_date IS NOT NULL ${periodSql}`, false)}
+    `;
+
+    const dataSql = `
+      SELECT DISTINCT
+        a.tracking_number AS tracking_number,
+        e.school_name AS school_name,
+        s.registration_number AS registration_number,
+        COALESCE(sc.category, 'Unknown') AS category,
+        CASE
+          WHEN a.registry_type_id IN (1, 2) THEN 'Non Government'
+          WHEN a.registry_type_id = 3 THEN 'Government'
+          ELSE COALESCE(rt.registry, 'Unknown')
+        END AS ownership,
+        r.RegionName AS region,
+        d.LgaName AS district,
+        w.WardName AS ward,
+        s.registration_date AS registration_date
+      ${baseFromSql}
+      ORDER BY s.registration_date DESC, e.school_name ASC
+      LIMIT ?
+    `;
+
+    const countSql = `SELECT COUNT(*) AS total ${baseFromSql}`;
+
+    db.query(dataSql, [limit], (error, rows) => {
+      if (error) {
+        console.error("[getRegisteredSchoolsByPeriod:dataSql]", {
+          period,
+          code: error.code,
+          message: error.sqlMessage || error.message,
+        });
+        callbackFn(error, [], 0);
+        return;
+      }
+
+      db.query(countSql, (countError, countRows) => {
+        if (countError) {
+          console.error("[getRegisteredSchoolsByPeriod:countSql]", {
+            period,
+            code: countError.code,
+            message: countError.sqlMessage || countError.message,
+          });
+          callbackFn(countError, [], 0);
+          return;
+        }
+
+        callbackFn(null, rows || [], Number(countRows?.[0]?.total || 0));
+      });
     });
   },
 

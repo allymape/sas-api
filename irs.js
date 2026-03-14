@@ -56,6 +56,13 @@ const ongezaDahaliaRequestRouter = require("./routers/maombi/ongezaDahaliaReques
 const sajiliShuleCommentRouter = require("./routers/maombi/sajiliShuleCommentRouter.js");
 const algorithmRouter = require("./routers/algorithmRouter.js");
 const schoolCategoryRouter = require("./routers/schoolCategoryRouter.js");
+const schoolSubCategoryRouter = require("./routers/schoolSubCategoryRouter.js");
+const schoolTypeStandardRouter = require("./routers/schoolTypeStandardRouter.js");
+const schoolInfrastructureStandardRouter = require("./routers/schoolInfrastructureStandardRouter.js");
+const subjectRouter = require("./routers/subjectRouter.js");
+const combinationSubjectRouter = require("./routers/combinationSubjectRouter.js");
+const curriculumRouter = require("./routers/curriculumRouter.js");
+const actionTypeRouter = require("./routers/actionTypeRouter.js");
 const notificationRouter = require("./routers/notificationRouter.js");
 const trackApplicationRouter = require("./routers/trackApplicationRouter.js");
 const requestSummaryRouter = require("./routers/maombi/requestSummaryRouter.js");
@@ -80,6 +87,7 @@ const attachementRouter = require("./routers/attachmentRouter.js");
 const auditTrailRouter = require("./routers/auditTrailRouter.js");
 const handoverRouter = require("./routers/handoverRouter.js");
 const updateSchoolDetailRouter = require("./routers/updateSchoolDetailRouter.js");
+const applicationApiRoutes = require("./src/Routes/ApplicationApiRoutes.js");
 
 
 // app.use("/api", indexRouter);
@@ -100,7 +108,14 @@ app.use("/api", designationRouter);
 app.use("/api", zoneRouter);
 app.use("/api", algorithmRouter);
 app.use("/api", workflowRouter);
+app.use("/api", actionTypeRouter);
 app.use("/api", schoolCategoryRouter);
+app.use("/api", schoolSubCategoryRouter);
+app.use("/api", schoolTypeStandardRouter);
+app.use("/api", schoolInfrastructureStandardRouter);
+app.use("/api", subjectRouter);
+app.use("/api", combinationSubjectRouter);
+app.use("/api", curriculumRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);
 app.use("/api", registrationTypeRouter);
@@ -149,7 +164,15 @@ app.use("/api", baruaRouter);
 app.use("/api", loginActivityRouter); 
 app.use("/api", auditTrailRouter); 
 app.use("/api", handoverRouter); 
-
+app.use("/api/applications", applicationApiRoutes);
+app.use(express.json());
+const api_routes = require("./src/Routes/api.js"); // central routes
+app.use("/api/v2", api_routes); // <--- Prefix
+app.use("/api/v2", handoverRouter); // compatibility for my-active-handover, handover-list
+app.use("/api/v2", userRouter); // compatibility for refresh_token and shared auth/session endpoints
+app.use("/api/v2", notificationRouter); // compatibility for my-notifications
+app.use("/api/v2", schoolTypeStandardRouter); // compatibility for settings endpoints
+app.use("/api/v2", schoolInfrastructureStandardRouter); // compatibility for settings endpoints
 
 // Handling Errors
 app.use((err, req, res, next) => {
@@ -165,8 +188,3 @@ app.use((err, req, res, next) => {
 app.listen(process.env.HTTP_PORT || 80, () => {
    console.log(`API Server is running on  port ${process.env.HTTP_PORT || 80}`);
 });
-
-
-
-
-

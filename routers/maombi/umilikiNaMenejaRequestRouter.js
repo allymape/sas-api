@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const db = require('../../dbConnection');
+const db = require('../../config/database');
 const umilikiNaMenejaRequestRouter = express.Router();
 const { isAuth, permission, selectConditionByTitle, selectStaffsBySection, approvalStatuses, calculcateRemainDays, topSearch } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");

@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const attachementRouter = express.Router();
 const { isAuth , formatDate , permission } = require("../utils.js");
-const db = require("../dbConnection");
+const db = require("../config/database.js");
 
 attachementRouter.post(
   "/upload-attachment",

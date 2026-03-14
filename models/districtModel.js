@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 module.exports = {
   //******** GET A LIST OF DISTRICTS *******************************
   getAllDistricts: (
@@ -48,7 +48,13 @@ module.exports = {
       }
     );
   },
-  lookupDistricts: (user, region_code, callback) => {
+  lookupDistricts: (user, region_code, keyword, callback) => {
+    const params = [region_code];
+    let searchSql = "";
+    if (keyword) {
+      searchSql = ` AND (districts.LgaName LIKE ? OR districts.LgaCode LIKE ? OR regions.RegionName LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
     db.query(
       ` SELECT regions.id AS reg_id, regions.RegionName AS regionName,districts.LgaName AS LgaName, districts.LgaCode AS LgaCode , districts.created_at AS createdAt , districts.updated_at AS updatedAt 
         FROM districts, regions 
@@ -58,8 +64,9 @@ module.exports = {
             ? " AND districts.LgaCode = '" + user.district_code + "'"
             : ""
         }
+        ${searchSql}
         ORDER BY RegionName ASC`,
-      [region_code],
+      params,
       (error, districts) => {
         if (error) {
           console.log(error);

@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 module.exports = {
   //******** GET A LIST OF REGIONS *******************************
   getAllRegions: (offset, per_page, search_value, callback) => {
@@ -33,9 +33,10 @@ module.exports = {
         });
       });
   },
-  lookupRegions: (user, zone_id, callback) => {
+  lookupRegions: (user, zone_id, keyword, callback) => {
     //  console.log(user)
-    var condition = ''
+    var condition = "";
+    var params = [];
     if(zone_id){
       condition += `${
                     ["wilaya"].includes(user.ngazi)
@@ -48,6 +49,14 @@ module.exports = {
                       ? "AND  d.LgaCode= '" + user.district_code + "'"
                       : ""
                   }`;
+      params.push(Number(zone_id));
+    } else {
+      condition += `WHERE 1 = 1`;
+    }
+
+    if (keyword) {
+      condition += ` AND (r.RegionName LIKE ? OR r.RegionCode LIKE ? OR IFNULL(z.zone_name, '') LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
     }
     db.query(
       `SELECT r.id AS regionId, r.RegionCode AS regionCode, RegionName AS regionName, 
@@ -58,7 +67,7 @@ module.exports = {
       LEFT JOIN zones z ON z.id = r.zone_id 
       ${condition}
       ORDER BY RegionName ASC`,
-      zone_id ? [Number(zone_id)] : '',
+      params,
       (error, regions) => {
         if (error) console.log(error);
         callback(error, regions);
@@ -103,5 +112,4 @@ module.exports = {
     );
   },
 };
-
 

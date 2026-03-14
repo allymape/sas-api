@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const db = require('../../dbConnection');
+const db = require('../../config/database');
 const badiliMenejaRequestRouter = express.Router();
 
 const { isAuth, permission, selectConditionByTitle, calculcateRemainDays, approvalStatuses } = require("../../utils");

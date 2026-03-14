@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 
 module.exports = {
   //******** GET A LIST OF streets *******************************
@@ -44,7 +44,13 @@ module.exports = {
       }
     );
   },
-  lookupStreets: (ward_code, callback) => {
+  lookupStreets: (ward_code, keyword, callback) => {
+    const params = [ward_code];
+    let searchSql = "";
+    if (keyword) {
+      searchSql = ` AND (StreetName LIKE ? OR StreetCode LIKE ? OR WardName LIKE ? OR LgaName LIKE ? OR RegionName LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
     db.query(
       `SELECT s.id AS id , StreetCode, StreetName, WardName, LgaName, RegionName, s.created_at AS CreatedAt , s.updated_at AS UpdatedAt 
       FROM streets s
@@ -52,8 +58,9 @@ module.exports = {
       JOIN districts d ON w.LgaCode = d.LgaCode
       JOIN regions r ON d.RegionCode = r.RegionCode
       WHERE s.WardCode = ? 
+      ${searchSql}
       ORDER BY StreetName ASC`,
-      [ward_code],
+      params,
       (error, streets) => {
         if (error) {
           console.log(error);

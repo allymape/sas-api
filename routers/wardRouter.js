@@ -29,8 +29,9 @@ wardRouter.get("/allwards", isAuth, (req, res, next) => {
         );
 });
 wardRouter.get("/lookup-wards", isAuth, (req, res) => {
-  var {lga_code} = req.body;
-  wardModel.lookupWards(lga_code, (error, wards) => {
+  var lga_code = req.query.lga_code || req.body?.lga_code;
+  var keyword = req.query.q || req.body?.q || "";
+  wardModel.lookupWards(lga_code, keyword, (error, wards) => {
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,

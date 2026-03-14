@@ -29,8 +29,9 @@ streetRouter.get("/allStreets", isAuth, (req, res, next) => {
 });
 
 streetRouter.get("/lookup-streets", isAuth, (req, res) => {
-  const { ward_code } = req.body;
-  streetModel.lookupStreets(ward_code, (error, streets) => {
+  const ward_code = req.query.ward_code || req.body?.ward_code;
+  const keyword = req.query.q || req.body?.q || "";
+  streetModel.lookupStreets(ward_code, keyword, (error, streets) => {
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,

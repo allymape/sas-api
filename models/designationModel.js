@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 const { lowerCase } = require("../utils");
 
 module.exports = {
@@ -47,8 +47,7 @@ module.exports = {
   },
 
   lookupDesignations: (hierarchy_id, callback) => {
-    db.query(
-      `SELECT 
+    const sql = `SELECT 
         r.id as id,
         r.name as name, 
         v.rank_name as role, 
@@ -56,8 +55,13 @@ module.exports = {
         r.status_id AS status
         FROM roles r
         LEFT JOIN vyeo v ON v.id = r.vyeoId 
-        WHERE r.status_id = 1 AND r.vyeoId = ?`,
-      [hierarchy_id],
+        WHERE r.status_id = 1
+        ${hierarchy_id ? "AND r.vyeoId = ?" : ""}
+        ORDER BY r.name ASC`;
+    const queryParams = hierarchy_id ? [hierarchy_id] : [];
+    db.query(
+      sql,
+      queryParams,
       (error, designations) => {
         if(error) console.log(error)
         callback(error , designations);      
@@ -101,9 +105,9 @@ module.exports = {
       [id],
       (error, designation) => {
         if (error) {
-          console.log("Error", err);
+          console.log("Error", error);
         }
-        if (designation) {
+        if (designation && designation.length > 0) {
           success = true;
         }
         callback(error, success, designation);
@@ -146,7 +150,7 @@ module.exports = {
   deleteDesignation: (id, callback) => {
     var success = false;
     db.query(
-      "SELECT COUNT(*) AS num_rows FROM Designation_Designation WHERE Designation_id = ?",
+      "SELECT COUNT(*) AS num_rows FROM users WHERE role_id = ?",
       [id],
       (error, result) => {
         if (error) {
@@ -155,7 +159,7 @@ module.exports = {
         var numRows = result[0].num_rows;
         if (numRows > 0) {
           callback(
-            "Haujafanikiwa kufuta kwa kuwa Designation hii inatumiwa na Designation " +
+            "Haujafanikiwa kufuta kwa kuwa cheo hiki kinatumiwa na watumiaji " +
               numRows,
             success,
             []
@@ -163,7 +167,7 @@ module.exports = {
           return;
         } else {
           db.query(
-            `DELETE FROM Designations  WHERE id = ?`,
+            `DELETE FROM roles WHERE id = ?`,
             [id],
             (error2, deletedDesignation) => {
               if (error2) {

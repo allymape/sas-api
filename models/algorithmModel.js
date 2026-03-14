@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 
 module.exports = {
   //******** GET A LIST OF ZONES *******************************

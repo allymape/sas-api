@@ -1,4 +1,4 @@
-const db = require("../dbConnection");
+const db = require("../config/database");
 
 module.exports = {
   //******** GET A LIST OF WARDS *******************************
@@ -37,15 +37,22 @@ module.exports = {
        }
      );
   },
-  lookupWards: (lga_code, callback) => {
+  lookupWards: (lga_code, keyword, callback) => {
+    const params = [lga_code];
+    let searchSql = "";
+    if (keyword) {
+      searchSql = ` AND (WardName LIKE ? OR WardCode LIKE ? OR LgaName LIKE ? OR RegionName LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+    }
     db.query(
       ` SELECT WardCode, WardName AS WardName, LgaName, RegionName , w.created_at AS CreatedAt , w.updated_at AS UpdatedAt 
         FROM wards w
         JOIN districts d ON d.LgaCode = w.LgaCode
         JOIN regions r ON r.RegionCode = d.RegionCode  
         WHERE w.LgaCode = ?
+        ${searchSql}
         ORDER BY WardName ASC`,
-      [lga_code],
+      params,
       (error, wards) => {
         if (error) {
           console.log(error);
@@ -74,5 +81,4 @@ module.exports = {
     );
   },
 };
-
 

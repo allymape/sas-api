@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 var nodeMailer = require("nodemailer");
 const { default: axios } = require("axios");
 const { rolesPermissions, translations, defaultPermissions } = require("./role_permissions");
-const db = require('./dbConnection');
+const db = require('./config/database');
 
 const {
   camelCase,
@@ -1049,6 +1049,10 @@ const ObjectFuctions = {
     return commonJoin;
   },
   notificationArrayData: (results, callback) => {
+    if (!Array.isArray(results)) {
+      callback([]);
+      return;
+    }
     const data = [];
     results.forEach((item) => {
       var count = 60;
