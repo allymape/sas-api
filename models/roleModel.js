@@ -4,24 +4,47 @@ const { formatDate, uniqueArray, mergeArray } = require("../utils");
 module.exports = {
   //******** GET A LIST OF ROLES *******************************
   getAllRoles: (offset, per_page, is_paginated, callback) => {
-    const roleQuery = `SELECT id as role_id, role_name , status_id
-                      FROM role_management
+    const roleQuery = `SELECT
+                          rm.id AS role_id,
+                          rm.role_name,
+                          rm.is_active,
+                          rm.is_active AS status,
+                          rm.created_at,
+                          rm.updated_at,
+                          rm.created_by,
+                          rm.updated_by,
+                          sc.name AS created_by_name,
+                          su.name AS updated_by_name
+                      FROM role_management rm
+                      LEFT JOIN staffs sc ON sc.id = rm.created_by
+                      LEFT JOIN staffs su ON su.id = rm.updated_by
+                      ORDER BY rm.role_name ASC
                       ${is_paginated ? " LIMIT ?,?" : ""}`;
     db.query(
       roleQuery,
       is_paginated ? [offset, per_page] : [],
       (rolesErr, roleResults) => {
         if (rolesErr) {
-          callback(rolesErr, null, 0);
+          callback(rolesErr, null, 0, 0);
           return;
         }
         if (!is_paginated) {
           //Return all roles without permissions if not paginated
-          callback(rolesErr, roleResults, 0);
+          callback(rolesErr, roleResults, 0, 0);
           return;
         }
         const rolePromises = roleResults.map((roleRow) => {
-          const { role_id, role_name, status_id } = roleRow;
+          const {
+            role_id,
+            role_name,
+            is_active,
+            created_at,
+            updated_at,
+            created_by,
+            updated_by,
+            created_by_name,
+            updated_by_name,
+          } = roleRow;
           const permissionQuery = `SELECT display_name, permission_name
                                     FROM permissions p
                                     JOIN permission_role pr ON pr.permission_id = p.id
@@ -42,7 +65,14 @@ module.exports = {
               resolvePermissions({
                 id : role_id,
                 role_name : role_name,
-                status : status_id,
+                status : is_active,
+                is_active : is_active,
+                created_at,
+                updated_at,
+                created_by,
+                updated_by,
+                created_by_name,
+                updated_by_name,
                 permissions : permissions,
                 permission_names: permission_names,
               });
@@ -54,15 +84,23 @@ module.exports = {
           .then((results) => {
             // console.log(results);
             db.query(
-              `select COUNT(*) AS num_rows FROM role_management`,
+              `SELECT
+                 COUNT(*) AS num_rows,
+                 SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active_rows
+               FROM role_management`,
               (error, result) => {
                 // console.log(results)
-                callback(null, results, result[0].num_rows);
+                callback(
+                  null,
+                  results,
+                  Number(result[0]?.num_rows || 0),
+                  Number(result[0]?.active_rows || 0)
+                );
               }
             );
           })
           .catch((error) => {
-            callback(error, null, 0);
+            callback(error, null, 0, 0);
           })
           .finally(() => {
             // db.end();
@@ -98,9 +136,12 @@ module.exports = {
         (err) => {
           if(err) console.log(err)
           db.query(
-            `INSERT INTO role_management (id , role_name , status_id, created_at , created_by) 
+            `INSERT INTO role_management (id, role_name, is_active, created_at, updated_at, created_by, updated_by) 
           VALUES ? ON DUPLICATE KEY 
-          UPDATE role_name = VALUES(role_name) , status_id = VALUES(status_id), created_by = VALUES(created_by) , created_at=VALUES(created_at)`,
+          UPDATE role_name = VALUES(role_name),
+                 is_active = VALUES(is_active),
+                 updated_at = VALUES(updated_at),
+                 updated_by = VALUES(updated_by)`,
             [roles],
             (error, result) => {
               if (error) {
@@ -123,7 +164,7 @@ module.exports = {
   storeRole: (roleData, userId, permissions, callback) => {
     var success = false;
     db.query(
-      `INSERT INTO role_management (role_name , status_id, created_at , created_by) VALUES ?`,
+      `INSERT INTO role_management (role_name, is_active, created_at, updated_at, created_by, updated_by) VALUES ?`,
       [roleData],
       (error, result) => {
         if (error) {
@@ -151,7 +192,7 @@ module.exports = {
   findRole: (id, callback) => {
     var success = false;
     db.query(
-      `SELECT id , role_name 
+      `SELECT id, role_name, is_active, created_at, updated_at, created_by, updated_by
         FROM role_management WHERE id = ?`,
       [id],
       (error, role) => {
@@ -160,7 +201,13 @@ module.exports = {
         } else if (role.length > 0) {
           success = true;
           db.query(
-            `SELECT * FROM permissions WHERE status_id = 1 ORDER BY permission_name ASC `,
+            `SELECT p.*,
+                    m.module_name,
+                    m.display_name AS module_display_name
+             FROM permissions p
+             LEFT JOIN modules m ON m.id = p.module_id
+             WHERE p.status_id = 1
+             ORDER BY p.permission_name ASC`,
             (error2, permissions) => {
               error = error2;
               // callback(error, success, role, permissions);
@@ -187,7 +234,9 @@ module.exports = {
     var success = false;
 
     db.query(
-      `UPDATE  role_management SET role_name = ? WHERE id = ?`,
+      `UPDATE role_management
+       SET role_name = ?, updated_at = ?, updated_by = ?
+       WHERE id = ?`,
       roleData,
       (error, result, fields) => {
         if (error) {
@@ -337,5 +386,3 @@ const syncPermissions = (permissions , userId , roleId , callback) => {
                    });
           })
 }
-
-

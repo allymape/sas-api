@@ -38,6 +38,118 @@ const toBool = (value, fallback = false) => {
 
 const AUTO_AUDIT_ENABLED = toBool(process.env.API_AUDIT_AUTO_LOG, true);
 
+const APPLICATION_PERMISSION_MODULE_KEYS = new Set([
+  "track-application",
+  "initiate-schools",
+  "school-owners-and-managers",
+  "school-registration-private",
+  "school-registration-government",
+  "change-of-streams",
+  "change-school-name",
+  "change-of-bias",
+  "addition-of-domitory",
+  "change-of-hostel",
+  "change-registration-type",
+  "change-school-location",
+  "change-of-school-owner",
+  "change-of-school-manager",
+  "deregistration-of-schools",
+  "school-name",
+]);
+
+const REPORT_PERMISSION_MODULE_KEYS = new Set([
+  "established-schools-report",
+  "registered-school-report",
+  "school-owners-report",
+  "school-managers-report",
+  "change-school-name-report",
+  "change-school-registration-type",
+  "addition-of-domitory-report",
+  "addition-of-hostel-report",
+  "change-school-owners-report",
+  "change-school-managers-report",
+  "change-school-location-report",
+  "deregistration-report",
+  "addition-of-streams-report",
+  "addition-of-bias-report",
+  "reports-establishment",
+  "reports-owners",
+  "reports-managers",
+  "reports-registered",
+  "reports-changes",
+]);
+
+const DASHBOARD_GIS_PERMISSION_MODULE_KEYS = new Set(["dashboard", "map", "gis"]);
+const SYS_LOGS_CONFIGURATION_PERMISSION_MODULE_KEYS = new Set([
+  "sys-logs-configurations",
+  "system-logs",
+  "system-configurations",
+]);
+const AUDIT_PERMISSION_MODULE_KEYS = new Set(["audit", "audit-trail"]);
+const STAFF_MANAGEMENT_PERMISSION_MODULE_KEYS = new Set([
+  "users-and-permissions",
+  "users",
+  "roles",
+  "permissions",
+  "modules",
+  "login-activity",
+  "designations",
+  "hierarchies",
+  "ranks",
+  "profile",
+  "handover",
+  "letters",
+]);
+const APPLICANTS_MANAGEMENT_PERMISSION_MODULE_KEYS = new Set([
+  "school-and-applicants",
+  "applicants",
+  "schools",
+  "school-files",
+  "school-categories",
+  "hostel-types",
+  "school-type-standards",
+  "infrastructure-standards",
+]);
+
+const ADMINISTRATIVE_AREAS_PERMISSION_MODULE_KEYS = new Set([
+  "zones",
+  "regions",
+  "districts",
+  "wards",
+  "streets",
+]);
+
+const normalizeModuleKey = (value) => lowerCase(paramCase(String(value || "").trim()));
+
+const resolvePermissionModuleKey = (moduleEnglishName) => {
+  const normalized = normalizeModuleKey(moduleEnglishName);
+  if (APPLICATION_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "applications";
+  }
+  if (REPORT_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "reports";
+  }
+  if (DASHBOARD_GIS_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "dashboard-gis";
+  }
+  if (SYS_LOGS_CONFIGURATION_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "sys-logs-configurations";
+  }
+  if (AUDIT_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "audit-trail";
+  }
+  if (STAFF_MANAGEMENT_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "staff-management";
+  }
+  if (ADMINISTRATIVE_AREAS_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "administrative-areas";
+  }
+  if (APPLICANTS_MANAGEMENT_PERMISSION_MODULE_KEYS.has(normalized)) {
+    return "applicants-management";
+  }
+  return "setup";
+};
+
 const ObjectFuctions = {
   generateAccessToken: (user) => {
     // console.log(user)
@@ -470,11 +582,14 @@ const ObjectFuctions = {
     let all_display_names = [];
     let role_with_permissions = [];
     let default_permissions = [];
+    let permission_module_map = {};
     Object.entries(defaultPermissions).forEach(([name, values]) => {
       values.split(",").forEach((value) => {
-        default_permissions.push(
-          lowerCase(paramCase(translations["en"][value] + " " + name))
+        const defaultPermissionName = lowerCase(
+          paramCase(translations["en"][value] + " " + name)
         );
+        default_permissions.push(defaultPermissionName);
+        permission_module_map[defaultPermissionName] = resolvePermissionModuleKey(name);
       });
     });
     // build all role , all permissions names and display names
@@ -494,6 +609,8 @@ const ObjectFuctions = {
               " " +
               (typeof module_sw_name != "undefined" ? module_sw_name : "")
           );
+          permission_module_map[permission_name] =
+            resolvePermissionModuleKey(module_en_name);
           permission_names.push(permission_name);
           display_names.push(display_name);
           all_display_names.push(display_name);
@@ -515,11 +632,14 @@ const ObjectFuctions = {
             ObjectFuctions.uniqueArray(all_display_names);
           var roleId = roleIndex + 1;
           // //  Push roles
+          const now = ObjectFuctions.formatDate(new Date());
           roles.push([
             roleId,
             roleName,
             1,
-            ObjectFuctions.formatDate(new Date()),
+            now,
+            now,
+            userId,
             userId,
           ]);
           unique_permission_names.forEach(
@@ -540,6 +660,7 @@ const ObjectFuctions = {
                   1,
                   ObjectFuctions.formatDate(new Date()),
                   userId,
+                  permission_module_map[permission_name] || "general",
                 ]);
                 // push permission role ids
                 permission_role.push([

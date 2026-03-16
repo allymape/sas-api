@@ -50,6 +50,7 @@ const streetRouter = require("./routers/streetRouter.js");
 const schoolRouter = require("./routers/schoolRouter.js");
 const userRouter = require("./routers/userRouter.js");
 const permissionRouter = require("./routers/permissionRouter.js");
+const moduleRouter = require("./routers/moduleRouter.js");
 const roleRouter = require("./routers/roleRouter.js");
 const zoneRouter = require("./routers/zoneRouter.js");
 const attachementTypeRouter = require("./routers/attachmentTypeRouter.js");
@@ -130,6 +131,7 @@ app.use("/api", schoolRouter);
 app.use("/api", updateSchoolDetailRouter);
 app.use("/api", userRouter);
 app.use("/api", permissionRouter);
+app.use("/api", moduleRouter);
 app.use("/api", roleRouter);
 app.use("/api", hierarchyRouter);
 app.use("/api", rankRouter);
@@ -204,6 +206,9 @@ app.use("/api/v2", userRouter); // compatibility for refresh_token and shared au
 app.use("/api/v2", notificationRouter); // compatibility for my-notifications
 app.use("/api/v2", auditTrailRouter); // compatibility for audit-trail
 app.use("/api/v2", loginActivityRouter); // compatibility for login-activity
+app.use("/api/v2", permissionRouter); // compatibility for legacy allPermissions/addPermission endpoints
+app.use("/api/v2", moduleRouter); // compatibility for allModules/addModule endpoints
+app.use("/api/v2", applicantRouter); // compatibility for all-applicants/find-applicant/look_for_applicants endpoints
 app.use("/api/v2", schoolTypeStandardRouter); // compatibility for settings endpoints
 app.use("/api/v2", schoolInfrastructureStandardRouter); // compatibility for settings endpoints
 app.use("/api/v2", baruaRouter); // compatibility for letters endpoint

@@ -25,7 +25,7 @@ roleRouter.get("/allRoles", isAuth, permission('view-roles'), (req, res, next) =
                 ? false
                 : true;
         }
-  roleModel.getAllRoles(offset, per_page, is_paginated , (error, roles, numRows) => {
+  roleModel.getAllRoles(offset, per_page, is_paginated , (error, roles, numRows, activeRows) => {
     // console.log(roles)
             if(error) console.log(error);
             return res.send({
@@ -33,6 +33,7 @@ roleRouter.get("/allRoles", isAuth, permission('view-roles'), (req, res, next) =
                 statusCode: error ? 306 : 300,
                 data: error ? "" : roles,
                 numRows: numRows,
+                activeRows: activeRows,
                 is_paginated : is_paginated,
                 message: error ? "Something went wrong." : "List of Roles.",
             });
@@ -84,10 +85,13 @@ roleRouter.post("/roles", isAuth, (req, res, next) => {
             var name = titleCase(req.body.roleName);
             var permissions = req.body.permissions;
             var userId = req.user.id;
+            var now = formatDate(new Date());
             roleData.push([
                     name,
                     1,
-                    formatDate(new Date()),
+                    now,
+                    now,
+                    userId,
                     userId,
             ]);
     
@@ -108,7 +112,7 @@ roleRouter.put("/roles/:id", isAuth, (req, res, next) => {
              var permissions = req.body.permissions;
              var roleId = Number(req.params.id);
              var userId = req.user.id;
-             roleData.push(name,  roleId);
+             roleData.push(name, formatDate(new Date()), userId, roleId);
          
             roleModel.updateRole(roleData , userId, roleId, permissions, (error , success , role) => {
                      return res.send({

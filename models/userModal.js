@@ -106,6 +106,15 @@ module.exports = {
   },
   //******** LIST USERS *******************************
   getUsers: (offset, per_page, search_value, user, inactive, callback) => {
+    const isInactive =
+      inactive === true ||
+      inactive === "true" ||
+      inactive === 1 ||
+      inactive === "1";
+    const statusFilter = isInactive
+      ? " AND s.user_status = 0"
+      : " AND s.user_status = 1";
+
     var searchQuery = "";
     var queryParams = [];
     if (search_value) {
@@ -133,7 +142,7 @@ module.exports = {
     }
     let sql = ` FROM staffs s ${staffCommonJoins()}
                 WHERE 1 = 1
-                ${inactive == "true" ? " AND s.user_status = 0" : ""}
+                ${statusFilter}
                 ${searchQuery}
                 ${filterByUserOffice(
                   user,
