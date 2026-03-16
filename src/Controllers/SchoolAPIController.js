@@ -33,6 +33,19 @@ class SchoolAPIController {
     }
   }
 
+  static async schoolFiles(req, res) {
+    try {
+      return res.send(await SchoolAPIService.fetchSchoolFiles(req));
+    } catch (error) {
+      console.error("V2 schoolFiles Error:", error);
+      return res.status(500).send({
+        error: true,
+        statusCode: 500,
+        message: error.message || "Kuna tatizo la server.",
+      });
+    }
+  }
+
   static async lookForSchools(req, res) {
     try {
       return res.send(await SchoolAPIService.lookForSchools(req));
@@ -66,6 +79,45 @@ class SchoolAPIController {
       return res.send(await SchoolAPIService.updateSchool(req));
     } catch (error) {
       console.error("V2 updateSchool Error:", error);
+      return res.status(500).send({
+        error: true,
+        statusCode: 500,
+        message: error.message || "Kuna tatizo la server.",
+      });
+    }
+  }
+
+  static async updateSchoolFileNumber(req, res) {
+    try {
+      return res.send(await SchoolAPIService.updateSchoolFileNumber(req));
+    } catch (error) {
+      console.error("V2 updateSchoolFileNumber Error:", error);
+      return res.status(500).send({
+        error: true,
+        statusCode: 500,
+        message: error.message || "Kuna tatizo la server.",
+      });
+    }
+  }
+
+  static async missingSchoolFileNumbersCount(req, res) {
+    try {
+      return res.send(await SchoolAPIService.fetchMissingSchoolFileNumbersCount(req));
+    } catch (error) {
+      console.error("V2 missingSchoolFileNumbersCount Error:", error);
+      return res.status(500).send({
+        error: true,
+        statusCode: 500,
+        message: error.message || "Kuna tatizo la server.",
+      });
+    }
+  }
+
+  static async generateMissingSchoolFileNumbers(req, res) {
+    try {
+      return res.send(await SchoolAPIService.generateMissingSchoolFileNumbers(req));
+    } catch (error) {
+      console.error("V2 generateMissingSchoolFileNumbers Error:", error);
       return res.status(500).send({
         error: true,
         statusCode: 500,

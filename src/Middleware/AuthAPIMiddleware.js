@@ -2,6 +2,8 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { getStaffWithRole } = require("../Services/StaffAPIService");
+const ACCESS_TOKEN_SECRET =
+  process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect";
 
 // --------------------------------------------
 // Authentication Middleware
@@ -24,7 +26,7 @@ const authMiddleware = async (req, res, next) => {
     try {
       decoded = jwt.verify(
         token,
-        process.env.ACCESS_TOKEN_SECRET || "your-secret-key",
+        ACCESS_TOKEN_SECRET,
       );
     } catch (err) {
       return res.status(401).json({

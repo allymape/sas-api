@@ -31,6 +31,12 @@ const {
 const dateAndTime = require("date-and-time");
 const { notifyStaffOnComment, notifyMwombajiOnComment } = require("./templates/emailTemplate");
 
+const toBool = (value, fallback = false) => {
+  if (value === undefined || value === null || String(value).trim() === "") return fallback;
+  return ["1", "true", "yes", "y", "on"].includes(String(value).trim().toLowerCase());
+};
+
+const AUTO_AUDIT_ENABLED = toBool(process.env.API_AUDIT_AUTO_LOG, true);
 
 const ObjectFuctions = {
   generateAccessToken: (user) => {
@@ -813,6 +819,14 @@ const ObjectFuctions = {
   },
   auditMiddleware: (tableName = "", action = "create", messageText = "") => {
     return (req, res, next) => {
+      if (req?.body?.clientInfo) {
+        delete req.body.clientInfo;
+      }
+
+      if (AUTO_AUDIT_ENABLED) {
+        return next();
+      }
+
       const { user, body, url } = req;
       const { id , user_level} = user;
       const { clientInfo } = body;
@@ -862,6 +876,10 @@ const ObjectFuctions = {
     ip_address,
     tableId
   ) => {
+    if (AUTO_AUDIT_ENABLED) {
+      return "skipped-auto-audit-enabled";
+    }
+
     db.query(
       `INSERT INTO audit_trail (user_id, event_type, new_body,old_body, 
         created_at, ip_address, api_router, browser_used, rollId, message, tableName)
@@ -903,6 +921,10 @@ const ObjectFuctions = {
     ip_address,
     tableId
   ) => {
+    if (AUTO_AUDIT_ENABLED) {
+      return "skipped-auto-audit-enabled";
+    }
+
     db.query(
       `INSERT INTO audit_trail (user_id, event_type, new_body, 
         created_at, ip_address, api_router, browser_used, rollId, message, tableName)
@@ -933,6 +955,10 @@ const ObjectFuctions = {
     );
   },
   auditTrail: (req, action, comment, module) => {
+    if (AUTO_AUDIT_ENABLED) {
+      return "skipped-auto-audit-enabled";
+    }
+
     if (action == "new") {
       ObjectFuctions.InsertAuditTrail(
         req.user.id,
@@ -1108,6 +1134,10 @@ const ObjectFuctions = {
     old_body,
     tableId
   ) => {
+    if (AUTO_AUDIT_ENABLED) {
+      return "skipped-auto-audit-enabled";
+    }
+
     // console.log(JSON.stringify(new_body))
     db.query(
       "INSERT INTO audit_trail (user_id, event_type, new_body, " +

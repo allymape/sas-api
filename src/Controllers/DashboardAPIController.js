@@ -48,7 +48,11 @@ class DashboardAPIController {
 
   static mapData = async (req, res) => {
     try {
-      const payload = { user: req.user, body: req.body || {} };
+      const requestData = {
+        ...(req.query || {}),
+        ...(req.body || {}),
+      };
+      const payload = { user: req.user, body: requestData };
       const data = await DashboardAPIService.fetchMapData(payload);
       return DashboardAPIController.sendSuccess(res, data);
     } catch (error) {

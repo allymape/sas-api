@@ -2,7 +2,7 @@ const db = require("../config/database");
 const { schoolLocationsSqlJoin, applicationView } = require("../utils");
 
 module.exports = {
-  getAllApplications: (offset, per_page, search_value, user, callback) => {
+  getAllApplications: (offset, per_page, search_value, school_id, user, callback) => {
     var searchQuery = "";
     var queryParams = [];
     const { sehemu, zone_id, district_code } = user;
@@ -28,6 +28,10 @@ module.exports = {
         `%${search_value}%`,
         `%${search_value}%`
       );
+    }
+    if (school_id) {
+      searchQuery += ` AND app.establishing_school_id = ?`;
+      queryParams.push(Number(school_id));
     }
     let sql = ` FROM track_application_view a
                       LEFT JOIN staffs s ON s.id = a.staff_id 
@@ -89,6 +93,5 @@ module.exports = {
     );
   },
 };
-
 
 

@@ -550,6 +550,7 @@ class ApplicationAPIService {
       const orderValue = Number.isFinite(parsedOrder) ? parsedOrder : 0;
       const isStart = Number.parseInt(row?.is_start, 10) === 1;
       const isFinal = Number.parseInt(row?.is_final, 10) === 1;
+      const canApprove = Number.parseInt(row?.can_approve, 10) === 1;
       const unitId = Number.parseInt(row?.unit_id, 10);
 
       if (!stepMap.has(workFlowId)) {
@@ -558,6 +559,7 @@ class ApplicationAPIService {
           _order: orderValue,
           is_start: isStart ? 1 : 0,
           is_final: isFinal ? 1 : 0,
+          can_approve: canApprove ? 1 : 0,
           unit_id: Number.isFinite(unitId) ? unitId : null,
         });
       }
@@ -1038,6 +1040,7 @@ class ApplicationAPIService {
   static async fetchAllApplications(req) {
     const categoryId = Number.parseInt(req?.query?.application_category_id, 10);
     const approvalState = Number.parseInt(req?.query?.is_approved, 10);
+    const establishingSchoolId = Number.parseInt(req?.query?.establishing_school_id, 10);
     const search = req?.query?.search;
     const where = {
       establishing_school_id: {
@@ -1050,6 +1053,9 @@ class ApplicationAPIService {
     }
     if (Number.isInteger(approvalState) && approvalState >= 0) {
       where.is_approved = approvalState;
+    }
+    if (Number.isInteger(establishingSchoolId) && establishingSchoolId > 0) {
+      where.establishing_school_id = establishingSchoolId;
     }
     this.applySearchFilter(where, search);
 
@@ -1879,6 +1885,11 @@ class ApplicationAPIService {
     const allowedActions = Array.isArray(workflow?.allowed_actions) ? workflow.allowed_actions : [];
 
     if (!allowedActions.includes(action)) {
+      if (action === "Approve" || action === "Reject") {
+        throw new Error(
+          "Approve/Reject requires assign-staff permission and current workflow step with is_final = true and can_approve = true.",
+        );
+      }
       throw new Error("This workflow action is not allowed for you.");
     }
 
@@ -1887,6 +1898,7 @@ class ApplicationAPIService {
     const currentProcessId = Number.parseInt(currentProcess?.id, 10);
     const currentWorkflowId = Number.parseInt(currentProcess?.work_flow_id, 10);
     const currentProcessStepOrder = Number.parseInt(currentProcess?.step_order, 10);
+    const actorHasAssignStaffPermission = this.hasAssignStaffPermission(currentUser || {});
     const workflowSteps = this.normalizeWorkflowRouteSteps(application.get("workflow_steps") || []);
     const currentStepIndex = workflowSteps.findIndex((step) => Number(step.work_flow_id) === currentWorkflowId);
     const currentWorkflowStep = currentStepIndex >= 0 ? workflowSteps[currentStepIndex] : null;
@@ -1944,10 +1956,16 @@ class ApplicationAPIService {
         application.updated_at = new Date();
         await application.save({ transaction });
       } else if (action === "Review") {
+        const reviewReceiverStaffId = (() => {
+          const candidate = Number.parseInt(currentProcess?.acted_by, 10);
+          if (!Number.isFinite(candidate) || candidate <= 0) return null;
+          return candidate === staffId ? null : candidate;
+        })();
+
         await this.createCommentWithLocationSnapshot({
           trackingNumber: application.tracking_number,
           staffId,
-          userTo: null,
+          userTo: reviewReceiverStaffId,
           content,
           action,
           applicationProcessId: currentProcessId,
@@ -2041,8 +2059,16 @@ class ApplicationAPIService {
         application.updated_at = new Date();
         await application.save({ transaction });
       } else if (action === "Approve" || action === "Reject") {
+        if (!actorHasAssignStaffPermission) {
+          throw new Error("Approve/Reject requires assign-staff permission.");
+        }
+
         if (Number.parseInt(currentWorkflowStep?.is_final, 10) !== 1) {
           throw new Error("Approve/Reject is allowed only on final workflow unit.");
+        }
+
+        if (Number.parseInt(currentWorkflowStep?.can_approve, 10) !== 1) {
+          throw new Error("Approve/Reject is allowed only for workflow unit with can_approve = true.");
         }
 
         await this.createCommentWithLocationSnapshot({

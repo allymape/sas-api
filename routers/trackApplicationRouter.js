@@ -15,13 +15,24 @@ trackApplicationRouter.get(
     var per_page = parseInt(req.query.per_page);
     var page = parseInt(req.query.page);
     var offset = (page - 1) * per_page;
-    var search_value = req.body.search.value;
+    var search_value =
+      (req.body && req.body.search && req.body.search.value) ||
+      req.query.search_value ||
+      req.query.search ||
+      "";
+    var school_id =
+      req.query.school_id !== undefined && req.query.school_id !== ""
+        ? Number(req.query.school_id)
+        : req.body && req.body.school_id !== undefined && req.body.school_id !== ""
+          ? Number(req.body.school_id)
+          : null;
     const user = req.user;
     // sharedModel.getApplicationCategories((categories) => {
       trackApplicationModel.getAllApplications(
         offset,
         per_page,
         search_value,
+        school_id,
         user,
         (error, applications, numRows , ovedue) => {
 

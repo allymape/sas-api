@@ -233,6 +233,8 @@ class WorkflowHelper {
     const currentWorkflowStep = Array.isArray(workflowSteps)
       ? workflowSteps.find((step) => toNumber(step?.work_flow_id) === currentWorkflowId)
       : null;
+    const currentStepIsFinal = toNumber(currentWorkflowStep?.is_final) === 1;
+    const currentStepCanApprove = toNumber(currentWorkflowStep?.can_approve) === 1;
     const currentWorkflowUnitId = toNumber(currentWorkflowStep?.unit_id);
     const currentProcessStatus = normalizeStatus(currentProcess?.status || currentProcess?.process_status);
     const currentProcessAssignedTo = toNumber(currentProcess?.assigned_to);
@@ -256,23 +258,31 @@ class WorkflowHelper {
       assignableStaff = await this.getAssignableStaff(actor);
     }
 
-    const finalApprover = isFinalApprover(actor);
-    const isCurrentAssignee = toNumber(application.staff_id) === actor.id;
+    const isCurrentAssignee = currentProcessAssignedTo
+      ? currentProcessAssignedTo === actor.id
+      : toNumber(application.staff_id) === actor.id;
+    const finalApprover = Boolean(
+      currentStepIsFinal
+      && currentStepCanApprove
+      && canAssignStaff
+    );
 
     const allowedActions = [];
-    if (isCurrentAssignee && Number(application?.is_approved) <= 1) {
+    if (Number(application?.is_approved) <= 1) {
       if (finalApprover) {
         allowedActions.push(ACTIONS.APPROVE, ACTIONS.REJECT, ACTIONS.RETURN_BACK);
         if (assignableStaff.length) {
           allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN);
         }
-      } else if (assignableStaff.length) {
-        allowedActions.push(ACTIONS.ASSIGN, ACTIONS.FORWARD, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
-      } else {
-        allowedActions.push(ACTIONS.REVIEW);
+      } else if (isCurrentAssignee) {
+        if (assignableStaff.length) {
+          allowedActions.push(ACTIONS.ASSIGN, ACTIONS.FORWARD, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
+        } else {
+          allowedActions.push(ACTIONS.REVIEW);
+        }
+      } else if (canAssignInOwnUnit && assignableStaff.length) {
+        allowedActions.push(ACTIONS.ASSIGN);
       }
-    } else if (canAssignInOwnUnit && assignableStaff.length && Number(application?.is_approved) <= 1) {
-      allowedActions.push(ACTIONS.ASSIGN);
     }
 
     const actionTypes = await this.getActionTypes();

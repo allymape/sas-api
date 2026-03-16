@@ -56,7 +56,7 @@ class SchoolAPIService {
     const offset = (page - 1) * perPage;
     const searchValue = extractSearchValue(req);
 
-    const [error, schools, numRows] = await asPromise((cb) =>
+    const [error, schools, numRows, missingFileNumbersCount] = await asPromise((cb) =>
       schoolModel.getAllSchools(
         offset,
         perPage,
@@ -68,7 +68,8 @@ class SchoolAPIService {
         getOptionalNumber(req.query.delete_duplicate, req.body?.delete_duplicate),
         getOptionalNumber(req.query.correction, req.body?.correction),
         searchValue,
-        (modelError, list, total) => cb(modelError, list || [], total || 0),
+        (modelError, list, total, missingTotal) =>
+          cb(modelError, list || [], total || 0, missingTotal || 0),
         req,
       ),
     );
@@ -78,9 +79,43 @@ class SchoolAPIService {
       statusCode: error ? 306 : 300,
       data: error ? [] : schools,
       numRows: Number(numRows || 0),
+      missing_file_numbers_count: Number(missingFileNumbersCount || 0),
       current_page: page,
       per_page: perPage,
       message: error ? "Failed to fetch schools." : "Orodha ya Shule.",
+    };
+  }
+
+  static async fetchSchoolFiles(req) {
+    const perPage = Number.parseInt(req.query.per_page, 10) || 10;
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const offset = (page - 1) * perPage;
+    const searchValue = extractSearchValue(req);
+    const sortBy = String(req.query.sort_by || req.body?.sort_by || "name").trim();
+    const sortDir = String(req.query.sort_dir || req.body?.sort_dir || "asc").trim();
+
+    const [error, rows, numRows, missingFileNumbersCount] = await asPromise((cb) =>
+      schoolModel.getSchoolFiles(
+        offset,
+        perPage,
+        searchValue,
+        sortBy,
+        sortDir,
+        req,
+        (modelError, list, total, missingTotal) =>
+          cb(modelError, list || [], total || 0, missingTotal || 0),
+      ),
+    );
+
+    return {
+      error: Boolean(error),
+      statusCode: error ? 306 : 300,
+      data: error ? [] : rows,
+      numRows: Number(numRows || 0),
+      missing_file_numbers_count: Number(missingFileNumbersCount || 0),
+      current_page: page,
+      per_page: perPage,
+      message: error ? "Failed to fetch school files." : "Orodha ya Majalada ya Shule.",
     };
   }
 
@@ -147,6 +182,69 @@ class SchoolAPIService {
       error: Boolean(error),
       statusCode: error ? 306 : 300,
       message,
+    };
+  }
+
+  static async updateSchoolFileNumber(req) {
+    const schoolId = Number.parseInt(req?.params?.school_id, 10) || 0;
+    const fileNumber = String(req?.body?.file_number || "").trim();
+
+    const [success, message] = await asPromise((cb) =>
+      schoolModel.updateSchoolFileNumber(schoolId, fileNumber, (ok, modelMessage) =>
+        cb(Boolean(ok), modelMessage),
+      ),
+    );
+
+    return {
+      error: !success,
+      statusCode: success ? 300 : 306,
+      message: message || (success ? "Umefanikiwa." : "Haujafanikiwa."),
+    };
+  }
+
+  static async fetchMissingSchoolFileNumbersCount() {
+    const [success, total, message] = await asPromise((cb) =>
+      schoolModel.countMissingSchoolFileNumbers((ok, count, modelMessage) =>
+        cb(Boolean(ok), Number(count || 0), modelMessage),
+      ),
+    );
+
+    return {
+      error: !success,
+      statusCode: success ? 300 : 306,
+      message:
+        message ||
+        (success
+          ? "Idadi ya majalada yasiyo na namba imepatikana."
+          : "Haujafanikiwa kupata idadi ya majalada yasiyo na namba."),
+      data: {
+        total: Number(total || 0),
+      },
+    };
+  }
+
+  static async generateMissingSchoolFileNumbers() {
+    const [success, message, meta] = await asPromise((cb) =>
+      schoolModel.generateMissingSchoolFileNumbers((ok, modelMessage, modelMeta) =>
+        cb(Boolean(ok), modelMessage, modelMeta || {
+          updated: 0,
+          skipped: 0,
+          skipped_reasons: {},
+          skipped_details: [],
+        }),
+      ),
+    );
+
+    return {
+      error: !success,
+      statusCode: success ? 300 : 306,
+      message: message || (success ? "Umefanikiwa." : "Haujafanikiwa."),
+      data: meta || {
+        updated: 0,
+        skipped: 0,
+        skipped_reasons: {},
+        skipped_details: [],
+      },
     };
   }
 }

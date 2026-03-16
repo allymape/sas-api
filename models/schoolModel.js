@@ -118,10 +118,13 @@ module.exports = {
 
     db.query(
       `SELECT s.tracking_number AS id,
+              e.id AS school_id,
               school_name AS name, 
               s.registration_number AS reg_no, 
               rt.registry AS ownership,
               sc.category AS category,
+              e.file_number AS file_number,
+              (SELECT COUNT(*) FROM applications app2 WHERE app2.establishing_school_id = e.id) AS applications_count,
               IFNULL(s.school_opening_date , '') AS opening_date, 
               r.RegionName AS region, 
               latitude,longitude,
@@ -183,11 +186,171 @@ module.exports = {
                  module.exports.deleteDuplicateSchools();
                }
             }
-            callback(error, schoolRows, result2?.[0]?.num_rows || 0);
+            db.query(
+              `SELECT COUNT(*) AS missing_rows
+                 FROM establishing_schools
+                WHERE file_number IS NULL OR TRIM(file_number) = ''`,
+              (error3, result3) => {
+                if (error3) {
+                  console.log(error3);
+                }
+
+                callback(
+                  error || error2 || error3,
+                  schoolRows,
+                  result2?.[0]?.num_rows || 0,
+                  result3?.[0]?.missing_rows || 0
+                );
+              }
+            );
           }
         );
       }
     );
+  },
+  getSchoolFiles: (
+    offset,
+    per_page,
+    search_value,
+    sort_by,
+    sort_dir,
+    req,
+    callback
+  ) => {
+    const { sehemu, zone_id, district_code } = req.user || {};
+    const needsLocationFilter = sehemu === "k1" || sehemu === "w1";
+    const joins = [];
+    const whereParts = ["1 = 1"];
+    const queryParams = [];
+    const sortableColumns = {
+      name: "e.school_name",
+      reg_no: "s.registration_number",
+      category: "sc.category",
+      ownership: "rt.registry",
+      file_number: "e.file_number",
+      applications_count: "IFNULL(ax.applications_count, 0)",
+    };
+    const orderColumn = sortableColumns[String(sort_by || "").trim()] || "e.school_name";
+    const orderDir = String(sort_dir || "asc").toLowerCase() === "desc" ? "DESC" : "ASC";
+    const sortKey = String(sort_by || "").trim();
+    const orderClause =
+      sortKey === "reg_no"
+        ? `
+          CASE
+            WHEN s.registration_number IS NULL OR TRIM(s.registration_number) = '' THEN 1
+            ELSE 0
+          END ASC,
+          UPPER(SUBSTRING_INDEX(TRIM(s.registration_number), '.', 1)) ${orderDir},
+          CAST(SUBSTRING_INDEX(TRIM(s.registration_number), '.', -1) AS UNSIGNED) ${orderDir},
+          UPPER(TRIM(s.registration_number)) ${orderDir},
+          e.id ASC
+        `
+        : `${orderColumn} ${orderDir}, e.id ASC`;
+
+    if (needsLocationFilter) {
+      joins.push(schoolLocationsSqlJoin());
+      if (sehemu === "k1") {
+        whereParts.push(`r.zone_id = ?`);
+        queryParams.push(Number(zone_id) || 0);
+      } else if (sehemu === "w1") {
+        whereParts.push(`d.LgaCode = ?`);
+        queryParams.push(String(district_code || ""));
+      }
+    }
+
+    const keyword = String(search_value || "").trim();
+    if (keyword) {
+      whereParts.push(
+        `(e.school_name LIKE ? OR
+          s.registration_number LIKE ? OR
+          sc.category LIKE ? OR
+          rt.registry LIKE ? OR
+          e.file_number LIKE ?)`
+      );
+      const like = `%${keyword}%`;
+      queryParams.push(like, like, like, like, like);
+    }
+
+    const baseSql = `
+      FROM establishing_schools e
+      LEFT JOIN (
+        SELECT
+          sr.establishing_school_id,
+          MAX(sr.id) AS latest_registration_id
+        FROM school_registrations sr
+        WHERE sr.reg_status = 1
+        GROUP BY sr.establishing_school_id
+      ) srx ON srx.establishing_school_id = e.id
+      LEFT JOIN school_registrations s ON s.id = srx.latest_registration_id
+      LEFT JOIN school_categories sc ON sc.id = e.school_category_id
+      LEFT JOIN (
+        SELECT
+          a.establishing_school_id,
+          MAX(a.id) AS latest_application_id,
+          COUNT(*) AS applications_count
+        FROM applications a
+        GROUP BY a.establishing_school_id
+      ) ax ON ax.establishing_school_id = e.id
+      LEFT JOIN applications a ON a.id = ax.latest_application_id
+      LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
+      ${joins.join("\n")}
+      WHERE ${whereParts.join(" AND ")}
+    `;
+
+    const listSql = `
+      SELECT
+        e.id AS school_id,
+        e.school_name AS name,
+        s.registration_number AS reg_no,
+        sc.category AS category,
+        rt.registry AS ownership,
+        e.file_number AS file_number,
+        IFNULL(ax.applications_count, 0) AS applications_count
+      ${baseSql}
+      ORDER BY ${orderClause}
+      ${per_page > 0 ? "LIMIT ?, ?" : ""}
+    `;
+
+    const listParams = per_page > 0
+      ? queryParams.concat([offset, per_page])
+      : queryParams;
+
+    db.query(listSql, listParams, (error, rows = []) => {
+      if (error) {
+        console.log(error);
+        callback(error, [], 0, 0);
+        return;
+      }
+
+      const countSql = `SELECT COUNT(*) AS num_rows ${baseSql}`;
+      db.query(countSql, queryParams, (countError, countRows = []) => {
+        if (countError) {
+          console.log(countError);
+          callback(countError, [], 0, 0);
+          return;
+        }
+
+        db.query(
+          `SELECT COUNT(*) AS total
+             FROM establishing_schools
+            WHERE file_number IS NULL OR TRIM(file_number) = ''`,
+          (missingError, missingRows = []) => {
+            if (missingError) {
+              console.log(missingError);
+              callback(missingError, rows, Number(countRows?.[0]?.num_rows || 0), 0);
+              return;
+            }
+
+            callback(
+              null,
+              rows,
+              Number(countRows?.[0]?.num_rows || 0),
+              Number(missingRows?.[0]?.total || 0)
+            );
+          }
+        );
+      });
+    });
   },
   // LOOK FOR SCHOOLS
   lookForSchools: (offset, per_page, search, callback) => {
@@ -622,5 +785,435 @@ module.exports = {
         }
       }
     );
+  },
+  updateSchoolFileNumber: (school_id, file_number, callback) => {
+    const schoolId = Number.parseInt(school_id, 10) || 0;
+    const normalizedFileNumber = String(file_number || "").trim();
+    const normalizedUpper = normalizedFileNumber.toUpperCase();
+
+    if (!schoolId) {
+      callback(false, "Shule haijapatikana.");
+      return;
+    }
+
+    if (!normalizedFileNumber) {
+      callback(false, "Namba ya jalada inahitajika.");
+      return;
+    }
+
+    db.query(
+      `SELECT
+          e.school_category_id,
+          (
+            SELECT a.registry_type_id
+              FROM applications a
+             WHERE a.establishing_school_id = e.id
+             ORDER BY a.id DESC
+             LIMIT 1
+          ) AS registry_type_id
+        FROM establishing_schools e
+       WHERE e.id = ?
+       LIMIT 1`,
+      [schoolId],
+      (schoolError, schoolRows = []) => {
+        if (schoolError) {
+          console.log(schoolError);
+          callback(false, "Kuna tatizo la mfumo.");
+          return;
+        }
+
+        if (!schoolRows.length) {
+          callback(false, "Shule haijapatikana.");
+          return;
+        }
+
+        const schoolCategoryId = Number(schoolRows[0]?.school_category_id || 0);
+        const registryTypeId = Number(schoolRows[0]?.registry_type_id || 0);
+
+        if (!schoolCategoryId || !registryTypeId) {
+          callback(false, "Aina au umiliki wa shule haujakamilika kwenye mfumo.");
+          return;
+        }
+
+        db.query(
+          `SELECT UPPER(TRIM(file_number)) AS base_pattern
+             FROM school_file_number_mappings
+            WHERE is_active = 1
+              AND registry_type_id = ?
+              AND school_category_id = ?
+              AND file_number IS NOT NULL
+              AND TRIM(file_number) <> ''`,
+          [registryTypeId, schoolCategoryId],
+          (patternError, patternRows = []) => {
+            if (patternError) {
+              console.log(patternError);
+              callback(false, "Kuna tatizo la mfumo.");
+              return;
+            }
+
+            const allowedBases = patternRows
+              .map((row) => String(row?.base_pattern || "").trim())
+              .filter(Boolean);
+            const allowedPatternText = allowedBases.join(", ");
+
+            if (!allowedBases.length) {
+              callback(
+                false,
+                "Hakuna pattern ya namba ya jalada kwa aina na umiliki wa shule hii."
+              );
+              return;
+            }
+
+            const validPattern = allowedBases.some(
+              (base) => normalizedUpper === base || normalizedUpper.startsWith(`${base}/`)
+            );
+
+            if (!validPattern) {
+              callback(
+                false,
+                `Namba ya jalada haifuati pattern inayotakiwa. Tumia pattern: ${allowedPatternText}. Mfano: ${allowedBases[0]}/1`
+              );
+              return;
+            }
+
+            const matchedBase =
+              allowedBases.find(
+                (base) =>
+                  normalizedUpper === base || normalizedUpper.startsWith(`${base}/`)
+              ) || "";
+            const basePrefix = `${matchedBase}/`;
+            const enteredSuffixRaw = normalizedUpper.startsWith(basePrefix)
+              ? normalizedUpper.slice(basePrefix.length)
+              : "";
+
+            if (!/^\d+$/.test(enteredSuffixRaw)) {
+              callback(
+                false,
+                `Namba ya jalada haipo kwenye muundo sahihi. Tumia muundo: ${matchedBase}/N (mfano ${matchedBase}/1).`
+              );
+              return;
+            }
+
+            const enteredSuffix = Number.parseInt(enteredSuffixRaw, 10);
+            if (!Number.isFinite(enteredSuffix) || enteredSuffix < 1) {
+              callback(
+                false,
+                `Namba ya jalada haipo kwenye muundo sahihi. Tumia muundo: ${matchedBase}/N (mfano ${matchedBase}/1).`
+              );
+              return;
+            }
+
+            db.query(
+              `SELECT UPPER(TRIM(file_number)) AS file_number
+                 FROM establishing_schools
+                WHERE file_number IS NOT NULL
+                  AND TRIM(file_number) <> ''
+                  AND UPPER(TRIM(file_number)) LIKE CONCAT(?, '/%')`,
+              [matchedBase],
+              (rangeError, rangeRows = []) => {
+                if (rangeError) {
+                  console.log(rangeError);
+                  callback(false, "Kuna tatizo la mfumo.");
+                  return;
+                }
+
+                let maxSuffix = 0;
+                (rangeRows || []).forEach((row) => {
+                  const value = String(row?.file_number || "").trim().toUpperCase();
+                  if (!value.startsWith(basePrefix)) return;
+                  const suffixRaw = value.slice(basePrefix.length);
+                  if (!/^\d+$/.test(suffixRaw)) return;
+                  const suffix = Number.parseInt(suffixRaw, 10);
+                  if (Number.isFinite(suffix) && suffix > maxSuffix) {
+                    maxSuffix = suffix;
+                  }
+                });
+
+                if (maxSuffix > 0 && enteredSuffix > maxSuffix) {
+                  callback(
+                    false,
+                    `Namba ya jalada imezidi range ya pattern hii. Mwisho unaoruhusiwa ni ${matchedBase}/${maxSuffix}.`
+                  );
+                  return;
+                }
+
+                db.query(
+                  `SELECT id
+                     FROM establishing_schools
+                    WHERE UPPER(TRIM(file_number)) = UPPER(?)
+                      AND id <> ?
+                      AND file_number IS NOT NULL
+                      AND TRIM(file_number) <> ''
+                    LIMIT 1`,
+                  [normalizedFileNumber, schoolId],
+                  (existError, existRows = []) => {
+                    if (existError) {
+                      console.log(existError);
+                      callback(false, "Kuna tatizo la mfumo.");
+                      return;
+                    }
+
+                    if (existRows.length > 0) {
+                      callback(false, "Namba ya jalada imeshatumika na shule nyingine.");
+                      return;
+                    }
+
+                    db.query(
+                      `UPDATE establishing_schools
+                          SET file_number = ?, updated_at = ?
+                        WHERE id = ?`,
+                      [normalizedFileNumber, formatDate(new Date()), schoolId],
+                      (updateError, result) => {
+                        if (updateError) {
+                          console.log(updateError);
+                          callback(false, "Haujafanikiwa kubadili namba ya jalada.");
+                          return;
+                        }
+
+                        const success = Number(result?.affectedRows || 0) > 0;
+                        callback(success, success
+                          ? "Umefanikiwa kubadili namba ya jalada."
+                          : "Hakuna mabadiliko yaliyofanyika.");
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  },
+  countMissingSchoolFileNumbers: (callback) => {
+    db.query(
+      `SELECT COUNT(*) AS total
+         FROM establishing_schools
+        WHERE file_number IS NULL OR TRIM(file_number) = ''`,
+      (error, rows = []) => {
+        if (error) {
+          console.log(error);
+          callback(false, 0, "Haujafanikiwa kupata idadi ya majalada yasiyo na namba.");
+          return;
+        }
+
+        const total = Number(rows?.[0]?.total || 0);
+        callback(true, total, "Idadi imepatikana.");
+      }
+    );
+  },
+  generateMissingSchoolFileNumbers: (callback) => {
+    const queryAsync = (sql, params = []) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (error, rows) => (error ? reject(error) : resolve(rows)));
+      });
+
+    const normalize = (value) => String(value || "").trim();
+    const normalizeUpper = (value) => normalize(value).toUpperCase();
+
+    (async () => {
+      const skippedReasons = {
+        registry_type_missing: 0,
+        school_category_missing: 0,
+        mapping_not_found: 0,
+      };
+      const skippedDetails = [];
+
+      const mappings = await queryAsync(
+        `SELECT registry_type_id, school_category_id, file_number
+           FROM school_file_number_mappings
+          WHERE is_active = 1
+            AND file_number IS NOT NULL
+            AND TRIM(file_number) <> ''`
+      );
+
+      if (!Array.isArray(mappings) || mappings.length === 0) {
+        callback(true, "Hakuna mapping za namba za jalada zilizoactive.", {
+          updated: 0,
+          skipped: 0,
+          skipped_reasons: skippedReasons,
+          skipped_details: skippedDetails,
+        });
+        return;
+      }
+
+      const mappingByKey = new Map();
+      const bases = [];
+      mappings.forEach((row) => {
+        const key = `${Number(row.registry_type_id || 0)}|${Number(row.school_category_id || 0)}`;
+        const base = normalize(row.file_number);
+        if (!base) return;
+        mappingByKey.set(key, base);
+        if (!bases.includes(base)) bases.push(base);
+      });
+
+      const existingRows = await queryAsync(
+        `SELECT file_number
+           FROM establishing_schools
+          WHERE file_number IS NOT NULL
+            AND TRIM(file_number) <> ''`
+      );
+
+      const usedNumbers = new Set();
+      const nextByBase = {};
+      bases.forEach((base) => {
+        nextByBase[base] = 1;
+      });
+
+      existingRows.forEach((row) => {
+        const current = normalize(row.file_number);
+        if (!current) return;
+        usedNumbers.add(normalizeUpper(current));
+        bases.forEach((base) => {
+          const prefix = `${base}/`;
+          if (!current.startsWith(prefix)) return;
+          const suffix = current.slice(prefix.length).split("/").pop();
+          const numericSuffix = Number.parseInt(suffix, 10);
+          if (Number.isFinite(numericSuffix) && numericSuffix >= nextByBase[base]) {
+            nextByBase[base] = numericSuffix + 1;
+          }
+        });
+      });
+
+      const missingSchools = await queryAsync(
+        `SELECT
+            e.id,
+            e.tracking_number,
+            e.school_name,
+            e.school_category_id,
+            e.created_at,
+            (
+              SELECT a.registry_type_id
+                FROM applications a
+               WHERE a.tracking_number = e.tracking_number
+               ORDER BY a.id DESC
+               LIMIT 1
+            ) AS registry_type_id,
+            (
+              SELECT MIN(sr.registration_date)
+                FROM school_registrations sr
+               WHERE sr.establishing_school_id = e.id
+            ) AS registration_date
+          FROM establishing_schools e
+          WHERE e.file_number IS NULL OR TRIM(e.file_number) = ''
+          ORDER BY
+            (registration_date IS NULL) ASC,
+            registration_date ASC,
+            e.created_at ASC,
+            e.id ASC`
+      );
+
+      const updates = [];
+      let skipped = 0;
+
+      missingSchools.forEach((row) => {
+        const registryTypeId = Number(row.registry_type_id || 0);
+        const schoolCategoryId = Number(row.school_category_id || 0);
+        const key = `${registryTypeId}|${schoolCategoryId}`;
+        const base = mappingByKey.get(key);
+
+        if (!registryTypeId || !schoolCategoryId || !base) {
+          let reasonCode = "mapping_not_found";
+          let reasonText = "Hakuna pattern inayolingana na aina/umiliki wa shule.";
+
+          if (!registryTypeId) {
+            reasonCode = "registry_type_missing";
+            reasonText = "Shule haina umiliki (registry_type) kwenye taarifa zake.";
+          } else if (!schoolCategoryId) {
+            reasonCode = "school_category_missing";
+            reasonText = "Shule haina aina ya shule (school_category).";
+          }
+
+          skippedReasons[reasonCode] = Number(skippedReasons[reasonCode] || 0) + 1;
+          if (skippedDetails.length < 50) {
+            skippedDetails.push({
+              id: Number(row.id || 0),
+              tracking_number: row.tracking_number || null,
+              school_name: row.school_name || null,
+              reason_code: reasonCode,
+              reason: reasonText,
+              registry_type_id: registryTypeId || null,
+              school_category_id: schoolCategoryId || null,
+            });
+          }
+
+          skipped += 1;
+          return;
+        }
+
+        let sequence = Number(nextByBase[base] || 1);
+        let generated = `${base}/${sequence}`;
+        while (usedNumbers.has(normalizeUpper(generated))) {
+          sequence += 1;
+          generated = `${base}/${sequence}`;
+        }
+
+        usedNumbers.add(normalizeUpper(generated));
+        nextByBase[base] = sequence + 1;
+        updates.push({
+          id: Number(row.id),
+          file_number: generated,
+        });
+      });
+
+      if (!updates.length) {
+        callback(true, "Hakuna shule zenye uhitaji wa kugenerate namba ya jalada.", {
+          updated: 0,
+          skipped,
+          skipped_reasons: skippedReasons,
+          skipped_details: skippedDetails,
+        });
+        return;
+      }
+
+      await queryAsync("START TRANSACTION");
+      try {
+        const updatedAt = formatDate(new Date());
+        const chunkSize = 300;
+        for (let i = 0; i < updates.length; i += chunkSize) {
+          const chunk = updates.slice(i, i + chunkSize);
+          const caseParts = [];
+          const params = [];
+          const ids = [];
+
+          chunk.forEach((row) => {
+            caseParts.push("WHEN ? THEN ?");
+            params.push(Number(row.id), String(row.file_number));
+            ids.push(Number(row.id));
+          });
+
+          const idPlaceholders = ids.map(() => "?").join(", ");
+          const sql = `UPDATE establishing_schools
+                         SET file_number = CASE id ${caseParts.join(" ")} END,
+                             updated_at = ?
+                       WHERE id IN (${idPlaceholders})`;
+
+          await queryAsync(sql, params.concat([updatedAt], ids));
+        }
+        await queryAsync("COMMIT");
+      } catch (error) {
+        await queryAsync("ROLLBACK");
+        throw error;
+      }
+
+      callback(true, "Umefanikiwa kugenerate namba za jalada.", {
+        updated: updates.length,
+        skipped,
+        skipped_reasons: skippedReasons,
+        skipped_details: skippedDetails,
+      });
+    })().catch((error) => {
+      console.log(error);
+      callback(false, "Haujafanikiwa kugenerate namba za jalada.", {
+        updated: 0,
+        skipped: 0,
+        skipped_reasons: {
+          registry_type_missing: 0,
+          school_category_missing: 0,
+          mapping_not_found: 0,
+        },
+        skipped_details: [],
+      });
+    });
   }
 };
