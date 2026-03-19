@@ -7,9 +7,12 @@ const schoolCategoryModel = require("../models/schoolCategoryModel.js");
 const normalizePayload = (body = {}) => {
   const inputName = body.schoolCategoryName || body.category || body.name || "";
   const inputCode = body.schoolCategoryCode || body.code || "";
+  const inputTrackingNumberPrefix = body.schoolCategoryTrackingNumberPrefix || body.tracking_number_prefix || "";
+
   return {
     name: sentenceCase(String(inputName || "").trim()),
     code: String(inputCode || "").trim() || null,
+    tracking_number_prefix: String(inputTrackingNumberPrefix || "").trim() || null,
   };
 };
 
@@ -26,6 +29,7 @@ schoolCategoryRouter.get("/all-school-categories", isAuth, (req, res) => {
   }
 
   schoolCategoryModel.getAllCategories(offset, per_page, is_paginated, (error, categories, numRows) => {
+    console.log(categories)
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,

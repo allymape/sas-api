@@ -107,6 +107,8 @@ const ripotiBweniChangeRequestRouter = require("./routers/ripoti/ripotiBweniChan
 const ripotiUsajiliChangeRequestRouter = require("./routers/ripoti/ripotiUsajiliChangeRequestRouter.js");
 const ripotiDahaliaChangeRequestRouter = require("./routers/ripoti/ripotiDahaliaChangeRequestRouter.js");
 const baruaRouter = require("./routers/barua/baruaRouter.js");
+const letterTemplateRouter = require("./routers/barua/letterTemplateRouter.js");
+const certificateRouter = require("./routers/barua/certificateRouter.js");
 const workflowRouter = require("./routers/workflowRouter.js");
 const loginActivityRouter = require("./routers/loginActivityRouter.js");
 const attachementRouter = require("./routers/attachmentRouter.js");
@@ -193,6 +195,8 @@ app.use("/api", ripotiBweniChangeRequestRouter);
 app.use("/api", ripotiUsajiliChangeRequestRouter); 
 app.use("/api", ripotiDahaliaChangeRequestRouter); 
 app.use("/api", baruaRouter); 
+app.use("/api", letterTemplateRouter);
+app.use("/api", certificateRouter);
 app.use("/api", loginActivityRouter); 
 app.use("/api", auditTrailRouter); 
 app.use("/api", handoverRouter); 
@@ -212,6 +216,8 @@ app.use("/api/v2", applicantRouter); // compatibility for all-applicants/find-ap
 app.use("/api/v2", schoolTypeStandardRouter); // compatibility for settings endpoints
 app.use("/api/v2", schoolInfrastructureStandardRouter); // compatibility for settings endpoints
 app.use("/api/v2", baruaRouter); // compatibility for letters endpoint
+app.use("/api/v2", letterTemplateRouter); // templates for letters endpoint
+app.use("/api/v2", certificateRouter); // school registration certificates
 
 // Handling Errors
 app.use((err, req, res, next) => {

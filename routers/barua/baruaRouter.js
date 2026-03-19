@@ -4,13 +4,15 @@ const db = require("../../config/database");
 const baruaRouter = express.Router();
 const { isAuth, permission } = require("../../utils");
 const { writeSystemLog } = require("../../src/Utils/systemLogService");
+const { renderLetterTemplate } = require("../../src/Utils/letterTemplateRenderer");
 
 const LETTER_DATA_SQL = `
 SELECT
   a.id AS application_id,
   a.establishing_school_id,
   a.application_category_id,
-  a.approved_at,
+  a.tracking_number,
+  COALESCE(a.approved_at, a.updated_at, a.created_at) AS approved_at,
   e.id AS school_id,
   e.ward_id,
   e.village_id,
@@ -146,9 +148,9 @@ SELECT
     WHEN a.application_category_id IN (5, 6, 9, 10, 11, 13, 14) AND r_former.zone_id IS NOT NULL THEN r_former.zone_id
     ELSE r_current.zone_id
   END AS zone_id,
-  UCASE(app.title) AS address_title,
-  UCASE(app.display_name) AS address_name,
-  app.box AS address_box,
+  UCASE(COALESCE(app.title, '')) AS address_title,
+  UCASE(COALESCE(app.display_name, app.email, '')) AS address_name,
+  COALESCE(app.box, '') AS address_box,
   r_addr.RegionName AS address_region,
   u.name AS signatory,
   u.signature AS base64signature,
@@ -192,7 +194,7 @@ LEFT JOIN streets s_former ON s_former.StreetCode = fsi.village_id
 LEFT JOIN applicants app ON app.id = e.applicant_id
 LEFT JOIN districts d_addr ON d_addr.LgaCode = app.lga_box_location
 LEFT JOIN regions r_addr ON r_addr.RegionCode = d_addr.RegionCode
-LEFT JOIN staffs u ON u.id = a.approved_by
+LEFT JOIN staffs u ON u.id = COALESCE(a.approved_by, a.staff_id)
 LEFT JOIN roles roles ON roles.id = u.user_level
 LEFT JOIN (
   SELECT
@@ -404,6 +406,115 @@ const buildDebugContext = (data) => ({
   tracking_number: data?.tracking_number || null,
 });
 
+const findLatestTemplate = async ({ applicationCategoryId, type, templateKey = null }) => {
+  const normalizedType = String(type || "").trim().toLowerCase() || null;
+  const categoryId = Number(applicationCategoryId || 0) || null;
+  const key = String(templateKey || "").trim() || null;
+
+  const baseSql = `
+    SELECT
+      t.id,
+      t.template_key,
+      t.name,
+      t.application_category_id,
+      t.letter_type,
+      v.version,
+      v.title_template,
+      v.body_template,
+      v.reference_template,
+      v.date_template,
+      v.addressee_template,
+      v.addressee_template_id,
+      at.addressee_template AS addressee_template_from_id
+    FROM letter_templates t
+    JOIN letter_template_versions v
+      ON v.letter_template_id = t.id
+     AND v.version = (
+        SELECT MAX(v2.version)
+        FROM letter_template_versions v2
+        WHERE v2.letter_template_id = t.id
+      )
+    LEFT JOIN letter_addressee_templates at
+      ON at.id = v.addressee_template_id
+     AND at.is_active = 1
+    WHERE t.is_active = 1
+  `;
+
+  const orderBy = ` ORDER BY t.updated_at DESC, t.id DESC LIMIT 1`;
+
+  try {
+    const runQuery = async (sql, params) => {
+      try {
+        const [rows] = await db.promise().query(sql, params);
+        return rows;
+      } catch (error) {
+        if (
+          (error.code === "ER_BAD_FIELD_ERROR" || error.errno === 1054) &&
+          String(error?.sqlMessage || "").includes("reference_template")
+        ) {
+          const baseSqlFallback = `
+            SELECT
+              t.id,
+              t.template_key,
+              t.name,
+              t.application_category_id,
+              t.letter_type,
+              v.version,
+              v.title_template,
+              v.body_template
+            FROM letter_templates t
+            JOIN letter_template_versions v
+              ON v.letter_template_id = t.id
+             AND v.version = (
+                SELECT MAX(v2.version)
+                FROM letter_template_versions v2
+                WHERE v2.letter_template_id = t.id
+              )
+            WHERE t.is_active = 1
+          `;
+          const fallbackSql = sql.replace(baseSql, baseSqlFallback);
+          const [fallbackRows] = await db.promise().query(fallbackSql, params);
+          return (Array.isArray(fallbackRows) ? fallbackRows : []).map((row) => ({
+            ...row,
+            reference_template: null,
+            date_template: null,
+            addressee_template: null,
+          }));
+        }
+        throw error;
+      }
+    };
+
+    if (key) {
+      const rows = await runQuery(`${baseSql} AND t.template_key = ?${orderBy}`, [key]);
+      return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    }
+
+    if (categoryId !== null && normalizedType) {
+      const rows = await runQuery(
+        `${baseSql} AND t.application_category_id = ? AND t.letter_type = ?${orderBy}`,
+        [categoryId, normalizedType],
+      );
+      if (Array.isArray(rows) && rows.length > 0) return rows[0];
+    }
+
+    if (categoryId !== null) {
+      const rows = await runQuery(
+        `${baseSql} AND t.application_category_id = ? AND (t.letter_type IS NULL OR t.letter_type = '')${orderBy}`,
+        [categoryId],
+      );
+      if (Array.isArray(rows) && rows.length > 0) return rows[0];
+    }
+
+    return null;
+  } catch (error) {
+    if (error && (error.code === "ER_NO_SUCH_TABLE" || error.errno === 1146)) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 // List of
 baruaRouter.post(
   "/barua/:tracking_number",
@@ -412,6 +523,7 @@ baruaRouter.post(
   (req, res) => {
     const tracking_number = req.params.tracking_number;
     const type = String(req.body?.type || "").trim().toLowerCase();
+    const templateKey = String(req.body?.template_key || req.query?.template_key || "").trim();
 
     db.query(LETTER_DATA_SQL, [type, type, tracking_number], (error, results) => {
       if (error) {
@@ -474,7 +586,7 @@ baruaRouter.post(
          WHERE r.zone_id = ? AND r.sqa_zone = 1
          LIMIT 1`,
         [Number(data.zone_id || 0)],
-        (zoneError, zoneRows) => {
+        async (zoneError, zoneRows) => {
           if (zoneError) {
             logLetterIssue({
               stage: "query-sqa-zone-region",
@@ -490,12 +602,64 @@ baruaRouter.post(
               ? zoneRows[0].sqa_zone_region
               : null;
 
+          let rendered = null;
+          try {
+            let templateType = type;
+            const categoryId = Number(data?.application_category_id || 0);
+            if (!templateType && categoryId === 4) {
+              templateType = Number(data?.registry_type_id || 0) === 3 ? "serikali" : "binafsi";
+            }
+
+            const template = await findLatestTemplate({
+              applicationCategoryId: data?.application_category_id || null,
+              type: templateType,
+              templateKey: templateKey || null,
+            });
+
+            if (template?.title_template && template?.body_template) {
+              const resolvedAddresseeTemplate =
+                typeof template.addressee_template_from_id === "string" && template.addressee_template_from_id.trim().length > 0
+                  ? template.addressee_template_from_id
+                  : template.addressee_template || null;
+
+              const output = renderLetterTemplate({
+                titleTemplate: template.title_template,
+                bodyTemplate: template.body_template,
+                referenceTemplate: template.reference_template || null,
+                dateTemplate: template.date_template || null,
+                addresseeTemplate: resolvedAddresseeTemplate,
+                data,
+                letterType: templateType || null,
+              });
+              rendered = {
+                template_key: template.template_key,
+                version: template.version,
+                title: output.title,
+                paragraphs: output.paragraphs,
+                reference: output.reference,
+                date: output.date,
+                addressee: output.addressee,
+              };
+            }
+          } catch (renderError) {
+            logLetterIssue({
+              stage: "template-render-error",
+              tracking_number,
+              type,
+              application_category_id: validation.categoryId,
+              message: "Imeshindikana ku-render template ya barua.",
+              error: renderError,
+              context: buildDebugContext(data),
+            });
+          }
+
           return res.send({
             error: false,
             statusCode: 300,
             data,
             sqa_zone_region,
             warnings,
+            rendered,
             message: "Success",
           });
         }

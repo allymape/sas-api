@@ -15,6 +15,7 @@ module.exports = {
           category AS name,
           category,
           code,
+          tracking_number_prefix,
           created_at,
           updated_at
         FROM school_categories  
@@ -34,9 +35,9 @@ module.exports = {
               return;
             }
             callback(null, categories, result[0].num_rows || 0);
-          }
+          },
         );
-      }
+      },
     );
   },
 
@@ -44,6 +45,7 @@ module.exports = {
   storeCategory: (data, callback) => {
     const name = String(data?.name || "").trim();
     const code = String(data?.code || "").trim() || null;
+    const tracking_number_prefix = String(data?.tracking_number_prefix || "").trim() || null;
 
     if (!name) {
       callback(new Error("Aina ya Shule ni lazima."), false, null, false);
@@ -65,16 +67,16 @@ module.exports = {
         }
 
         db.query(
-          `INSERT INTO school_categories (code, secure_token, category, created_at, updated_at)
-           VALUES (?, ?, ?, NOW(), NOW())`,
-          [code, crypto.randomBytes(24).toString("hex"), name],
+          `INSERT INTO school_categories (code, secure_token, category,tracking_number_prefix, created_at, updated_at)
+           VALUES (?, ?, ?,?, NOW(), NOW())`,
+          [code, crypto.randomBytes(24).toString("hex"), name,tracking_number_prefix],
           (insertError, result) => {
             if (insertError) {
               callback(insertError, false, null, false);
               return;
             }
             callback(null, result?.affectedRows > 0, result, false);
-          }
+          },
         );
       }
     );
@@ -97,6 +99,7 @@ module.exports = {
   updateCategory: (data, id, callback) => {
     const name = String(data?.name || "").trim();
     const code = String(data?.code || "").trim() || null;
+    const tracking_number_prefix = String(data?.tracking_number_prefix || "").trim() || null;
 
     if (!name) {
       callback(new Error("Aina ya Shule ni lazima."), false, null, false);
@@ -119,16 +122,16 @@ module.exports = {
 
         db.query(
           `UPDATE school_categories
-           SET category = ?, code = ?, updated_at = NOW()
+           SET category = ?, code = ?, tracking_number_prefix = ?, updated_at = NOW()
            WHERE id = ?`,
-          [name, code, id],
+          [name, code, tracking_number_prefix, id],
           (updateError, result) => {
             if (updateError) {
               callback(updateError, false, null, false);
               return;
             }
             callback(null, result?.affectedRows > 0, result, false);
-          }
+          },
         );
       }
     );

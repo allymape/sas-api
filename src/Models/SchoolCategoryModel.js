@@ -11,9 +11,14 @@ const SchoolCategory = db.define(
       autoIncrement: true,
     },
     code: {
-      type: DataTypes.STRING(2),
+      type: DataTypes.STRING(5),
       allowNull: true,
       field: "code",
+    },
+    tracking_number_prefix:{
+      type: DataTypes.STRING(5),
+      allowNull: true,
+      field: "tracking_number_prefix",
     },
     secure_token: {
       type: DataTypes.STRING(255),
