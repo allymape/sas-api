@@ -25,6 +25,7 @@ router.use("/", require("../../routers/schoolCategoryRouter"));
 router.use("/", require("../../routers/schoolSubCategoryRouter"));
 router.use("/", require("../../routers/schoolFileNumberMappingRouter"));
 router.use("/", require("../../routers/systemLogRouter"));
+router.use("/", require("../../routers/aiSupportRouter"));
 router.use("/", require("../../routers/subjectRouter"));
 router.use("/", require("../../routers/combinationSubjectRouter"));
 router.use("/", require("../../routers/curriculumRouter"));
