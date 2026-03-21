@@ -12,10 +12,17 @@ const request = require("request-promise");
 
 // List of streets
 streetRouter.get("/allStreets", isAuth, (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  let search_value = req.body.search.value;
+  const per_page = Number.parseInt(req.query.per_page, 10) || 10;
+  const page = Number.parseInt(req.query.page, 10) || 1;
+  const offset = (page - 1) * per_page;
+  const search_value =
+    req.query?.search?.value ??
+    req.body?.search?.value ??
+    req.query?.["search[value]"] ??
+    req.body?.["search[value]"] ??
+    req.query?.search_value ??
+    req.body?.search_value ??
+    "";
   streetModel.getAllStreets(offset, per_page, search_value, (error, streets, numRows) => {
     // console.log(streets);
     return res.send({

@@ -17,6 +17,7 @@ router.use("/", require("../../routers/trackApplicationRouter"));
 router.use("/", require("../../routers/hierarchyRouter"));
 router.use("/", require("../../routers/designationRouter"));
 router.use("/", require("../../routers/roleRouter"));
+router.use("/", require("../../routers/rankRouter"));
 router.use("/", require("../../routers/permissionRouter"));
 router.use("/", require("../../routers/algorithmRouter"));
 router.use("/", require("../../routers/applicationCategoryRouter"));

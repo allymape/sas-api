@@ -16,11 +16,18 @@ const districtModel = require("../models/districtModel.js");
 
 // List of disticts
 districtRouter.get("/allDistricts", isAuth, (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
+  const per_page = Number.parseInt(req.query.per_page, 10) || 10;
+  const page = Number.parseInt(req.query.page, 10) || 1;
+  const offset = (page - 1) * per_page;
   // var is_paginated = true;
-  let search_value = req.body.search.value;
+  const search_value =
+    req.query?.search?.value ??
+    req.body?.search?.value ??
+    req.query?.["search[value]"] ??
+    req.body?.["search[value]"] ??
+    req.query?.search_value ??
+    req.body?.search_value ??
+    "";
   districtModel.getAllDistricts(
     offset,
     per_page,

@@ -2,6 +2,7 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { getStaffWithRole } = require("../Services/StaffAPIService");
+const { getJson, setJsonEx } = require("../Config/RedisClient");
 const ACCESS_TOKEN_SECRET =
   process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect";
 
@@ -46,15 +47,42 @@ const authMiddleware = async (req, res, next) => {
         : {};
 
     let user = null;
+    const staffCacheTtlSeconds = Number.parseInt(
+      process.env.AUTH_STAFF_CACHE_TTL_SECONDS,
+      10,
+    );
+    const cacheEnabled = Number.isFinite(staffCacheTtlSeconds) && staffCacheTtlSeconds > 0;
+    const staffId = safeDecoded.id;
+    const staffCacheKey = staffId ? `sas:auth:staff:v3:${staffId}` : null;
+
+    if (cacheEnabled && staffCacheKey) {
+      try {
+        const cached = await getJson(staffCacheKey);
+        if (cached && typeof cached === "object" && !Array.isArray(cached)) {
+          user = cached;
+        }
+      } catch (cacheError) {
+        // Ignore cache errors; fall back to DB.
+      }
+    }
+
     try {
-      const staffInstance = safeDecoded.id
-        ? await getStaffWithRole(safeDecoded.id)
+      const staffInstance = !user && staffId
+        ? await getStaffWithRole(staffId)
         : null;
       if (staffInstance) {
         user =
           typeof staffInstance.toJSON === "function"
             ? staffInstance.toJSON()
             : staffInstance;
+
+        if (cacheEnabled && staffCacheKey) {
+          try {
+            await setJsonEx(staffCacheKey, staffCacheTtlSeconds, user);
+          } catch (cacheWriteError) {
+            // Ignore cache errors.
+          }
+        }
       }
     } catch (dbError) {
       console.error("Auth Middleware staff lookup warning:", dbError);
@@ -91,7 +119,15 @@ const authMiddleware = async (req, res, next) => {
       roleName: safeUser.role?.name || safeDecoded.jukumu || null,
       vyeoId: safeUser.role?.vyeoId || null,
       stationLevel: safeUser.station_level ?? safeDecoded.station_level ?? null,
-      office: safeUser.office ?? safeDecoded.office ?? 1,
+      office: (() => {
+        const rankLevel = Number.parseInt(safeUser?.role?.vyeo?.rank_level, 10);
+        if (Number.isFinite(rankLevel)) return rankLevel;
+        const staffOffice = Number.parseInt(safeUser.office, 10);
+        if (Number.isFinite(staffOffice)) return staffOffice;
+        const tokenOffice = Number.parseInt(safeDecoded.office, 10);
+        if (Number.isFinite(tokenOffice)) return tokenOffice;
+        return 1;
+      })(),
       zoneId: safeUser.zone_id ?? safeDecoded.zone_id ?? 0,
       regionCode: safeUser.region_code ?? safeDecoded.region_code ?? null,
       districtCode: safeUser.district_code ?? safeDecoded.district_code ?? null,

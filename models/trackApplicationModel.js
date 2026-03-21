@@ -7,16 +7,16 @@ module.exports = {
     var queryParams = [];
     const { sehemu, zone_id, district_code } = user;
     if (search_value) {
-      searchQuery += ` AND (a.tracking_number LIKE ? OR 
-                            school_name LIKE ? OR 
-                            application_category LIKE ? OR
-                            category LIKE ? OR
-                            region_name LIKE ? OR
-                            district_name LIKE ? OR
-                            ward_name LIKE ? OR
-                            street_name LIKE ? OR
-                            applicant_name LIKE ? 
-                            )`;
+      searchQuery += ` AND (app.tracking_number LIKE ? OR 
+	                            e.school_name LIKE ? OR 
+	                            ac.app_name LIKE ? OR
+	                            sc.category LIKE ? OR
+	                            r.RegionName LIKE ? OR
+	                            d.LgaName LIKE ? OR
+	                            w.WardName LIKE ? OR
+	                            st.StreetName LIKE ? OR
+	                            u.name LIKE ? 
+	                            )`;
       queryParams.push(
         `%${search_value}%`,
         `%${search_value}%`,
@@ -33,27 +33,57 @@ module.exports = {
       searchQuery += ` AND app.establishing_school_id = ?`;
       queryParams.push(Number(school_id));
     }
-    let sql = ` FROM track_application_view a
-                      LEFT JOIN staffs s ON s.id = a.staff_id 
-                      LEFT JOIN roles r ON r.id = s.user_level
-                      LEFT JOIN vyeo v ON v.id = r.vyeoId
-                      JOIN applications app ON app.tracking_number = a.tracking_number
+
+    const lastMaoniSql = `
+      SELECT m2.trackingNo AS trackingNo, m2.created_at AS maoni_created_at
+      FROM maoni m2
+      JOIN (
+        SELECT trackingNo, MAX(id) AS max_id
+        FROM maoni
+        GROUP BY trackingNo
+      ) mx ON mx.trackingNo = m2.trackingNo AND mx.max_id = m2.id
+    `;
+
+    let sql = ` FROM applications app
+                      LEFT JOIN application_categories ac ON ac.id = app.application_category_id
+                      LEFT JOIN users u ON u.id = app.user_id
+                      LEFT JOIN staffs s ON s.id = app.staff_id 
+                      LEFT JOIN roles rr ON rr.id = s.user_level
+                      LEFT JOIN vyeo v ON v.id = rr.vyeoId
+                      LEFT JOIN (${lastMaoniSql}) m ON m.trackingNo = app.tracking_number
+                      LEFT JOIN payment_statuses p ON p.id = app.payment_status_id
+                      LEFT JOIN registry_types rt ON rt.id = app.registry_type_id
+                      LEFT JOIN establishing_schools e_tn ON e_tn.tracking_number = app.tracking_number
+                      LEFT JOIN owners o ON o.tracking_number = app.tracking_number
+                      LEFT JOIN former_owners fo ON fo.tracking_number = app.tracking_number
+                      LEFT JOIN former_managers fm ON fm.tracking_number = app.tracking_number
+                      LEFT JOIN former_school_combinations fsc ON fsc.tracking_number = app.tracking_number
+                      LEFT JOIN former_school_infos fsi ON fsi.tracking_number = app.tracking_number
+                      LEFT JOIN establishing_schools e ON e.id = COALESCE(
+                        app.establishing_school_id,
+                        e_tn.id,
+                        o.establishing_school_id,
+                        fo.establishing_school_id,
+                        fm.establishing_school_id,
+                        fsc.establishing_school_id,
+                        fsi.establishing_school_id
+                      )
+                      LEFT JOIN school_categories sc ON sc.id = e.school_category_id
+                      ${schoolLocationsSqlJoin()}
                       WHERE 1=1 AND app.is_complete = 1
-                      ${sehemu == "k1" ? "AND a.zone_id = " + zone_id : ""}
-                      ${
-                        sehemu == "w1"
-                          ? "AND a.district_code = '" + district_code + "'"
-                          : ""
-                      }
+                      ${sehemu == "k1" ? "AND r.zone_id = " + zone_id : ""}
+                      ${sehemu == "w1" ? "AND d.LgaCode = '" + district_code + "'" : ""}
                       ${searchQuery}
-                      ORDER BY submitted_created_at DESC`;
+                      ORDER BY IFNULL(m.maoni_created_at, app.created_at) DESC`;
 
     db.query(
-      `SELECT a.tracking_number AS tracking_number , application_category,  applicant_name ,   application_created_at,submitted_created_at,
-              UPPER(school_name) AS school_name,category,title, region_name , district_name,ward_name,street_name,zone_name,
-              status, v.overdue AS overdue, payment_status, a.payment_status_id AS payment_status_id,v.rank_level AS ngazi, registry
-              ${sql}
-              ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
+      `SELECT app.tracking_number AS tracking_number , ac.app_name AS application_category,  UPPER(u.name) AS applicant_name ,   app.created_at AS application_created_at,
+                IFNULL(m.maoni_created_at, app.created_at) AS submitted_created_at,
+	              UPPER(e.school_name) AS school_name,sc.category AS category,UPPER(rr.name) AS title, r.RegionName AS region_name , d.LgaName AS district_name,w.WardName AS ward_name,st.StreetName AS street_name,UPPER(z.zone_name) AS zone_name,
+	              app.is_approved AS status, v.overdue AS overdue, p.status AS payment_status, app.payment_status_id AS payment_status_id,v.rank_level AS ngazi, rt.registry AS registry,
+	              d.LgaCode AS district_code, r.zone_id AS zone_id, app.staff_id AS staff_id
+	              ${sql}
+	              ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
       per_page > 0 ? queryParams.concat([offset, per_page]) : queryParams,
       (error, applications) => {
         if (error) console.log(error);
@@ -93,5 +123,4 @@ module.exports = {
     );
   },
 };
-
 

@@ -156,6 +156,8 @@ app.use("/api", registrationTypeRouter);
 app.use("/api", applicantRouter);
 app.use("/api", feeRouter);
 app.use('/api' , biasRouter);
+// Backward/forward compatibility: allow v2 prefix for setup endpoints used by admin UI
+app.use('/api/v2' , biasRouter);
 app.use('/api' , combinationRouter);
 app.use('/api' , dashboardRouter);
 app.use("/api", attachementRouter); 

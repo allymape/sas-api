@@ -7,22 +7,35 @@ const {
   isAdmin,
   formatDate,
   permit,
+  permission,
   paramCase,
   sentenceCase,
 } = require("../utils.js");
 const applicantModel = require("../models/applicantModel.js");
 
-const extractSearchValue = (req) => {
-  const querySearch = req.query?.search;
-  if (typeof querySearch === "object" && querySearch !== null) {
-    return querySearch.value || "";
+const normalizeSearchValue = (value) => {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "object") {
+    return String(value.value ?? value.q ?? "").trim();
   }
+  return String(value).trim();
+};
+
+const extractSearchValue = (req) => {
+  // Supports:
+  // - DataTables: search[value]=...
+  // - Legacy: search_value=...
+  // - Custom: q=...
+  const querySearch = req.query?.search;
+  const querySearchValue = req.query?.search_value;
+  const bodySearch = req.body?.search;
+  const bodySearchValue = req.body?.search_value;
 
   return (
-    req.query?.search_value ||
-    querySearch ||
-    req.body?.search?.value ||
-    req.body?.search_value ||
+    normalizeSearchValue(querySearchValue) ||
+    normalizeSearchValue(querySearch) ||
+    normalizeSearchValue(bodySearchValue) ||
+    normalizeSearchValue(bodySearch?.value) ||
     ""
   );
 };
@@ -52,21 +65,41 @@ applicantRouter.get("/all-applicants", isAuth, (req, res, next) => {
   var sort_order = req.query.sort_order || "desc";
   var min_apps = req.query.min_applications || 0;
   var max_apps = req.query.max_applications || null;
+	applicantModel.getAllApplicants(
+	    offset,
+	    per_page,
+	    search_value,
+	    sort_by,
+	    sort_order,
+	    min_apps,
+	    max_apps,
+	    (error, applicants, numRows) => {
+	      return res.send({
+	        error: error ? true : false,
+	        statusCode: error ? 306 : 300,
+	        ...formatApplicantResponse(applicants || [], numRows, page, per_page),
+	        message: error ? "Something went wrong." : "List of Applicants.",
+	      });
+	    }
+	  );
+});
 
-  applicantModel.getAllApplicants(
-    offset,
-    per_page,
+// Registry type summary (counts of users by resolved registry type)
+applicantRouter.get("/all-applicants/registry-type-summary", isAuth, (req, res) => {
+  const search_value = extractSearchValue(req);
+  const min_apps = req.query.min_applications || 0;
+  const max_apps = req.query.max_applications || null;
+
+  applicantModel.getApplicantsRegistryTypeSummary(
     search_value,
-    sort_by,
-    sort_order,
     min_apps,
     max_apps,
-    (error, applicants, numRows) => {
+    (error, summaryRows) => {
       return res.send({
         error: error ? true : false,
         statusCode: error ? 306 : 300,
-        ...formatApplicantResponse(applicants || [], numRows, page, per_page),
-        message: error ? "Something went wrong." : "List of Applicants.",
+        data: error ? [] : (summaryRows || []),
+        message: error ? "Something went wrong." : "Registry type summary.",
       });
     }
   );
@@ -187,4 +220,49 @@ applicantRouter.post("/change-school-applicant", isAuth, (req, res, next) => {
     });
   });
 });
+
+// Bulk transfer: set establishing_schools.applicant_id for registry_type_id=3 schools in a district
+// Only affects schools created by the target user (applications.user_id = user_id).
+const handleTransferGovernmentSchools = (req, res) => {
+  const payload = {
+    user_id: req.body?.user_id,
+    applicant_id: req.body?.applicant_id,
+    lga_code: req.body?.lga_code,
+    registry_type_id: req.body?.registry_type_id,
+  };
+
+  applicantModel.transferGovernmentSchoolsToApplicant(payload, (error, result) => {
+    if (error) {
+      return res.send({
+        error: true,
+        statusCode: 306,
+        schoolsUpdated: 0,
+        applicationsUpdated: 0,
+        message: error.message || "Something went wrong.",
+      });
+    }
+    return res.send({
+      error: false,
+      statusCode: 300,
+      schoolsUpdated: result?.schoolsUpdated || 0,
+      applicationsUpdated: result?.applicationsUpdated || 0,
+      message: "Transfer completed.",
+    });
+  });
+};
+
+applicantRouter.post(
+  "/transfer-government-schools",
+  isAuth,
+  permission("update-schools"),
+  handleTransferGovernmentSchools
+);
+
+// Backward compatible alias (old url)
+applicantRouter.post(
+  "/transfer-registry3-schools",
+  isAuth,
+  permission("update-schools"),
+  handleTransferGovernmentSchools
+);
 module.exports = applicantRouter;

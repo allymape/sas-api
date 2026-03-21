@@ -893,8 +893,26 @@ module.exports = {
       callback(str);
     }
   },
-  tumaMaoni: (req, application_category, callback) => {
-    var success = false;
+  tumaMaoni: (req, application_category, callbackOrOptions, maybeCallback) => {
+    const options =
+      typeof callbackOrOptions === "function" ? {} : (callbackOrOptions || {});
+    const cb =
+      typeof callbackOrOptions === "function" ? callbackOrOptions : maybeCallback;
+
+    if (typeof cb !== "function") return;
+
+    let finished = false;
+    const done = (ok, message = null, meta = null) => {
+      if (finished) return;
+      finished = true;
+      cb(ok, message, meta);
+    };
+
+    const useExistingTransaction = Boolean(options?.use_existing_transaction);
+    const manageTransaction = !useExistingTransaction;
+    const deferSideEffects = useExistingTransaction || Boolean(options?.defer_side_effects);
+
+    let success = false;
     const today = formatDate(new Date(), "YYYY-MM-DD HH:mm:ss");
     const { user } = req;
     const {
@@ -926,7 +944,11 @@ module.exports = {
                   LIMIT 1
                   `,
           (err, staff) => {
-            if (err) console.log(err);
+            if (err) {
+              console.log(err);
+              done(false, "Imeshindikana kupata muhusika wa kuwasilishiwa.");
+              return;
+            }
             var user_to = staff_id;
             if (staff.length > 0) {
               user_to = staff[0].id;
@@ -938,10 +960,7 @@ module.exports = {
               [0, 1].includes(Number(haliombi))
             ) {
               console.log("Kuna shida hakuna id ya staff wa kutumiwa");
-              callback(
-                success,
-                "Kuna tatizo, Hakuna muhusika wa kuwasilishiwa."
-              );
+              done(false, "Kuna tatizo, Hakuna muhusika wa kuwasilishiwa.");
             } else {
               if ([0, 1, 4].includes(Number(haliombi))) {
                 console.log(
@@ -965,102 +984,154 @@ module.exports = {
               }
               // console.log(haliombi, user_to);
               // return haliombi;
-              db.query(
-                `INSERT INTO maoni (trackingNo, user_from, user_to, coments , title , type_of_comment, created_at) VALUES 
-                (
-                  ${db.escape(trackerId)},
-                  ${db.escape(from_user)},
-                  ${haliombi == 4 ? null : db.escape(user_to)},
-                  ${db.escape(coments)},
-                  '${user.cheo}',
-                  ${db.escape(haliombi)},
-                  ${db.escape(today)}
-                )`,
-                function (error, results) {
-                  if (error) {
-                    callback(false)
-                    console.log(error);
-                  } else {
-                    if (results.affectedRows > 0) {
-                      success = true;
-                      // sendMail notify
-                      notifyStaff(
-                        user_to,
-                        application_category,
-                        user.name,
-                        trackerId
-                      );
-                      notifyMwombaji(trackerId, haliombi);
-                    db.query(
-                      "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ? , approved_by = ?, approved_at = ? WHERE tracking_number = ?",
-                      [
-                        [2, 3, 4].includes(Number(haliombi)) ? null : user_to,
-                        0,
-                        haliombi,
-                        haliombi > 1 && haliombi < 4 ? user.id : null,
-                        today,
-                        trackerId,
-                      ],
-                      function (error) {
-                        if (error) {
-                          console.log(error);
+              const beginTx = (next) => {
+                if (!manageTransaction) return next();
+                db.beginTransaction((txError) => {
+                  if (txError) {
+                    console.log(txError);
+                    done(false, "Imeshindikana kuanzisha mchakato wa kuhifadhi maoni.");
+                    return;
+                  }
+                  next();
+                });
+              };
+
+              const rollbackWith = (message, error = null) => {
+                if (error) console.log(error);
+                if (!manageTransaction) {
+                  done(false, message);
+                  return;
+                }
+                db.rollback(() => {
+                  done(false, message);
+                });
+              };
+
+              beginTx(() => {
+                const userToValue = Number(haliombi) === 4 ? null : Number(user_to || 0) || null;
+                const insertSql =
+                  "INSERT INTO maoni (trackingNo, user_from, user_to, coments, title, type_of_comment, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                const insertParams = [
+                  trackerId,
+                  from_user,
+                  userToValue,
+                  coments,
+                  user.cheo,
+                  haliombi,
+                  today,
+                ];
+
+                db.query(insertSql, insertParams, (insertError, insertResult) => {
+                  if (insertError) {
+                    rollbackWith("Imeshindikana kuhifadhi maoni.", insertError);
+                    return;
+                  }
+
+                  if (Number(insertResult?.affectedRows || 0) <= 0) {
+                    rollbackWith("Imeshindikana kuhifadhi maoni.");
+                    return;
+                  }
+
+                  success = true;
+
+                  const staffIdUpdate = [2, 3, 4].includes(Number(haliombi)) ? null : user_to;
+                  const approvedBy = haliombi > 1 && haliombi < 4 ? user.id : null;
+                  const updateSql =
+                    "UPDATE applications SET staff_id = ?, status_id = ?, is_approved = ?, approved_by = ?, approved_at = ? WHERE tracking_number = ?";
+                  const updateParams = [staffIdUpdate, 0, haliombi, approvedBy, today, trackerId];
+
+                  db.query(updateSql, updateParams, (updateError) => {
+                    if (updateError) {
+                      rollbackWith("Imeshindikana kusasisha taarifa za ombi.", updateError);
+                      return;
+                    }
+
+                    const meta = {
+                      tracking_number: trackerId,
+                      application_category_id: Number(application_category || 0) || null,
+                      haliombi: Number(haliombi),
+                      user_to: user_to || null,
+                      comment_id: Number(insertResult?.insertId || 0) || null,
+                    };
+
+                    const shouldCreateQueue =
+                      Number(haliombi) === 2
+                      && Number(application_category) > 3
+                      && !Boolean(options?.skip_event_queue);
+
+                    const finalize = () => {
+                      if (!manageTransaction) {
+                        if (!deferSideEffects && meta?.comment_id) {
+                          InsertAuditTrail(
+                            req.user.id,
+                            "created",
+                            req.body,
+                            req.url,
+                            req.body.browser_used,
+                            meta.comment_id,
+                            "Maoni yameongezwa!",
+                            req.body.ip_address,
+                            "maoni",
+                          );
+                        }
+                        if (!deferSideEffects) {
+                          notifyStaff(user_to, application_category, user.name, trackerId);
+                          notifyMwombaji(trackerId, haliombi);
+                        }
+                        done(true, null, meta);
+                        return;
+                      }
+
+                      db.commit((commitError) => {
+                        if (commitError) {
+                          rollbackWith("Imeshindikana kukamilisha mchakato wa kuhifadhi maoni.", commitError);
+                          return;
                         }
 
-                        db.query(
-                          `SELECT id 
-                          FROM maoni 
-                          WHERE 
-                          trackingNo = ${db.escape(trackerId)} AND 
-                          user_from = ${db.escape(from_user)} AND 
-                          user_to = ${db.escape(user_to)}
-                          ORDER BY id DESC
-                          LIMIT 1`,
-                          function (error, results) {
-                            if (error) {
-                              console.log(error);
-                            }
-                            if (results.length > 0) {
-                              var rollId = results[0].id;
-                              InsertAuditTrail(
-                                req.user.id,
-                                "created",
-                                req.body,
-                                req.url,
-                                req.body.browser_used,
-                                rollId,
-                                "Maoni yameongezwa!",
-                                req.body.ip_address,
-                                "maoni"
-                              );
-                            }
-                            if (
-                              Number(haliombi) == 2 &&
-                              Number(application_category) > 3
-                            ) {
-                              // Ombi ni usajili na change requests na limekuwa approved
-                              console.log("Start Creating event queue")
-                              module.exports.createEventQueue(
-                                trackerId,
-                                application_category,
-                                randomInt(0,1),
-                                (queueSuccess) => {
-                                  callback(queueSuccess);
-                                }
-                              );
-                            } else {
-                              // Ombi likiwa linaendelea kushughulikiwa
-                              callback(success);
-                            }
-                          }
-                        );
-                      }
+                        if (!deferSideEffects && meta?.comment_id) {
+                          InsertAuditTrail(
+                            req.user.id,
+                            "created",
+                            req.body,
+                            req.url,
+                            req.body.browser_used,
+                            meta.comment_id,
+                            "Maoni yameongezwa!",
+                            req.body.ip_address,
+                            "maoni",
+                          );
+                        }
+
+                        if (!deferSideEffects) {
+                          notifyStaff(user_to, application_category, user.name, trackerId);
+                          notifyMwombaji(trackerId, haliombi);
+                        }
+
+                        done(true, null, meta);
+                      });
+                    };
+
+                    if (!shouldCreateQueue) {
+                      finalize();
+                      return;
+                    }
+
+                    console.log("Start Creating event queue");
+                    module.exports.createEventQueue(
+                      trackerId,
+                      application_category,
+                      randomInt(0, 1),
+                      (queueSuccess) => {
+                        if (!queueSuccess) {
+                          rollbackWith("Imeshindikana kuandaa foleni ya matukio (event queue).");
+                          return;
+                        }
+                        finalize();
+                      },
                     );
-                   }else{
-                    callback(false)
-                   }
-                  }
-                }
-              );
+                  });
+                });
+              });
             }
           }
         );
@@ -1400,93 +1471,171 @@ module.exports = {
     tracking_number,
     schoolCatId,
     existing_reg_no = null,
-    callback
+    callbackOrOptions,
+    maybeCallback
   ) => {
-    var code = "";
-    var id = 0;
-    switch (Number(schoolCatId)) {
-      case 1:
-        code = "EA";
-        id = 1;
-        break;
-      case 2:
-        code = "EM";
-        id = 2;
-        break;
-      case 3:
-        code = "S";
-        id = 3;
-        break;
-      case 4:
-        code = "CU";
-        id = 4;
-        break;
-      default:
-        break;
+    const options =
+      typeof callbackOrOptions === "function" ? {} : (callbackOrOptions || {});
+    const callback =
+      typeof callbackOrOptions === "function" ? callbackOrOptions : maybeCallback;
+
+    if (typeof callback !== "function") return;
+
+    const useExistingTransaction = Boolean(options?.use_existing_transaction);
+    const manageTransaction = !useExistingTransaction;
+
+    const resolveAlgorithmMeta = (value) => {
+      const parsed = Number(value);
+      if (parsed === 1) return { code: "EA", id: 1 };
+      if (parsed === 2) return { code: "EM", id: 2 };
+      if (parsed === 3) return { code: "S", id: 3 };
+      if (parsed === 4) return { code: "CU", id: 4 };
+      return null;
+    };
+
+    const meta = resolveAlgorithmMeta(schoolCatId);
+    if (!meta) {
+      callback(null);
+      return;
     }
-    console.log("school category id : ", schoolCatId);
-    db.query(`SELECT * FROM algorthm WHERE id = ${id}`, (error, result) => {
-      if (error) console.log(error);
-      var registration_number = 1;
-      var last_number = 1;
-      var exist = false;
-      if (result.length > 0) {
-        registration_number = result[0].last_number;
-        last_number = registration_number + 1;
-        exist = true;
-        console.log(
-          "last_number",
-          last_number,
-          "Registration Number: " + registration_number
+
+    const normalizedTracking = String(tracking_number || "").trim();
+    const normalizedExisting = existing_reg_no ? String(existing_reg_no).trim() : null;
+    const today = new Date();
+    const regDate = formatDate(today, "YYYY-MM-DD");
+
+    const queryAsync = (sql, params = []) =>
+      new Promise((resolve, reject) => {
+        db.query(sql, params, (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        });
+      });
+
+    const beginAsync = () =>
+      new Promise((resolve, reject) => {
+        if (!manageTransaction) {
+          resolve();
+          return;
+        }
+        db.beginTransaction((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+
+    const commitAsync = () =>
+      new Promise((resolve, reject) => {
+        if (!manageTransaction) {
+          resolve();
+          return;
+        }
+        db.commit((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+
+    const rollbackAsync = () =>
+      new Promise((resolve) => {
+        if (!manageTransaction) {
+          resolve();
+          return;
+        }
+        db.rollback(() => resolve());
+      });
+
+    (async () => {
+      await beginAsync();
+
+      try {
+        // Lock algorithm row to avoid concurrent issuance for the same school type.
+        let algorithmRows = await queryAsync(
+          "SELECT last_number FROM algorthm WHERE id = ? FOR UPDATE",
+          [meta.id],
         );
-        module.exports.updateSchoolRegistrationNumber(
-          id,
-          existing_reg_no,
-          code,
-          registration_number,
-          exist,
-          tracking_number,
-          last_number,
-          (reg_number) => {
-            callback(reg_number);
+
+        if (!Array.isArray(algorithmRows) || algorithmRows.length === 0) {
+          // Initialize algorithm row using current max from registrations (best effort).
+          const maxRows = await queryAsync(
+            `SELECT MAX(CAST(SUBSTRING_INDEX(TRIM(registration_number), '.', -1) AS UNSIGNED)) AS max_no
+             FROM school_registrations
+             WHERE registration_number LIKE ?`,
+            [`${meta.code}.%`],
+          );
+
+          const currentMax = Number(maxRows?.[0]?.max_no || 0) || 0;
+          const startAt = currentMax > 0 ? currentMax + 1 : 1;
+
+          try {
+            await queryAsync(
+              "INSERT INTO algorthm (id, school_type, last_number) VALUES (?, ?, ?)",
+              [meta.id, meta.code, startAt],
+            );
+          } catch (error) {
+            if (String(error?.code) !== "ER_DUP_ENTRY") throw error;
           }
-        );
-      } else {
-        // Find registration number from existing schools
-        db.query(
-          `SELECT substring_index(s.registration_number , '.', 1) AS registration_code,
-                  CAST(substring_index(s.registration_number , '.', -1) AS SIGNED) AS registration_number
-                FROM school_registrations s
-                WHERE s.tracking_number <> "${tracking_number}" AND s.registration_number LIKE "%${code}%" 
-                ORDER BY s.registration_number DESC 
-                LIMIT 1`,
-          (error, result) => {
-            if (error) console.log(error);
-            if (result.length > 0) {
-              registration_number = parseInt(result[0].registration_number) + 1;
-              last_number = registration_number + 1;
+
+          algorithmRows = await queryAsync(
+            "SELECT last_number FROM algorthm WHERE id = ? FOR UPDATE",
+            [meta.id],
+          );
+        }
+
+        let nextNumber = Number(algorithmRows?.[0]?.last_number || 1) || 1;
+        if (nextNumber <= 0) nextNumber = 1;
+
+        // Important: uniqueness should also be enforced by a UNIQUE index in DB.
+        for (let attempt = 0; attempt < 50; attempt += 1) {
+          const candidate = `${meta.code}.${nextNumber}`;
+
+          // Best-effort pre-check (DB UNIQUE index should be the source of truth).
+          const dupRows = await queryAsync(
+            "SELECT 1 FROM school_registrations WHERE registration_number = ? AND tracking_number <> ? LIMIT 1",
+            [candidate, normalizedTracking],
+          );
+
+          if (Array.isArray(dupRows) && dupRows.length > 0) {
+            nextNumber += 1;
+            continue;
+          }
+
+          try {
+            const whereSql = normalizedExisting ? "registration_number = ?" : "tracking_number = ?";
+            const whereParam = normalizedExisting ? normalizedExisting : normalizedTracking;
+            const updateResult = await queryAsync(
+              `UPDATE school_registrations
+               SET registration_number = ?, registration_date = ?, updated_at = ?, reg_status = ?
+               WHERE ${whereSql}`,
+              [candidate, regDate, today, 1, whereParam],
+            );
+
+            if (Number(updateResult?.affectedRows || 0) <= 0) {
+              throw new Error("Hakuna rekodi ya usajili (school_registrations) iliyosasishwa.");
             }
-            console.log(
-              "last_number",
-              last_number,
-              "Registration Number: " + registration_number
-            );
-            module.exports.updateSchoolRegistrationNumber(
-              id,
-              existing_reg_no,
-              code,
-              registration_number,
-              exist,
-              tracking_number,
-              last_number,
-              (reg_number) => {
-                callback(reg_number);
-              }
-            );
+          } catch (error) {
+            if (String(error?.code) === "ER_DUP_ENTRY") {
+              nextNumber += 1;
+              continue;
+            }
+            throw error;
           }
-        );
+
+          // Advance algorithm to the next available number.
+          await queryAsync("UPDATE algorthm SET last_number = ? WHERE id = ?", [nextNumber + 1, meta.id]);
+
+          await commitAsync();
+          callback(candidate);
+          return;
+        }
+
+        throw new Error("Imeshindikana kupata registration number ya kipekee baada ya majaribio mengi.");
+      } catch (error) {
+        console.log(error);
+        await rollbackAsync();
+        callback(null);
       }
-    });
+    })();
   },
   updateSchoolRegistrationNumber: (
     id,
@@ -1687,31 +1836,67 @@ module.exports = {
       }
     );
   },
-  updateSharti: (tracking_number, conditions) => {
-    if (conditions) {
-      db.query(
-        `UPDATE school_registrations SET sharti = ? WHERE tracking_number = ?`,
-        [conditions, tracking_number],
-        (error) => {
-          if (error) console.log(error);
-        }
-      );
+  updateSharti: (tracking_number, conditions, callback = null) => {
+    const cb = typeof callback === "function" ? callback : () => {};
+    if (!conditions) {
+      cb(true);
+      return;
     }
+
+    db.query(
+      `UPDATE school_registrations SET sharti = ? WHERE tracking_number = ?`,
+      [conditions, tracking_number],
+      (error, result) => {
+        if (error) {
+          console.log(error);
+          cb(false);
+          return;
+        }
+        cb(Number(result?.affectedRows || 0) >= 0);
+      },
+    );
   },
   paginate: (sql_rows, sql_count, callback, parameters = []) => {
-    db.query(`${sql_rows}`, parameters, (error, data) => {
+    const nowMs = () => Number(process.hrtime.bigint() / 1000000n);
+    const startedAt = nowMs();
+
+    const paramsRows = Array.isArray(parameters)
+      ? parameters
+      : Array.isArray(parameters?.rows)
+        ? parameters.rows
+        : [];
+    const paramsCount = Array.isArray(parameters)
+      ? parameters
+      : Array.isArray(parameters?.count)
+        ? parameters.count
+        : paramsRows;
+
+    const rowsStartedAt = nowMs();
+    db.query(`${sql_rows}`, paramsRows, (error, data) => {
+      const rowsMs = nowMs() - rowsStartedAt;
       if (error) console.log(error);
+
       if (!sql_count) {
-        callback(error, data, Array.isArray(data) ? data.length : 0);
+        callback(error, data, Array.isArray(data) ? data.length : 0, {
+          rows_ms: rowsMs,
+          count_ms: 0,
+          total_ms: nowMs() - startedAt,
+        });
         return;
       }
-      // sql query to count number of rows
-      db.query(`${sql_count}`, parameters, (error2, result) => {
+
+      const countStartedAt = nowMs();
+      db.query(`${sql_count}`, paramsCount, (error2, result) => {
+        const countMs = nowMs() - countStartedAt;
         if (error2) {
           console.log(error2);
           error = error2;
         }
-        callback(error, data, result[0].num_rows);
+        callback(error, data, result?.[0]?.num_rows ?? 0, {
+          rows_ms: rowsMs,
+          count_ms: countMs,
+          total_ms: nowMs() - startedAt,
+        });
       });
     });
   },

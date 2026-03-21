@@ -14,5 +14,6 @@ router.get('/my-applications', authMiddleware, ApplicationController.getMyApplic
 router.get('/:trackingNumber', authMiddleware, ApplicationController.getApplicationByTrackingNumber);
 router.post('/:trackingNumber/comment', authMiddleware, ApplicationController.addComment);
 router.post('/:trackingNumber/advance', authMiddleware, ApplicationController.advanceWorkflow);
+router.post('/:trackingNumber/start', authMiddleware, ApplicationController.startWorkflow);
 
 module.exports = router;

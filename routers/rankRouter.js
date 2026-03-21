@@ -6,16 +6,14 @@ const { isAuth, isAdmin , formatDate , permit, permission } = require("../utils.
 const rankModel = require("../models/rankModel.js");
 // List of ranks
 rankRouter.get("/allRanks", isAuth, permission('view-ranks'), (req, res, next) => {
-  var per_page = parseInt(req.query.per_page);
-  var page = parseInt(req.query.page);
-  var offset = (page - 1) * per_page;
-  var is_paginated = true;
-        if (typeof req.body.is_paginated !== "undefined") {
-            is_paginated =
-              req.body.is_paginated == "false" || !req.body.is_paginated
-                ? false
-                : true;
-        }
+  const per_page = Number.parseInt(req.query.per_page, 10) || 10;
+  const page = Number.parseInt(req.query.page, 10) || 1;
+  const offset = (page - 1) * per_page;
+  let is_paginated = true;
+  if (typeof req.body?.is_paginated !== "undefined") {
+    is_paginated =
+      req.body.is_paginated == "false" || !req.body.is_paginated ? false : true;
+  }
   rankModel.getAllRanks(offset, per_page, is_paginated , (error, ranks, numRows) => {
             return res.send({
                 error: error ? true : false,

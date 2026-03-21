@@ -77,7 +77,7 @@ const listAuditTrail = (req, res) => {
        }
        const sqlFrom = `
                   FROM audit_trail a
-                  JOIN staffs s ON a.user_id = s.id 
+                  LEFT JOIN staffs s ON a.user_id = s.id 
                   LEFT JOIN roles r ON r.id = s.user_level
                   WHERE 1=1 
                   ${searchQuery}
@@ -85,7 +85,10 @@ const listAuditTrail = (req, res) => {
        const sql_rows = `SELECT a.id as id, a.event_type as event_type, 
                               a.created_at as created_at, a.ip_address as ip_address, 
                               a.api_router as api_router, a.browser_used as browser_used, 
-                              a.message as message, s.name AS name, r.name AS rollId, tableName, old_body, new_body
+                              a.message as message,
+                              COALESCE(s.name, CONCAT('USER#', a.user_id)) AS name,
+                              r.name AS rollId,
+                              tableName, old_body, new_body
                           ${sqlFrom} 
                           LIMIT ${offset}, ${per_page}`;
         const sql_count = `SELECT COUNT(*) num_rows ${sqlFrom}`;

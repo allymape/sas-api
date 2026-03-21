@@ -1,5 +1,5 @@
 // src/Services/StaffService.js
-const { Staff, Role  } = require("../Models");
+const { Staff, Role, Vyeo } = require("../Models");
 
 const getStaffWithRole = async (staffId) => {
   const staff = await Staff.findOne({
@@ -8,7 +8,16 @@ const getStaffWithRole = async (staffId) => {
       {
         model: Role,
         as: "role",
-        attributes: ["name", "vyeoId"],
+        attributes: ["id", "name", "vyeoId"],
+        required: false,
+        include: [
+          {
+            model: Vyeo,
+            as: "vyeo",
+            attributes: ["id", "rank_name", "rank_level"],
+            required: false,
+          },
+        ],
       },
     ],
   });

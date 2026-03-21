@@ -1,6 +1,7 @@
 // src/Models/index.js
 const Staff = require("./StaffModel");
 const Role = require("./RoleModel");
+const Vyeo = require("./VyeoModel");
 const Application = require("./ApplicationModel");
 const ApplicationCategory = require("./ApplicationCategoryModel");
 const Comment = require("./CommentModel");
@@ -205,6 +206,18 @@ Role.hasMany(Staff, {
   as: "staffs",
 });
 
+Role.belongsTo(Vyeo, {
+  foreignKey: "vyeoId",
+  targetKey: "id",
+  as: "vyeo",
+});
+
+Vyeo.hasMany(Role, {
+  foreignKey: "vyeoId",
+  sourceKey: "id",
+  as: "roles",
+});
+
 // Associations for Comment (Maoni)
 Comment.belongsTo(Staff, {
   foreignKey: "user_from",
@@ -364,6 +377,7 @@ InstituteInfo.hasOne(Applicant, {
 module.exports = {
   Staff,
   Role,
+  Vyeo,
   Application,
   EstablishingSchool,
   Applicant,

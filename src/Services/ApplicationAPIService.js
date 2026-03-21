@@ -321,6 +321,244 @@ class ApplicationAPIService {
     return normalized;
   }
 
+  static async attachHalmashauriToApplications(applications = []) {
+    if (!Array.isArray(applications) || applications.length === 0) return;
+
+    const wardRefs = this.uniqueNonEmptyCodes(
+      applications.map((row) => row?.establishing_school?.ward_id),
+    );
+    const villageRefs = this.uniqueNonEmptyCodes(
+      applications.map((row) => row?.establishing_school?.village_id),
+    );
+
+    if (!wardRefs.length && !villageRefs.length) return;
+
+    const numericWardIds = wardRefs
+      .filter((value) => /^\d+$/.test(String(value)))
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isFinite(value));
+    const wardCodes = wardRefs.filter((value) => !/^\d+$/.test(String(value)));
+
+    const wardOrConditions = [];
+    if (wardCodes.length) wardOrConditions.push({ WardCode: { [Op.in]: wardCodes } });
+    if (wardRefs.length) wardOrConditions.push({ area_code: { [Op.in]: wardRefs } });
+
+    const wards = wardOrConditions.length
+      ? await Ward.findAll({
+          where: wardOrConditions.length === 1 ? wardOrConditions[0] : { [Op.or]: wardOrConditions },
+          attributes: ["WardCode", "LgaCode"],
+          raw: true,
+        })
+      : [];
+
+    const wardToLgaCode = new Map();
+    wards.forEach((row) => {
+      const wardCode = this.normalizeNullableCode(row?.WardCode);
+      const lgaCode = this.normalizeNullableCode(row?.LgaCode);
+      if (wardCode) wardToLgaCode.set(wardCode, lgaCode);
+    });
+
+    const numericStreetIds = villageRefs
+      .filter((value) => /^\d+$/.test(String(value)))
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isFinite(value));
+    const streetCodes = villageRefs.filter((value) => !/^\d+$/.test(String(value)));
+
+    const streetOrConditions = [];
+    if (streetCodes.length) streetOrConditions.push({ StreetCode: { [Op.in]: streetCodes } });
+    if (villageRefs.length) streetOrConditions.push({ area_code: { [Op.in]: villageRefs } });
+
+    const streets = streetOrConditions.length
+      ? await Street.findAll({
+          where: streetOrConditions.length === 1 ? streetOrConditions[0] : { [Op.or]: streetOrConditions },
+          attributes: ["StreetCode", "WardCode"],
+          raw: true,
+        })
+      : [];
+
+    const villageToWardCode = new Map();
+    streets.forEach((row) => {
+      const streetCode = this.normalizeNullableCode(row?.StreetCode);
+      const wardCode = this.normalizeNullableCode(row?.WardCode);
+      if (streetCode && wardCode) villageToWardCode.set(streetCode, wardCode);
+    });
+
+    const wardCodesFromStreets = this.uniqueNonEmptyCodes(streets.map((row) => row?.WardCode));
+    if (wardCodesFromStreets.length) {
+      const wardsByStreet = await Ward.findAll({
+        where: { WardCode: { [Op.in]: wardCodesFromStreets } },
+        attributes: ["WardCode", "LgaCode"],
+        raw: true,
+      });
+      wardsByStreet.forEach((row) => {
+        const wardCode = this.normalizeNullableCode(row?.WardCode);
+        const lgaCode = this.normalizeNullableCode(row?.LgaCode);
+        if (wardCode) wardToLgaCode.set(wardCode, lgaCode);
+      });
+    }
+
+    const lgaCodes = this.uniqueNonEmptyCodes(Array.from(wardToLgaCode.values()));
+    if (!lgaCodes.length) return;
+
+    const districts = await District.findAll({
+      where: {
+        LgaCode: { [Op.in]: lgaCodes },
+      },
+      attributes: ["LgaCode", "LgaName", "RegionCode"],
+      raw: true,
+    });
+
+    const lgaToDistrictInfo = new Map(
+      districts.map((row) => [
+        this.normalizeNullableCode(row?.LgaCode),
+        {
+          name: this.normalizeNullableCode(row?.LgaName),
+          regionCode: this.normalizeNullableCode(row?.RegionCode),
+        },
+      ]),
+    );
+
+    const regionCodes = this.uniqueNonEmptyCodes(districts.map((row) => row?.RegionCode));
+    const regions = regionCodes.length
+      ? await Region.findAll({
+          where: { RegionCode: { [Op.in]: regionCodes } },
+          attributes: ["RegionCode", "RegionName"],
+          raw: true,
+        })
+      : [];
+
+    const regionByCode = new Map(
+      regions.map((row) => [
+        this.normalizeNullableCode(row?.RegionCode),
+        this.normalizeNullableCode(row?.RegionName),
+      ]),
+    );
+
+    applications.forEach((row) => {
+      const wardCode = this.normalizeNullableCode(row?.establishing_school?.ward_id);
+      const villageCode = this.normalizeNullableCode(row?.establishing_school?.village_id);
+      const wardCodeFromVillage = villageCode ? villageToWardCode.get(villageCode) : null;
+      const lgaFromVillage = wardCodeFromVillage ? wardToLgaCode.get(wardCodeFromVillage) : null;
+      const lgaFromWard = wardCode ? wardToLgaCode.get(wardCode) : null;
+      const lgaCode = lgaFromWard || lgaFromVillage || null;
+      const districtInfo = lgaCode ? lgaToDistrictInfo.get(lgaCode) : null;
+      const halmashauri = districtInfo?.name || null;
+      const mkoa = districtInfo?.regionCode
+        ? regionByCode.get(districtInfo.regionCode) || null
+        : null;
+      if (!row?.establishing_school || typeof row.establishing_school !== "object") return;
+      this.setModelDataValue(
+        row.establishing_school,
+        "halmashauri",
+        halmashauri ? String(halmashauri).toUpperCase() : null,
+      );
+      this.setModelDataValue(
+        row.establishing_school,
+        "mkoa",
+        mkoa ? String(mkoa).toUpperCase() : null,
+      );
+    });
+  }
+
+  static async attachCertificateIssuedToApplications(applications = []) {
+    if (!Array.isArray(applications) || applications.length === 0) return;
+
+    const eligible = applications.filter(
+      (row) => {
+        if (Number(row?.application_category_id) !== 4) return false;
+        if (Number(row?.is_approved) !== 2) return false;
+        const registryTypeId = Number(
+          row?.establishing_school?.registry_type?.id ?? row?.establishing_school?.registry_type_id,
+        );
+        if (Number.isFinite(registryTypeId) && registryTypeId === 3) return false;
+        return true;
+      },
+    );
+    if (!eligible.length) return;
+
+    const applicationIds = eligible
+      .map((row) => Number.parseInt(row?.id, 10))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    if (!applicationIds.length) return;
+
+    let issuedSet = new Set();
+    try {
+      const rows = await Application.sequelize.query(
+        `
+          SELECT application_id
+          FROM school_registration_certificates
+          WHERE application_id IN (:ids)
+            AND (is_revoked IS NULL OR is_revoked = 0)
+        `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { ids: applicationIds },
+        },
+      );
+
+      issuedSet = new Set(
+        (Array.isArray(rows) ? rows : [])
+          .map((r) => Number.parseInt(r?.application_id, 10))
+          .filter((id) => Number.isFinite(id) && id > 0),
+      );
+    } catch (error) {
+      // If the certificates tables are missing, ignore silently (feature will appear once migrations are applied).
+      issuedSet = new Set();
+    }
+
+    applications.forEach((row) => {
+      const id = Number.parseInt(row?.id, 10);
+      if (!Number.isFinite(id) || id <= 0) return;
+      const registryTypeId = Number(
+        row?.establishing_school?.registry_type?.id ?? row?.establishing_school?.registry_type_id,
+      );
+      if (Number.isFinite(registryTypeId) && registryTypeId === 3) {
+        row.certificate_issued = false;
+        return;
+      }
+      row.certificate_issued = issuedSet.has(id);
+    });
+  }
+
+  static async attachNeedsStartToApplications(applications = []) {
+    if (!Array.isArray(applications) || applications.length === 0) return;
+
+    const submitted = applications.filter((row) => Number(row?.is_approved) === 0 && row?.tracking_number);
+    if (!submitted.length) return;
+
+    const trackingNumbers = this.uniqueNonEmptyCodes(submitted.map((row) => row.tracking_number));
+    if (!trackingNumbers.length) return;
+
+    let existingSet = new Set();
+    try {
+      const rows = await Application.sequelize.query(
+        `
+          SELECT DISTINCT tracking_number
+          FROM application_processes
+          WHERE tracking_number IN (:trackingNumbers)
+        `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: { trackingNumbers },
+        },
+      );
+      existingSet = new Set(
+        (Array.isArray(rows) ? rows : [])
+          .map((r) => String(r?.tracking_number || "").trim())
+          .filter(Boolean),
+      );
+    } catch (error) {
+      existingSet = new Set();
+    }
+
+    applications.forEach((row) => {
+      if (Number(row?.is_approved) !== 0) return;
+      const tn = String(row?.tracking_number || "").trim();
+      if (!tn) return;
+      row.needs_start = !existingSet.has(tn);
+    });
+  }
+
   static async resolveCommentSnapshotContext(currentUser = {}, staffId = null) {
     let office = this.normalizeOfficeValue(currentUser?.office);
     let zoneId = this.normalizeNullableCode(currentUser?.zone_id);
@@ -658,7 +896,11 @@ class ApplicationAPIService {
     stepOrder,
     actorId,
     transaction,
+    startedAt = false,
   }) {
+    const hasActor = Number.isFinite(Number(actorId)) && Number(actorId) > 0;
+    const startedAtSql = startedAt ? "NOW()" : "NULL";
+
     await Application.sequelize.query(
       `
         INSERT INTO application_processes (
@@ -680,8 +922,8 @@ class ApplicationAPIService {
           NULL,
           'Pending',
           :actorId,
-          NOW(),
-          NULL,
+          :actedAt,
+          ${startedAtSql},
           NULL,
           NOW(),
           NOW()
@@ -694,7 +936,8 @@ class ApplicationAPIService {
           trackingNumber: String(trackingNumber || "").trim(),
           workFlowId: Number(workFlowId),
           stepOrder: Number(stepOrder),
-          actorId: Number(actorId),
+          actorId: hasActor ? Number(actorId) : null,
+          actedAt: hasActor ? new Date() : null,
         },
       },
     );
@@ -809,7 +1052,6 @@ class ApplicationAPIService {
       const candidates = [{ StreetCode: token }, { area_code: token }];
       if (Number.isFinite(numeric)) {
         candidates.push({ id: numeric });
-        candidates.push({ tamisemi_id: numeric });
       }
 
       for (const where of candidates) {
@@ -826,7 +1068,6 @@ class ApplicationAPIService {
       const candidates = [{ WardCode: token }, { area_code: token }];
       if (Number.isFinite(numeric)) {
         candidates.push({ id: numeric });
-        candidates.push({ tamisemi_id: numeric });
       }
 
       for (const where of candidates) {
@@ -894,9 +1135,59 @@ class ApplicationAPIService {
     });
   }
 
+  static applyLocationScopeFilter(where, user = {}) {
+    if (!where || typeof where !== "object") return;
+
+    const office = Number.parseInt(user?.office, 10);
+    const districtCode = this.normalizeNullableCode(user?.districtCode ?? user?.district_code);
+    const zoneId = this.normalizeNullableCode(user?.zoneId ?? user?.zone_id);
+
+    if (office === 3 && districtCode) {
+      if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+      const escapedDistrictCode = Application.sequelize.escape(districtCode);
+      where[Op.and].push(
+        Application.sequelize.literal(`
+          EXISTS (
+            SELECT 1
+            FROM establishing_schools es
+            LEFT JOIN wards w
+              ON w.WardCode = es.ward_id
+            WHERE es.id = Application.establishing_school_id
+              AND w.LgaCode = ${escapedDistrictCode}
+          )
+        `),
+      );
+      return;
+    }
+
+    if (office === 2 && zoneId) {
+      if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+      const escapedZoneId = Application.sequelize.escape(zoneId);
+      where[Op.and].push(
+        Application.sequelize.literal(`
+          EXISTS (
+            SELECT 1
+            FROM establishing_schools es
+            LEFT JOIN wards w
+              ON w.WardCode = es.ward_id
+            LEFT JOIN districts d
+              ON d.LgaCode = w.LgaCode
+            LEFT JOIN regions r
+              ON r.RegionCode = d.RegionCode
+            WHERE es.id = Application.establishing_school_id
+              AND r.zone_id = ${escapedZoneId}
+          )
+        `),
+      );
+    }
+  }
+
   static async fetchApplicationCategorySummary(req) {
     const sequelize = Application.sequelize;
     const approvalState = Number.parseInt(req?.query?.is_approved, 10);
+    const office = Number.parseInt(req?.user?.office, 10);
+    const districtCode = this.normalizeNullableCode(req?.user?.districtCode ?? req?.user?.district_code);
+    const zoneId = this.normalizeNullableCode(req?.user?.zoneId ?? req?.user?.zone_id);
     const whereSql = [
       "a.application_category_id = ac.id",
       "a.establishing_school_id IS NOT NULL",
@@ -906,6 +1197,36 @@ class ApplicationAPIService {
     if (Number.isInteger(approvalState) && approvalState >= 0) {
       whereSql.push("a.is_approved = :approvalState");
       replacements.approvalState = approvalState;
+    }
+
+    if (office === 3 && districtCode) {
+      whereSql.push(`
+        EXISTS (
+          SELECT 1
+          FROM establishing_schools es
+          LEFT JOIN wards w
+            ON w.WardCode = es.ward_id
+          WHERE es.id = a.establishing_school_id
+            AND w.LgaCode = :districtCode
+        )
+      `);
+      replacements.districtCode = districtCode;
+    } else if (office === 2 && zoneId) {
+      whereSql.push(`
+        EXISTS (
+          SELECT 1
+          FROM establishing_schools es
+          LEFT JOIN wards w
+            ON w.WardCode = es.ward_id
+          LEFT JOIN districts d
+            ON d.LgaCode = w.LgaCode
+          LEFT JOIN regions r
+            ON r.RegionCode = d.RegionCode
+          WHERE es.id = a.establishing_school_id
+            AND r.zone_id = :zoneId
+        )
+      `);
+      replacements.zoneId = zoneId;
     }
 
     const sql = `
@@ -929,6 +1250,43 @@ class ApplicationAPIService {
     const workflowUnitId = this.resolveWorkflowUnitId(user);
     const canAssignStaff = this.hasAssignStaffPermission(user);
     const fallbackStaffId = Number.parseInt(user?.id, 10) || 0;
+    const office = Number.parseInt(user?.office, 10);
+    const staffDistrictCodeRaw = this.normalizeNullableCode(
+      user?.districtCode ?? user?.district_code,
+    );
+    const staffZoneIdRaw = this.normalizeNullableCode(
+      user?.zoneId ?? user?.zone_id,
+    );
+    const isDistrictScopeUser = office === 3 && Boolean(staffDistrictCodeRaw);
+    const isZoneScopeUser = !isDistrictScopeUser && office === 2 && Boolean(staffZoneIdRaw);
+    const districtFilter = isDistrictScopeUser
+      ? `
+        AND EXISTS (
+          SELECT 1
+          FROM establishing_schools es
+          LEFT JOIN wards w
+            ON w.WardCode = es.ward_id
+          WHERE es.id = a.establishing_school_id
+            AND w.LgaCode = :districtCode
+        )
+      `
+      : "";
+    const zoneFilter = isZoneScopeUser
+      ? `
+        AND EXISTS (
+          SELECT 1
+          FROM establishing_schools es
+          LEFT JOIN wards w
+            ON w.WardCode = es.ward_id
+          LEFT JOIN districts d
+            ON d.LgaCode = w.LgaCode
+          LEFT JOIN regions r
+            ON r.RegionCode = d.RegionCode
+          WHERE es.id = a.establishing_school_id
+            AND r.zone_id = :zoneId
+        )
+      `
+      : "";
     const handledFilter = `
       EXISTS (
         SELECT 1
@@ -950,13 +1308,19 @@ class ApplicationAPIService {
           ON a.application_category_id = ac.id
           AND a.establishing_school_id IS NOT NULL
           AND ${handledFilter}
+          ${districtFilter}
+          ${zoneFilter}
         GROUP BY ac.id, ac.app_name
         ORDER BY ac.id ASC
       `;
 
       return sequelize.query(sql, {
         type: QueryTypes.SELECT,
-        replacements: { staffId: fallbackStaffId },
+        replacements: {
+          staffId: fallbackStaffId,
+          ...(districtFilter ? { districtCode: staffDistrictCodeRaw } : {}),
+          ...(zoneFilter ? { zoneId: staffZoneIdRaw } : {}),
+        },
       });
     }
 
@@ -976,13 +1340,19 @@ class ApplicationAPIService {
           ON a.application_category_id = ac.id
           AND a.establishing_school_id IS NOT NULL
           AND ${whereFilter}
+          ${districtFilter}
+          ${zoneFilter}
         GROUP BY ac.id, ac.app_name
         ORDER BY ac.id ASC
       `;
 
       return sequelize.query(sql, {
         type: QueryTypes.SELECT,
-        replacements: { staffId: fallbackStaffId },
+        replacements: {
+          staffId: fallbackStaffId,
+          ...(districtFilter ? { districtCode: staffDistrictCodeRaw } : {}),
+          ...(zoneFilter ? { zoneId: staffZoneIdRaw } : {}),
+        },
       });
     }
 
@@ -1010,6 +1380,7 @@ class ApplicationAPIService {
             )
           )
       )
+      AND a.is_approved IN (0, 1)
     `;
     const whereFilter = pendingFilter;
     const sql = `
@@ -1022,6 +1393,8 @@ class ApplicationAPIService {
         ON a.application_category_id = ac.id
         AND a.establishing_school_id IS NOT NULL
         AND ${whereFilter}
+        ${districtFilter}
+        ${zoneFilter}
       GROUP BY ac.id, ac.app_name
       ORDER BY ac.id ASC
     `;
@@ -1032,6 +1405,8 @@ class ApplicationAPIService {
         workflowUnitId,
         staffId: fallbackStaffId,
         canAssignStaff: canAssignStaff ? 1 : 0,
+        ...(districtFilter ? { districtCode: staffDistrictCodeRaw } : {}),
+        ...(zoneFilter ? { zoneId: staffZoneIdRaw } : {}),
       },
     });
   }
@@ -1057,6 +1432,7 @@ class ApplicationAPIService {
     if (Number.isInteger(establishingSchoolId) && establishingSchoolId > 0) {
       where.establishing_school_id = establishingSchoolId;
     }
+    this.applyLocationScopeFilter(where, req?.user || {});
     this.applySearchFilter(where, search);
 
     const paginated = await paginate(Application, {
@@ -1086,7 +1462,7 @@ class ApplicationAPIService {
         {
           model: EstablishingSchool,
           as: "establishing_school",
-          attributes: ["school_name"],
+          attributes: ["school_name", "ward_id", "village_id"],
           include: [
             {
               model: SchoolCategory,
@@ -1130,6 +1506,9 @@ class ApplicationAPIService {
       return row;
     });
 
+    await this.attachHalmashauriToApplications(paginated.data);
+    await this.attachCertificateIssuedToApplications(paginated.data);
+    await this.attachNeedsStartToApplications(paginated.data);
     return paginated;
   }
 
@@ -1138,9 +1517,19 @@ class ApplicationAPIService {
     const numericStaffId = Number.parseInt(staffId, 10) || 0;
     const workflowUnitId = this.resolveWorkflowUnitId(req?.user);
     const canAssignStaff = this.hasAssignStaffPermission(req?.user);
+    const office = Number.parseInt(req?.user?.office, 10);
+    const staffDistrictCodeRaw = this.normalizeNullableCode(
+      req?.user?.districtCode ?? req?.user?.district_code,
+    );
+    const staffZoneIdRaw = this.normalizeNullableCode(
+      req?.user?.zoneId ?? req?.user?.zone_id,
+    );
+    const isDistrictScopeUser = office === 3 && Boolean(staffDistrictCodeRaw);
+    const isZoneScopeUser = !isDistrictScopeUser && office === 2 && Boolean(staffZoneIdRaw);
     const categoryId = Number.parseInt(req?.query?.application_category_id, 10);
     const approvalState = Number.parseInt(req?.query?.is_approved, 10);
     const workTab = String(req?.query?.work_tab || "pending").toLowerCase();
+    const onlyAssigned = String(req?.query?.only_assigned || "").trim() === "1";
     const search = req?.query?.search;
     const where = {
       establishing_school_id: {
@@ -1171,7 +1560,7 @@ class ApplicationAPIService {
       {
         model: EstablishingSchool,
         as: "establishing_school",
-        attributes: ["school_name"],
+        attributes: ["school_name", "ward_id", "village_id"],
         include: [
           {
             model: SchoolCategory,
@@ -1192,8 +1581,52 @@ class ApplicationAPIService {
       where.application_category_id = categoryId;
     }
     if (workTab === "pending") {
+      where.is_approved = { [Op.in]: [0, 1] };
+      if (isDistrictScopeUser) {
+        if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+        const escapedDistrictCode = Application.sequelize.escape(staffDistrictCodeRaw);
+        where[Op.and].push(
+          Application.sequelize.literal(`
+            EXISTS (
+              SELECT 1
+              FROM establishing_schools es
+              LEFT JOIN wards w
+                ON w.WardCode = es.ward_id
+              WHERE es.id = Application.establishing_school_id
+                AND w.LgaCode = ${escapedDistrictCode}
+            )
+          `),
+        );
+      }
+      if (isZoneScopeUser) {
+        if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+        const escapedZoneId = Application.sequelize.escape(staffZoneIdRaw);
+        where[Op.and].push(
+          Application.sequelize.literal(`
+            EXISTS (
+              SELECT 1
+              FROM establishing_schools es
+              LEFT JOIN wards w
+                ON w.WardCode = es.ward_id
+              LEFT JOIN districts d
+                ON d.LgaCode = w.LgaCode
+              LEFT JOIN regions r
+                ON r.RegionCode = d.RegionCode
+              WHERE es.id = Application.establishing_school_id
+                AND r.zone_id = ${escapedZoneId}
+            )
+          `),
+        );
+      }
+
       if (workflowUnitId) {
         if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+        const assignedToSql = onlyAssigned
+          ? `ap.assigned_to = ${Number(numericStaffId)}`
+          : `(
+                ap.assigned_to = ${Number(numericStaffId)}
+                OR ap.assigned_to IS NULL
+              )`;
         const pendingVisibilitySql = `
           EXISTS (
             SELECT 1
@@ -1206,10 +1639,7 @@ class ApplicationAPIService {
                 (
                   ${canAssignStaff ? 1 : 0} = 1
                   AND ap.status = 'Pending'
-                  AND (
-                    ap.assigned_to = ${Number(numericStaffId)}
-                    OR ap.assigned_to IS NULL
-                  )
+                  AND ${assignedToSql}
                 )
                 OR (
                   ${canAssignStaff ? 1 : 0} = 0
@@ -1224,7 +1654,6 @@ class ApplicationAPIService {
         );
       } else {
         where.staff_id = staffId;
-        where.is_approved = { [Op.in]: [0, 1] };
       }
     } else if (workTab === "handled") {
       if (!Array.isArray(where[Op.and])) where[Op.and] = [];
@@ -1242,9 +1671,15 @@ class ApplicationAPIService {
             AND m.user_from = ${Number(staffId) || 0}
         )`),
       );
-    } else if (Number.isInteger(approvalState) && approvalState >= 0) {
-      where.staff_id = staffId;
-      where.is_approved = approvalState;
+    }
+
+    if (Number.isInteger(approvalState) && approvalState >= 0) {
+      if (workTab === "pending" && ![0, 1].includes(approvalState)) {
+        if (!Array.isArray(where[Op.and])) where[Op.and] = [];
+        where[Op.and].push(Application.sequelize.literal("1=0"));
+      } else {
+        where.is_approved = approvalState;
+      }
     }
     this.applySearchFilter(where, search);
 
@@ -1254,6 +1689,8 @@ class ApplicationAPIService {
       include,
       order: [["created_at", workTab === "pending" ? "ASC" : "DESC"]],
     });
+
+    paginated.debug_staff_district_code_raw = staffDistrictCodeRaw;
 
     paginated.data = paginated.data.map((application) => {
       const row = application?.toJSON ? application.toJSON() : application;
@@ -1280,6 +1717,58 @@ class ApplicationAPIService {
       return row;
     });
 
+    const debugLocation = String(req?.query?.debug_location || "").trim() === "1";
+    if (debugLocation) {
+      const establishingSchoolIds = Array.from(
+        new Set(
+          paginated.data
+            .map((row) => Number.parseInt(row?.establishing_school_id, 10))
+            .filter((value) => Number.isFinite(value) && value > 0),
+        ),
+      );
+
+      if (establishingSchoolIds.length) {
+        const rows = await Application.sequelize.query(
+          `
+            SELECT
+              es.id AS establishing_school_id,
+              w.LgaCode AS resolved_lga_code
+            FROM establishing_schools es
+            LEFT JOIN wards w
+              ON w.WardCode = es.ward_id
+            WHERE es.id IN (:ids)
+          `,
+          {
+            type: QueryTypes.SELECT,
+            replacements: { ids: establishingSchoolIds },
+          },
+        );
+
+        const resolvedByEstablishingSchoolId = new Map(
+          rows.map((row) => [
+            Number.parseInt(row?.establishing_school_id, 10),
+            {
+              lga: this.normalizeNullableCode(row?.resolved_lga_code),
+            },
+          ]),
+        );
+
+        paginated.data.forEach((row) => {
+          if (!row?.establishing_school || typeof row.establishing_school !== "object") return;
+          const id = Number.parseInt(row?.establishing_school_id, 10);
+          const resolved = resolvedByEstablishingSchoolId.get(id) || {};
+          this.setModelDataValue(
+            row.establishing_school,
+            "debug_resolved_lga_code",
+            resolved.lga || null,
+          );
+        });
+      }
+    }
+
+    await this.attachHalmashauriToApplications(paginated.data);
+    await this.attachCertificateIssuedToApplications(paginated.data);
+    await this.attachNeedsStartToApplications(paginated.data);
     return paginated;
   }
 
@@ -1287,6 +1776,79 @@ class ApplicationAPIService {
     const trackingNumber = String(application?.tracking_number || "").trim();
     const staffId = Number.parseInt(user?.id, 10) || 0;
     if (!trackingNumber || !staffId) return false;
+
+    const office = Number.parseInt(user?.office, 10);
+    const staffDistrictCodeRaw = this.normalizeNullableCode(
+      user?.districtCode ?? user?.district_code,
+    );
+    if (office === 3 && staffDistrictCodeRaw) {
+      const establishingSchoolId = Number.parseInt(
+        application?.establishing_school_id ?? application?.establishing_school?.id,
+        10,
+      );
+      if (!Number.isFinite(establishingSchoolId) || establishingSchoolId <= 0) return false;
+
+      const sequelize = Application.sequelize;
+      const locationRows = await sequelize.query(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM establishing_schools es
+            LEFT JOIN wards w
+              ON w.WardCode = es.ward_id
+            WHERE es.id = :establishingSchoolId
+              AND w.LgaCode = :districtCode
+          ) AS allowed
+        `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: {
+            establishingSchoolId,
+            districtCode: staffDistrictCodeRaw,
+          },
+        },
+      );
+
+      if (Number(locationRows?.[0]?.allowed || 0) !== 1) return false;
+    }
+
+    const staffZoneIdRaw = this.normalizeNullableCode(
+      user?.zoneId ?? user?.zone_id,
+    );
+    if (office === 2 && staffZoneIdRaw) {
+      const establishingSchoolId = Number.parseInt(
+        application?.establishing_school_id ?? application?.establishing_school?.id,
+        10,
+      );
+      if (!Number.isFinite(establishingSchoolId) || establishingSchoolId <= 0) return false;
+
+      const sequelize = Application.sequelize;
+      const zoneRows = await sequelize.query(
+        `
+          SELECT EXISTS (
+            SELECT 1
+            FROM establishing_schools es
+            LEFT JOIN wards w
+              ON w.WardCode = es.ward_id
+            LEFT JOIN districts d
+              ON d.LgaCode = w.LgaCode
+            LEFT JOIN regions r
+              ON r.RegionCode = d.RegionCode
+            WHERE es.id = :establishingSchoolId
+              AND r.zone_id = :zoneId
+          ) AS allowed
+        `,
+        {
+          type: QueryTypes.SELECT,
+          replacements: {
+            establishingSchoolId,
+            zoneId: staffZoneIdRaw,
+          },
+        },
+      );
+
+      if (Number(zoneRows?.[0]?.allowed || 0) !== 1) return false;
+    }
 
     const workflowUnitId = this.resolveWorkflowUnitId(user);
     if (!workflowUnitId) {
@@ -2130,6 +2692,83 @@ class ApplicationAPIService {
     }
 
     return await this.fetchApplicationDetails(trackingNumber, currentUser);
+  }
+
+  static async startWorkflow(trackingNumber, staffId, currentUser = null) {
+    const normalizedTracking = String(trackingNumber || "").trim();
+    const actorId = Number.parseInt(staffId, 10);
+    if (!normalizedTracking) throw new Error("Tracking number is required.");
+    if (!Number.isFinite(actorId) || actorId <= 0) throw new Error("Valid staff id is required.");
+
+    const transaction = await Application.sequelize.transaction();
+
+    try {
+      const application = await Application.findOne({
+        where: { tracking_number: normalizedTracking },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+
+      if (!application) throw new Error("Application not found");
+      if (Number(application.is_approved) !== 0) {
+        throw new Error("Only submitted applications (is_approved = 0) can be started.");
+      }
+
+      const existing = await Application.sequelize.query(
+        `SELECT 1 FROM application_processes WHERE tracking_number = :trackingNumber LIMIT 1`,
+        {
+          type: QueryTypes.SELECT,
+          transaction,
+          replacements: { trackingNumber: normalizedTracking },
+        },
+      );
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        throw new Error("Workflow tayari imeanza kwa ombi hili.");
+      }
+
+      const startSteps = await Application.sequelize.query(
+        `
+          SELECT id, _order
+          FROM work_flow
+          WHERE application_category_id = :categoryId
+            AND is_start = 1
+            AND deleted_at IS NULL
+          ORDER BY _order ASC, id ASC
+          LIMIT 1
+        `,
+        {
+          type: QueryTypes.SELECT,
+          transaction,
+          replacements: { categoryId: Number(application.application_category_id) },
+        },
+      );
+
+      const startStep = Array.isArray(startSteps) && startSteps.length ? startSteps[0] : null;
+      const workFlowId = Number(startStep?.id || 0);
+      const stepOrderRaw = Number(startStep?._order || 0);
+      const stepOrder = Number.isFinite(stepOrderRaw) && stepOrderRaw > 0 ? stepOrderRaw : 1;
+
+      if (!workFlowId) {
+        throw new Error("Hakuna workflow step ya kuanzia (is_start=1) kwa ombi hili.");
+      }
+
+      await this.createPendingApplicationProcess({
+        trackingNumber: normalizedTracking,
+        workFlowId,
+        stepOrder,
+        actorId: null,
+        startedAt: true,
+        transaction,
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+
+    return await this.fetchApplicationDetails(normalizedTracking, currentUser);
   }
 }
 
