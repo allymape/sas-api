@@ -24,20 +24,29 @@ const postJson = async (url, payload, timeoutMs) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs || 20000));
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    const text = await res.text();
-    let json = null;
     try {
-      json = text ? JSON.parse(text) : null;
-    } catch (_) {
-      json = null;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (_) {
+        json = null;
+      }
+      return { ok: res.ok, status: res.status, json, text };
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        const err = new Error("Ollama request timed out");
+        err.code = "OLLAMA_TIMEOUT";
+        throw err;
+      }
+      throw error;
     }
-    return { ok: res.ok, status: res.status, json, text };
   } finally {
     clearTimeout(timer);
   }
@@ -84,4 +93,3 @@ module.exports = {
   getOllamaConfig,
   chat,
 };
-

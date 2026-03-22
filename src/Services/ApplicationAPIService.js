@@ -2003,7 +2003,8 @@ class ApplicationAPIService {
         `
           SELECT
             wf.*,
-            v.rank_name AS name
+            v.rank_name AS name,
+            v.overdue AS overdue
           FROM work_flow wf
           LEFT JOIN vyeo v
             ON v.id = wf.unit_id
@@ -2022,7 +2023,8 @@ class ApplicationAPIService {
         `
           SELECT
             wf.*,
-            v.rank_name AS name
+            v.rank_name AS name,
+            v.overdue AS overdue
           FROM work_flow wf
           LEFT JOIN vyeo v
             ON v.id = wf.start_from

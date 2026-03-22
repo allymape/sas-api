@@ -117,24 +117,61 @@ const getWorkflowStepsForCategory = async (applicationCategoryId) => {
   const id = Number(applicationCategoryId);
   if (!Number.isFinite(id) || id <= 0) return [];
 
-  const rows = await Application.sequelize.query(
-    `
-      SELECT
-        wf.id,
-        wf.application_category_id,
-        wf.step_order,
-        wf.unit_id,
-        wf.action_type_id,
-        wf.is_start,
-        wf.is_end
-      FROM work_flow wf
-      WHERE wf.application_category_id = :applicationCategoryId
-      ORDER BY wf.step_order ASC
-      LIMIT 60
-    `,
-    { type: QueryTypes.SELECT, replacements: { applicationCategoryId: id } },
-  );
-  return rows;
+  const sequelize = Application.sequelize;
+
+  const runModernQuery = async () =>
+    sequelize.query(
+      `
+        SELECT
+          wf.id,
+          wf.application_category_id,
+          wf._order,
+          wf.unit_id,
+          wf.role_id,
+          wf.is_start,
+          wf.is_final,
+          wf.can_assign,
+          wf.can_approve,
+          wf.can_return
+        FROM work_flow wf
+        WHERE wf.application_category_id = :applicationCategoryId
+          AND wf.deleted_at IS NULL
+        ORDER BY wf._order ASC
+        LIMIT 60
+      `,
+      { type: QueryTypes.SELECT, replacements: { applicationCategoryId: id } },
+    );
+
+  const runLegacyQuery = async () =>
+    sequelize.query(
+      `
+        SELECT
+          wf.id,
+          wf.application_category_id,
+          wf._order,
+          wf.start_from AS unit_id,
+          NULL AS role_id,
+          0 AS is_start,
+          0 AS is_final,
+          0 AS can_assign,
+          0 AS can_approve,
+          0 AS can_return
+        FROM work_flow wf
+        WHERE wf.application_category_id = :applicationCategoryId
+        ORDER BY wf._order ASC
+        LIMIT 60
+      `,
+      { type: QueryTypes.SELECT, replacements: { applicationCategoryId: id } },
+    );
+
+  try {
+    return await runModernQuery();
+  } catch (error) {
+    if (error?.original?.code === "ER_BAD_FIELD_ERROR" || error?.parent?.code === "ER_BAD_FIELD_ERROR") {
+      return runLegacyQuery();
+    }
+    throw error;
+  }
 };
 
 const buildSupportContext = async ({ req, userMessage }) => {
@@ -169,4 +206,3 @@ module.exports = {
   extractTrackingNumbers,
   buildSupportContext,
 };
-
