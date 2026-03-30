@@ -444,8 +444,6 @@ userRouter.put("/update-my-profile", isAuth, (req, res) => {
   const user = req.user;
   const canEditUsername =
     Array.isArray(user?.userPermissions) && user.userPermissions.includes("update-users");
-  const canEditEmail =
-    Array.isArray(user?.userPermissions) && user.userPermissions.includes("update-users");
 
   const formData = {
     user_id: user.id,
@@ -467,10 +465,6 @@ userRouter.put("/update-my-profile", isAuth, (req, res) => {
 
   if (canEditUsername) {
     formData.username = req.body?.username;
-  }
-
-  if (canEditEmail) {
-    formData.email = req.body?.email;
   }
 
   if (Object.prototype.hasOwnProperty.call(req.body || {}, "profile_photo")) {

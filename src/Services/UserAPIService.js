@@ -26,7 +26,6 @@ const toBoolean = (value) =>
 
 const PROFILE_PHONE_REGEX = /^\+?[0-9\s-]{9,20}$/;
 const PROFILE_USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,40}$/;
-const PROFILE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PROFILE_PHOTO_REGEX = /^data:image\/(png|jpe?g|webp);base64,/i;
 const MAX_PROFILE_PHOTO_LENGTH = 3_500_000;
 
@@ -224,13 +223,11 @@ const myProfile = async (req) => {
 
 const updateMyProfile = async (req) => {
   const canEditUsername = hasPermission(req, "update-users");
-  const canEditEmail = hasPermission(req, "update-users");
 
   const fullName = String(req.body?.full_name || req.body?.name || req.user?.name || "").trim();
   const phoneNumber = String(req.body?.phone_number || "").trim();
   const emailNotify = toBoolean(req.body?.email_notify) ? 1 : 0;
   const username = String(req.body?.username || "").trim();
-  const email = String(req.body?.email || "").trim().toLowerCase();
   const hasProfilePhoto = Object.prototype.hasOwnProperty.call(req.body || {}, "profile_photo");
   const profilePhoto = hasProfilePhoto ? String(req.body?.profile_photo || "").trim() : null;
 
@@ -252,13 +249,6 @@ const updateMyProfile = async (req) => {
     return {
       statusCode: 422,
       message: "Jina la mtumiaji si sahihi. Tumia herufi/tarakimu 3 hadi 40.",
-    };
-  }
-
-  if (canEditEmail && (!email || !PROFILE_EMAIL_REGEX.test(email))) {
-    return {
-      statusCode: 422,
-      message: "Barua pepe uliyoingiza si sahihi.",
     };
   }
 
@@ -286,10 +276,6 @@ const updateMyProfile = async (req) => {
 
   if (canEditUsername) {
     payload.username = username;
-  }
-
-  if (canEditEmail) {
-    payload.email = email;
   }
 
   if (hasProfilePhoto) {
