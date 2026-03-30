@@ -5,7 +5,8 @@
   "main": "irs.js",
   "scripts": {
     "start": "nodemon irs.js",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "handover:maintenance": "node scripts/handoverMaintenance.js"
   },
   "author": "mac mwocha",
   "license": "ISC",

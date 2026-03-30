@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { QueryTypes } = require("sequelize");
 const db = require("../Config/DbConfig");
+const HandoverService = require("./HandoverService");
 
 const getUserOffice = (user) => {
   if (!user.zone_id && !user.district_code) return 1;
@@ -35,6 +36,19 @@ const buildTokenPayload = (user) => ({
   sehemu: user.sehemu,
   cheo: user.cheo,
   handover_by: user.handover_by,
+  delegated_from_user_name: user.delegated_from_user_name || null,
+  delegated_until_at: user.delegated_until_at || null,
+  delegated_from_user_ids: Array.isArray(user.delegated_from_user_ids)
+    ? user.delegated_from_user_ids
+    : [],
+  active_handover_ids: Array.isArray(user.active_handover_ids)
+    ? user.active_handover_ids
+    : [],
+  primary_handover_id: user.primary_handover_id || null,
+  has_active_incoming_handover: Boolean(user.has_active_incoming_handover),
+  has_active_outgoing_handover: Boolean(user.has_active_outgoing_handover),
+  delegation_scope_type: user.delegation_scope_type || null,
+  delegation_status: user.delegation_status || null,
   is_password_changed: user.is_password_changed,
   cheo_office: Number(user.cheo_office),
   jukumu: user.jukumu,
@@ -135,25 +149,30 @@ class AuthAPIService {
   }
 
   static async getHandover(userId) {
-    const rows = await db.query(
-      `SELECT h.handover_by, LOWER(r.name) AS handedover_cheo
-       FROM handover h
-       JOIN staffs s ON s.id = h.handover_by
-       JOIN roles r ON r.id = s.user_level
-       WHERE h.staff_id = :user_id
-         AND h.start <= NOW()
-         AND h.end >= NOW()
-         AND h.active = 1
-       LIMIT 1`,
-      {
-        type: QueryTypes.SELECT,
-        replacements: { user_id: userId },
-      },
-    );
+    const context = await HandoverService.resolveDelegationContextForUser(userId, {
+      autoTransition: true,
+    });
+    const primaryDelegation = context?.primaryDelegation || null;
 
     return {
-      handover_by: rows[0]?.handover_by || null,
-      handedover_cheo: rows[0]?.handedover_cheo || null,
+      handover_by: primaryDelegation?.from_user_id || null,
+      delegated_from_user_name: primaryDelegation?.from_user_name || null,
+      delegated_until_at: primaryDelegation?.end_at || null,
+      handedover_cheo: primaryDelegation?.from_user_rank_name || null,
+      delegated_permissions: Array.isArray(context?.delegatedPermissions)
+        ? context.delegatedPermissions
+        : [],
+      delegated_from_user_ids: Array.isArray(context?.delegatedFromUserIds)
+        ? context.delegatedFromUserIds
+        : [],
+      active_handover_ids: Array.isArray(context?.activeHandoverIds)
+        ? context.activeHandoverIds
+        : [],
+      primary_handover_id: primaryDelegation?.id || null,
+      has_active_incoming_handover: Boolean(context?.hasIncomingActiveHandover),
+      has_active_outgoing_handover: Boolean(context?.hasOutgoingActiveHandover),
+      delegation_scope_type: primaryDelegation?.scope_type || null,
+      delegation_status: primaryDelegation?.status || null,
     };
   }
 
@@ -221,10 +240,13 @@ class AuthAPIService {
       },
     );
 
-    const userPermissions = permissions.map((item) => item.permission_name);
+    const basePermissions = permissions.map((item) => item.permission_name);
     const office = getUserOffice(user);
     const office_name = await this.resolveOfficeName(office, user);
     const handover = await this.getHandover(user.id);
+    const userPermissions = Array.from(
+      new Set([...(basePermissions || []), ...(handover?.delegated_permissions || [])]),
+    );
     const now = new Date();
 
     // Non-critical audit writes should never delay login response.
@@ -284,6 +306,15 @@ class AuthAPIService {
         ? "k" + handover.handedover_cheo
         : safeLower(user.rank_name),
       handover_by: handover.handover_by,
+      delegated_from_user_name: handover.delegated_from_user_name,
+      delegated_until_at: handover.delegated_until_at,
+      delegated_from_user_ids: handover.delegated_from_user_ids,
+      active_handover_ids: handover.active_handover_ids,
+      primary_handover_id: handover.primary_handover_id,
+      has_active_incoming_handover: handover.has_active_incoming_handover,
+      has_active_outgoing_handover: handover.has_active_outgoing_handover,
+      delegation_scope_type: handover.delegation_scope_type,
+      delegation_status: handover.delegation_status,
       cheo_office: user.cheo_office,
       jukumu: safeUpper(user.jukumu),
       userPermissions,
@@ -296,7 +327,10 @@ class AuthAPIService {
       statusCode: 300,
       message: "Logged in!",
       token,
-      RoleManage: permissions,
+      RoleManage: userPermissions.map((permission_name, index) => ({
+        permission_id: index + 1,
+        permission_name,
+      })),
       user: userData,
     };
   }

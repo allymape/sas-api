@@ -18,6 +18,7 @@ var rateLimit = require("express-rate-limit");
 const userModal = require("../models/userModal.js");
 const { resetPassword } = require("../templates/emailTemplate.js");
 const sharedModel = require("../models/sharedModel.js");
+const HandoverService = require("../src/Services/HandoverService");
 const baruaSecret = process.env.BARUA_SECRET_KEY || 'MY-SECRET-KEY'
 
 const extractSearchValue = (req) => {
@@ -35,6 +36,13 @@ const extractSearchValue = (req) => {
   );
 };
 
+const isAdminUser = (user = {}) => {
+  const roleName = String(user?.jukumu || user?.role_name || user?.role || "").toLowerCase();
+  return ["super admin", "super-admin", "admin", "system admin", "administrator"].some((name) =>
+    roleName.includes(name),
+  );
+};
+
 const loginlimiter = rateLimit({
   windowMs: 20 * 60 * 1000, // 10 minutes
   max: 20, // Limit each IP to 5 requests per `window` (here, per 10 minutes)
@@ -46,61 +54,98 @@ const loginlimiter = rateLimit({
 userRouter.post("/login", loginlimiter, (req, res) => {
   userModal.loginUser(req, (success , loginUser, permissions , message) => {
     if (success && loginUser) {
-      const userPermissions = [];
+      const basePermissions = [];
       let user = loginUser[0];
       let office = getUserOffice(user);
       userModal.getStaffOfficeName(office, user, (office_name) => {
-        sharedModel.myhandover(user.id, (handover_title, handover_by) => {
-          // console.log("User Data", userData);
-          for (var i = 0; i < permissions.length; i++) {
-            userPermissions.push(permissions[i].permission_name);
-          }
-          const userData = {
-            id: user.id,
-            name: user.name,
-            username: user.username,
-            phone_no: user.phone_no,
-            user_status: user.user_status,
-            last_login: user.last_login,
-            user_level: user.user_level,
-            role_id: user.new_role_id,
-            station_level: user.station_level,
-            office: office,
-            office_name: office_name,
-            rank_name: user.rank_name,
-            is_password_changed: user.is_password_changed,
-            zone_id: Number(user.zone_id),
-            kanda: user.zone_name,
-            region_code: user.region_code,
-            district_code: user.district_code,
-            rank_level: user.rank_level,
-            twofa: user.twofa,
-            email: user.email,
-            section_id: user.section_id,
-            ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
-            sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
-            cheo: handover_title
-              ? "k" + handover_title
-              : user.rank_name
-              ? lowerCase(user.rank_name)
-              : "",
-            handover_by: handover_by,
-            cheo_office: user.cheo_office,
-            jukumu: user.jukumu ? upperCase(user.jukumu) : "",
-            userPermissions: userPermissions,
-          };
+        for (var i = 0; i < permissions.length; i++) {
+          basePermissions.push(permissions[i].permission_name);
+        }
 
-          const token = generateAccessToken(loggedUserData(userData));
-          res.send({
-            error: false,
-            statusCode: 300,
-            message: message,
-            token,
-            RoleManage: permissions,
-            user: userData,
+        HandoverService.resolveDelegationContextForUser(user.id, {
+          autoTransition: true,
+        })
+          .then((handoverContext) => {
+            const delegatedPermissions = handoverContext?.delegatedPermissions || [];
+            const effectivePermissions = Array.from(
+              new Set([...(basePermissions || []), ...(delegatedPermissions || [])])
+            );
+            const primaryDelegation = handoverContext?.primaryDelegation || null;
+            const handoverTitle = primaryDelegation?.from_user_rank_name || null;
+            const handoverBy = primaryDelegation?.from_user_id || null;
+            const delegatedFromUserName = primaryDelegation?.from_user_name || null;
+
+            const userData = {
+              id: user.id,
+              name: user.name,
+              username: user.username,
+              phone_no: user.phone_no,
+              user_status: user.user_status,
+              last_login: user.last_login,
+              user_level: user.user_level,
+              role_id: user.new_role_id,
+              station_level: user.station_level,
+              office: office,
+              office_name: office_name,
+              rank_name: user.rank_name,
+              is_password_changed: user.is_password_changed,
+              zone_id: Number(user.zone_id),
+              kanda: user.zone_name,
+              region_code: user.region_code,
+              district_code: user.district_code,
+              rank_level: user.rank_level,
+              twofa: user.twofa,
+              email: user.email,
+              section_id: user.section_id,
+              ngazi: user.ngazi ? lowerCase(user.ngazi) : "",
+              sehemu: user.sehemu ? lowerCase(user.sehemu) : "",
+              cheo: handoverTitle
+                ? "k" + handoverTitle
+                : user.rank_name
+                ? lowerCase(user.rank_name)
+                : "",
+              handover_by: handoverBy,
+              delegated_from_user_name: delegatedFromUserName,
+              delegated_until_at: primaryDelegation?.end_at || null,
+              cheo_office: user.cheo_office,
+              jukumu: user.jukumu ? upperCase(user.jukumu) : "",
+              userPermissions: effectivePermissions,
+              base_permissions: basePermissions,
+              delegatedPermissions,
+              effectivePermissions,
+              delegated_from_user_ids: handoverContext?.delegatedFromUserIds || [],
+              active_handover_ids: handoverContext?.activeHandoverIds || [],
+              primary_handover_id: primaryDelegation?.id || null,
+              has_active_incoming_handover: Boolean(handoverContext?.hasIncomingActiveHandover),
+              has_active_outgoing_handover: Boolean(handoverContext?.hasOutgoingActiveHandover),
+              delegation_scope_type: primaryDelegation?.scope_type || null,
+              delegation_status: primaryDelegation?.status || null,
+            };
+
+            const token = generateAccessToken(loggedUserData(userData));
+            const roleManage = effectivePermissions.map((permissionName, index) => ({
+              permission_id: index + 1,
+              permission_name: permissionName,
+            }));
+
+            res.send({
+              error: false,
+              statusCode: 300,
+              message: message,
+              token,
+              RoleManage: roleManage,
+              user: userData,
+            });
+            console.log("rendered data succesfully");
+          })
+          .catch((handoverError) => {
+            console.log("Failed to resolve handover context during login", handoverError);
+            res.status(500).send({
+              error: true,
+              statusCode: 500,
+              message: "Kuna tatizo la handover context. Jaribu tena.",
+            });
           });
-          console.log("rendered data succesfully");
-        });
       
       });
     } else {
@@ -157,6 +202,7 @@ userRouter.post('/refresh_token' , isAuth , (req , res) => {
           success: true,
           statusCode: 300,
           token: token,
+          userPermissions: Array.isArray(user?.userPermissions) ? user.userPermissions : [],
         });
       }
 })
@@ -174,7 +220,16 @@ userRouter.get("/users", isAuth , permission('view-users'), (req, res, next) => 
     inactiveRaw === "true" ||
     inactiveRaw === 1 ||
     inactiveRaw === "1";
-  userModal.getUsers(offset, per_page, search_value, user, inactive,(error, users, numRows) => {
+
+  const unitFilterRaw =
+    req.query.unit_id !== undefined ? req.query.unit_id : req.body?.unit_id;
+  const requestedUnitId = Number.parseInt(unitFilterRaw, 10);
+  const unitId =
+    isAdminUser(user) && Number.isInteger(requestedUnitId) && requestedUnitId > 0
+      ? requestedUnitId
+      : null;
+
+  userModal.getUsers(offset, per_page, search_value, user, inactive, unitId, (error, users, numRows) => {
     // console.log(users);
     return res.send({
       error: error ? true : false,
@@ -208,6 +263,55 @@ userRouter.get("/users/:id", isAuth, (req, res, next) => {
       statusCode: error ? 306 : 300,
       data: error ? error : user,
       message: error ? "Not Found" : "Success",
+    });
+  });
+});
+
+// get user signature (for preview)
+userRouter.get("/users/:id/signature", isAuth, permission("view-users"), (req, res) => {
+  const userId = Number(req.params.id || 0);
+  if (!userId) {
+    return res.send({
+      error: true,
+      statusCode: 306,
+      data: null,
+      message: "Kitambulisho cha mtumiaji si sahihi.",
+    });
+  }
+
+  userModal.getUserSignature(userId, req.user, (error, found, userSignature) => {
+    if (error) {
+      return res.send({
+        error: true,
+        statusCode: 306,
+        data: null,
+        message: "Imeshindikana kupata sahihi ya mtumiaji.",
+      });
+    }
+
+    if (!found) {
+      return res.send({
+        error: true,
+        statusCode: 404,
+        data: null,
+        message: "Mtumiaji hakupatikana.",
+      });
+    }
+
+    if (!userSignature?.signature) {
+      return res.send({
+        error: true,
+        statusCode: 404,
+        data: userSignature,
+        message: "Mtumiaji huyu hana sahihi iliyohifadhiwa.",
+      });
+    }
+
+    return res.send({
+      error: false,
+      statusCode: 300,
+      data: userSignature,
+      message: "Sahihi imepatikana.",
     });
   });
 });
@@ -337,15 +441,58 @@ userRouter.post("/reset-user-password", function (req, res) {
 });
 
 userRouter.put("/update-my-profile", isAuth, (req, res) => {
-  const { phone_number, email_notify } = req.body;
   const user = req.user;
-  const formData = [phone_number, email_notify, user.id];
-  userModal.updateMyProfile(formData, (success) => {
+  const canEditUsername =
+    Array.isArray(user?.userPermissions) && user.userPermissions.includes("update-users");
+  const canEditEmail =
+    Array.isArray(user?.userPermissions) && user.userPermissions.includes("update-users");
+
+  const formData = {
+    user_id: user.id,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, "full_name")) {
+    formData.full_name = req.body.full_name;
+  } else if (user?.name) {
+    formData.full_name = user.name;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, "phone_number")) {
+    formData.phone_number = req.body.phone_number;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, "email_notify")) {
+    formData.email_notify = req.body.email_notify;
+  }
+
+  if (canEditUsername) {
+    formData.username = req.body?.username;
+  }
+
+  if (canEditEmail) {
+    formData.email = req.body?.email;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, "profile_photo")) {
+    formData.profile_photo = req.body.profile_photo;
+  }
+
+  userModal.updateMyProfile(formData, (success, meta = {}) => {
+    let message = success
+      ? "Umefanikiwa kurekebisha taarifa zako."
+      : "Haujafanikiwa kurekebisha taarifa zako.";
+
+    if (!success && meta.reason === "email_exists") {
+      message = "Barua pepe imeshatumika na mtumiaji mwingine.";
+    } else if (!success && meta.reason === "username_exists") {
+      message = "Jina la mtumiaji limeshatumika.";
+    } else if (!success && meta.reason === "not_found") {
+      message = "Akaunti haijapatikana.";
+    }
+
     res.send({
       statusCode: success ? 300 : 306,
-      message: success
-        ? "Umefanikiwa kurekebisha taarifa zako."
-        : "Haujafanikiwa kurekebisha taarifa zako.",
+      message,
     });
   });
 });
@@ -376,9 +523,23 @@ function loggedUserData(user){
     sehemu: user.sehemu, // KE,ADSA,HICT,W1,K1,MUS,DLSU
     cheo: user.cheo, // W4,W5,K2,K3, USJ1,USJ2,USJ3,ADSA,KE,MUS,
     handover_by: user.handover_by,
+    delegated_from_user_name: user.delegated_from_user_name || null,
+    delegated_until_at: user.delegated_until_at || null,
+    delegated_from_user_ids: Array.isArray(user.delegated_from_user_ids)
+      ? user.delegated_from_user_ids
+      : [],
+    active_handover_ids: Array.isArray(user.active_handover_ids)
+      ? user.active_handover_ids
+      : [],
+    primary_handover_id: user.primary_handover_id || null,
+    has_active_incoming_handover: Boolean(user.has_active_incoming_handover),
+    has_active_outgoing_handover: Boolean(user.has_active_outgoing_handover),
+    delegation_scope_type: user.delegation_scope_type || null,
+    delegation_status: user.delegation_status || null,
     is_password_changed: user.is_password_changed,
     cheo_office: Number(user.cheo_office),
     jukumu: user.jukumu,
+    userPermissions: Array.isArray(user.userPermissions) ? user.userPermissions : [],
   };
 }
 

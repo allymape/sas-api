@@ -90,7 +90,7 @@ const getApplicationsByTrackingNumbers = async (trackingNumbers = []) => {
 
   const processRows = await Application.sequelize.query(
     `
-      SELECT ap.tracking_number, ap.work_flow_id, ap.step_order, ap.status, ap.assigned_to, ap.started_at, ap.acted_by, ap.acted_at, ap.completed_at
+      SELECT ap.tracking_number, ap.workflow_id, ap.step_order, ap.status, ap.assigned_to, ap.started_at, ap.acted_by, ap.acted_at, ap.completed_at
       FROM application_processes ap
       WHERE ap.tracking_number IN (:trackingNumbers)
         AND ap.step_order = (
@@ -133,7 +133,7 @@ const getWorkflowStepsForCategory = async (applicationCategoryId) => {
           wf.can_assign,
           wf.can_approve,
           wf.can_return
-        FROM work_flow wf
+        FROM workflows wf
         WHERE wf.application_category_id = :applicationCategoryId
           AND wf.deleted_at IS NULL
         ORDER BY wf._order ASC
@@ -156,7 +156,7 @@ const getWorkflowStepsForCategory = async (applicationCategoryId) => {
           0 AS can_assign,
           0 AS can_approve,
           0 AS can_return
-        FROM work_flow wf
+        FROM workflows wf
         WHERE wf.application_category_id = :applicationCategoryId
         ORDER BY wf._order ASC
         LIMIT 60

@@ -111,7 +111,7 @@ SELECT
   END AS t_old_region,
   COALESCE(fsi.is_hostel, e.is_hostel) AS is_hostel,
   e.is_hostel AS was_hostel,
-  e.sharti AS masharti,
+  sr.sharti AS masharti,
   CASE
     WHEN a.application_category_id IN (5, 6, 9, 10, 11, 13, 14) AND r_former.RegionName IS NOT NULL THEN r_former.RegionName
     ELSE r_current.RegionName

@@ -350,7 +350,7 @@ const getOverdueApplicationsReply = async (user) => {
     LEFT JOIN zones z ON z.id = r.zone_id
     LEFT JOIN staffs assigned_staff ON assigned_staff.id = ap.assigned_to
     LEFT JOIN roles assigned_role ON assigned_role.id = assigned_staff.user_level
-    LEFT JOIN work_flow wf ON wf.id = ap.work_flow_id
+    LEFT JOIN workflows wf ON wf.id = ap.workflow_id
     LEFT JOIN vyeo workflow_role ON workflow_role.id = wf.unit_id
     WHERE 1 = 1
       ${officeFilterSqlForApplications(user)}
@@ -600,7 +600,7 @@ const getTrackingNumberReply = async (trackingNumber) => {
       fast_path: "tracking_number_lookup",
       tracking_number: normalizedTracking,
       application_id: application.id,
-      work_flow_id: currentProcess?.work_flow_id || null,
+      workflow_id: currentProcess?.workflow_id || null,
       assigned_to: currentProcess?.assigned_to || application.staff_id || null,
     },
   };

@@ -14,6 +14,7 @@ const {
   instituteLocationsSqlJoin,
   randomInt
 } = require("../utils");
+const HandoverService = require("../src/Services/HandoverService");
 
 module.exports = {
   getInstituteInfo: (establish_tracking_number, callback) => {
@@ -339,7 +340,7 @@ module.exports = {
     const runLegacyQuery = () => {
       db.query(
         `SELECT r.id AS id, v.rank_level
-         FROM work_flow w
+         FROM workflows w
          JOIN vyeo v ON v.id = w.start_from
          JOIN roles r ON r.vyeoId = v.id
          WHERE LOWER(r.name) = LOWER(v.rank_name)
@@ -360,8 +361,8 @@ module.exports = {
 
     db.query(
       `SELECT r.id AS id, v.rank_level
-       FROM work_flow w_current
-       JOIN work_flow w_prev
+       FROM workflows w_current
+       JOIN workflows w_prev
          ON w_prev.application_category_id = w_current.application_category_id
         AND w_prev._order = (w_current._order - 1)
        JOIN vyeo v ON v.id = w_prev.unit_id
@@ -873,7 +874,7 @@ module.exports = {
     ) {
       db.query(
         `SELECT LOWER(rank_name) AS rank_name , rank_level
-          FROM work_flow w
+          FROM workflows w
           JOIN vyeo v ON v.id = w.end_to
           WHERE w.application_category_id = ? AND w.start_from = ? 
           LIMIT 1`,
@@ -1059,6 +1060,31 @@ module.exports = {
                       && Number(application_category) > 3
                       && !Boolean(options?.skip_event_queue);
 
+                    const logDelegatedTaskAction = () => {
+                      if (!req?.user) return;
+                      const activeHandoverIds = Array.isArray(req.user.active_handover_ids)
+                        ? req.user.active_handover_ids
+                        : [];
+                      const primaryHandoverId = Number.parseInt(req.user.primary_handover_id, 10);
+                      const handoverIds = activeHandoverIds.length
+                        ? activeHandoverIds
+                        : (Number.isFinite(primaryHandoverId) && primaryHandoverId > 0 ? [primaryHandoverId] : []);
+
+                      if (!handoverIds.length) return;
+
+                      void HandoverService.logDelegatedTaskAction({
+                        user: req.user,
+                        handoverIds,
+                        description: "Workflow task action performed under active handover.",
+                        metadata: {
+                          tracking_number: trackerId,
+                          application_category_id: Number(application_category || 0) || null,
+                          haliombi: Number(haliombi || 0),
+                          endpoint: req?.originalUrl || req?.url || null,
+                        },
+                      });
+                    };
+
                     const finalize = () => {
                       if (!manageTransaction) {
                         if (!deferSideEffects && meta?.comment_id) {
@@ -1078,6 +1104,7 @@ module.exports = {
                           notifyStaff(user_to, application_category, user.name, trackerId);
                           notifyMwombaji(trackerId, haliombi);
                         }
+                        logDelegatedTaskAction();
                         done(true, null, meta);
                         return;
                       }
@@ -1107,6 +1134,7 @@ module.exports = {
                           notifyMwombaji(trackerId, haliombi);
                         }
 
+                        logDelegatedTaskAction();
                         done(true, null, meta);
                       });
                     };
@@ -1139,13 +1167,17 @@ module.exports = {
     );
   },
   myhandover: (user_id, callback) => {
-    const today = formatDate(new Date());
+    const today = new Date();
     db.query(
-      `SELECT handover_by , LOWER(r.name) AS handedover_cheo
-      FROM handover h
-      JOIN staffs s ON s.id = h.handover_by
+      `SELECT h.from_user_id AS handover_by, LOWER(r.name) AS handedover_cheo
+      FROM handovers h
+      JOIN staffs s ON s.id = h.from_user_id
       JOIN roles r ON r.id = s.user_level
-      WHERE staff_id = ? AND start <= ?  AND end >= ? AND active = 1
+      WHERE h.to_user_id = ?
+        AND h.start_at <= ?
+        AND h.end_at > ?
+        AND h.status = 'active'
+      ORDER BY h.start_at DESC, h.id DESC
       LIMIT 1`,
       [user_id, today, today],
       (error, handover) => {
@@ -1158,12 +1190,16 @@ module.exports = {
     );
   },
   myActivehandover: (handover_by, callback) => {
+    const now = new Date();
     db.query(
-      `SELECT *
-      FROM handover
-      WHERE active = 1 AND handover_by = ?
+      `SELECT id
+      FROM handovers
+      WHERE status = 'active'
+        AND from_user_id = ?
+        AND start_at <= ?
+        AND end_at > ?
       LIMIT 1`,
-      [handover_by],
+      [handover_by, now, now],
       (error, activeHandover) => {
         if (error) console.log(error);
         callback(activeHandover.length > 0 ? true : false);
@@ -1171,17 +1207,29 @@ module.exports = {
     );
   },
   stopHandover: (handover_by, callback) => {
-    const updated_at = new Date();
-    db.query(
-      `UPDATE handover 
-              SET active = 0 , updated_at = ?
-              WHERE handover_by = ? AND active = 1`,
-      [updated_at, handover_by],
-      (error, result) => {
+    HandoverService.findLatestOwnerOpenHandover(handover_by)
+      .then((latest) => {
+        if (!latest) {
+          callback(false);
+          return;
+        }
+
+        if (String(latest.status) === HandoverService.STATUS.ACTIVE) {
+          return HandoverService.reclaimHandover({
+            handoverId: latest.id,
+            reclaimedBy: handover_by,
+          }).then(() => callback(true));
+        }
+
+        return HandoverService.cancelHandover({
+          handoverId: latest.id,
+          cancelledBy: handover_by,
+        }).then(() => callback(true));
+      })
+      .catch((error) => {
         if (error) console.log(error);
-        callback(result.affectedRows > 0);
-      }
-    );
+        callback(false);
+      });
   },
   findOneApplication: (tracking_number, callback) => {
     db.query(

@@ -229,9 +229,9 @@ class WorkflowHelper {
     const workflowSteps = application?.workflow_steps
       || application?.get?.("workflow_steps")
       || [];
-    const currentWorkflowId = toNumber(currentProcess?.work_flow_id);
+    const currentWorkflowId = toNumber(currentProcess?.workflow_id);
     const currentWorkflowStep = Array.isArray(workflowSteps)
-      ? workflowSteps.find((step) => toNumber(step?.work_flow_id) === currentWorkflowId)
+      ? workflowSteps.find((step) => toNumber(step?.workflow_id) === currentWorkflowId)
       : null;
     const currentStepIsFinal = toNumber(currentWorkflowStep?.is_final) === 1;
     const currentStepCanApprove = toNumber(currentWorkflowStep?.can_approve) === 1;

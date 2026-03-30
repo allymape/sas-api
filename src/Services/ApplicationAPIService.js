@@ -37,8 +37,44 @@ const Zone = require("../Models/ZoneModel");
 const { Op, QueryTypes } = require("sequelize");
 
 const WorkflowHelper = require("../Utils/WorkflowHelper");
+const HandoverService = require("./HandoverService");
+
+let workflowUnitColumnCache = null;
 
 class ApplicationAPIService {
+  static async resolveWorkflowUnitColumnName() {
+    if (workflowUnitColumnCache) return workflowUnitColumnCache;
+
+    try {
+      const rows = await Application.sequelize.query(
+        `
+          SELECT COLUMN_NAME
+          FROM INFORMATION_SCHEMA.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME IN ('workflows', 'workflow')
+            AND COLUMN_NAME IN ('unit_id', 'start_from')
+          ORDER BY
+            CASE WHEN TABLE_NAME = 'workflows' THEN 0 ELSE 1 END,
+            CASE WHEN COLUMN_NAME = 'unit_id' THEN 0 ELSE 1 END
+          LIMIT 1
+        `,
+        { type: QueryTypes.SELECT },
+      );
+
+      const columnName = String(rows?.[0]?.COLUMN_NAME || "").trim();
+      workflowUnitColumnCache = columnName === "start_from" ? "start_from" : "unit_id";
+    } catch (error) {
+      workflowUnitColumnCache = "unit_id";
+    }
+
+    return workflowUnitColumnCache;
+  }
+
+  static async workflowUnitColumnSql(alias = "wf") {
+    const columnName = await this.resolveWorkflowUnitColumnName();
+    return `${alias}.${columnName}`;
+  }
+
   static normalizeNullableCode(value) {
     const normalized = String(value ?? "").trim();
     if (!normalized) return null;
@@ -781,7 +817,7 @@ class ApplicationAPIService {
   static normalizeWorkflowRouteSteps(steps = []) {
     const stepMap = new Map();
     (Array.isArray(steps) ? steps : []).forEach((row) => {
-      const workFlowId = Number.parseInt(row?.work_flow_id || row?.id, 10);
+      const workFlowId = Number.parseInt(row?.workflow_id || row?.id, 10);
       if (!Number.isFinite(workFlowId) || workFlowId <= 0) return;
 
       const parsedOrder = Number.parseInt(row?._order, 10);
@@ -793,7 +829,7 @@ class ApplicationAPIService {
 
       if (!stepMap.has(workFlowId)) {
         stepMap.set(workFlowId, {
-          work_flow_id: workFlowId,
+          workflow_id: workFlowId,
           _order: orderValue,
           is_start: isStart ? 1 : 0,
           is_final: isFinal ? 1 : 0,
@@ -804,7 +840,7 @@ class ApplicationAPIService {
     });
 
     return Array.from(stepMap.values()).sort(
-      (left, right) => left._order - right._order || left.work_flow_id - right.work_flow_id,
+      (left, right) => left._order - right._order || left.workflow_id - right.workflow_id,
     );
   }
 
@@ -905,7 +941,7 @@ class ApplicationAPIService {
       `
         INSERT INTO application_processes (
           tracking_number,
-          work_flow_id,
+          workflow_id,
           step_order,
           assigned_to,
           status,
@@ -948,7 +984,7 @@ class ApplicationAPIService {
       EXISTS (
         SELECT 1
         FROM application_processes ap
-        JOIN work_flow wf ON wf.id = ap.work_flow_id
+        JOIN workflows wf ON wf.id = ap.workflow_id
         WHERE ap.tracking_number = ${tableAlias}.tracking_number
           AND wf.unit_id = ${unitRef}
           AND LOWER(TRIM(COALESCE(ap.status, ''))) = 'pending'
@@ -966,12 +1002,12 @@ class ApplicationAPIService {
       EXISTS (
         SELECT 1
         FROM application_processes ap
-        JOIN work_flow wf ON wf.id = ap.work_flow_id
+        JOIN workflows wf ON wf.id = ap.workflow_id
         WHERE ap.tracking_number = ${tableAlias}.tracking_number
           AND wf.unit_id = ${unitRef}
           AND LOWER(TRIM(COALESCE(ap.status, ''))) = 'pending'
           AND ap.assigned_to = ${staffRef}
-          AND ap.work_flow_id IS NOT NULL
+          AND ap.workflow_id IS NOT NULL
           AND ap.step_order = (
             SELECT MAX(ap2.step_order)
             FROM application_processes ap2
@@ -986,12 +1022,12 @@ class ApplicationAPIService {
       EXISTS (
         SELECT 1
         FROM application_processes ap
-        JOIN work_flow wf ON wf.id = ap.work_flow_id
+        JOIN workflows wf ON wf.id = ap.workflow_id
         WHERE ap.tracking_number = ${tableAlias}.tracking_number
           AND wf.unit_id = ${unitRef}
           AND LOWER(TRIM(COALESCE(ap.status, ''))) = 'Pending'
           AND ap.assigned_to IS NULL
-          AND ap.work_flow_id IS NOT NULL
+          AND ap.workflow_id IS NOT NULL
       )
     `;
   }
@@ -1016,7 +1052,7 @@ class ApplicationAPIService {
       EXISTS (
         SELECT 1
         FROM application_processes ap
-        JOIN work_flow wf ON wf.id = ap.work_flow_id
+        JOIN workflows wf ON wf.id = ap.workflow_id
         WHERE ap.tracking_number = ${tableAlias}.tracking_number
           AND wf.unit_id = ${unitRef}
       )
@@ -1356,14 +1392,15 @@ class ApplicationAPIService {
       });
     }
 
+    const workflowUnitSql = await this.workflowUnitColumnSql("wf");
     const pendingFilter = `
       EXISTS (
         SELECT 1
         FROM application_processes ap
-        INNER JOIN work_flow wf
-          ON wf.id = ap.work_flow_id
+        INNER JOIN workflows wf
+          ON wf.id = ap.workflow_id
         WHERE ap.tracking_number = a.tracking_number
-          AND wf.unit_id = :workflowUnitId
+          AND ${workflowUnitSql} = :workflowUnitId
           AND (
             (
               :canAssignStaff = 1
@@ -1620,6 +1657,7 @@ class ApplicationAPIService {
       }
 
       if (workflowUnitId) {
+        const workflowUnitSql = await this.workflowUnitColumnSql("wf");
         if (!Array.isArray(where[Op.and])) where[Op.and] = [];
         const assignedToSql = onlyAssigned
           ? `ap.assigned_to = ${Number(numericStaffId)}`
@@ -1631,10 +1669,10 @@ class ApplicationAPIService {
           EXISTS (
             SELECT 1
             FROM application_processes ap
-            INNER JOIN work_flow wf
-              ON wf.id = ap.work_flow_id
+            INNER JOIN workflows wf
+              ON wf.id = ap.workflow_id
             WHERE ap.tracking_number = Application.tracking_number
-              AND wf.unit_id = ${Number(workflowUnitId)}
+              AND ${workflowUnitSql} = ${Number(workflowUnitId)}
               AND (
                 (
                   ${canAssignStaff ? 1 : 0} = 1
@@ -1857,16 +1895,17 @@ class ApplicationAPIService {
 
     const canAssignStaff = this.hasAssignStaffPermission(user);
     const sequelize = Application.sequelize;
+    const workflowUnitSql = await this.workflowUnitColumnSql("wf");
 
     const rows = await sequelize.query(
       `
         SELECT EXISTS (
           SELECT 1
           FROM application_processes ap
-          INNER JOIN work_flow wf
-            ON wf.id = ap.work_flow_id
+          INNER JOIN workflows wf
+            ON wf.id = ap.workflow_id
           WHERE ap.tracking_number = :trackingNumber
-            AND wf.unit_id = :workflowUnitId
+            AND ${workflowUnitSql} = :workflowUnitId
             AND (
               (
                 :canAssignStaff = 1
@@ -1913,8 +1952,8 @@ class ApplicationAPIService {
             wf.is_start AS current_workflow_is_start,
             wf.is_final AS current_workflow_is_final
           FROM application_processes ap
-          LEFT JOIN work_flow wf
-            ON wf.id = ap.work_flow_id
+          LEFT JOIN workflows wf
+            ON wf.id = ap.workflow_id
           LEFT JOIN vyeo v
             ON v.id = wf.unit_id
           WHERE ap.tracking_number = :trackingNumber
@@ -1941,8 +1980,8 @@ class ApplicationAPIService {
             0 AS current_workflow_is_start,
             0 AS current_workflow_is_final
           FROM application_processes ap
-          LEFT JOIN work_flow wf
-            ON wf.id = ap.work_flow_id
+          LEFT JOIN workflows wf
+            ON wf.id = ap.workflow_id
           LEFT JOIN vyeo v
             ON v.id = wf.start_from
           WHERE ap.tracking_number = :trackingNumber
@@ -1973,7 +2012,7 @@ class ApplicationAPIService {
     const process = rows?.[0] || null;
     if (!process) return null;
 
-    const workflowId = Number.parseInt(process?.work_flow_id, 10);
+    const workflowId = Number.parseInt(process?.workflow_id, 10);
     process.current_workflow_unit = await this.fetchCurrentWorkflowUnit(workflowId);
     delete process.current_workflow_unit_id;
     delete process.current_workflow_unit_name;
@@ -2005,7 +2044,7 @@ class ApplicationAPIService {
             wf.*,
             v.rank_name AS name,
             v.overdue AS overdue
-          FROM work_flow wf
+          FROM workflows wf
           LEFT JOIN vyeo v
             ON v.id = wf.unit_id
           WHERE wf.id = :workflowId
@@ -2025,7 +2064,7 @@ class ApplicationAPIService {
             wf.*,
             v.rank_name AS name,
             v.overdue AS overdue
-          FROM work_flow wf
+          FROM workflows wf
           LEFT JOIN vyeo v
             ON v.id = wf.start_from
           WHERE wf.id = :workflowId
@@ -2067,7 +2106,7 @@ class ApplicationAPIService {
       return sequelize.query(
         `
           SELECT
-            w.id AS work_flow_id,
+            w.id AS workflow_id,
             w.application_category_id,
             w._order,
             w.unit_id,
@@ -2085,11 +2124,11 @@ class ApplicationAPIService {
             ap.step_order AS process_step_order,
             ap.created_at AS process_created_at,
             ap.updated_at AS process_updated_at
-          FROM work_flow w
+          FROM workflows w
           LEFT JOIN vyeo v ON v.id = w.unit_id
           LEFT JOIN role_management rm ON rm.id = w.role_id
           LEFT JOIN application_processes ap
-            ON ap.work_flow_id = w.id
+            ON ap.workflow_id = w.id
            AND ap.tracking_number = :trackingNumber
           WHERE w.application_category_id = :applicationCategoryId
             AND w.deleted_at IS NULL
@@ -2109,7 +2148,7 @@ class ApplicationAPIService {
       return sequelize.query(
         `
           SELECT
-            w.id AS work_flow_id,
+            w.id AS workflow_id,
             w.application_category_id,
             w._order,
             w.start_from AS unit_id,
@@ -2127,10 +2166,10 @@ class ApplicationAPIService {
             ap.step_order AS process_step_order,
             ap.created_at AS process_created_at,
             ap.updated_at AS process_updated_at
-          FROM work_flow w
+          FROM workflows w
           LEFT JOIN vyeo v ON v.id = w.start_from
           LEFT JOIN application_processes ap
-            ON ap.work_flow_id = w.id
+            ON ap.workflow_id = w.id
            AND ap.tracking_number = :trackingNumber
           WHERE w.application_category_id = :applicationCategoryId
           ORDER BY w._order ASC
@@ -2433,6 +2472,12 @@ class ApplicationAPIService {
 
   // 5. Advance workflow
   static async advanceWorkflow(trackingNumber, staffId, payload = {}, currentUser = null) {
+    if (currentUser?.has_active_outgoing_handover) {
+      const lockError = new Error(HandoverService.OWNER_LOCK_MESSAGE);
+      lockError.statusCode = 423;
+      throw lockError;
+    }
+
     const rawAction = String(payload?.action || "").trim();
     const action = this.normalizeWorkflowAction(rawAction);
     const content = String(payload?.content || "").trim();
@@ -2460,11 +2505,11 @@ class ApplicationAPIService {
     const actorId = Number.parseInt(staffId, 10);
     const currentProcess = application.get("current_process") || null;
     const currentProcessId = Number.parseInt(currentProcess?.id, 10);
-    const currentWorkflowId = Number.parseInt(currentProcess?.work_flow_id, 10);
+    const currentWorkflowId = Number.parseInt(currentProcess?.workflow_id, 10);
     const currentProcessStepOrder = Number.parseInt(currentProcess?.step_order, 10);
     const actorHasAssignStaffPermission = this.hasAssignStaffPermission(currentUser || {});
     const workflowSteps = this.normalizeWorkflowRouteSteps(application.get("workflow_steps") || []);
-    const currentStepIndex = workflowSteps.findIndex((step) => Number(step.work_flow_id) === currentWorkflowId);
+    const currentStepIndex = workflowSteps.findIndex((step) => Number(step.workflow_id) === currentWorkflowId);
     const currentWorkflowStep = currentStepIndex >= 0 ? workflowSteps[currentStepIndex] : null;
 
     if (!Number.isFinite(currentProcessId) || currentProcessId <= 0) {
@@ -2569,7 +2614,7 @@ class ApplicationAPIService {
         await this.closeCurrentProcess(currentProcessId, "Completed", actorId, transaction);
         await this.createPendingApplicationProcess({
           trackingNumber: application.tracking_number,
-          workFlowId: nextRouteStep.work_flow_id,
+          workFlowId: nextRouteStep.workflow_id,
           stepOrder: this.resolveStepOrderValue(nextRouteStep, currentProcessStepOrder + 1),
           actorId,
           transaction,
@@ -2607,7 +2652,7 @@ class ApplicationAPIService {
         await this.closeCurrentProcess(currentProcessId, "Returned", actorId, transaction);
         await this.createPendingApplicationProcess({
           trackingNumber: application.tracking_number,
-          workFlowId: previousRouteStep.work_flow_id,
+          workFlowId: previousRouteStep.workflow_id,
           stepOrder: this.resolveStepOrderValue(previousRouteStep, currentProcessStepOrder - 1),
           actorId,
           transaction,
@@ -2693,10 +2738,36 @@ class ApplicationAPIService {
       throw error;
     }
 
-    return await this.fetchApplicationDetails(trackingNumber, currentUser);
+    const updatedApplication = await this.fetchApplicationDetails(trackingNumber, currentUser);
+
+    if (Array.isArray(currentUser?.active_handover_ids) && currentUser.active_handover_ids.length > 0) {
+      try {
+        await HandoverService.logDelegatedTaskAction({
+          user: currentUser,
+          userId: staffId,
+          handoverIds: currentUser.active_handover_ids,
+          description: "Workflow action performed under delegated handover (v2 applications API).",
+          metadata: {
+            tracking_number: trackingNumber,
+            action,
+            endpoint: `/applications/${trackingNumber}/advance`,
+          },
+        });
+      } catch (auditError) {
+        // non-blocking delegated action audit
+      }
+    }
+
+    return updatedApplication;
   }
 
   static async startWorkflow(trackingNumber, staffId, currentUser = null) {
+    if (currentUser?.has_active_outgoing_handover) {
+      const lockError = new Error(HandoverService.OWNER_LOCK_MESSAGE);
+      lockError.statusCode = 423;
+      throw lockError;
+    }
+
     const normalizedTracking = String(trackingNumber || "").trim();
     const actorId = Number.parseInt(staffId, 10);
     if (!normalizedTracking) throw new Error("Tracking number is required.");
@@ -2732,7 +2803,7 @@ class ApplicationAPIService {
       const startSteps = await Application.sequelize.query(
         `
           SELECT id, _order
-          FROM work_flow
+          FROM workflows
           WHERE application_category_id = :categoryId
             AND is_start = 1
             AND deleted_at IS NULL

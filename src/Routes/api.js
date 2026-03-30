@@ -7,6 +7,7 @@ router.use("/", require("./DashboardApiRoutes"));
 router.use("/applications", require("./ApplicationApiRoutes"));
 router.use("/", require("./SchoolApiRoutes"));
 router.use("/", require("./UserApiRoutes"));
+router.use("/", require("./ReligionApiRoutes"));
 router.use("/", require("./LegacyCompatRoutes"));
 
 module.exports = router;

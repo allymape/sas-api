@@ -11,6 +11,20 @@ const normalizePayload = (body = {}) => {
   };
 };
 
+const extractSearchValue = (req) => {
+  const querySearch = req.query.search;
+  if (typeof querySearch === "object" && querySearch !== null) {
+    return querySearch.value || "";
+  }
+  return (
+    req.query.search_value ||
+    querySearch ||
+    req.body?.search?.value ||
+    req.body?.search_value ||
+    ""
+  );
+};
+
 // List of languages
 languageRouter.get("/all-languages", isAuth, (req, res) => {
   const per_page = Math.max(1, Number.parseInt(req.query.per_page || "10", 10) || 10);
@@ -23,8 +37,9 @@ languageRouter.get("/all-languages", isAuth, (req, res) => {
   } else if (typeof req.body?.is_paginated !== "undefined") {
     is_paginated = !(req.body.is_paginated === "false" || req.body.is_paginated === false || req.body.is_paginated === 0 || req.body.is_paginated === "0");
   }
+  const search_value = String(extractSearchValue(req) || "").trim();
 
-  languageModel.getAllLanguages(offset, per_page, is_paginated, (error, languages, numRows) => {
+  languageModel.getAllLanguages(offset, per_page, is_paginated, search_value, (error, languages, numRows) => {
     return res.send({
       error: error ? true : false,
       statusCode: error ? 306 : 300,

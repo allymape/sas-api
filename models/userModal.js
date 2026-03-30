@@ -105,7 +105,7 @@ module.exports = {
     }
   },
   //******** LIST USERS *******************************
-  getUsers: (offset, per_page, search_value, user, inactive, callback) => {
+  getUsers: (offset, per_page, search_value, user, inactive, unit_id, callback) => {
     const isInactive =
       inactive === true ||
       inactive === "true" ||
@@ -114,6 +114,9 @@ module.exports = {
     const statusFilter = isInactive
       ? " AND s.user_status = 0"
       : " AND s.user_status = 1";
+    const unitId = Number.parseInt(unit_id, 10);
+    const hasUnitFilter = Number.isInteger(unitId) && unitId > 0;
+    const unitFilter = hasUnitFilter ? " AND v.id = ?" : "";
 
     var searchQuery = "";
     var queryParams = [];
@@ -140,10 +143,14 @@ module.exports = {
         `%${search_value}%`
       );
     }
+    if (hasUnitFilter) {
+      queryParams.push(unitId);
+    }
     let sql = ` FROM staffs s ${staffCommonJoins()}
                 WHERE 1 = 1
                 ${statusFilter}
                 ${searchQuery}
+                ${unitFilter}
                 ${filterByUserOffice(
                   user,
                   "AND",
@@ -157,7 +164,14 @@ module.exports = {
                 s.name as name, phone_no, IFNULL(r.name , '') as level_name, v.rank_name AS section_name,
                 IFNULL(rank_level , '') as rank_level, IFNULL(rm.role_name , '') as role_name,
                 IFNULL(z.zone_name , '') as zone_name , rg.RegionName as region_name, IFNULL(d.LgaName , '') as 
-                lga_name , CASE WHEN s.signature IS NOT NULL THEN 1 ELSE 0 END AS has_signature , 
+                lga_name ,
+                CASE
+                  WHEN s.signature IS NOT NULL
+                   AND NULLIF(TRIM(CAST(s.signature AS CHAR)), '') IS NOT NULL
+                   AND LOWER(TRIM(CAST(s.signature AS CHAR))) <> 'null'
+                  THEN 1
+                  ELSE 0
+                END AS has_signature ,
                 s.user_status as user_status, is_password_changed
                 ${sql}
                 ${per_page > 0 ? "LIMIT ? , ?" : ""}`,
@@ -180,27 +194,52 @@ module.exports = {
   },
   // ********** USER PROFILE *************
   getMyProfile: (id, callback) => {
-    db.query(
-      `SELECT name,username,email , email_notify,phone_no,created_at,updated_at
-                FROM staffs s 
-                WHERE s.id = ?`,
-      [id],
-      (error, user) => {
-        if (error) console.log(error);
-        db.query(
-          `SELECT browser , ip , device , created_at 
+    const queryWithProfilePhoto = `SELECT s.name, s.username, s.email, s.email_notify, s.phone_no,
+                                          s.created_at, s.updated_at, s.user_status, s.last_login,
+                                          s.profile_photo, IFNULL(rm.role_name, '') AS role_name
+                                     FROM staffs s
+                                LEFT JOIN role_management rm ON rm.id = s.new_role_id
+                                    WHERE s.id = ?`;
+    const fallbackQuery = `SELECT s.name, s.username, s.email, s.email_notify, s.phone_no,
+                                  s.created_at, s.updated_at, s.user_status, s.last_login,
+                                  NULL AS profile_photo, IFNULL(rm.role_name, '') AS role_name
+                             FROM staffs s
+                        LEFT JOIN role_management rm ON rm.id = s.new_role_id
+                            WHERE s.id = ?`;
+
+    const runLoginActivityQuery = (profile) => {
+      db.query(
+        `SELECT browser , ip , device , created_at 
                     FROM login_activity
                     WHERE staff_id = ? 
                     ORDER BY created_at DESC 
                     LIMIT 10`,
-          [id],
-          (erro2, loginActivities) => {
-            if (erro2) console.log(erro2);
-            callback(user[0], loginActivities);
+        [id],
+        (erro2, loginActivities) => {
+          if (erro2) console.log(erro2);
+          callback(profile, loginActivities);
+        }
+      );
+    };
+
+    db.query(queryWithProfilePhoto, [id], (error, user) => {
+      if (error && error.code === "ER_BAD_FIELD_ERROR") {
+        db.query(fallbackQuery, [id], (fallbackError, fallbackUser) => {
+          if (fallbackError) {
+            console.log(fallbackError);
+            runLoginActivityQuery({});
+            return;
           }
-        );
+          runLoginActivityQuery(fallbackUser[0] || {});
+        });
+        return;
       }
-    );
+
+      if (error) {
+        console.log(error);
+      }
+      runLoginActivityQuery(user?.[0] || {});
+    });
   },
   //******** FIND USER *******************************
   findUser: (userId, user, callback) => {
@@ -229,6 +268,85 @@ module.exports = {
         callback(error, success, user);
       }
     );
+  },
+  //******** GET USER SIGNATURE *******************************
+  getUserSignature: (userId, user, callback) => {
+    const resolveSignaturePayload = (row) => {
+      let signature = row?.signature;
+      if (Buffer.isBuffer(signature)) {
+        signature = signature.toString("base64");
+      } else if (signature !== null && signature !== undefined) {
+        signature = String(signature).trim();
+      }
+
+      if (typeof signature === "string" && signature.toLowerCase() === "null") {
+        signature = "";
+      }
+
+      return {
+        id: row?.id || null,
+        name: row?.name || "",
+        cheo: row?.cheo || "",
+        signature: signature || "",
+      };
+    };
+
+    const scopedSql = `SELECT s.id,
+                              s.name,
+                              s.signature,
+                              COALESCE(NULLIF(TRIM(r.description), ''), NULLIF(TRIM(r.name), ''), NULLIF(TRIM(rm.role_name), ''), '') AS cheo
+                         FROM staffs s
+                    LEFT JOIN roles r ON r.id = s.user_level
+                    LEFT JOIN role_management rm ON rm.id = s.new_role_id
+                        WHERE s.id = ?
+                        ${filterByUserOffice(
+                          user,
+                          "AND",
+                          "s.zone_id",
+                          "s.district_code"
+                        )}
+                        LIMIT 1`;
+
+    db.query(scopedSql, [Number(userId)], (error, rows = []) => {
+      if (error) {
+        console.log(error);
+        callback(error, false, null);
+        return;
+      }
+
+      if (Array.isArray(rows) && rows.length > 0) {
+        callback(null, true, resolveSignaturePayload(rows[0]));
+        return;
+      }
+
+      // Fallback: avoid false negatives caused by strict office scope mismatches.
+      db.query(
+        `SELECT s.id,
+                s.name,
+                s.signature,
+                COALESCE(NULLIF(TRIM(r.description), ''), NULLIF(TRIM(r.name), ''), NULLIF(TRIM(rm.role_name), ''), '') AS cheo
+           FROM staffs s
+      LEFT JOIN roles r ON r.id = s.user_level
+      LEFT JOIN role_management rm ON rm.id = s.new_role_id
+          WHERE s.id = ?
+          LIMIT 1`,
+        [Number(userId)],
+        (fallbackError, fallbackRows = []) => {
+          if (fallbackError) {
+            console.log(fallbackError);
+            callback(fallbackError, false, null);
+            return;
+          }
+
+          if (!Array.isArray(fallbackRows) || fallbackRows.length === 0) {
+            callback(null, false, null);
+            return;
+          }
+
+          callback(null, true, resolveSignaturePayload(fallbackRows[0]));
+        }
+      );
+    });
   },
   //******** CREATE USER *******************************
   createUser: (user, callback) => {
@@ -326,6 +444,21 @@ module.exports = {
       if (userId) { 
         query += " AND id <> ?";
         params.push(userId);
+      }
+      db.query(query, params, (error, results) => {
+        if (error) return reject(error);
+        resolve(results[0].count);
+      });
+    });
+  },
+  // Check if username exists
+  checkUsernameExists: (username, userId = null) => {
+    return new Promise((resolve, reject) => {
+      let query = "SELECT COUNT(*) AS count FROM staffs WHERE username = ?";
+      const params = [lowerCase(username)];
+      if (userId) {
+        query += " AND id <> ?";
+        params.push(Number(userId));
       }
       db.query(query, params, (error, results) => {
         if (error) return reject(error);
@@ -527,15 +660,173 @@ module.exports = {
   },
   // Update my profile
   updateMyProfile: (formData, callback) => {
-    db.query(
-      `UPDATE staffs SET phone_no = ? , email_notify = ? 
-                WHERE id = ?`,
-      formData,
-      (error, result) => {
-        if (error) console.log(error);
-        callback(result.affectedRows > 0);
+    const isLegacyPayload = Array.isArray(formData);
+    const payload = isLegacyPayload
+      ? {
+          phone_number: formData[0],
+          email_notify: formData[1],
+          user_id: formData[2],
+        }
+      : formData || {};
+
+    const userId = Number(payload.user_id || payload.id || payload.staff_id || 0);
+    if (!userId) {
+      callback(false, { reason: "invalid_user" });
+      return;
+    }
+
+    const hasName = Object.prototype.hasOwnProperty.call(payload, "full_name");
+    const hasPhone = Object.prototype.hasOwnProperty.call(payload, "phone_number");
+    const hasUsername = Object.prototype.hasOwnProperty.call(payload, "username");
+    const hasEmail = Object.prototype.hasOwnProperty.call(payload, "email");
+    const hasEmailNotify = Object.prototype.hasOwnProperty.call(payload, "email_notify");
+    const hasProfilePhoto = Object.prototype.hasOwnProperty.call(payload, "profile_photo");
+
+    const nextName = hasName ? titleCase(String(payload.full_name || "").trim()) : null;
+    const nextPhone = hasPhone ? String(payload.phone_number || "").trim() : null;
+    const nextUsername = hasUsername ? lowerCase(String(payload.username || "").trim()) : null;
+    const nextEmail = hasEmail ? lowerCase(String(payload.email || "").trim()) : null;
+    const nextEmailNotify = hasEmailNotify
+      ? payload.email_notify === true ||
+        payload.email_notify === "true" ||
+        payload.email_notify === 1 ||
+        payload.email_notify === "1"
+        ? 1
+        : 0
+      : null;
+    const nextProfilePhoto = hasProfilePhoto
+      ? String(payload.profile_photo || "").trim() || null
+      : null;
+
+    db.query(`SELECT id FROM staffs WHERE id = ? LIMIT 1`, [userId], (findError, rows) => {
+      if (findError) {
+        console.log(findError);
+        callback(false, { reason: "query_error" });
+        return;
       }
-    );
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        callback(false, { reason: "not_found" });
+        return;
+      }
+
+      const checks = [];
+      if (hasEmail && nextEmail) {
+        checks.push(
+          module.exports.checkEmailExists(nextEmail, userId).then((count) => ({
+            key: "email_exists",
+            exists: Number(count) > 0,
+          }))
+        );
+      }
+
+      if (hasUsername && nextUsername) {
+        checks.push(
+          module.exports.checkUsernameExists(nextUsername, userId).then((count) => ({
+            key: "username_exists",
+            exists: Number(count) > 0,
+          }))
+        );
+      }
+
+      Promise.all(checks)
+        .then((results) => {
+          const duplicateEmail = results.some((item) => item.key === "email_exists" && item.exists);
+          if (duplicateEmail) {
+            callback(false, { reason: "email_exists" });
+            return;
+          }
+
+          const duplicateUsername = results.some(
+            (item) => item.key === "username_exists" && item.exists
+          );
+          if (duplicateUsername) {
+            callback(false, { reason: "username_exists" });
+            return;
+          }
+
+          const updates = [];
+          const values = [];
+
+          if (hasName) {
+            updates.push(`name = ?`);
+            values.push(nextName);
+          }
+
+          if (hasPhone) {
+            updates.push(`phone_no = ?`);
+            values.push(nextPhone);
+          }
+
+          if (hasUsername) {
+            updates.push(`username = ?`);
+            values.push(nextUsername);
+          }
+
+          if (hasEmail) {
+            updates.push(`email = ?`);
+            values.push(nextEmail);
+          }
+
+          if (hasEmailNotify) {
+            updates.push(`email_notify = ?`);
+            values.push(nextEmailNotify);
+          }
+
+          if (hasProfilePhoto) {
+            updates.push(`profile_photo = ?`);
+            values.push(nextProfilePhoto);
+          }
+
+          updates.push(`updated_at = ?`);
+          values.push(formatDate(new Date()));
+          values.push(userId);
+
+          db.query(
+            `UPDATE staffs SET ${updates.join(", ")} WHERE id = ?`,
+            values,
+            (updateError) => {
+              if (updateError) {
+                if (updateError.code === "ER_BAD_FIELD_ERROR" && hasProfilePhoto) {
+                  const fallbackUpdates = updates.filter(
+                    (segment) => segment !== "profile_photo = ?"
+                  );
+                  const fallbackValues = [];
+                  for (let i = 0; i < updates.length; i += 1) {
+                    if (updates[i] === "profile_photo = ?") {
+                      continue;
+                    }
+                    fallbackValues.push(values[i]);
+                  }
+                  fallbackValues.push(userId);
+
+                  db.query(
+                    `UPDATE staffs SET ${fallbackUpdates.join(", ")} WHERE id = ?`,
+                    fallbackValues,
+                    (fallbackError) => {
+                      if (fallbackError) {
+                        console.log(fallbackError);
+                        callback(false, { reason: "query_error" });
+                        return;
+                      }
+                      callback(true, { reason: "updated_without_profile_photo" });
+                    }
+                  );
+                  return;
+                }
+                console.log(updateError);
+                callback(false, { reason: "query_error" });
+                return;
+              }
+              callback(true, { reason: "updated" });
+            }
+          );
+        })
+        .catch((error) => {
+          console.log(error);
+          callback(false, { reason: "query_error" });
+        });
+    });
   },
   // change my password
   changeMyPassword: (oldpassword, newpassword, user_id, callback) => {

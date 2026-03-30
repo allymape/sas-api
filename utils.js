@@ -5,6 +5,7 @@ var nodeMailer = require("nodemailer");
 const { default: axios } = require("axios");
 const { rolesPermissions, translations, defaultPermissions } = require("./role_permissions");
 const db = require('./config/database');
+const HandoverService = require("./src/Services/HandoverService");
 
 const {
   camelCase,
@@ -191,12 +192,31 @@ const ObjectFuctions = {
       jwt.verify(
         token,
         process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect",
-        (err, decode) => {
+        async (err, decode) => {
           if (err) {
             res.status(401).send({ message: "Invalid Token" });
           } else {
-            req.user = decode;
-            next();
+            try {
+              const enrichedUser = await HandoverService.enrichTokenUser(decode || {}, {
+                autoTransition: true,
+              });
+              req.user = enrichedUser;
+
+              if (HandoverService.shouldBlockOwnerWorkflowAction(req, req.user)) {
+                return res.send({
+                  statusCode: 423,
+                  message: HandoverService.OWNER_LOCK_MESSAGE,
+                });
+              }
+
+              next();
+            } catch (handoverError) {
+              console.log("isAuth handover context error", handoverError);
+              res.status(500).send({
+                statusCode: 500,
+                message: "Failed to resolve handover context.",
+              });
+            }
           }
         }
       );
@@ -217,7 +237,18 @@ const ObjectFuctions = {
     // return a middleware
     return (req, res, next) => {
       const { user } = req;
-      if (user && user.userPermissions.includes(permission)) {
+      if (HandoverService.shouldBlockOwnerWorkflowAction(req, user, permission)) {
+        return res.status(200).json({
+          statusCode: 423,
+          message: HandoverService.OWNER_LOCK_MESSAGE,
+        });
+      }
+
+      const effectivePermissions = Array.isArray(user?.effectivePermissions)
+        ? user.effectivePermissions
+        : (Array.isArray(user?.userPermissions) ? user.userPermissions : []);
+
+      if (user && effectivePermissions.includes(permission)) {
         next(); // role is allowed, so continue on the next middleware
       } else {
         // console.log(permission, req);
@@ -783,8 +814,33 @@ const ObjectFuctions = {
     status = "pending"
   ) => {
     const { cheo, ngazi, handover_by, sehemu, district_code, zone_id, jukumu } =
-      user;
-    const id = handover_by ? handover_by : user.id;
+      user || {};
+    const numericUserId = Number.parseInt(user?.id, 10);
+    const legacyOwnerId = Number.parseInt(handover_by, 10);
+    const delegatedOwnerIds = Array.isArray(user?.delegated_from_user_ids)
+      ? user.delegated_from_user_ids
+          .map((value) => Number.parseInt(value, 10))
+          .filter((value) => Number.isFinite(value) && value > 0)
+      : [];
+
+    const actorIds = Array.from(
+      new Set(
+        [
+          Number.isFinite(numericUserId) && numericUserId > 0 ? numericUserId : null,
+          Number.isFinite(legacyOwnerId) && legacyOwnerId > 0 ? legacyOwnerId : null,
+          ...delegatedOwnerIds,
+        ].filter((value) => Number.isFinite(value) && value > 0)
+      )
+    );
+
+    const assignmentField = useAlias ? "a.staff_id" : "applications.staff_id";
+    const actorAssignmentCondition =
+      actorIds.length > 1
+        ? `${assignmentField} IN (${actorIds.join(",")})`
+        : actorIds.length === 1
+        ? `${assignmentField} = ${actorIds[0]}`
+        : `${assignmentField} = -1`;
+
     var str = ``;
     // console.log(jukumu)
     if (ngazi == "wizara") {
@@ -810,9 +866,7 @@ const ObjectFuctions = {
         // str += ` AND is_approved = 2`;
       } else {
         // console.log(cheo , id)
-        str += ` AND ${
-          useAlias ? "a.staff_id" : "applications.staff_id"
-        } = ${id}`;
+        str += ` AND ${actorAssignmentCondition}`;
         // str += ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}
         // AND is_approved <> 2`;
       }
@@ -820,7 +874,7 @@ const ObjectFuctions = {
     } else if (ngazi == "kanda") {
       str +=
         (status == "pending"
-          ? ` AND ${useAlias ? "a.staff_id" : "applications.staff_id"} = ${id}`
+          ? ` AND ${actorAssignmentCondition}`
           : "") +
         ` AND ${useAlias ? "r.zone_id" : "regions.zone_id"} = ${zone_id}`;
     } else if (ngazi == "wilaya") {
@@ -828,17 +882,11 @@ const ObjectFuctions = {
       if (cheo == "w1" || cheo == "kw1") {
         str +=
           status == "pending"
-            ? ` AND (${
-                useAlias ? "a.staff_id" : "applications.staff_id"
-              } = ${id} OR  ${
-                useAlias ? "a.staff_id" : "applications.staff_id"
-              } IS NULL)`
+            ? ` AND (${actorAssignmentCondition} OR ${assignmentField} IS NULL)`
             : "";
       } else {
         //Officer W1
-        str += ` AND ${
-          useAlias ? "a.staff_id" : "applications.staff_id"
-        } = ${id}`;
+        str += ` AND ${actorAssignmentCondition}`;
       }
       str += ` AND ${
         useAlias ? "d.LgaCode" : "districts.LgaCode"

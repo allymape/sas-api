@@ -2487,15 +2487,15 @@ CREATE TABLE `wardsBackup` (
 ;
 
 --
--- Table structure for table `work_flow`
+-- Table structure for table `workflow`
 --
 
-DROP TABLE IF EXISTS `work_flow`;
+DROP TABLE IF EXISTS `workflow`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */
 ;
 /*!50503 SET character_set_client = utf8mb4 */
 ;
-CREATE TABLE `work_flow` (
+CREATE TABLE `workflow` (
     `id` int NOT NULL AUTO_INCREMENT,
     `application_category_id` bigint NOT NULL,
     `start_from` int NOT NULL,

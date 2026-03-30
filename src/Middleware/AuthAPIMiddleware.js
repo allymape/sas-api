@@ -3,6 +3,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { getStaffWithRole } = require("../Services/StaffAPIService");
 const { getJson, setJsonEx } = require("../Config/RedisClient");
+const HandoverService = require("../Services/HandoverService");
 const ACCESS_TOKEN_SECRET =
   process.env.ACCESS_TOKEN_SECRET || "the-super-strong-secrect";
 
@@ -111,7 +112,7 @@ const authMiddleware = async (req, res, next) => {
     const safeUser =
       user && typeof user === "object" && !Array.isArray(user) ? user : {};
 
-    req.user = {
+    const baseUser = {
       id: safeUser.id ?? safeDecoded.id,
       name: safeUser.name ?? safeDecoded.name ?? "",
       username: safeUser.username ?? safeDecoded.username ?? "",
@@ -145,8 +146,22 @@ const authMiddleware = async (req, res, next) => {
       sehemu: safeDecoded.sehemu || null,
       cheo: safeDecoded.cheo || null,
       handover_by: safeDecoded.handover_by || null,
+      delegated_from_user_name: safeDecoded.delegated_from_user_name || null,
+      delegated_until_at: safeDecoded.delegated_until_at || null,
       jukumu: safeDecoded.jukumu || null,
     };
+
+    req.user = await HandoverService.enrichTokenUser(baseUser, {
+      autoTransition: true,
+    });
+
+    if (HandoverService.shouldBlockOwnerWorkflowAction(req, req.user)) {
+      return res.status(200).json({
+        error: true,
+        statusCode: 423,
+        message: HandoverService.OWNER_LOCK_MESSAGE,
+      });
+    }
 
     req.token = token;
 

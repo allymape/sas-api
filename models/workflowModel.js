@@ -62,7 +62,7 @@ module.exports = {
     }
 
     db.query(
-      `SELECT _order, unit_id FROM work_flow WHERE ${whereSql}`,
+      `SELECT _order, unit_id FROM workflows WHERE ${whereSql}`,
       params,
       (error, rows) => {
         if (error) {
@@ -156,7 +156,7 @@ module.exports = {
       const check = checks[index];
       db.query(
         `SELECT COUNT(*) AS num_rows
-         FROM work_flow
+         FROM workflows
          WHERE ${whereSql} AND ${check.field} = 1`,
         params,
         (error, results) => {
@@ -208,7 +208,7 @@ module.exports = {
       `SELECT w.application_category_id, ac.app_name,
               MAX(CASE WHEN w.is_start = 1 THEN 1 ELSE 0 END) AS has_start,
               MAX(CASE WHEN w.is_final = 1 THEN 1 ELSE 0 END) AS has_final
-       FROM work_flow w
+       FROM workflows w
        INNER JOIN application_categories ac ON ac.id = w.application_category_id
        WHERE w.deleted_at IS NULL
        GROUP BY w.application_category_id, ac.app_name`,
@@ -289,7 +289,7 @@ module.exports = {
 
     const runModernSchemaQuery = () => {
       const filter = buildWhereSql(true);
-      const sqlFrom = `FROM work_flow w
+      const sqlFrom = `FROM workflows w
             INNER JOIN application_categories ac ON ac.id = w.application_category_id
             INNER JOIN vyeo v ON v.id = w.unit_id
             LEFT JOIN role_management rm ON rm.id = w.role_id
@@ -330,7 +330,7 @@ module.exports = {
 
     const runLegacySchemaQuery = () => {
       const filter = buildWhereSql(false);
-      const sqlFrom = `FROM work_flow w
+      const sqlFrom = `FROM workflows w
             INNER JOIN application_categories ac ON ac.id = w.application_category_id
             INNER JOIN vyeo v ON v.id = w.start_from
             ${filter}
@@ -396,7 +396,7 @@ module.exports = {
     const validatePayloadAt = (index) => {
       if (index >= payloads.length) {
         db.query(
-          `INSERT INTO work_flow(
+          `INSERT INTO workflows(
             application_category_id, _order, unit_id, role_id,
             is_start, is_final, can_assign, can_approve, can_return, created_by, updated_by, created_at, updated_at
           ) VALUES ?`,
@@ -447,15 +447,15 @@ module.exports = {
     db.query(
       `SELECT id, application_category_id, unit_id AS start_from, _order,
               unit_id, role_id, is_start, is_final, can_assign, can_approve, can_return
-         FROM work_flow WHERE id = ? AND deleted_at IS NULL`,
+         FROM workflows WHERE id = ? AND deleted_at IS NULL`,
       [Number(id)],
-      (error, work_flow) => {
+      (error, workflow) => {
         if (error) {
           console.log("Error", error);
           callback(error, false, null);
           return;
         }
-        const rows = Array.isArray(work_flow) ? work_flow : [];
+        const rows = Array.isArray(workflow) ? workflow : [];
         const success = rows.length > 0;
         callback(null, success, success ? rows[0] : null);
       }
@@ -475,7 +475,7 @@ module.exports = {
 
     db.query(
       `SELECT id, application_category_id, _order
-       FROM work_flow
+       FROM workflows
        WHERE id = ? AND deleted_at IS NULL
        LIMIT 1`,
       [workflowId],
@@ -518,7 +518,7 @@ module.exports = {
               }
 
               db.query(
-                `UPDATE work_flow 
+                `UPDATE workflows 
                  SET application_category_id = ? , _order = ? ,
                      unit_id = ?, role_id = ?, is_start = ?, is_final = ?, can_assign = ?, can_approve = ?, can_return = ?,
                      updated_by = ?, updated_at = ? 
@@ -564,47 +564,74 @@ module.exports = {
           };
 
           const reorderWithinSameCategory = () => {
-            if (targetOrder === currentOrder) {
-              runValidationAndSave();
-              return;
-            }
-
             const now = formatDate(new Date());
-            const moveDown = targetOrder > currentOrder;
-            const shiftSql = moveDown
-              ? `UPDATE work_flow
-                 SET _order = _order - 1, updated_by = ?, updated_at = ?
-                 WHERE deleted_at IS NULL
-                   AND application_category_id = ?
-                   AND id <> ?
-                   AND _order > ?
-                   AND _order <= ?`
-              : `UPDATE work_flow
-                 SET _order = _order + 1, updated_by = ?, updated_at = ?
-                 WHERE deleted_at IS NULL
-                   AND application_category_id = ?
-                   AND id <> ?
-                   AND _order >= ?
-                   AND _order < ?`;
+            db.query(
+              `SELECT id, _order
+               FROM workflows
+               WHERE deleted_at IS NULL
+                 AND application_category_id = ?
+                 AND id <> ?
+               ORDER BY _order ASC, id ASC`,
+              [targetCategoryId, workflowId],
+              (listError, rows) => {
+                if (listError) {
+                  console.log(listError);
+                  rollbackWithMessage("Imeshindikana kupanga upya Step Order.");
+                  return;
+                }
 
-            const shiftParams = moveDown
-              ? [actorId, now, targetCategoryId, workflowId, currentOrder, targetOrder]
-              : [actorId, now, targetCategoryId, workflowId, targetOrder, currentOrder];
+                const otherRows = Array.isArray(rows) ? rows : [];
+                const maxTargetOrder = otherRows.length + 1;
+                const safeTargetOrder = Math.max(1, Math.min(Number(targetOrder || 1), maxTargetOrder));
+                payload._order = safeTargetOrder;
 
-            db.query(shiftSql, shiftParams, (shiftError) => {
-              if (shiftError) {
-                console.log(shiftError);
-                rollbackWithMessage("Imeshindikana kupanga upya Step Order.");
-                return;
+                const plannedUpdates = otherRows.map((row, index) => {
+                  let nextOrder = index + 1;
+                  if (nextOrder >= safeTargetOrder) {
+                    nextOrder += 1;
+                  }
+                  return {
+                    id: Number(row.id || 0),
+                    currentOrder: Number(row._order || 0),
+                    nextOrder,
+                  };
+                }).filter((row) => row.id > 0);
+
+                const changedRows = plannedUpdates.filter((row) => row.currentOrder !== row.nextOrder);
+                if (!changedRows.length) {
+                  runValidationAndSave();
+                  return;
+                }
+
+                const caseSql = changedRows
+                  .map((row) => `WHEN ${row.id} THEN ${row.nextOrder}`)
+                  .join(" ");
+                const idListSql = changedRows.map((row) => row.id).join(",");
+
+                db.query(
+                  `UPDATE workflows
+                   SET _order = CASE id ${caseSql} END,
+                       updated_by = ?,
+                       updated_at = ?
+                   WHERE id IN (${idListSql})`,
+                  [actorId, now],
+                  (shiftError) => {
+                    if (shiftError) {
+                      console.log(shiftError);
+                      rollbackWithMessage("Imeshindikana kupanga upya Step Order.");
+                      return;
+                    }
+                    runValidationAndSave();
+                  }
+                );
               }
-              runValidationAndSave();
-            });
+            );
           };
 
           const reorderAcrossCategories = () => {
             const now = formatDate(new Date());
             db.query(
-              `UPDATE work_flow
+              `UPDATE workflows
                SET _order = _order - 1, updated_by = ?, updated_at = ?
                WHERE deleted_at IS NULL
                  AND application_category_id = ?
@@ -618,7 +645,7 @@ module.exports = {
                 }
 
                 db.query(
-                  `UPDATE work_flow
+                  `UPDATE workflows
                    SET _order = _order + 1, updated_by = ?, updated_at = ?
                    WHERE deleted_at IS NULL
                      AND application_category_id = ?
@@ -653,7 +680,7 @@ module.exports = {
     var success = false;
     const actorId = module.exports.resolveActorId(req);
     db.query(
-      `UPDATE work_flow
+      `UPDATE workflows
        SET deleted_at = ?, updated_at = ?, updated_by = ?
        WHERE id = ? AND deleted_at IS NULL`,
       [formatDate(new Date()), formatDate(new Date()), actorId, id],
@@ -682,7 +709,7 @@ module.exports = {
 
     db.query(
       `SELECT id, application_category_id, _order, unit_id, is_final
-       FROM work_flow
+       FROM workflows
        WHERE id = ? AND deleted_at IS NOT NULL
        LIMIT 1`,
       [workflowId],
@@ -701,7 +728,7 @@ module.exports = {
 
         db.query(
           `SELECT COUNT(*) AS num_rows
-           FROM work_flow
+           FROM workflows
            WHERE deleted_at IS NULL
              AND application_category_id = ?
              AND _order = ?
@@ -728,7 +755,7 @@ module.exports = {
 
             const finalizeRestore = () => {
               db.query(
-                `UPDATE work_flow
+                `UPDATE workflows
                  SET deleted_at = NULL, updated_at = ?, updated_by = ?
                  WHERE id = ? AND deleted_at IS NOT NULL`,
                 [now, actorId, workflowId],
@@ -757,7 +784,7 @@ module.exports = {
 
             db.query(
               `SELECT COUNT(*) AS num_rows
-               FROM work_flow
+               FROM workflows
                WHERE deleted_at IS NULL
                  AND application_category_id = ?
                  AND is_final = 1`,

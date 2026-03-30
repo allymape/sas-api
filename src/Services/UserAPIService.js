@@ -9,6 +9,7 @@ const designationModel = require("../../models/designationModel");
 const sharedModel = require("../../models/sharedModel");
 const db = require("../Config/DbConfig");
 const { QueryTypes } = require("sequelize");
+const HandoverService = require("./HandoverService");
 const {
   sendEmail,
   setMailOptions,
@@ -22,6 +23,16 @@ const safeUpper = (value) => (value ? String(value).toUpperCase() : "");
 
 const toBoolean = (value) =>
   value === true || value === "true" || value === 1 || value === "1";
+
+const PROFILE_PHONE_REGEX = /^\+?[0-9\s-]{9,20}$/;
+const PROFILE_USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,40}$/;
+const PROFILE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PROFILE_PHOTO_REGEX = /^data:image\/(png|jpe?g|webp);base64,/i;
+const MAX_PROFILE_PHOTO_LENGTH = 3_500_000;
+
+const hasPermission = (req, permissionName) =>
+  Array.isArray(req.user?.userPermissions) &&
+  req.user.userPermissions.includes(permissionName);
 
 const asPromise = (fn) =>
   new Promise((resolve, reject) => {
@@ -56,6 +67,16 @@ const getUsers = async (req) => {
   const inactive = toBoolean(
     req.query.inactive !== undefined ? req.query.inactive : req.body?.inactive,
   );
+  const unitFilterRaw =
+    req.query.unit_id !== undefined ? req.query.unit_id : req.body?.unit_id;
+  const requestedUnitId = Number.parseInt(unitFilterRaw, 10);
+  const roleName = String(req?.user?.jukumu || req?.user?.role_name || req?.user?.role || "").toLowerCase();
+  const isAdminRole = ["super admin", "super-admin", "admin", "system admin", "administrator"].some(
+    (name) => roleName.includes(name),
+  );
+  const unitId = isAdminRole && Number.isInteger(requestedUnitId) && requestedUnitId > 0
+    ? requestedUnitId
+    : null;
 
   const [error, users, numRows] = await asPromise((cb) =>
     userModal.getUsers(
@@ -64,6 +85,7 @@ const getUsers = async (req) => {
       search_value,
       req.user,
       inactive,
+      unitId,
       (err, list, total) => cb(err, list || [], total || 0),
     ),
   );
@@ -201,10 +223,103 @@ const myProfile = async (req) => {
 };
 
 const updateMyProfile = async (req) => {
-  const formData = [req.body.phone_number, req.body.email_notify, req.user.id];
-  const [success] = await asPromise((cb) =>
-    userModal.updateMyProfile(formData, (ok) => cb(Boolean(ok))),
+  const canEditUsername = hasPermission(req, "update-users");
+  const canEditEmail = hasPermission(req, "update-users");
+
+  const fullName = String(req.body?.full_name || req.body?.name || req.user?.name || "").trim();
+  const phoneNumber = String(req.body?.phone_number || "").trim();
+  const emailNotify = toBoolean(req.body?.email_notify) ? 1 : 0;
+  const username = String(req.body?.username || "").trim();
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const hasProfilePhoto = Object.prototype.hasOwnProperty.call(req.body || {}, "profile_photo");
+  const profilePhoto = hasProfilePhoto ? String(req.body?.profile_photo || "").trim() : null;
+
+  if (!fullName || fullName.length < 3) {
+    return {
+      statusCode: 422,
+      message: "Jina kamili linahitajika (angalau herufi 3).",
+    };
+  }
+
+  if (!phoneNumber || !PROFILE_PHONE_REGEX.test(phoneNumber)) {
+    return {
+      statusCode: 422,
+      message: "Namba ya simu si sahihi. Tumia tarakimu 9 hadi 20.",
+    };
+  }
+
+  if (canEditUsername && (!username || !PROFILE_USERNAME_REGEX.test(username))) {
+    return {
+      statusCode: 422,
+      message: "Jina la mtumiaji si sahihi. Tumia herufi/tarakimu 3 hadi 40.",
+    };
+  }
+
+  if (canEditEmail && (!email || !PROFILE_EMAIL_REGEX.test(email))) {
+    return {
+      statusCode: 422,
+      message: "Barua pepe uliyoingiza si sahihi.",
+    };
+  }
+
+  if (hasProfilePhoto) {
+    const isRemoving = profilePhoto === "";
+    if (!isRemoving) {
+      if (
+        !PROFILE_PHOTO_REGEX.test(profilePhoto) ||
+        profilePhoto.length > MAX_PROFILE_PHOTO_LENGTH
+      ) {
+        return {
+          statusCode: 422,
+          message: "Picha ya wasifu si sahihi. Tumia PNG/JPG/WEBP yenye ukubwa sahihi.",
+        };
+      }
+    }
+  }
+
+  const payload = {
+    user_id: req.user.id,
+    full_name: fullName,
+    phone_number: phoneNumber,
+    email_notify: emailNotify,
+  };
+
+  if (canEditUsername) {
+    payload.username = username;
+  }
+
+  if (canEditEmail) {
+    payload.email = email;
+  }
+
+  if (hasProfilePhoto) {
+    payload.profile_photo = profilePhoto;
+  }
+
+  const [success, meta] = await asPromise((cb) =>
+    userModal.updateMyProfile(payload, (ok, info = {}) => cb(Boolean(ok), info)),
   );
+
+  if (!success && meta?.reason === "email_exists") {
+    return {
+      statusCode: 422,
+      message: "Barua pepe imeshatumika na mtumiaji mwingine.",
+    };
+  }
+
+  if (!success && meta?.reason === "username_exists") {
+    return {
+      statusCode: 422,
+      message: "Jina la mtumiaji limeshatumika.",
+    };
+  }
+
+  if (!success && meta?.reason === "not_found") {
+    return {
+      statusCode: 404,
+      message: "Akaunti haijapatikana.",
+    };
+  }
 
   return {
     statusCode: success ? 300 : 306,
@@ -296,7 +411,14 @@ const buildFreshTokenPayload = async (user = {}) => {
     },
   );
 
-  const userPermissions = permissions.map((item) => item.permission_name);
+  const basePermissions = permissions.map((item) => item.permission_name);
+  const handoverContext = await HandoverService.resolveDelegationContextForUser(account.id, {
+    autoTransition: true,
+  });
+  const userPermissions = Array.from(
+    new Set([...(basePermissions || []), ...(handoverContext?.delegatedPermissions || [])]),
+  );
+  const primaryDelegation = handoverContext?.primaryDelegation || null;
 
   return {
     id: account.id,
@@ -311,8 +433,23 @@ const buildFreshTokenPayload = async (user = {}) => {
     section_id: Number(account.section_id || 0),
     ngazi: safeLower(account.ngazi),
     sehemu: safeLower(account.sehemu),
-    cheo: safeLower(account.rank_name || user?.cheo || ""),
-    handover_by: user?.handover_by || null,
+    cheo: primaryDelegation?.from_user_rank_name
+      ? `k${safeLower(primaryDelegation.from_user_rank_name)}`
+      : safeLower(account.rank_name || user?.cheo || ""),
+    handover_by: primaryDelegation?.from_user_id || user?.handover_by || null,
+    delegated_from_user_name: primaryDelegation?.from_user_name || user?.delegated_from_user_name || null,
+    delegated_until_at: primaryDelegation?.end_at || user?.delegated_until_at || null,
+    delegated_from_user_ids: Array.isArray(handoverContext?.delegatedFromUserIds)
+      ? handoverContext.delegatedFromUserIds
+      : [],
+    active_handover_ids: Array.isArray(handoverContext?.activeHandoverIds)
+      ? handoverContext.activeHandoverIds
+      : [],
+    primary_handover_id: primaryDelegation?.id || null,
+    has_active_incoming_handover: Boolean(handoverContext?.hasIncomingActiveHandover),
+    has_active_outgoing_handover: Boolean(handoverContext?.hasOutgoingActiveHandover),
+    delegation_scope_type: primaryDelegation?.scope_type || null,
+    delegation_status: primaryDelegation?.status || null,
     is_password_changed: account.is_password_changed,
     cheo_office: Number(account.cheo_office || 0),
     jukumu: safeUpper(account.jukumu),

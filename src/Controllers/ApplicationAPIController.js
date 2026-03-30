@@ -27,7 +27,9 @@ class ApplicationController {
           : {}),
       });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const statusCode = Number(error?.statusCode || 500);
+      const httpCode = statusCode >= 500 ? statusCode : 200;
+      res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 
@@ -62,7 +64,9 @@ class ApplicationController {
           : {}),
       });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const statusCode = Number(error?.statusCode || 500);
+      const httpCode = statusCode >= 500 ? statusCode : 200;
+      res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 
@@ -77,7 +81,9 @@ class ApplicationController {
           .json({ success: false, message: "Application not found" });
         res.json({ success: true, data: application });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        const statusCode = Number(error?.statusCode || 500);
+        const httpCode = statusCode >= 500 ? statusCode : 200;
+        res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 
@@ -95,7 +101,9 @@ class ApplicationController {
       );
       res.json({ success: true, data: comment });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const statusCode = Number(error?.statusCode || 500);
+      const httpCode = statusCode >= 500 ? statusCode : 200;
+      res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 
@@ -112,7 +120,9 @@ class ApplicationController {
       );
       res.json({ success: true, data: updatedApplication });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const statusCode = Number(error?.statusCode || 500);
+      const httpCode = statusCode >= 500 ? statusCode : 200;
+      res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 
@@ -128,7 +138,9 @@ class ApplicationController {
       );
       res.json({ success: true, data: updatedApplication });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const statusCode = Number(error?.statusCode || 500);
+      const httpCode = statusCode >= 500 ? statusCode : 200;
+      res.status(httpCode).json({ success: false, statusCode, message: error.message });
     }
   }
 }

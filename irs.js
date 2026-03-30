@@ -55,6 +55,7 @@ const roleRouter = require("./routers/roleRouter.js");
 const zoneRouter = require("./routers/zoneRouter.js");
 const attachementTypeRouter = require("./routers/attachmentTypeRouter.js");
 const applicationCategoryRouter = require("./routers/applicationCategoryRouter.js");
+const languageRouter = require("./routers/languageRouter.js");
 const registrationTypeRouter = require("./routers/registrationTypeRouter.js");
 const designationRouter = require("./routers/designationRouter.js");
 const applicantRouter = require("./routers/applicantRouter.js");
@@ -118,7 +119,9 @@ const updateSchoolDetailRouter = require("./routers/updateSchoolDetailRouter.js"
 const systemLogRouter = require("./routers/systemLogRouter.js");
 const { writeSystemLog } = require("./src/Utils/systemLogService");
 const applicationApiRoutes = require("./src/Routes/ApplicationApiRoutes.js");
+const religionApiRoutes = require("./src/Routes/ReligionApiRoutes.js");
 const { bindRequestContext } = require("./src/Utils/requestContext");
+const { startHandoverScheduler } = require("./src/Schedulers/HandoverScheduler");
 
 
 // app.use("/api", indexRouter);
@@ -152,6 +155,7 @@ app.use("/api", combinationSubjectRouter);
 app.use("/api", curriculumRouter);
 app.use("/api", attachementTypeRouter);
 app.use("/api", applicationCategoryRouter);
+app.use("/api", languageRouter);
 app.use("/api", registrationTypeRouter);
 app.use("/api", applicantRouter);
 app.use("/api", feeRouter);
@@ -204,6 +208,7 @@ app.use("/api", auditTrailRouter);
 app.use("/api", handoverRouter); 
 app.use("/api", systemLogRouter);
 app.use("/api/applications", applicationApiRoutes);
+app.use("/api", religionApiRoutes);
 app.use(express.json());
 const api_routes = require("./src/Routes/api.js"); // central routes
 app.use("/api/v2", api_routes); // <--- Prefix
@@ -217,9 +222,11 @@ app.use("/api/v2", moduleRouter); // compatibility for allModules/addModule endp
 app.use("/api/v2", applicantRouter); // compatibility for all-applicants/find-applicant/look_for_applicants endpoints
 app.use("/api/v2", schoolTypeStandardRouter); // compatibility for settings endpoints
 app.use("/api/v2", schoolInfrastructureStandardRouter); // compatibility for settings endpoints
+app.use("/api/v2", attachementTypeRouter); // compatibility for attachment type setup endpoints
 app.use("/api/v2", baruaRouter); // compatibility for letters endpoint
 app.use("/api/v2", letterTemplateRouter); // templates for letters endpoint
 app.use("/api/v2", certificateRouter); // school registration certificates
+app.use("/api/v2", languageRouter); // compatibility for language setup endpoints
 
 // Handling Errors
 app.use((err, req, res, next) => {
@@ -251,6 +258,8 @@ app.use((err, req, res, next) => {
     message: err.message,
   });
 });
+
+startHandoverScheduler();
 
 app.listen(process.env.HTTP_PORT || 80, () => {
    console.log(`API Server is running on  port ${process.env.HTTP_PORT || 80}`);
