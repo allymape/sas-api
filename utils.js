@@ -212,6 +212,17 @@ const ObjectFuctions = {
               next();
             } catch (handoverError) {
               console.log("isAuth handover context error", handoverError);
+              const requestPath = String(req.originalUrl || req.url || "");
+              const isActiveHandoverProbe = /\/my-active-handover(?:\?|$)/i.test(requestPath);
+              if (isActiveHandoverProbe) {
+                req.user = {
+                  ...(decode || {}),
+                  has_active_outgoing_handover: Boolean(decode?.has_active_outgoing_handover),
+                  has_active_incoming_handover: Boolean(decode?.has_active_incoming_handover),
+                  active_handover_ids: Array.isArray(decode?.active_handover_ids) ? decode.active_handover_ids : [],
+                };
+                return next();
+              }
               res.status(500).send({
                 statusCode: 500,
                 message: "Failed to resolve handover context.",

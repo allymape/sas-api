@@ -124,7 +124,13 @@ handoverRouter.post("/my-active-handover", isAuth, async (req, res) => {
       outgoing_handover: context.activeOutgoingHandovers?.[0] || null,
     });
   } catch (error) {
-    failure(res, error, "Failed to fetch active handover status.");
+    console.log("my-active-handover fallback", error?.message || error);
+    success(res, {
+      active: Boolean(req.user?.has_active_outgoing_handover),
+      outgoing_handover: null,
+      degraded: true,
+      message: "Active handover status resolved from token fallback.",
+    });
   }
 });
 

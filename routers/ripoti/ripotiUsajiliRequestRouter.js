@@ -4,9 +4,11 @@ const ripotiUsajiliRequestRouter = express.Router();
 const { isAuth, formatDate, auditTrail, auditMiddleware } = require("../../utils");
 const sharedModel = require("../../models/sharedModel");
 const schoolModel = require("../../models/schoolModel");
+const UsajiliPivotAnalyticsService = require("../../src/Services/UsajiliPivotAnalyticsService");
 
 const ANALYTICS_CACHE_TTL_MS = Number.parseInt(process.env.RIPOTI_ANALYTICS_CACHE_MS || "60000", 10);
 const analyticsCache = new Map();
+const usajiliPivotAnalyticsService = new UsajiliPivotAnalyticsService();
 
 const getCache = (key) => {
   const cached = analyticsCache.get(key);
@@ -442,6 +444,180 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule/analytics", isAuth, (req, 
     },
     [...params, limit]
   );
+});
+
+// Full pivot dataset endpoint (approved applications only)
+ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule/pivot-data", isAuth, (req, res) => {
+  const requestStartedAt = Number(process.hrtime.bigint() / 1000000n);
+  const user = req.user || {};
+  const input = { ...(req.body || {}), ...(req.query || {}) };
+
+  const cacheKey = [
+    "usajili:pivot:data",
+    user?.id || "0",
+    user?.sehemu || "null",
+    user?.zone_id || "null",
+    user?.district_code || "null",
+    JSON.stringify(input || {}),
+  ].join(":");
+
+  const cached = getCache(cacheKey);
+  if (cached) {
+    const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+    console.info(
+      `[ripoti-usajili-shule/pivot-data] cache-hit user=${user?.id || "0"} rows=${Number(cached?.summary?.loaded_records || 0)} total_ms=${requestTotalMs}`
+    );
+    return res.send({
+      ...cached,
+      cached: true,
+      summary: {
+        ...(cached.summary || {}),
+        timings: {
+          ...((cached.summary && cached.summary.timings) || {}),
+          request_total_ms: requestTotalMs,
+        },
+      },
+    });
+  }
+
+  usajiliPivotAnalyticsService.fetch({
+    user,
+    input,
+    callback: (error, result) => {
+      if (error) {
+        const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+        console.error(
+          `[ripoti-usajili-shule/pivot-data] error user=${user?.id || "0"} total_ms=${requestTotalMs}`,
+          error
+        );
+        return res.send({
+          error: true,
+          statusCode: 306,
+          data: [],
+          message: "Imeshindikana kupakia taarifa za pivot analytics.",
+        });
+      }
+
+      const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+      const payload = {
+        error: false,
+        statusCode: 300,
+        data: result?.records || [],
+        summary: {
+          total_records:
+            result?.totalRecords === null || typeof result?.totalRecords === "undefined"
+              ? null
+              : Number(result.totalRecords),
+          loaded_records: Number(result?.loadedRecords || 0),
+          has_more: Boolean(result?.hasMore),
+          exact_total: Boolean(result?.exactTotal),
+          truncated: Boolean(result?.truncated),
+          max_limit: Number(result?.maxLimit || 0),
+          active_filters: result?.activeFilters || {},
+          last_refreshed: result?.lastRefreshed || null,
+          timings: {
+            ...(result?.timings || {}),
+            request_total_ms: requestTotalMs,
+          },
+        },
+        message: "Pivot analytics data loaded successfully.",
+      };
+
+      console.info(
+        `[ripoti-usajili-shule/pivot-data] user=${user?.id || "0"} rows=${payload.summary.loaded_records} truncated=${payload.summary.truncated} query_ms=${Number(payload.summary.timings?.query_ms || 0)} transform_ms=${Number(payload.summary.timings?.transform_ms || 0)} request_total_ms=${requestTotalMs}`
+      );
+
+      if (Number(payload?.summary?.loaded_records || 0) <= 3000) {
+        setCache(cacheKey, payload);
+      }
+      return res.send(payload);
+    },
+  });
+});
+
+// National summary dataset endpoint (server-side grouped analytics)
+ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule/pivot-summary-data", isAuth, (req, res) => {
+  const requestStartedAt = Number(process.hrtime.bigint() / 1000000n);
+  const user = req.user || {};
+  const input = { ...(req.body || {}), ...(req.query || {}) };
+
+  const cacheKey = [
+    "usajili:pivot:summary",
+    user?.id || "0",
+    user?.sehemu || "null",
+    user?.zone_id || "null",
+    user?.district_code || "null",
+    JSON.stringify(input || {}),
+  ].join(":");
+
+  const cached = getCache(cacheKey);
+  if (cached) {
+    const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+    console.info(
+      `[ripoti-usajili-shule/pivot-summary-data] cache-hit user=${user?.id || "0"} groups=${Number(cached?.summary?.loaded_groups || 0)} total_ms=${requestTotalMs}`
+    );
+    return res.send({
+      ...cached,
+      cached: true,
+      summary: {
+        ...(cached.summary || {}),
+        timings: {
+          ...((cached.summary && cached.summary.timings) || {}),
+          request_total_ms: requestTotalMs,
+        },
+      },
+    });
+  }
+
+  usajiliPivotAnalyticsService.fetchSummary({
+    user,
+    input,
+    callback: (error, result) => {
+      if (error) {
+        const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+        console.error(
+          `[ripoti-usajili-shule/pivot-summary-data] error user=${user?.id || "0"} total_ms=${requestTotalMs}`,
+          error
+        );
+        return res.send({
+          error: true,
+          statusCode: 306,
+          data: [],
+          message: "Imeshindikana kupakia national summary report.",
+        });
+      }
+
+      const requestTotalMs = Number(process.hrtime.bigint() / 1000000n) - requestStartedAt;
+      const payload = {
+        error: false,
+        statusCode: 300,
+        data: result?.groups || [],
+        summary: {
+          mode: "national_summary",
+          grouping: result?.grouping || {},
+          totals: result?.totals || {},
+          row_totals: result?.rowTotals || [],
+          col_totals: result?.colTotals || [],
+          loaded_groups: Number(result?.loadedGroups || 0),
+          max_group_limit: Number(result?.maxGroupLimit || 0),
+          active_filters: result?.activeFilters || {},
+          last_refreshed: result?.lastRefreshed || null,
+          timings: {
+            ...(result?.timings || {}),
+            request_total_ms: requestTotalMs,
+          },
+        },
+        message: "National summary report loaded successfully.",
+      };
+
+      console.info(
+        `[ripoti-usajili-shule/pivot-summary-data] user=${user?.id || "0"} groups=${payload.summary.loaded_groups} row_dim=${payload.summary.grouping?.row_dim || "n/a"} col_dim=${payload.summary.grouping?.col_dim || "n/a"} query_ms=${Number(payload.summary.timings?.query_ms || 0)} request_total_ms=${requestTotalMs}`
+      );
+
+      setCache(cacheKey, payload);
+      return res.send(payload);
+    },
+  });
 });
 
 // Lookups for report filters (fast; avoids heavy report query)
