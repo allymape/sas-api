@@ -509,10 +509,22 @@ ripotiUsajiliRequestRouter.get("/ripoti-usajili-shule/pivot-data", isAuth, (req,
               ? null
               : Number(result.totalRecords),
           loaded_records: Number(result?.loadedRecords || 0),
+          records_returned: Number(result?.loadedRecords || 0),
           has_more: Boolean(result?.hasMore),
           exact_total: Boolean(result?.exactTotal),
           truncated: Boolean(result?.truncated),
-          max_limit: Number(result?.maxLimit || 0),
+          requested_limit:
+            result?.requestedLimit === null || typeof result?.requestedLimit === "undefined"
+              ? null
+              : result.requestedLimit,
+          applied_limit:
+            result?.appliedLimit === null || typeof result?.appliedLimit === "undefined"
+              ? null
+              : Number(result.appliedLimit),
+          max_limit:
+            result?.maxLimit === null || typeof result?.maxLimit === "undefined"
+              ? null
+              : Number(result.maxLimit),
           active_filters: result?.activeFilters || {},
           last_refreshed: result?.lastRefreshed || null,
           timings: {

@@ -54,9 +54,19 @@ const SUMMARY_DIMENSIONS = {
     key: "COALESCE(NULLIF(TRIM(lang.language), ''), 'Haijulikani')",
     display: "Lugha",
   },
+  school_type_name: {
+    label: "Aina ya Shule",
+    key: "COALESCE(NULLIF(TRIM(sc.category), ''), 'Haijulikani')",
+    display: "Aina ya Shule",
+  },
+  accommodation_name: {
+    label: "Malazi",
+    key: "COALESCE(NULLIF(TRIM(ssc.subcategory), ''), 'Haijulikani')",
+    display: "Malazi",
+  },
   education_type_name: {
     label: "Aina ya Shule",
-    key: "COALESCE(NULLIF(TRIM(ssc.subcategory), ''), COALESCE(NULLIF(TRIM(sc.category), ''), 'Haijulikani'))",
+    key: "COALESCE(NULLIF(TRIM(sc.category), ''), 'Haijulikani')",
     display: "Aina ya Shule",
   },
   verification_label: {
@@ -167,11 +177,24 @@ const daysDiff = (from, to) => {
 
 class UsajiliPivotAnalyticsService {
   normalizeInput(rawInput = {}) {
-    const limitInput = toNumber(rawInput.limit, DEFAULT_LIMIT) || DEFAULT_LIMIT;
     const safeDefault = Number.isFinite(DEFAULT_LIMIT) && DEFAULT_LIMIT > 0 ? DEFAULT_LIMIT : 500;
     const safeMax = Number.isFinite(MAX_LIMIT) && MAX_LIMIT > 0 ? MAX_LIMIT : 10000;
 
-    const limit = Math.min(safeMax, Math.max(100, limitInput || safeDefault));
+    const rawLimitToken = trimOrNull(rawInput.limit);
+    const isAllLimitRequested = rawLimitToken && String(rawLimitToken).toLowerCase() === "all";
+
+    let requestedLimit = null;
+    let appliedLimit = null;
+
+    if (isAllLimitRequested) {
+      requestedLimit = "all";
+      appliedLimit = null;
+    } else {
+      const limitInput = toNumber(rawInput.limit, safeDefault) || safeDefault;
+      const boundedLimit = Math.min(safeMax, Math.max(100, limitInput || safeDefault));
+      requestedLimit = boundedLimit;
+      appliedLimit = boundedLimit;
+    }
 
     const year = toNumber(rawInput.year, null);
     const ownership = toNumber(rawInput.ownership, null);
@@ -191,7 +214,9 @@ class UsajiliPivotAnalyticsService {
     const dateTo = applicationDateTo || range.endDate;
 
     return {
-      limit,
+      limit: appliedLimit,
+      requestedLimit,
+      appliedLimit,
       year,
       ownership,
       level,
@@ -385,7 +410,9 @@ class UsajiliPivotAnalyticsService {
       council_name: row.council_name || row.district_name || null,
       ward_name: row.ward_name || null,
       level_name: row.level_name || null,
-      education_type_name: row.education_type_name || null,
+      school_type_name: row.school_type_name || null,
+      accommodation_name: row.accommodation_name || null,
+      education_type_name: row.school_type_name || row.education_type_name || null,
       specialization_name: row.specialization_name || null,
       language_name: row.language_name || null,
       verification_status: verificationStatusRaw === 1 ? "Verified" : "Not Verified",
@@ -648,7 +675,10 @@ class UsajiliPivotAnalyticsService {
     const serviceStarted = nowMs();
     const filters = this.normalizeInput(input);
     const { fromSql, params } = this.buildBaseSql({ user, filters });
-    const fetchLimit = Number(filters.limit) + 1;
+
+    const numericLimit = Number(filters.appliedLimit);
+    const hasNumericLimit = Number.isFinite(numericLimit) && numericLimit > 0;
+    const fetchLimit = hasNumericLimit ? numericLimit + 1 : null;
 
     const sqlRows = `
       SELECT
@@ -663,7 +693,8 @@ class UsajiliPivotAnalyticsService {
         COALESCE(NULLIF(TRIM(d.LgaName), ''), 'Haijulikani') AS council_name,
         COALESCE(NULLIF(TRIM(w.WardName), ''), 'Haijulikani') AS ward_name,
         COALESCE(NULLIF(TRIM(ct.certificate), ''), COALESCE(NULLIF(TRIM(ct.level), ''), 'Haijulikani')) AS level_name,
-        COALESCE(NULLIF(TRIM(ssc.subcategory), ''), COALESCE(NULLIF(TRIM(sc.category), ''), 'Haijulikani')) AS education_type_name,
+        COALESCE(NULLIF(TRIM(sc.category), ''), 'Haijulikani') AS school_type_name,
+        COALESCE(NULLIF(TRIM(ssc.subcategory), ''), 'Haijulikani') AS accommodation_name,
         COALESCE(NULLIF(TRIM(ss.specialization), ''), '') AS specialization_name,
         COALESCE(NULLIF(TRIM(lang.language), ''), '') AS language_name,
         COALESCE(sr.is_verified, 0) AS verification_status,
@@ -674,8 +705,7 @@ class UsajiliPivotAnalyticsService {
         a.updated_at AS reviewed_at,
         a.approved_at AS approved_at
       ${fromSql}
-      ORDER BY a.id DESC
-      LIMIT ?
+      ORDER BY a.id DESC${hasNumericLimit ? "\n      LIMIT ?" : ""}
     `;
 
     sharedModel.paginate(
@@ -697,11 +727,12 @@ class UsajiliPivotAnalyticsService {
           if (!key || seen.has(key)) continue;
           seen.add(key);
           uniqueRows.push(row);
-          if (uniqueRows.length > Number(filters.limit)) break;
+
+          if (hasNumericLimit && uniqueRows.length > numericLimit) break;
         }
 
-        const hasMore = uniqueRows.length > Number(filters.limit);
-        const selectedRows = hasMore ? uniqueRows.slice(0, Number(filters.limit)) : uniqueRows;
+        const hasMore = hasNumericLimit ? uniqueRows.length > numericLimit : false;
+        const selectedRows = hasMore ? uniqueRows.slice(0, numericLimit) : uniqueRows;
 
         const transformStarted = nowMs();
         const flatData = selectedRows.map((row) => this.mapRow(row));
@@ -718,7 +749,9 @@ class UsajiliPivotAnalyticsService {
           hasMore,
           loadedRecords: flatData.length,
           truncated: hasMore,
-          maxLimit: filters.limit,
+          requestedLimit: filters.requestedLimit,
+          appliedLimit: hasNumericLimit ? numericLimit : null,
+          maxLimit: hasNumericLimit ? numericLimit : null,
           activeFilters: {
             year: filters.year,
             region: filters.region,
@@ -742,7 +775,7 @@ class UsajiliPivotAnalyticsService {
         });
       },
       {
-        rows: [...params, fetchLimit],
+        rows: hasNumericLimit ? [...params, fetchLimit] : [...params],
       },
     );
   }
