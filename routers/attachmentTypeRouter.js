@@ -10,8 +10,13 @@ const sharedModel = require("../models/sharedModel.js");
 attachementTypeRouter.get("/all-attachment-types", isAuth, (req, res, next) => {
   var per_page = parseInt(req.query.per_page);
   var page = parseInt(req.query.page);
+  if (!Number.isFinite(per_page) || per_page <= 0) per_page = 15;
+  if (!Number.isFinite(page) || page <= 0) page = 1;
   var offset = (page - 1) * per_page;
-  var searchParams = req.body
+  var searchParams = {
+    ...(req.query || {}),
+    ...(req.body || {}),
+  };
   attachmentTypeModel.getAllAttachmentTypes(offset, per_page, searchParams, (error, attachementTypes, numRows) => {
            return res.send({
              error: error ? true : false,

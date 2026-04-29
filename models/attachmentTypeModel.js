@@ -3,7 +3,7 @@ const db = require("../config/database");
 module.exports = {
   //******** GET A LIST OF ATTACHMENT TYPES *******************************
   getAllAttachmentTypes: (offset, per_page, searchParams, callback) => {
-    const {deleted , tafuta, structure , umiliki, aina_ombi} = searchParams;
+    const {deleted , tafuta, structure , umiliki, aina_ombi, is_backend, status_id} = searchParams;
     const sqlFrom = `FROM attachment_types a
       INNER JOIN application_categories ac ON ac.id = a.application_category_id
       LEFT  JOIN registry_types rt ON a.registry_type_id = rt.id
@@ -13,7 +13,14 @@ module.exports = {
                           ${umiliki ? " AND a.registry_type_id = "+db.escape(umiliki): ""}
                           ${tafuta ? " AND ( attachment_name LIKE '%"+tafuta+"%' )" : ""}
                           `;
-    const $where = `WHERE status_id = ${deleted == "true" ? 0 : 1}  ${searchQuery}`;
+    const parsedStatus = status_id !== undefined && status_id !== null && String(status_id).trim() !== ""
+      ? Number(status_id)
+      : (deleted == "true" ? 0 : 1);
+    const resolvedStatus = Number.isFinite(parsedStatus) ? parsedStatus : 1;
+    const backendFilter = is_backend !== undefined && is_backend !== null && String(is_backend).trim() !== ""
+      ? ` AND a.is_backend = ${db.escape(Number(is_backend))}`
+      : "";
+    const $where = `WHERE a.status_id = ${db.escape(resolvedStatus)} ${backendFilter} ${searchQuery}`;
     db.query(
       `SELECT a.id as id, app_name, file_size as size, file_format, 
               attachment_name,IFNULL(registry , '') as registry,a.status_id as status, 
