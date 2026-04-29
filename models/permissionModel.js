@@ -1,4 +1,5 @@
 const db = require("../config/database");
+let permissionHasModuleIdCache = null;
 
 const normalizePaginationFlag = (is_paginated) =>
   !(is_paginated === false || is_paginated === "false" || is_paginated === 0 || is_paginated === "0");
@@ -103,7 +104,26 @@ const ensureModulesByKeys = (moduleKeys = [], callback) => {
   );
 };
 
+const detectPermissionHasModuleId = (callback) => {
+  if (permissionHasModuleIdCache !== null) {
+    callback(null, permissionHasModuleIdCache);
+    return;
+  }
+
+  db.query("SHOW COLUMNS FROM permissions LIKE 'module_id'", (error, rows = []) => {
+    if (error) {
+      callback(error, false);
+      return;
+    }
+    permissionHasModuleIdCache = Array.isArray(rows) && rows.length > 0;
+    callback(null, permissionHasModuleIdCache);
+  });
+};
+
 module.exports = {
+  hasModuleId: (callback) => {
+    detectPermissionHasModuleId(callback);
+  },
   //******** GET A LIST OF PERMISSIONS *******************************
   getAllPermission: (
     offset,
@@ -131,45 +151,70 @@ module.exports = {
     }
 
     const searchText = String(search || "").trim();
-    if (searchText) {
-      where.push(
-        "(p.display_name LIKE ? OR p.permission_name LIKE ? OR m.module_name LIKE ? OR m.display_name LIKE ?)"
-      );
-      params.push(`%${searchText}%`, `%${searchText}%`, `%${searchText}%`, `%${searchText}%`);
-    }
 
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-    const commonSql = ` FROM permissions p
-                        LEFT JOIN modules m ON m.id = p.module_id
-                        ${whereSql}`;
-
-    db.query(
-      `SELECT p.*,
-              m.module_name,
-              m.display_name AS module_display_name
-       ${commonSql}
-       ORDER BY p.permission_name ASC
-       ${paginated ? "LIMIT ?,?" : ""}`,
-      paginated ? [...params, safeOffset, safePerPage] : params,
-      (error, permissions = []) => {
-        if (error) {
-          callback(error, [], 0);
-          return;
-        }
-
-        db.query(
-          `SELECT COUNT(*) AS num_rows ${commonSql}`,
-          params,
-          (countError, result = []) => {
-            if (countError) {
-              callback(countError, [], 0);
-              return;
-            }
-            callback(null, permissions, Number(result[0]?.num_rows || 0));
-          }
-        );
+    detectPermissionHasModuleId((schemaError, hasModuleId) => {
+      if (schemaError) {
+        callback(schemaError, [], 0);
+        return;
       }
-    );
+
+      if (searchText) {
+        if (hasModuleId) {
+          where.push(
+            "(p.display_name LIKE ? OR p.permission_name LIKE ? OR m.module_name LIKE ? OR m.display_name LIKE ?)"
+          );
+          params.push(`%${searchText}%`, `%${searchText}%`, `%${searchText}%`, `%${searchText}%`);
+        } else {
+          where.push("(p.display_name LIKE ? OR p.permission_name LIKE ?)");
+          params.push(`%${searchText}%`, `%${searchText}%`);
+        }
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const commonSql = hasModuleId
+        ? ` FROM permissions p
+            LEFT JOIN modules m ON m.id = p.module_id
+            ${whereSql}`
+        : ` FROM permissions p
+            ${whereSql}`;
+
+      const selectSql = hasModuleId
+        ? `SELECT p.*,
+                  m.module_name,
+                  m.display_name AS module_display_name
+           ${commonSql}
+           ORDER BY p.permission_name ASC
+           ${paginated ? "LIMIT ?,?" : ""}`
+        : `SELECT p.*,
+                  NULL AS module_name,
+                  NULL AS module_display_name
+           ${commonSql}
+           ORDER BY p.permission_name ASC
+           ${paginated ? "LIMIT ?,?" : ""}`;
+
+      db.query(
+        selectSql,
+        paginated ? [...params, safeOffset, safePerPage] : params,
+        (error, permissions = []) => {
+          if (error) {
+            callback(error, [], 0);
+            return;
+          }
+
+          db.query(
+            `SELECT COUNT(*) AS num_rows ${commonSql}`,
+            params,
+            (countError, result = []) => {
+              if (countError) {
+                callback(countError, [], 0);
+                return;
+              }
+              callback(null, permissions, Number(result[0]?.num_rows || 0));
+            }
+          );
+        }
+      );
+    });
   },
 
   syncPermissions: (permissions, callback) => {
@@ -247,63 +292,202 @@ module.exports = {
 
   //******** STORE PERMISSION *******************************
   storePermission: (permissionData, callback) => {
-    let success = false;
+    const row = Array.isArray(permissionData?.[0]) ? permissionData[0] : [];
+    const permissionName = String(row[0] || "").trim();
+    const moduleId = Number(row[1] || 0) || null;
+    const displayName = String(row[2] || "").trim() || null;
+    const statusId = Number(row[3] || 1) || 1;
+    const createdAt = row[4] || null;
+    const createdBy = Number(row[5] || 0) || null;
+
+    if (!permissionName) {
+      callback({ type: "validation", message: "Permission name is required." }, false, null);
+      return;
+    }
+
     db.query(
-      `INSERT INTO permissions (permission_name, module_id, display_name, status_id, created_at, created_by) VALUES ?`,
-      [permissionData],
-      (error, result) => {
-        if (result) {
-          success = true;
+      "SELECT id FROM permissions WHERE LOWER(TRIM(permission_name)) = LOWER(TRIM(?)) LIMIT 1",
+      [permissionName],
+      (existsError, rows = []) => {
+        if (existsError) {
+          callback(existsError, false, null);
+          return;
         }
-        callback(error, success, result);
+
+        if (Array.isArray(rows) && rows.length > 0) {
+          callback({ type: "validation", message: "Permission already exists." }, false, null);
+          return;
+        }
+
+        detectPermissionHasModuleId((schemaError, hasModuleId) => {
+          if (schemaError) {
+            callback(schemaError, false, null);
+            return;
+          }
+
+          if (hasModuleId) {
+            if (!moduleId || moduleId < 1) {
+              callback({ type: "validation", message: "Invalid module_id." }, false, null);
+              return;
+            }
+
+            db.query(
+              "SELECT id FROM modules WHERE id = ? LIMIT 1",
+              [moduleId],
+              (moduleError, moduleRows = []) => {
+                if (moduleError) {
+                  callback(moduleError, false, null);
+                  return;
+                }
+                if (!Array.isArray(moduleRows) || moduleRows.length === 0) {
+                  callback({ type: "validation", message: "Invalid module_id." }, false, null);
+                  return;
+                }
+
+                const sql = `INSERT INTO permissions (permission_name, module_id, display_name, status_id, created_at, created_by)
+                             VALUES (?, ?, ?, ?, ?, ?)`;
+                const params = [permissionName, moduleId, displayName, statusId, createdAt, createdBy];
+
+                db.query(sql, params, (error, result) => {
+                  if (error) {
+                    callback(error, false, result);
+                    return;
+                  }
+                  callback(null, (result?.affectedRows || 0) > 0, result);
+                });
+              }
+            );
+            return;
+          }
+
+          const sql = `INSERT INTO permissions (permission_name, display_name, status_id, created_at, created_by)
+                       VALUES (?, ?, ?, ?, ?)`;
+          const params = [permissionName, displayName, statusId, createdAt, createdBy];
+
+          db.query(sql, params, (error, result) => {
+            if (error) {
+              callback(error, false, result);
+              return;
+            }
+            callback(null, (result?.affectedRows || 0) > 0, result);
+          });
+        });
       }
     );
   },
 
   //******** FIND PERMISSION *******************************
   findPermission: (id, callback) => {
-    let success = false;
-    db.query(
-      `SELECT p.id,
-              p.permission_name,
-              p.module_id,
-              p.display_name,
-              p.status_id,
-              p.is_default,
-              m.module_name,
-              m.display_name AS module_display_name
-       FROM permissions p
-       LEFT JOIN modules m ON m.id = p.module_id
-       WHERE p.id = ?`,
-      [id],
-      (error, permission = []) => {
-        if (permission.length > 0) {
-          success = true;
-        }
-        callback(error, success, permission);
+    detectPermissionHasModuleId((schemaError, hasModuleId) => {
+      if (schemaError) {
+        callback(schemaError, false, []);
+        return;
       }
-    );
+
+      const sql = hasModuleId
+        ? `SELECT p.id,
+                p.permission_name,
+                p.module_id,
+                p.display_name,
+                p.status_id,
+                p.is_default,
+                m.module_name,
+                m.display_name AS module_display_name
+         FROM permissions p
+         LEFT JOIN modules m ON m.id = p.module_id
+         WHERE p.id = ?`
+        : `SELECT p.id,
+                p.permission_name,
+                NULL AS module_id,
+                p.display_name,
+                p.status_id,
+                p.is_default,
+                NULL AS module_name,
+                NULL AS module_display_name
+         FROM permissions p
+         WHERE p.id = ?`;
+
+      db.query(sql, [id], (error, permission = []) => {
+        const success = Array.isArray(permission) && permission.length > 0;
+        callback(error, success, permission);
+      });
+    });
   },
 
   //******** UPDATE PERMISSION *******************************
   updatePermission: (name, module_id, display, status, is_default, id, callback) => {
-    let success = false;
-    db.query(
-      `UPDATE permissions
-       SET permission_name = ?,
-           module_id = ?,
-           display_name = ?,
-           status_id = ?,
-           is_default = ?
-       WHERE id = ?`,
-      [name, module_id, display, status, is_default, id],
-      (error, permission) => {
-        if (permission) {
-          success = true;
-        }
-        callback(error, success, permission);
+    const permissionName = String(name || "").trim();
+    const moduleId = Number(module_id || 0) || null;
+    const displayName = String(display || "").trim();
+    const statusId = Number(status) === 1 || status === true ? 1 : 0;
+    const isDefault = Number(is_default) === 1 || is_default === true ? 1 : 0;
+    const permissionId = Number(id || 0) || 0;
+
+    if (!permissionName) {
+      callback({ type: "validation", message: "Permission name is required." }, false, null);
+      return;
+    }
+    if (!displayName) {
+      callback({ type: "validation", message: "Display name is required." }, false, null);
+      return;
+    }
+    if (!permissionId) {
+      callback({ type: "validation", message: "Invalid permission id." }, false, null);
+      return;
+    }
+
+    detectPermissionHasModuleId((schemaError, hasModuleId) => {
+      if (schemaError) {
+        callback(schemaError, false, null);
+        return;
       }
-    );
+
+      const runUpdate = () => {
+        const sql = hasModuleId
+          ? `UPDATE permissions
+             SET permission_name = ?,
+                 module_id = ?,
+                 display_name = ?,
+                 status_id = ?,
+                 is_default = ?
+             WHERE id = ?`
+          : `UPDATE permissions
+             SET permission_name = ?,
+                 display_name = ?,
+                 status_id = ?,
+                 is_default = ?
+             WHERE id = ?`;
+        const params = hasModuleId
+          ? [permissionName, moduleId, displayName, statusId, isDefault, permissionId]
+          : [permissionName, displayName, statusId, isDefault, permissionId];
+
+        db.query(sql, params, (error, permission) => {
+          const success = !!permission && Number(permission.affectedRows || 0) > 0;
+          callback(error, success, permission);
+        });
+      };
+
+      if (hasModuleId) {
+        if (!moduleId || moduleId < 1) {
+          callback({ type: "validation", message: "Invalid module_id." }, false, null);
+          return;
+        }
+        db.query("SELECT id FROM modules WHERE id = ? LIMIT 1", [moduleId], (moduleError, rows = []) => {
+          if (moduleError) {
+            callback(moduleError, false, null);
+            return;
+          }
+          if (!Array.isArray(rows) || rows.length === 0) {
+            callback({ type: "validation", message: "Invalid module_id." }, false, null);
+            return;
+          }
+          runUpdate();
+        });
+        return;
+      }
+
+      runUpdate();
+    });
   },
 
   //******** DELETE PERMISSION *******************************

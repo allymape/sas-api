@@ -32,12 +32,15 @@ permissionRouter.get("/allPermissions", isAuth, (req, res, next) => {
   }
 
   permissionModel.getAllPermission(offset, per_page, is_paginated , search ,(error, permissions, numRows) => {
-            return res.send({
-                error: error ? true : false,
-                statusCode: error ? 306 : 300,
-                data: error ? [] : permissions,
-                numRows: numRows,
-                message: error ? "Something went wrong." : "List of Permissions.",
+            permissionModel.hasModuleId((schemaError, hasModuleId) => {
+              return res.send({
+                  error: error ? true : false,
+                  statusCode: error ? 306 : 300,
+                  data: error ? [] : permissions,
+                  numRows: numRows,
+                  hasModuleId: schemaError ? true : !!hasModuleId,
+                  message: error ? "Something went wrong." : "List of Permissions.",
+              });
             });
   } , status, is_default);
 });
@@ -56,17 +59,27 @@ permissionRouter.get("/editPermission/:id", isAuth, (req, res, next) => {
 
 // Store permission
 permissionRouter.post("/addPermission", isAuth, (req, res, next) => {
+            console.log("[Permissions][Create][API] Request", {
+              url: "/api/v2/addPermission",
+              method: "POST",
+              payload: {
+                permissionName: req.body.permissionName,
+                displayName: req.body.displayName,
+                module_id: req.body.module_id || req.body.moduleId,
+              },
+              user_id: req?.user?.id || null,
+            });
             var data = [];
             var name = paramCase(req.body.permissionName);
             var display = sentenceCase(req.body.displayName);
             var moduleId = Number(req.body.module_id || req.body.moduleId || 0);
 
-            if (!moduleId || moduleId < 1) {
+            if (!name || !String(name).trim()) {
               return res.send({
                 success: false,
                 statusCode: 306,
                 data: [],
-                message: "Moduli ya permission ni lazima.",
+                message: "Permission name is required.",
               });
             }
 
@@ -80,19 +93,44 @@ permissionRouter.post("/addPermission", isAuth, (req, res, next) => {
             ]);
     
             permissionModel.storePermission(data , (error , success , result) => {
+                     const rawErrorMessage = String(error?.message || error?.sqlMessage || "").trim();
+                     const normalizedErrorMessage = rawErrorMessage.toLowerCase();
+                     const isDuplicate =
+                       rawErrorMessage === "Permission already exists."
+                       || normalizedErrorMessage.includes("duplicate")
+                       || normalizedErrorMessage.includes("permission already exists");
+                     const isInvalidModule =
+                       rawErrorMessage === "Invalid module_id."
+                       || normalizedErrorMessage.includes("invalid module_id");
                      return res.send({
                        success: success ? true : false,
                        statusCode: success ? 300 : 306,
                        data: success ? result : error,
                        message: success
                          ? "Umefanikiwa kusajili permission."
-                         : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+                         : (isDuplicate
+                             ? "Permission already exists."
+                             : (isInvalidModule
+                                 ? "Invalid module_id."
+                                 : (rawErrorMessage || "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. "))),
                      });
             });
 });
 
 // Store permission
 permissionRouter.put("/updatePermission/:id", isAuth, (req, res, next) => {
+            console.log("[Permissions][Update][API] Request", {
+              url: "/api/v2/updatePermission/" + req.params.id,
+              method: "PUT",
+              payload: {
+                permissionName: req.body.permissionName,
+                displayName: req.body.displayName,
+                module_id: req.body.module_id || req.body.moduleId,
+                status: req.body.status,
+                is_default: req.body.is_default,
+              },
+              user_id: req?.user?.id || null,
+            });
             var name = paramCase(req.body.permissionName);
             var display = sentenceCase(req.body.displayName);
             var moduleId = Number(req.body.module_id || req.body.moduleId || 0);
@@ -100,21 +138,54 @@ permissionRouter.put("/updatePermission/:id", isAuth, (req, res, next) => {
             var is_default = req.body.is_default == "on" || req.body.is_default == 1 ? true : false ;
             var id = Number(req.params.id);
 
-            if (!moduleId || moduleId < 1) {
+            if (!id || id < 1) {
               return res.send({
                 success: false,
                 statusCode: 306,
                 data: [],
-                message: "Moduli ya permission ni lazima.",
+                message: "Invalid permission id.",
+              });
+            }
+
+            if (!name || !String(name).trim()) {
+              return res.send({
+                success: false,
+                statusCode: 306,
+                data: [],
+                message: "Permission name is required.",
+              });
+            }
+
+            if (!display || !String(display).trim()) {
+              return res.send({
+                success: false,
+                statusCode: 306,
+                data: [],
+                message: "Display name is required.",
               });
             }
             
             permissionModel.updatePermission(name , moduleId, display , status , is_default , id , (error , success , permission) => {
+                     const rawErrorMessage = String(error?.message || error?.sqlMessage || "").trim();
+                     const normalizedErrorMessage = rawErrorMessage.toLowerCase();
+                     const isDuplicate =
+                       rawErrorMessage === "Permission already exists."
+                       || normalizedErrorMessage.includes("duplicate")
+                       || normalizedErrorMessage.includes("permission already exists");
+                     const isInvalidModule =
+                       rawErrorMessage === "Invalid module_id."
+                       || normalizedErrorMessage.includes("invalid module_id");
                      return res.send({
                         success: success ? true : false,
                         statusCode: success ? 300 : 306,
                         data: success ? permission : error,
-                        message: success ? "Umefanikiwa kubadili permission." : "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. ",
+                        message: success
+                          ? "Umefanikiwa kubadili permission."
+                          : (isDuplicate
+                              ? "Permission already exists."
+                              : (isInvalidModule
+                                  ? "Invalid module_id."
+                                  : (rawErrorMessage || "Kuna shida tafadhali wasiliana na Misimamizi wa Mfumo. "))),
                      });
                     
             });
