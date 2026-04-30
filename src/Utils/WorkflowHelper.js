@@ -290,10 +290,16 @@ class WorkflowHelper {
           allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN);
         }
       } else if (isCurrentAssignee) {
-        // W1/current assignee should submit to next step as FORWARD.
-        allowedActions.push(ACTIONS.FORWARD);
-        if (assignableStaff.length) {
-          allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
+        // Action visibility is permission-driven:
+        // - without assign-staff -> REVIEW
+        // - with assign-staff    -> FORWARD
+        if (!canAssignStaff) {
+          allowedActions.push(ACTIONS.REVIEW);
+        } else {
+          allowedActions.push(ACTIONS.FORWARD);
+          if (assignableStaff.length) {
+            allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
+          }
         }
       } else if (canAssignInOwnUnit && assignableStaff.length) {
         allowedActions.push(ACTIONS.ASSIGN);
