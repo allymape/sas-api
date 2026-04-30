@@ -861,6 +861,7 @@ class ApplicationAPIService {
             acted_at = NOW(),
             updated_at = NOW()
         WHERE id = :processId
+          AND LOWER(TRIM(COALESCE(status, ''))) IN ('pending', 'in-progress')
         LIMIT 1
       `,
       {
@@ -885,6 +886,7 @@ class ApplicationAPIService {
             acted_at = NOW(),
             updated_at = NOW()
         WHERE id = :processId
+          AND LOWER(TRIM(COALESCE(status, ''))) IN ('pending', 'in-progress')
         LIMIT 1
       `,
       {
@@ -912,6 +914,7 @@ class ApplicationAPIService {
             ${completeAtSql}
             updated_at = NOW()
         WHERE id = :processId
+          AND LOWER(TRIM(COALESCE(status, ''))) IN ('pending', 'in-progress')
         LIMIT 1
       `,
       {
@@ -1965,9 +1968,10 @@ class ApplicationAPIService {
           LEFT JOIN vyeo v
             ON v.id = wf.unit_id
           WHERE ap.tracking_number = :trackingNumber
+            AND LOWER(TRIM(COALESCE(ap.status, ''))) IN ('pending', 'in-progress')
           ORDER BY
-            CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'pending' THEN 0 ELSE 1 END,
-            ap.step_order DESC,
+            CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'in-progress' THEN 0 ELSE 1 END,
+            ap.updated_at DESC,
             ap.id DESC
           LIMIT 1
         `,
@@ -1993,9 +1997,10 @@ class ApplicationAPIService {
           LEFT JOIN vyeo v
             ON v.id = wf.start_from
           WHERE ap.tracking_number = :trackingNumber
+            AND LOWER(TRIM(COALESCE(ap.status, ''))) IN ('pending', 'in-progress')
           ORDER BY
-            CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'pending' THEN 0 ELSE 1 END,
-            ap.step_order DESC,
+            CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'in-progress' THEN 0 ELSE 1 END,
+            ap.updated_at DESC,
             ap.id DESC
           LIMIT 1
         `,
@@ -2028,6 +2033,53 @@ class ApplicationAPIService {
     delete process.current_workflow_is_final;
 
     return process;
+  }
+
+  static async fetchLatestActiveProcessForUpdate(trackingNumber, transaction) {
+    const normalizedTracking = String(trackingNumber || "").trim();
+    if (!normalizedTracking) return null;
+
+    const duplicateRows = await Application.sequelize.query(
+      `
+        SELECT COUNT(*) AS total
+        FROM application_processes ap
+        WHERE ap.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(ap.status, ''))) IN ('pending', 'in-progress')
+      `,
+      {
+        type: QueryTypes.SELECT,
+        transaction,
+        replacements: { trackingNumber: normalizedTracking },
+      },
+    );
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT ap.*
+        FROM application_processes ap
+        WHERE ap.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(ap.status, ''))) IN ('pending', 'in-progress')
+        ORDER BY
+          CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'in-progress' THEN 0 ELSE 1 END,
+          ap.updated_at DESC,
+          ap.id DESC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        transaction,
+        replacements: { trackingNumber: normalizedTracking },
+      },
+    );
+
+    if (Number(duplicateRows?.[0]?.total || 0) > 1) {
+      // Keep deterministic behavior; do not mutate historical completed rows.
+      console.warn(
+        `[Workflow] Multiple active process rows found for ${normalizedTracking}; using latest active row id=${rows[0]?.id || "unknown"}.`,
+      );
+    }
+
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
   }
 
   static stripWorkflowAuditFields(workflowRow = {}) {
@@ -2511,14 +2563,14 @@ class ApplicationAPIService {
     }
 
     const actorId = Number.parseInt(staffId, 10);
-    const currentProcess = application.get("current_process") || null;
-    const currentProcessId = Number.parseInt(currentProcess?.id, 10);
-    const currentWorkflowId = Number.parseInt(currentProcess?.workflow_id, 10);
-    const currentProcessStepOrder = Number.parseInt(currentProcess?.step_order, 10);
+    let currentProcess = application.get("current_process") || null;
+    let currentProcessId = Number.parseInt(currentProcess?.id, 10);
+    let currentWorkflowId = Number.parseInt(currentProcess?.workflow_id, 10);
+    let currentProcessStepOrder = Number.parseInt(currentProcess?.step_order, 10);
     const actorHasAssignStaffPermission = this.hasAssignStaffPermission(currentUser || {});
     const workflowSteps = this.normalizeWorkflowRouteSteps(application.get("workflow_steps") || []);
-    const currentStepIndex = workflowSteps.findIndex((step) => Number(step.workflow_id) === currentWorkflowId);
-    const currentWorkflowStep = currentStepIndex >= 0 ? workflowSteps[currentStepIndex] : null;
+    let currentStepIndex = workflowSteps.findIndex((step) => Number(step.workflow_id) === currentWorkflowId);
+    let currentWorkflowStep = currentStepIndex >= 0 ? workflowSteps[currentStepIndex] : null;
 
     if (!Number.isFinite(currentProcessId) || currentProcessId <= 0) {
       throw new Error("No active workflow process found for this application.");
@@ -2529,12 +2581,26 @@ class ApplicationAPIService {
     }
 
     const snapshotContext = await this.resolveCommentSnapshotContext(currentUser || {}, staffId);
-    const nextRouteStep = currentStepIndex >= 0 ? (workflowSteps[currentStepIndex + 1] || null) : null;
-    const previousRouteStep = currentStepIndex > 0 ? (workflowSteps[currentStepIndex - 1] || null) : null;
+    let nextRouteStep = currentStepIndex >= 0 ? (workflowSteps[currentStepIndex + 1] || null) : null;
+    let previousRouteStep = currentStepIndex > 0 ? (workflowSteps[currentStepIndex - 1] || null) : null;
 
     const transaction = await Application.sequelize.transaction();
 
     try {
+      const latestActiveProcess = await this.fetchLatestActiveProcessForUpdate(application.tracking_number, transaction);
+      if (!latestActiveProcess) {
+        throw new Error("No active workflow process found for this application.");
+      }
+
+      currentProcess = latestActiveProcess;
+      currentProcessId = Number.parseInt(currentProcess?.id, 10);
+      currentWorkflowId = Number.parseInt(currentProcess?.workflow_id, 10);
+      currentProcessStepOrder = Number.parseInt(currentProcess?.step_order, 10);
+      currentStepIndex = workflowSteps.findIndex((step) => Number(step.workflow_id) === currentWorkflowId);
+      currentWorkflowStep = currentStepIndex >= 0 ? workflowSteps[currentStepIndex] : null;
+      nextRouteStep = currentStepIndex >= 0 ? (workflowSteps[currentStepIndex + 1] || null) : null;
+      previousRouteStep = currentStepIndex > 0 ? (workflowSteps[currentStepIndex - 1] || null) : null;
+
       if (action === "Assign") {
         const parsedTargetStaffId = Number.parseInt(targetStaffId, 10);
         if (!Number.isFinite(parsedTargetStaffId) || parsedTargetStaffId <= 0) {
@@ -2657,7 +2723,7 @@ class ApplicationAPIService {
           transaction,
         });
 
-        await this.closeCurrentProcess(currentProcessId, "Returned", actorId, transaction);
+        await this.closeCurrentProcess(currentProcessId, "Completed", actorId, transaction);
         await this.createPendingApplicationProcess({
           trackingNumber: application.tracking_number,
           workFlowId: previousRouteStep.workflow_id,
