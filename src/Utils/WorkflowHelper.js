@@ -248,6 +248,13 @@ class WorkflowHelper {
       && currentProcessStatus === "pending"
       && currentProcessAssignedTo === null,
     );
+    const canActOnOwnPendingUnit = Boolean(
+      actorSectionId
+      && currentWorkflowUnitId
+      && Number(actorSectionId) === Number(currentWorkflowUnitId)
+      && currentProcessStatus === "pending"
+      && currentProcessAssignedTo === null,
+    );
 
     const assignedStaff = await this.getStaffProfile(application.staff_id);
     let assignableStaff = [];
@@ -260,7 +267,15 @@ class WorkflowHelper {
 
     const isCurrentAssignee = currentProcessAssignedTo
       ? currentProcessAssignedTo === actor.id
-      : toNumber(application.staff_id) === actor.id;
+      : (
+        toNumber(application.staff_id) === actor.id
+        || canActOnOwnPendingUnit
+      );
+    const isUnassignedUnitActor = Boolean(
+      canActOnOwnPendingUnit
+      && !toNumber(application.staff_id)
+      && currentProcessAssignedTo === null,
+    );
     const finalApprover = Boolean(
       currentStepIsFinal
       && currentStepCanApprove
@@ -275,10 +290,10 @@ class WorkflowHelper {
           allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN);
         }
       } else if (isCurrentAssignee) {
+        // W1/current assignee should submit to next step as FORWARD.
+        allowedActions.push(ACTIONS.FORWARD);
         if (assignableStaff.length) {
-          allowedActions.push(ACTIONS.ASSIGN, ACTIONS.FORWARD, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
-        } else {
-          allowedActions.push(ACTIONS.REVIEW);
+          allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
         }
       } else if (canAssignInOwnUnit && assignableStaff.length) {
         allowedActions.push(ACTIONS.ASSIGN);

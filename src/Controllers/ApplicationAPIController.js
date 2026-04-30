@@ -1,5 +1,40 @@
 // Src/Controllers/ApplicationController.js
 const ApplicationService = require("../Services/ApplicationAPIService");
+const { Staff } = require("../Models");
+
+const toPositiveInt = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const resolveActorStaffId = async (user = {}) => {
+  const candidates = [
+    toPositiveInt(user?.staff_id),
+    toPositiveInt(user?.staffId),
+    toPositiveInt(user?.id),
+  ].filter((value, index, arr) => value > 0 && arr.indexOf(value) === index);
+
+  for (const id of candidates) {
+    const exists = await Staff.findOne({
+      where: { id },
+      attributes: ["id"],
+      raw: true,
+    });
+    if (exists?.id) return Number(exists.id);
+  }
+
+  const email = String(user?.email || "").trim().toLowerCase();
+  if (email) {
+    const byEmail = await Staff.findOne({
+      where: { email },
+      attributes: ["id"],
+      raw: true,
+    });
+    if (byEmail?.id) return Number(byEmail.id);
+  }
+
+  return candidates[0] || 0;
+};
 
 class ApplicationController {
   // 1. Get all applications
@@ -91,7 +126,7 @@ class ApplicationController {
   static  addComment = async(req, res) => {
     try {
       const trackingNumber = req.params.trackingNumber;
-      const staffId = req.user.id;
+      const staffId = await resolveActorStaffId(req.user);
       const { content } = req.body;
       const comment = await ApplicationService.addComment(
         trackingNumber,
@@ -111,7 +146,7 @@ class ApplicationController {
   static  advanceWorkflow = async(req, res) => {
     try {
       const trackingNumber = req.params.trackingNumber;
-      const staffId = req.user.id;
+      const staffId = await resolveActorStaffId(req.user);
       const updatedApplication = await ApplicationService.advanceWorkflow(
         trackingNumber,
         staffId,
@@ -130,7 +165,7 @@ class ApplicationController {
   static startWorkflow = async (req, res) => {
     try {
       const trackingNumber = req.params.trackingNumber;
-      const staffId = req.user.id;
+      const staffId = await resolveActorStaffId(req.user);
       const updatedApplication = await ApplicationService.startWorkflow(
         trackingNumber,
         staffId,

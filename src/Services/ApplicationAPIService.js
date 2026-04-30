@@ -1917,8 +1917,16 @@ class ApplicationAPIService {
               )
               OR (
                 :canAssignStaff = 0
-                AND ap.assigned_to = :staffId
-                AND ap.status IN ('Pending', 'In-progress')
+                AND (
+                  (
+                    ap.status IN ('Pending', 'In-progress')
+                    AND ap.assigned_to = :staffId
+                  )
+                  OR (
+                    ap.status = 'Pending'
+                    AND ap.assigned_to IS NULL
+                  )
+                )
               )
             )
         ) AS can_attend
