@@ -30,7 +30,7 @@ const dashboardYearsCache = new Map();
 const dashboardPeriodsCache = new Map();
 const dashboardInFlightCache = new Map();
 const latestApprovedRegistrationApplicationSql = `
-  SELECT a1.id, a1.establishing_school_id, a1.registry_type_id, a1.tracking_number
+  SELECT a1.id, a1.establishing_school_id, a1.registry_type_id, a1.tracking_number, a1.user_id
   FROM applications a1
   INNER JOIN (
     SELECT establishing_school_id, MAX(id) AS max_id
@@ -129,6 +129,18 @@ const getAllSummaries = async (user) => {
     FROM establishing_schools e
     JOIN school_registrations s ON s.establishing_school_id = e.id
     JOIN (${latestApprovedRegistrationApplicationSql}) a ON a.establishing_school_id = e.id
+    LEFT JOIN applicants ap ON ap.user_id = a.user_id
+    LEFT JOIN (
+      SELECT ax.user_id, ax.registry_type_id
+      FROM applications ax
+      INNER JOIN (
+        SELECT user_id, MAX(id) AS max_id
+        FROM applications
+        WHERE user_id IS NOT NULL
+          AND registry_type_id IS NOT NULL
+        GROUP BY user_id
+      ) last_user_app ON last_user_app.max_id = ax.id
+    ) au ON au.user_id = ap.user_id
     LEFT JOIN school_categories sc ON sc.id = e.school_category_id
     LEFT JOIN registry_types rt ON rt.id = a.registry_type_id
     ${dashboardLocationsJoinSql}
@@ -158,8 +170,8 @@ const getAllSummaries = async (user) => {
 
   const ownersSql = `
     SELECT CASE
-      WHEN a.registry_type_id IN (1, 2) THEN 'Non Government'
-      WHEN a.registry_type_id = 3 THEN 'Government'
+      WHEN COALESCE(a.registry_type_id, e.registry_type_id, au.registry_type_id) IN (1, 2) THEN 'Non Government'
+      WHEN COALESCE(a.registry_type_id, e.registry_type_id, au.registry_type_id) = 3 THEN 'Government'
       ELSE 'Unknown'
     END AS owner,
     COUNT(*) AS total

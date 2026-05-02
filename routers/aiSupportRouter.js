@@ -23,8 +23,14 @@ const SIMPLE_GREETING_PATTERN =
   /^(hi+|hello+|hey+|mambo|vipi|habari|habari yako|shikamoo|salaam|hujambo)$/i;
 const REGISTERED_SCHOOLS_COUNT_PATTERN =
   /(idadi|jumla|ngapi).*(shule).*(zilizosajiliwa|zimesajiliwa|imesajiliwa|registered)|((registered|zilizosajiliwa).*(schools|shule).*(count|idadi|jumla|ngapi))/i;
+const REGISTERED_TEACHER_COLLEGES_COUNT_PATTERN =
+  /((idadi|jumla|ngapi).*(vyuo? vya ualimu|chuo cha ualimu|teacher colleges?).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|vimesajiliwa|registered))|((registered|zilizosajiliwa|vilivyosajiliwa|zimesajiliwa|vimesajiliwa).*(teacher colleges?|vyuo? vya ualimu).*(count|idadi|jumla|ngapi))|((vyuo? vya ualimu|teacher colleges?).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|vimesajiliwa|registered).*(ngapi|idadi|jumla|count))/i;
+const REGISTERED_SCHOOLS_BY_SPECIFIC_TYPE_COUNT_PATTERN =
+  /((idadi|jumla|ngapi).*(awali|msingi|sekondari|vyuo? vya ualimu|chuo cha ualimu).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|vimesajiliwa|registered))|((registered|zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|vimesajiliwa).*(awali|msingi|sekondari|vyuo? vya ualimu|chuo cha ualimu).*(count|idadi|jumla|ngapi))|((awali|msingi|sekondari|vyuo? vya ualimu|chuo cha ualimu).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|vimesajiliwa|registered).*(ngapi|idadi|jumla|count))/i;
 const REGISTERED_SCHOOLS_BY_OWNERSHIP_PATTERN =
   /(idadi|jumla|ngapi).*(shule).*(zilizosajiliwa|zimesajiliwa|registered).*(umiliki)|((registered|zilizosajiliwa).*(schools|shule).*(ownership|umiliki))/i;
+const REGISTERED_SCHOOLS_OWNERSHIP_DIRECT_COUNT_PATTERN =
+  /((non[\s-]?government|private|binafsi|government|serikali).*(schools?|shule).*(zilizosajiliwa|zimesajiliwa|registered).*(ngapi|idadi|jumla|count))|((ngapi|idadi|jumla|count).*(non[\s-]?government|private|binafsi|government|serikali).*(schools?|shule).*(zilizosajiliwa|zimesajiliwa|registered))/i;
 const PENDING_APPLICATIONS_PATTERN =
   /(idadi|jumla|ngapi).*(maombi).*(yanayosubiri|pending)|((pending|yanayosubiri).*(applications|maombi).*(count|idadi|jumla|ngapi))/i;
 const PENDING_APPLICATIONS_BY_CATEGORY_PATTERN =
@@ -40,13 +46,13 @@ const REJECTED_APPLICATIONS_BY_CATEGORY_PATTERN =
 const APPLICATIONS_BY_CATEGORY_PATTERN =
   /(idadi|jumla|ngapi).*(maombi|applications?).*(aina ya maombi|aina ya ombi|kwa aina|category|categories|application category)|((applications?|maombi).*(by category|aina ya maombi|aina ya ombi|category))/i;
 const REGISTERED_SCHOOLS_BY_REGION_PATTERN =
-  /(shule).*(zilizosajiliwa|registered).*(kwa mkoa|mkoa)|((registered|zilizosajiliwa).*(schools|shule).*(region|mkoa))/i;
+  /(shule).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|registered).*(kwa mkoa|mkoa)|((registered|zilizosajiliwa|zimesajiliwa|vilivyosajiliwa).*(schools|shule).*(region|mkoa))|((mkoa|region).*(gani|upi|zipi|una|yenye).*(shule).*(nyingi|zaidi).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|registered))/i;
 const REGISTRATION_GROWTH_BY_REGION_PATTERN =
   /((mkoa|mikoa|region|regions).*(growth).*(registrations?|usajili).*(mwaka huu|this year))|((growth).*(registrations?|usajili).*(mwaka huu|this year).*(mkoa|mikoa|region|regions))|((mkoa|mikoa|region|regions).*(una|yenye|gani).*(growth kubwa).*(registrations?|usajili))/i;
 const REGISTRATION_GROWTH_BY_DISTRICT_PATTERN =
   /((wilaya|district|districts).*(growth).*(registrations?|usajili).*(mwaka huu|this year))|((growth).*(registrations?|usajili).*(mwaka huu|this year).*(wilaya|district|districts))|((wilaya|district|districts).*(ina|zenye|gani).*(growth kubwa).*(registrations?|usajili))/i;
 const REGISTERED_SCHOOLS_BY_DISTRICT_PATTERN =
-  /(shule).*(zilizosajiliwa|registered).*(kwa wilaya|wilaya)|((registered|zilizosajiliwa).*(schools|shule).*(district|wilaya))/i;
+  /(shule).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|registered).*(kwa wilaya|wilaya)|((registered|zilizosajiliwa|zimesajiliwa|vilivyosajiliwa).*(schools|shule).*(district|wilaya))|((wilaya|district).*(gani|ipi|zipi|ina|zenye).*(shule).*(nyingi|zaidi).*(zilizosajiliwa|zimesajiliwa|vilivyosajiliwa|registered))/i;
 const REGISTERED_SCHOOLS_BY_TYPE_PATTERN =
   /(shule).*(zilizosajiliwa|registered).*(aina ya shule|aina ya school|school type|type)|((registered|zilizosajiliwa).*(schools|shule).*(school type|aina ya shule|type))/i;
 const REGISTERED_SCHOOLS_BY_LANGUAGE_PATTERN =
@@ -204,6 +210,7 @@ const detectIntent = (message) => {
   const value = safeTrim(message);
   if (!value) return null;
   if (SIMPLE_GREETING_PATTERN.test(value)) return "simple_greeting";
+  if (REGISTERED_SCHOOLS_OWNERSHIP_DIRECT_COUNT_PATTERN.test(value)) return "registered_schools_ownership_direct_count";
   if (REGISTERED_SCHOOLS_BY_OWNERSHIP_PATTERN.test(value)) return "registered_schools_by_ownership";
   if (APPROVED_APPLICATIONS_BY_CATEGORY_PATTERN.test(value)) return "approved_applications_by_category";
   if (APPROVED_APPLICATIONS_PATTERN.test(value)) return "approved_applications_count";
@@ -236,7 +243,47 @@ const detectIntent = (message) => {
   if (DEREGISTERED_SCHOOLS_PATTERN.test(value)) return "deregistered_schools_count";
   if (APPLICATIONS_BY_PERIOD_PATTERN.test(value)) return "applications_by_period";
   if (OVERDUE_APPLICATIONS_PATTERN.test(value)) return "overdue_applications";
+  if (REGISTERED_SCHOOLS_BY_SPECIFIC_TYPE_COUNT_PATTERN.test(value)) return "registered_schools_specific_type_count";
+  if (REGISTERED_TEACHER_COLLEGES_COUNT_PATTERN.test(value)) return "registered_teacher_colleges_count";
   if (REGISTERED_SCHOOLS_COUNT_PATTERN.test(value)) return "registered_schools_count";
+  return null;
+};
+
+const detectRequestedOwnership = (message) => {
+  const value = safeTrim(message).toLowerCase();
+  if (!value) return null;
+  if (/(non[\s-]?government|private|binafsi)/i.test(value)) {
+    return {
+      label: "Non Government",
+      sqlCondition: "e.registry_type_id IN (1, 2)",
+      registryTypeIds: [1, 2],
+    };
+  }
+  if (/(government|serikali)/i.test(value)) {
+    return {
+      label: "Government",
+      sqlCondition: "e.registry_type_id = 3",
+      registryTypeIds: [3],
+    };
+  }
+  return null;
+};
+
+const detectRequestedSchoolCategory = (message) => {
+  const value = safeTrim(message).toLowerCase();
+  if (!value) return null;
+  if (/(vyuo? vya ualimu|chuo cha ualimu|teacher colleges?)/i.test(value)) {
+    return { id: 4, label: "vyuo vya ualimu" };
+  }
+  if (/\bsekondari\b/i.test(value)) {
+    return { id: 3, label: "shule za sekondari" };
+  }
+  if (/\bmsingi\b/i.test(value)) {
+    return { id: 2, label: "shule za msingi" };
+  }
+  if (/\bawali\b/i.test(value)) {
+    return { id: 1, label: "shule za awali" };
+  }
   return null;
 };
 
@@ -1606,6 +1653,114 @@ const getRegisteredSchoolsByOwnershipReply = async (user) => {
   };
 };
 
+const getRegisteredTeacherCollegesCountReply = async (user) => {
+  const rows = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM establishing_schools e
+      JOIN school_registrations sr ON sr.establishing_school_id = e.id
+      ${REGISTERED_LOCATION_JOINS_SQL}
+      WHERE sr.reg_status = 1
+        AND sr.deleted_at IS NULL
+        AND e.school_category_id = 4
+        ${officeFilterSqlForRegistered(user)}
+    `,
+    { type: QueryTypes.SELECT },
+  );
+
+  const total = Number(rows?.[0]?.total || 0);
+  const scopeLabel = getIndicatorScopeLabel(user);
+
+  return {
+    reply: `Kwa sasa kuna vyuo vya ualimu ${formatCount(total)} vilivyosajiliwa ${scopeLabel}.`,
+    context_used: {
+      fast_path: "registered_teacher_colleges_count",
+      total,
+      school_category_id: 4,
+      reg_status: 1,
+      scope: scopeLabel,
+    },
+  };
+};
+
+const getRegisteredSchoolsByOwnershipDirectCountReply = async (user, message) => {
+  const ownership = detectRequestedOwnership(message);
+  if (!ownership) {
+    return {
+      reply: "Taja ownership unayotaka: Government au Non Government.",
+      context_used: { fast_path: "registered_schools_ownership_direct_count", matched: false },
+    };
+  }
+
+  const rows = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM establishing_schools e
+      JOIN school_registrations sr ON sr.establishing_school_id = e.id
+      ${REGISTERED_LOCATION_JOINS_SQL}
+      WHERE sr.reg_status = 1
+        AND sr.deleted_at IS NULL
+        AND ${ownership.sqlCondition}
+        ${officeFilterSqlForRegistered(user)}
+    `,
+    { type: QueryTypes.SELECT },
+  );
+
+  const total = Number(rows?.[0]?.total || 0);
+  const scopeLabel = getIndicatorScopeLabel(user);
+  return {
+    reply: `Kwa sasa kuna shule za ${ownership.label} ${formatCount(total)} zilizosajiliwa ${scopeLabel}.`,
+    context_used: {
+      fast_path: "registered_schools_ownership_direct_count",
+      ownership: ownership.label,
+      registry_type_ids: ownership.registryTypeIds,
+      total,
+      reg_status: 1,
+      scope: scopeLabel,
+    },
+  };
+};
+
+const getRegisteredSchoolsSpecificTypeCountReply = async (user, message) => {
+  const category = detectRequestedSchoolCategory(message);
+  if (!category) {
+    return {
+      reply: "Taja aina ya shule unayotaka, mfano: awali, msingi, sekondari, au vyuo vya ualimu.",
+      context_used: { fast_path: "registered_schools_specific_type_count", matched: false },
+    };
+  }
+
+  const rows = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM establishing_schools e
+      JOIN school_registrations sr ON sr.establishing_school_id = e.id
+      ${REGISTERED_LOCATION_JOINS_SQL}
+      WHERE sr.reg_status = 1
+        AND sr.deleted_at IS NULL
+        AND e.school_category_id = :categoryId
+        ${officeFilterSqlForRegistered(user)}
+    `,
+    {
+      type: QueryTypes.SELECT,
+      replacements: { categoryId: category.id },
+    },
+  );
+
+  const total = Number(rows?.[0]?.total || 0);
+  const scopeLabel = getIndicatorScopeLabel(user);
+
+  return {
+    reply: `Kwa sasa kuna ${category.label} ${formatCount(total)} zilizosajiliwa ${scopeLabel}.`,
+    context_used: {
+      fast_path: "registered_schools_specific_type_count",
+      total,
+      school_category_id: category.id,
+      scope: scopeLabel,
+    },
+  };
+};
+
 const buildSystemPrompt = (context) => {
   const ctxJson = JSON.stringify(context || {}, null, 2);
   return `
@@ -1684,6 +1839,36 @@ aiSupportRouter.post("/ai-support/chat", isAuth, permission("view-dashboard"), a
 
     if (intent === "registered_schools_by_ownership") {
       const result = await getRegisteredSchoolsByOwnershipReply(req.user);
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: result,
+        message: "AI response",
+      });
+    }
+
+    if (intent === "registered_schools_ownership_direct_count") {
+      const result = await getRegisteredSchoolsByOwnershipDirectCountReply(req.user, lastUserMessage);
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: result,
+        message: "AI response",
+      });
+    }
+
+    if (intent === "registered_teacher_colleges_count") {
+      const result = await getRegisteredTeacherCollegesCountReply(req.user);
+      return res.send({
+        error: false,
+        statusCode: 300,
+        data: result,
+        message: "AI response",
+      });
+    }
+
+    if (intent === "registered_schools_specific_type_count") {
+      const result = await getRegisteredSchoolsSpecificTypeCountReply(req.user, lastUserMessage);
       return res.send({
         error: false,
         statusCode: 300,
