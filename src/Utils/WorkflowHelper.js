@@ -235,6 +235,7 @@ class WorkflowHelper {
       : null;
     const currentStepIsFinal = toNumber(currentWorkflowStep?.is_final) === 1;
     const currentStepCanApprove = toNumber(currentWorkflowStep?.can_approve) === 1;
+    const currentStepCanReturn = toNumber(currentWorkflowStep?.can_return) === 1;
     const currentWorkflowUnitId = toNumber(currentWorkflowStep?.unit_id);
     const currentProcessStatus = normalizeStatus(currentProcess?.status || currentProcess?.process_status);
     const currentProcessAssignedTo = toNumber(currentProcess?.assigned_to);
@@ -245,8 +246,7 @@ class WorkflowHelper {
       && actorSectionId
       && currentWorkflowUnitId
       && Number(actorSectionId) === Number(currentWorkflowUnitId)
-      && currentProcessStatus === "pending"
-      && currentProcessAssignedTo === null,
+      && ["pending", "in-progress"].includes(currentProcessStatus),
     );
     const canActOnOwnPendingUnit = Boolean(
       actorSectionId
@@ -285,7 +285,10 @@ class WorkflowHelper {
     const allowedActions = [];
     if (Number(application?.is_approved) <= 1) {
       if (finalApprover) {
-        allowedActions.push(ACTIONS.APPROVE, ACTIONS.REJECT, ACTIONS.RETURN_BACK);
+        allowedActions.push(ACTIONS.APPROVE, ACTIONS.REJECT);
+        if (currentStepCanReturn) {
+          allowedActions.push(ACTIONS.RETURN_BACK);
+        }
         if (assignableStaff.length) {
           allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN);
         }
@@ -297,8 +300,11 @@ class WorkflowHelper {
           allowedActions.push(ACTIONS.REVIEW);
         } else {
           allowedActions.push(ACTIONS.FORWARD);
+          if (currentStepCanReturn) {
+            allowedActions.push(ACTIONS.RETURN_BACK);
+          }
           if (assignableStaff.length) {
-            allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN, ACTIONS.RETURN_BACK);
+            allowedActions.push(ACTIONS.ASSIGN, ACTIONS.RETURN);
           }
         }
       } else if (canAssignInOwnUnit && assignableStaff.length) {

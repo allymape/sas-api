@@ -109,7 +109,21 @@ class ApplicationController {
   static  getApplicationByTrackingNumber = async(req, res) => {
     try {
       const trackingNumber = req.params.trackingNumber;
-      const application = await ApplicationService.fetchApplicationDetails(trackingNumber, req.user);
+      const detailsTimeoutMsRaw = Number.parseInt(process.env.APPLICATION_DETAILS_HARD_TIMEOUT_MS || "12000", 10);
+      const detailsTimeoutMs = Number.isFinite(detailsTimeoutMsRaw) && detailsTimeoutMsRaw > 0
+        ? detailsTimeoutMsRaw
+        : 12000;
+
+      const application = await Promise.race([
+        ApplicationService.fetchApplicationDetails(trackingNumber, req.user),
+        new Promise((_, reject) => {
+          setTimeout(() => {
+            const timeoutError = new Error("Application details request timed out.");
+            timeoutError.statusCode = 504;
+            reject(timeoutError);
+          }, detailsTimeoutMs);
+        }),
+      ]);
       if (!application)
         return res
           .status(404)

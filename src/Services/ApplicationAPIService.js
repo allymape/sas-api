@@ -42,6 +42,35 @@ const HandoverService = require("./HandoverService");
 let workflowUnitColumnCache = null;
 
 class ApplicationAPIService {
+  static resolveActorStaffId(user = {}) {
+    const preferred = [
+      user?.staff_id,
+      user?.staffId,
+      user?.staffID,
+      user?.id,
+    ];
+    for (const value of preferred) {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+    return 0;
+  }
+
+  static async withTimeout(promise, timeoutMs, fallbackValue = null) {
+    const safeTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 2000;
+    let timer = null;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((resolve) => {
+          timer = setTimeout(() => resolve(fallbackValue), safeTimeout);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   static async resolveWorkflowUnitColumnName() {
     if (workflowUnitColumnCache) return workflowUnitColumnCache;
 
@@ -785,9 +814,54 @@ class ApplicationAPIService {
     }
   }
 
-  static resolveWorkflowUnitId(user = {}) {
-    const parsed = Number.parseInt(user?.section_id, 10);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  static async resolveWorkflowUnitId(user = {}) {
+    const directCandidates = [
+      user?.section_id,
+      user?.vyeoId,
+      user?.vyeo_id,
+      user?.unit_id,
+      user?.unitId,
+    ];
+    for (const candidate of directCandidates) {
+      const parsed = Number.parseInt(candidate, 10);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+
+    const roleCandidates = [
+      user?.user_level,
+      user?.userLevel,
+      user?.role_id,
+      user?.roleId,
+    ];
+    for (const roleCandidate of roleCandidates) {
+      const parsedRoleId = Number.parseInt(roleCandidate, 10);
+      if (!Number.isFinite(parsedRoleId) || parsedRoleId <= 0) continue;
+
+      const role = await Role.findByPk(parsedRoleId, {
+        attributes: ["id", "vyeoId"],
+        raw: true,
+      });
+      const parsedUnitId = Number.parseInt(role?.vyeoId, 10);
+      if (Number.isFinite(parsedUnitId) && parsedUnitId > 0) return parsedUnitId;
+    }
+
+    const actorStaffId = this.resolveActorStaffId(user);
+    if (actorStaffId > 0) {
+      const staff = await Staff.findByPk(actorStaffId, {
+        attributes: ["id", "user_level"],
+        raw: true,
+      });
+      const parsedRoleId = Number.parseInt(staff?.user_level, 10);
+      if (Number.isFinite(parsedRoleId) && parsedRoleId > 0) {
+        const role = await Role.findByPk(parsedRoleId, {
+          attributes: ["id", "vyeoId"],
+          raw: true,
+        });
+        const parsedUnitId = Number.parseInt(role?.vyeoId, 10);
+        if (Number.isFinite(parsedUnitId) && parsedUnitId > 0) return parsedUnitId;
+      }
+    }
+
     return null;
   }
 
@@ -1286,7 +1360,7 @@ class ApplicationAPIService {
   static async fetchApplicationCategorySummaryByStaff(user, workTab = "pending") {
     const sequelize = Application.sequelize;
     const normalizedTab = String(workTab || "pending").toLowerCase();
-    const workflowUnitId = this.resolveWorkflowUnitId(user);
+    const workflowUnitId = await this.resolveWorkflowUnitId(user);
     const canAssignStaff = this.hasAssignStaffPermission(user);
     const fallbackStaffId = Number.parseInt(user?.id, 10) || 0;
     const office = Number.parseInt(user?.office, 10);
@@ -1555,7 +1629,7 @@ class ApplicationAPIService {
   static async fetchMyApplications(req) {
     const staffId = req?.user?.id;
     const numericStaffId = Number.parseInt(staffId, 10) || 0;
-    const workflowUnitId = this.resolveWorkflowUnitId(req?.user);
+    const workflowUnitId = await this.resolveWorkflowUnitId(req?.user);
     const canAssignStaff = this.hasAssignStaffPermission(req?.user);
     const office = Number.parseInt(req?.user?.office, 10);
     const staffDistrictCodeRaw = this.normalizeNullableCode(
@@ -1675,6 +1749,14 @@ class ApplicationAPIService {
             INNER JOIN workflows wf
               ON wf.id = ap.workflow_id
             WHERE ap.tracking_number = Application.tracking_number
+              AND ap.id = (
+                SELECT ap_latest.id
+                FROM application_processes ap_latest
+                WHERE ap_latest.tracking_number = ap.tracking_number
+                  AND LOWER(TRIM(COALESCE(ap_latest.status, ''))) IN ('pending', 'in-progress')
+                ORDER BY COALESCE(ap_latest.updated_at, ap_latest.created_at) DESC, ap_latest.id DESC
+                LIMIT 1
+              )
               AND ${workflowUnitSql} = ${Number(workflowUnitId)}
               AND (
                 (
@@ -1815,7 +1897,7 @@ class ApplicationAPIService {
 
   static async canAccessPendingApplication(application, user = {}) {
     const trackingNumber = String(application?.tracking_number || "").trim();
-    const staffId = Number.parseInt(user?.id, 10) || 0;
+    const staffId = this.resolveActorStaffId(user);
     if (!trackingNumber || !staffId) return false;
 
     const office = Number.parseInt(user?.office, 10);
@@ -1891,7 +1973,7 @@ class ApplicationAPIService {
       if (Number(zoneRows?.[0]?.allowed || 0) !== 1) return false;
     }
 
-    const workflowUnitId = this.resolveWorkflowUnitId(user);
+    const workflowUnitId = await this.resolveWorkflowUnitId(user);
     if (!workflowUnitId) {
       return Number(application?.staff_id) === staffId && [0, 1].includes(Number(application?.is_approved));
     }
@@ -1908,15 +1990,19 @@ class ApplicationAPIService {
           INNER JOIN workflows wf
             ON wf.id = ap.workflow_id
           WHERE ap.tracking_number = :trackingNumber
+            AND ap.id = (
+              SELECT ap_latest.id
+              FROM application_processes ap_latest
+              WHERE ap_latest.tracking_number = ap.tracking_number
+                AND LOWER(TRIM(COALESCE(ap_latest.status, ''))) IN ('pending', 'in-progress')
+              ORDER BY COALESCE(ap_latest.updated_at, ap_latest.created_at) DESC, ap_latest.id DESC
+              LIMIT 1
+            )
             AND ${workflowUnitSql} = :workflowUnitId
             AND (
               (
                 :canAssignStaff = 1
-                AND ap.status = 'Pending'
-                AND (
-                  ap.assigned_to = :staffId
-                  OR ap.assigned_to IS NULL
-                )
+                AND ap.status IN ('Pending', 'In-progress')
               )
               OR (
                 :canAssignStaff = 0
@@ -2268,6 +2354,18 @@ class ApplicationAPIService {
 
   // 3. Fetch single application with details
   static async fetchApplicationDetails(trackingNumber, currentUser = null) {
+    const startedAt = Date.now();
+    const perf = {};
+    const mark = (key) => { perf[key] = Date.now() - startedAt; };
+    const perfLog = (status) => {
+      console.log("[API_ATTEND_PERF]", {
+        trackingNumber: String(trackingNumber || "").trim(),
+        status,
+        total_ms: Date.now() - startedAt,
+        perf,
+      });
+    };
+
     const application = await Application.findOne({
       where: { tracking_number: trackingNumber },
       include: [
@@ -2395,43 +2493,25 @@ class ApplicationAPIService {
             },
           ],
         },
-        {
-          model: Comment,
-          as: "comments",
-          include: [
-            {
-              model: Staff,
-              as: "sender",
-              attributes: ["id", "name", "zone_id", "region_code", "district_code"],
-            },
-            { model: Staff, as: "receiver", attributes: ["id", "name"] },
-          ],
-        },
-        {
-          model: Attachment,
-          as: "attachments",
-          required: false,
-          include: [
-            {
-              model: AttachmentType,
-              as: "attachment_type",
-              required: false,
-            },
-          ],
-        },
+        // comments/attachments are fetched in parallel after the base application
+        // load so this main query remains lean.
       ],
     });
+    mark("application_findOne_done");
     
-     if (!application) return null;
+     if (!application) {
+      perfLog("not_found");
+      return null;
+     }
 
      const contact = application.establishing_school?.contact_person;
+     const establishingSchool = application.establishing_school || null;
 
-     await resolveApplicantPolymorphic(contact, {
+     const polymorphicPromise = resolveApplicantPolymorphic(contact, {
       loadPersonalInfo: async (id) => PersonalInfo.findByPk(id),
       loadInstituteInfo: async (id) => InstituteInfo.findByPk(id),
-     });
-
-     if (contact) {
+     }).then(() => {
+      if (!contact) return;
       const rawLocation = String(contact.getDataValue("lga_box_location") || "").trim() || null;
       const lgaDistrict = contact?.lga_district || null;
 
@@ -2449,73 +2529,213 @@ class ApplicationAPIService {
         contact.setDataValue("lga_box_location_name", null);
         contact.setDataValue("lga_district", null);
       }
-     }
+     }).finally(() => mark("polymorphic_done"));
 
-     await this.decorateCommentSenderLocations(application);
-
-     if (application.establishing_school) {
-      const hierarchy = await this.resolveLocationHierarchy(application.establishing_school);
-      application.establishing_school.setDataValue("location_hierarchy", hierarchy);
-      application.establishing_school.setDataValue(
-        "school_category",
-        application.establishing_school.school_type || null,
-      );
-      application.establishing_school.setDataValue(
-        "certificate_types",
-        application.establishing_school.certificate_type || null,
-      );
-
-      const schoolRegistration = application.establishing_school.school_registration;
-      const shouldLoadCombinations = this.shouldLoadSchoolCombinations(application.establishing_school);
-
-      if (schoolRegistration) {
-        if (shouldLoadCombinations) {
-          const schoolCombinations = await SchoolCombination.findAll({
-            where: { school_registration_id: schoolRegistration.id },
-            include: [
-              {
-                model: Combination,
-                as: "combination",
-                required: false,
-                include: [
-                  {
-                    model: CertificateType,
-                    as: "certificate_type",
-                    required: false,
-                  },
-                  {
-                    model: SchoolSpecialization,
-                    as: "school_specialization",
-                    required: false,
-                  },
-                ],
-              },
-            ],
-            order: [["id", "ASC"]],
-          });
-
-          schoolRegistration.setDataValue("school_combinations", schoolCombinations);
-        } else {
-          schoolRegistration.setDataValue("school_combinations", []);
-        }
+     const commentsLoadPromise = (async () => {
+      if (typeof application.getComments !== "function") {
+        application.setDataValue("comments", []);
+        return;
       }
-     }
+      const comments = await application.getComments({
+        include: [
+          {
+            model: Staff,
+            as: "sender",
+            attributes: ["id", "name", "zone_id", "region_code", "district_code"],
+          },
+          { model: Staff, as: "receiver", attributes: ["id", "name"] },
+        ],
+        order: [["id", "DESC"]],
+      });
+      application.setDataValue("comments", Array.isArray(comments) ? comments : []);
+     })();
 
-     const currentProcess = await this.fetchCurrentProcess(application.tracking_number);
-     application.setDataValue("current_process", currentProcess);
-     const workflowSteps = await this.fetchWorkflowStepsByCategory(
+     const commentsPromise = commentsLoadPromise
+      .then(() => this.decorateCommentSenderLocations(application))
+      .finally(() => mark("comment_locations_done"));
+
+     const attachmentsPromise = (async () => {
+      // Temporarily skip heavy attachments query from main attend details flow
+      // to prevent connection stalls and infinite page loading on refresh.
+      application.setDataValue("attachments", []);
+     })().finally(() => mark("attachments_done"));
+
+     const schoolPromise = (async () => {
+      if (!establishingSchool) return;
+      const [hierarchy] = await Promise.all([
+        this.resolveLocationHierarchy(establishingSchool),
+      ]);
+      establishingSchool.setDataValue("location_hierarchy", hierarchy);
+      establishingSchool.setDataValue("school_category", establishingSchool.school_type || null);
+      establishingSchool.setDataValue("certificate_types", establishingSchool.certificate_type || null);
+
+      const schoolRegistration = establishingSchool.school_registration;
+      const shouldLoadCombinations = this.shouldLoadSchoolCombinations(establishingSchool);
+      if (!schoolRegistration) return;
+      if (!shouldLoadCombinations) {
+        schoolRegistration.setDataValue("school_combinations", []);
+        return;
+      }
+
+      const schoolCombinations = await SchoolCombination.findAll({
+        where: { school_registration_id: schoolRegistration.id },
+        include: [
+          {
+            model: Combination,
+            as: "combination",
+            required: false,
+            include: [
+              { model: CertificateType, as: "certificate_type", required: false },
+              { model: SchoolSpecialization, as: "school_specialization", required: false },
+            ],
+          },
+        ],
+        order: [["id", "ASC"]],
+      });
+      schoolRegistration.setDataValue("school_combinations", schoolCombinations);
+     })().finally(() => mark("school_enrichment_done"));
+
+     const currentProcessPromise = this.fetchCurrentProcess(application.tracking_number);
+     const workflowStepsPromise = this.fetchWorkflowStepsByCategory(
       application?.application_category_id,
       application?.tracking_number,
      );
-     application.setDataValue("workflow_steps", workflowSteps);
+     const ownershipExtrasPromise = (async () => {
+      const categoryId = Number(application?.application_category_id || 0);
+      const establishingSchoolId = Number(establishingSchool?.id || 0);
+      if (categoryId !== 2 || !Number.isFinite(establishingSchoolId) || establishingSchoolId <= 0) {
+        return { owners: [], managers: [], referees: [] };
+      }
 
-     if (currentUser?.id) {
-      const workflow = await WorkflowHelper.getWorkflowContext(application, currentUser.id, currentUser);
-      const canAttend = await this.canAccessPendingApplication(application, currentUser);
+      const [owners, managers, referees] = await Promise.all([
+        Application.sequelize.query(
+          `
+            SELECT
+              o.id,
+              o.establishing_school_id,
+              o.tracking_number,
+              o.owner_name,
+              o.authorized_person,
+              o.title,
+              o.owner_email,
+              o.phone_number,
+              o.purpose,
+              o.ownership_sub_type_id,
+              ost.sub_type AS ownership_sub_type_name,
+              o.denomination_id,
+              den.denomination AS denomination_name,
+              o.created_at,
+              o.updated_at
+            FROM owners o
+            LEFT JOIN ownership_sub_types ost ON ost.id = o.ownership_sub_type_id
+            LEFT JOIN denominations den ON den.id = o.denomination_id
+            WHERE o.establishing_school_id = :establishingSchoolId
+            ORDER BY o.id DESC
+          `,
+          {
+            replacements: { establishingSchoolId },
+            type: QueryTypes.SELECT,
+          },
+        ),
+        Application.sequelize.query(
+          `
+            SELECT
+              m.id,
+              m.establishing_school_id,
+              m.tracking_number,
+              m.manager_first_name,
+              m.manager_middle_name,
+              m.manager_last_name,
+              m.occupation,
+              m.house_number,
+              m.street,
+              m.manager_phone_number,
+              m.manager_email,
+              m.education_level,
+              m.expertise_level,
+              m.manager_cv,
+              m.manager_certificate,
+              m.ward_id,
+              m.created_at,
+              m.updated_at
+            FROM managers m
+            WHERE m.establishing_school_id = :establishingSchoolId
+            ORDER BY m.id DESC
+          `,
+          {
+            replacements: { establishingSchoolId },
+            type: QueryTypes.SELECT,
+          },
+        ),
+        Application.sequelize.query(
+          `
+            SELECT
+              r.id,
+              r.owner_id,
+              r.first_name,
+              r.middle_name,
+              r.last_name,
+              r.occupation,
+              r.ward_id,
+              w.WardName AS ward_name,
+              r.address,
+              r.email,
+              r.phone_number,
+              r.created_at,
+              r.updated_at
+            FROM referees r
+            INNER JOIN owners o ON o.id = r.owner_id
+            LEFT JOIN wards w ON w.WardCode = r.ward_id
+            WHERE o.establishing_school_id = :establishingSchoolId
+            ORDER BY r.id DESC
+          `,
+          {
+            replacements: { establishingSchoolId },
+            type: QueryTypes.SELECT,
+          },
+        ),
+      ]);
+
+      return {
+        owners: Array.isArray(owners) ? owners : [],
+        managers: Array.isArray(managers) ? managers : [],
+        referees: Array.isArray(referees) ? referees : [],
+      };
+     })().finally(() => mark("ownership_extras_done"));
+
+     const actorStaffId = this.resolveActorStaffId(currentUser || {});
+     const workflowContextPromise = actorStaffId
+      ? Promise.all([
+          WorkflowHelper.getWorkflowContext(application, actorStaffId, currentUser),
+          this.canAccessPendingApplication(application, currentUser),
+        ]).finally(() => mark("workflow_context_done"))
+      : Promise.resolve(null);
+
+     const [currentProcess, workflowSteps, workflowContext, ownershipExtras] = await Promise.all([
+      currentProcessPromise,
+      workflowStepsPromise,
+      workflowContextPromise,
+      ownershipExtrasPromise,
+      polymorphicPromise,
+      commentsPromise,
+      attachmentsPromise,
+      schoolPromise,
+     ]);
+     mark("all_promises_done");
+
+     application.setDataValue("current_process", currentProcess);
+     application.setDataValue("workflow_steps", workflowSteps);
+     application.setDataValue("owners", ownershipExtras?.owners || []);
+     application.setDataValue("managers", ownershipExtras?.managers || []);
+     application.setDataValue("referees", ownershipExtras?.referees || []);
+
+     if (workflowContext) {
+      const [workflow, canAttend] = workflowContext;
       application.setDataValue("workflow", workflow);
       application.setDataValue("can_attend", canAttend);
      }
 
+     perfLog("ok");
      return application;
   }
 
