@@ -261,8 +261,8 @@ class WorkflowHelper {
     if (canAssignInOwnUnit && currentWorkflowUnitId) {
       assignableStaff = await this.getUnitAssignableStaff(actor, currentWorkflowUnitId);
     }
-    if (!assignableStaff.length) {
-      assignableStaff = await this.getAssignableStaff(actor);
+    if (!assignableStaff.length && canAssignStaff && actor.vyeo_id) {
+      assignableStaff = await this.getUnitAssignableStaff(actor, actor.vyeo_id);
     }
 
     const isCurrentAssignee = currentProcessAssignedTo

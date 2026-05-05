@@ -40,8 +40,290 @@ const WorkflowHelper = require("../Utils/WorkflowHelper");
 const HandoverService = require("./HandoverService");
 
 let workflowUnitColumnCache = null;
+let workflowOptionalColumnsCache = null;
 
 class ApplicationAPIService {
+  static async resolveWorkflowOptionalColumns() {
+    if (workflowOptionalColumnsCache) return workflowOptionalColumnsCache;
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'workflows'
+          AND COLUMN_NAME IN ('is_optional', 'optional_type', 'returns_to_approver')
+      `,
+      { type: QueryTypes.SELECT },
+    ).catch(() => []);
+
+    const set = new Set((Array.isArray(rows) ? rows : []).map((row) => String(row?.COLUMN_NAME || "")));
+    workflowOptionalColumnsCache = {
+      is_optional: set.has("is_optional"),
+      optional_type: set.has("optional_type"),
+      returns_to_approver: set.has("returns_to_approver"),
+    };
+    return workflowOptionalColumnsCache;
+  }
+
+  static async workflowOptionalColumnExpr(tableAlias, columnName, fallbackSql) {
+    const support = await this.resolveWorkflowOptionalColumns();
+    return support?.[columnName]
+      ? `${tableAlias}.${columnName}`
+      : `${fallbackSql}`;
+  }
+
+  static async fetchOptionalWorkflowStepByCategory(applicationCategoryId, optionalType = "legal_review") {
+    const categoryId = Number.parseInt(applicationCategoryId, 10);
+    if (!Number.isFinite(categoryId) || categoryId <= 0) return null;
+
+    const optionalTypeExpr = await this.workflowOptionalColumnExpr("w", "optional_type", "NULL");
+    const isOptionalExpr = await this.workflowOptionalColumnExpr("w", "is_optional", "0");
+    const returnsExpr = await this.workflowOptionalColumnExpr("w", "returns_to_approver", "1");
+    const workflowUnitSql = await this.workflowUnitColumnSql("w");
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT
+          w.id AS workflow_id,
+          w.application_category_id,
+          ${workflowUnitSql} AS unit_id,
+          ${isOptionalExpr} AS is_optional,
+          ${optionalTypeExpr} AS optional_type,
+          ${returnsExpr} AS returns_to_approver
+        FROM workflows w
+        WHERE w.application_category_id = :applicationCategoryId
+          AND LOWER(TRIM(COALESCE(${optionalTypeExpr}, ''))) = :optionalType
+          AND CAST(COALESCE(${isOptionalExpr}, 0) AS UNSIGNED) = 1
+        ORDER BY w._order ASC, w.id ASC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          applicationCategoryId: categoryId,
+          optionalType: String(optionalType || "").trim().toLowerCase(),
+        },
+      },
+    ).catch(() => []);
+
+    return rows?.[0] || null;
+  }
+
+  static getLegalReviewUnitId() {
+    const raw = process.env.LEGAL_REVIEW_UNIT_ID;
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  static async ensureLegalReviewUnitIsValid(unitId = null) {
+    const legalUnitId = Number.parseInt(unitId, 10) || this.getLegalReviewUnitId();
+    if (!legalUnitId) {
+      throw new Error("Legal review unit is not configured. Please set LEGAL_REVIEW_UNIT_ID.");
+    }
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT v.id
+        FROM vyeo v
+        WHERE v.id = :unitId
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { unitId: Number(legalUnitId) },
+      },
+    );
+
+    if (!Array.isArray(rows) || !rows.length) {
+      throw new Error("Configured LEGAL_REVIEW_UNIT_ID does not exist in units (vyeo).");
+    }
+
+    return Number(legalUnitId);
+  }
+
+  static async fetchLatestLegalReview(trackingNumber) {
+    const normalizedTracking = String(trackingNumber || "").trim();
+    if (!normalizedTracking) return null;
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT er.*
+        FROM application_external_reviews er
+        WHERE er.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(er.review_type, ''))) = 'legal'
+        ORDER BY er.id DESC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { trackingNumber: normalizedTracking },
+      },
+    ).catch(() => []);
+
+    return rows?.[0] || null;
+  }
+
+  static async fetchOpenLegalReview(trackingNumber) {
+    const normalizedTracking = String(trackingNumber || "").trim();
+    if (!normalizedTracking) return null;
+
+    const rows = await Application.sequelize.query(
+      `
+        SELECT er.*
+        FROM application_external_reviews er
+        WHERE er.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(er.review_type, ''))) = 'legal'
+          AND LOWER(TRIM(COALESCE(er.status, ''))) IN ('pending', 'in-progress')
+        ORDER BY er.id DESC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: { trackingNumber: normalizedTracking },
+      },
+    ).catch(() => []);
+
+    return rows?.[0] || null;
+  }
+
+  static async createLegalReviewTask({
+    application,
+    currentProcess,
+    actorId,
+    actorUnitId,
+    legalUnitId,
+    optionalWorkflowId,
+    requestComment,
+    transaction,
+  }) {
+    const resolvedLegalUnitId = await this.ensureLegalReviewUnitIsValid(legalUnitId);
+
+    const openReviewRows = await Application.sequelize.query(
+      `
+        SELECT er.id
+        FROM application_external_reviews er
+        WHERE er.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(er.review_type, ''))) = 'legal'
+          AND LOWER(TRIM(COALESCE(er.status, ''))) IN ('pending', 'in-progress')
+        ORDER BY er.id DESC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        transaction,
+        replacements: {
+          trackingNumber: String(application?.tracking_number || ""),
+        },
+      },
+    );
+    if (Array.isArray(openReviewRows) && openReviewRows.length) {
+      throw new Error("Mapitio ya kisheria tayari yanasubiriwa kwa ombi hili.");
+    }
+
+    await Application.sequelize.query(
+      `
+        INSERT INTO application_external_reviews (
+          application_id,
+          tracking_number,
+          from_process_id,
+          from_staff_id,
+          from_unit_id,
+          to_unit_id,
+          to_staff_id,
+          review_type,
+          status,
+          request_comment,
+          response_comment,
+          requested_at,
+          completed_at,
+          created_by,
+          completed_by,
+          created_at,
+          updated_at
+        ) VALUES (
+          :applicationId,
+          :trackingNumber,
+          :fromProcessId,
+          :fromStaffId,
+          :fromUnitId,
+          :toUnitId,
+          NULL,
+          'legal',
+          'Pending',
+          :requestComment,
+          NULL,
+          NOW(),
+          NULL,
+          :createdBy,
+          NULL,
+          NOW(),
+          NOW()
+        )
+      `,
+      {
+        type: QueryTypes.INSERT,
+        transaction,
+        replacements: {
+          applicationId: Number(application?.id),
+          trackingNumber: String(application?.tracking_number || ""),
+          fromProcessId: Number(currentProcess?.id),
+          fromStaffId: Number(actorId),
+          fromUnitId: actorUnitId || null,
+          toUnitId: Number(resolvedLegalUnitId),
+          requestComment: String(requestComment || ""),
+          createdBy: Number(actorId),
+        },
+      },
+    );
+  }
+
+  static async completeLegalReviewTask({ trackingNumber, actorId, responseComment, transaction }) {
+    const openReviewRows = await Application.sequelize.query(
+      `
+        SELECT er.*
+        FROM application_external_reviews er
+        WHERE er.tracking_number = :trackingNumber
+          AND LOWER(TRIM(COALESCE(er.review_type, ''))) = 'legal'
+          AND LOWER(TRIM(COALESCE(er.status, ''))) IN ('pending', 'in-progress')
+        ORDER BY er.id DESC
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.SELECT,
+        transaction,
+        replacements: { trackingNumber: String(trackingNumber || "") },
+      },
+    );
+
+    const openReview = openReviewRows?.[0] || null;
+    if (!openReview) throw new Error("No pending legal review found.");
+
+    await Application.sequelize.query(
+      `
+        UPDATE application_external_reviews
+        SET status = 'Completed',
+            response_comment = :responseComment,
+            completed_at = NOW(),
+            completed_by = :completedBy,
+            updated_at = NOW()
+        WHERE id = :id
+        LIMIT 1
+      `,
+      {
+        type: QueryTypes.UPDATE,
+        transaction,
+        replacements: {
+          id: Number(openReview.id),
+          responseComment: String(responseComment || ""),
+          completedBy: Number(actorId),
+        },
+      },
+    );
+
+    return openReview;
+  }
+
   static resolveActorStaffId(user = {}) {
     const preferred = [
       user?.staff_id,
@@ -73,29 +355,7 @@ class ApplicationAPIService {
 
   static async resolveWorkflowUnitColumnName() {
     if (workflowUnitColumnCache) return workflowUnitColumnCache;
-
-    try {
-      const rows = await Application.sequelize.query(
-        `
-          SELECT COLUMN_NAME
-          FROM INFORMATION_SCHEMA.COLUMNS
-          WHERE TABLE_SCHEMA = DATABASE()
-            AND TABLE_NAME IN ('workflows', 'workflow')
-            AND COLUMN_NAME IN ('unit_id', 'start_from')
-          ORDER BY
-            CASE WHEN TABLE_NAME = 'workflows' THEN 0 ELSE 1 END,
-            CASE WHEN COLUMN_NAME = 'unit_id' THEN 0 ELSE 1 END
-          LIMIT 1
-        `,
-        { type: QueryTypes.SELECT },
-      );
-
-      const columnName = String(rows?.[0]?.COLUMN_NAME || "").trim();
-      workflowUnitColumnCache = columnName === "start_from" ? "start_from" : "unit_id";
-    } catch (error) {
-      workflowUnitColumnCache = "unit_id";
-    }
-
+    workflowUnitColumnCache = "unit_id";
     return workflowUnitColumnCache;
   }
 
@@ -884,6 +1144,8 @@ class ApplicationAPIService {
     if (normalized === "return_back") return "Return_back";
     if (normalized === "approve") return "Approve";
     if (normalized === "reject") return "Reject";
+    if (normalized === "send_to_legal" || normalized === "tuma_kwa_mwanasheria") return "Send_to_legal";
+    if (normalized === "legal_opinion" || normalized === "submit_legal_opinion") return "Legal_opinion";
 
     return String(action || "").trim();
   }
@@ -899,6 +1161,10 @@ class ApplicationAPIService {
       const isStart = Number.parseInt(row?.is_start, 10) === 1;
       const isFinal = Number.parseInt(row?.is_final, 10) === 1;
       const canApprove = Number.parseInt(row?.can_approve, 10) === 1;
+      const canReturn = Number.parseInt(row?.can_return, 10) === 1;
+      const isOptional = Number.parseInt(row?.is_optional, 10) === 1;
+      const returnsToApprover = Number.parseInt(row?.returns_to_approver, 10) !== 0;
+      const optionalType = String(row?.optional_type || "").trim().toLowerCase() || null;
       const unitId = Number.parseInt(row?.unit_id, 10);
 
       if (!stepMap.has(workFlowId)) {
@@ -908,7 +1174,11 @@ class ApplicationAPIService {
           is_start: isStart ? 1 : 0,
           is_final: isFinal ? 1 : 0,
           can_approve: canApprove ? 1 : 0,
+          can_return: canReturn ? 1 : 0,
           unit_id: Number.isFinite(unitId) ? unitId : null,
+          is_optional: isOptional ? 1 : 0,
+          optional_type: optionalType,
+          returns_to_approver: returnsToApprover ? 1 : 0,
         });
       }
     });
@@ -1974,6 +2244,11 @@ class ApplicationAPIService {
     }
 
     const workflowUnitId = await this.resolveWorkflowUnitId(user);
+    const optionalWorkflowStep = await this.fetchOptionalWorkflowStepByCategory(
+      application?.application_category_id,
+      "legal_review",
+    );
+    const legalUnitId = Number.parseInt(optionalWorkflowStep?.unit_id, 10) || null;
     if (!workflowUnitId) {
       return Number(application?.staff_id) === staffId && [0, 1].includes(Number(application?.is_approved));
     }
@@ -2031,7 +2306,17 @@ class ApplicationAPIService {
       },
     );
 
-    return Number(rows?.[0]?.can_attend || 0) === 1;
+    const canAttendMainWorkflow = Number(rows?.[0]?.can_attend || 0) === 1;
+    if (canAttendMainWorkflow) return true;
+
+    if (legalUnitId && workflowUnitId && Number(workflowUnitId) === Number(legalUnitId)) {
+      const openLegal = await this.fetchOpenLegalReview(trackingNumber);
+      if (openLegal && Number(openLegal.to_unit_id || 0) === Number(legalUnitId)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   static async fetchCurrentProcess(trackingNumber) {
@@ -2068,44 +2353,11 @@ class ApplicationAPIService {
       );
     };
 
-    const runLegacyQuery = async () => {
-      return sequelize.query(
-        `
-          SELECT
-            ap.*,
-            wf.start_from AS current_workflow_unit_id,
-            v.rank_name AS current_workflow_unit_name,
-            0 AS current_workflow_is_start,
-            0 AS current_workflow_is_final
-          FROM application_processes ap
-          LEFT JOIN workflows wf
-            ON wf.id = ap.workflow_id
-          LEFT JOIN vyeo v
-            ON v.id = wf.start_from
-          WHERE ap.tracking_number = :trackingNumber
-            AND LOWER(TRIM(COALESCE(ap.status, ''))) IN ('pending', 'in-progress')
-          ORDER BY
-            CASE WHEN LOWER(TRIM(COALESCE(ap.status, ''))) = 'in-progress' THEN 0 ELSE 1 END,
-            ap.updated_at DESC,
-            ap.id DESC
-          LIMIT 1
-        `,
-        {
-          type: QueryTypes.SELECT,
-          replacements: { trackingNumber: normalizedTracking },
-        },
-      );
-    };
-
     let rows = [];
     try {
       rows = await runModernQuery();
     } catch (error) {
-      if (error?.original?.code === "ER_BAD_FIELD_ERROR" || error?.parent?.code === "ER_BAD_FIELD_ERROR") {
-        rows = await runLegacyQuery();
-      } else {
-        throw error;
-      }
+      throw error;
     }
 
     const process = rows?.[0] || null;
@@ -2203,35 +2455,11 @@ class ApplicationAPIService {
       );
     };
 
-    const runLegacyQuery = async () => {
-      return sequelize.query(
-        `
-          SELECT
-            wf.*,
-            v.rank_name AS name,
-            v.overdue AS overdue
-          FROM workflows wf
-          LEFT JOIN vyeo v
-            ON v.id = wf.start_from
-          WHERE wf.id = :workflowId
-          LIMIT 1
-        `,
-        {
-          type: QueryTypes.SELECT,
-          replacements: { workflowId: parsedWorkflowId },
-        },
-      );
-    };
-
     let rows = [];
     try {
       rows = await runModernQuery();
     } catch (error) {
-      if (error?.original?.code === "ER_BAD_FIELD_ERROR" || error?.parent?.code === "ER_BAD_FIELD_ERROR") {
-        rows = await runLegacyQuery();
-      } else {
-        throw error;
-      }
+      throw error;
     }
 
     const workflowRow = rows?.[0] || null;
@@ -2247,6 +2475,9 @@ class ApplicationAPIService {
     if (!normalizedTracking) return [];
 
     const sequelize = Application.sequelize;
+    const isOptionalExpr = await this.workflowOptionalColumnExpr("w", "is_optional", "0");
+    const optionalTypeExpr = await this.workflowOptionalColumnExpr("w", "optional_type", "NULL");
+    const returnsToApproverExpr = await this.workflowOptionalColumnExpr("w", "returns_to_approver", "1");
 
     const runModernQuery = async () => {
       return sequelize.query(
@@ -2264,6 +2495,9 @@ class ApplicationAPIService {
             w.can_assign,
             w.can_approve,
             w.can_return,
+            ${isOptionalExpr} AS is_optional,
+            ${optionalTypeExpr} AS optional_type,
+            ${returnsToApproverExpr} AS returns_to_approver,
             ap.id AS process_id,
             ap.status AS process_status,
             ap.assigned_to,
@@ -2290,52 +2524,9 @@ class ApplicationAPIService {
       );
     };
 
-    const runLegacyQuery = async () => {
-      return sequelize.query(
-        `
-          SELECT
-            w.id AS workflow_id,
-            w.application_category_id,
-            w._order,
-            w.start_from AS unit_id,
-            v.rank_name AS unit_name,
-            NULL AS role_id,
-            NULL AS role_name,
-            0 AS is_start,
-            0 AS is_final,
-            0 AS can_assign,
-            0 AS can_approve,
-            0 AS can_return,
-            ap.id AS process_id,
-            ap.status AS process_status,
-            ap.assigned_to,
-            ap.step_order AS process_step_order,
-            ap.created_at AS process_created_at,
-            ap.updated_at AS process_updated_at
-          FROM workflows w
-          LEFT JOIN vyeo v ON v.id = w.start_from
-          LEFT JOIN application_processes ap
-            ON ap.workflow_id = w.id
-           AND ap.tracking_number = :trackingNumber
-          WHERE w.application_category_id = :applicationCategoryId
-          ORDER BY w._order ASC
-        `,
-        {
-          type: QueryTypes.SELECT,
-          replacements: {
-            applicationCategoryId: categoryId,
-            trackingNumber: normalizedTracking,
-          },
-        },
-      );
-    };
-
     try {
       return await runModernQuery();
     } catch (error) {
-      if (error?.original?.code === "ER_BAD_FIELD_ERROR" || error?.parent?.code === "ER_BAD_FIELD_ERROR") {
-        return runLegacyQuery();
-      }
       throw error;
     }
   }
@@ -2704,6 +2895,7 @@ class ApplicationAPIService {
      })().finally(() => mark("ownership_extras_done"));
 
      const actorStaffId = this.resolveActorStaffId(currentUser || {});
+     const legalReviewPromise = this.fetchLatestLegalReview(application.tracking_number);
      const workflowContextPromise = actorStaffId
       ? Promise.all([
           WorkflowHelper.getWorkflowContext(application, actorStaffId, currentUser),
@@ -2711,7 +2903,7 @@ class ApplicationAPIService {
         ]).finally(() => mark("workflow_context_done"))
       : Promise.resolve(null);
 
-     const [currentProcess, workflowSteps, workflowContext, ownershipExtras] = await Promise.all([
+     const [currentProcess, workflowSteps, workflowContext, ownershipExtras, legalReview] = await Promise.all([
       currentProcessPromise,
       workflowStepsPromise,
       workflowContextPromise,
@@ -2720,6 +2912,7 @@ class ApplicationAPIService {
       commentsPromise,
       attachmentsPromise,
       schoolPromise,
+      legalReviewPromise,
      ]);
      mark("all_promises_done");
 
@@ -2731,6 +2924,56 @@ class ApplicationAPIService {
 
      if (workflowContext) {
       const [workflow, canAttend] = workflowContext;
+      const currentWorkflowIdInContext = Number.parseInt(currentProcess?.workflow_id, 10);
+      const currentWorkflowStep = (Array.isArray(workflowSteps) ? workflowSteps : []).find(
+        (step) => Number.parseInt(step?.workflow_id, 10) === currentWorkflowIdInContext,
+      ) || {};
+      const actorUnitId = Number.parseInt(workflow?.actor?.vyeo_id, 10);
+      const optionalWorkflowStep = await this.fetchOptionalWorkflowStepByCategory(
+        application?.application_category_id,
+        "legal_review",
+      );
+      const legalUnitId = Number.parseInt(optionalWorkflowStep?.unit_id, 10) || null;
+      const legalStatus = String(legalReview?.status || "").trim().toLowerCase();
+      const legalIsOpen = ["pending", "in-progress"].includes(legalStatus);
+      const legalReturned = legalStatus === "completed";
+      const isLegalActor = legalUnitId && Number(actorUnitId) === Number(legalUnitId);
+
+      const allowedActions = Array.isArray(workflow?.allowed_actions) ? [...workflow.allowed_actions] : [];
+      const isCurrentStepApprover = Number.parseInt(currentWorkflowStep?.can_approve, 10) === 1;
+      const canTriggerOptionalLegal = Boolean(
+        isCurrentStepApprover
+        && optionalWorkflowStep
+        && !legalIsOpen,
+      );
+
+      if (canTriggerOptionalLegal && !allowedActions.includes("Send_to_legal")) {
+        allowedActions.push("Send_to_legal");
+      }
+
+      if (legalIsOpen && isCurrentStepApprover) {
+        const blockedFinal = new Set(["Approve", "Reject", "Forward", "Return", "Return_back"]);
+        workflow.allowed_actions = allowedActions.filter((action) => !blockedFinal.has(action));
+      } else {
+        workflow.allowed_actions = allowedActions;
+      }
+
+      if (legalIsOpen && isLegalActor) {
+        workflow.allowed_actions = ["Legal_opinion"];
+      }
+
+      workflow.legal_review = {
+        exists: Boolean(legalReview),
+        configured: Boolean(optionalWorkflowStep),
+        optional_workflow_id: optionalWorkflowStep?.workflow_id || null,
+        status: legalReview?.status || null,
+        is_open: legalIsOpen,
+        is_completed: legalReturned,
+        to_unit_id: legalReview?.to_unit_id || null,
+        requested_at: legalReview?.requested_at || null,
+        completed_at: legalReview?.completed_at || null,
+      };
+
       application.setDataValue("workflow", workflow);
       application.setDataValue("can_attend", canAttend);
      }
@@ -2962,6 +3205,11 @@ class ApplicationAPIService {
         application.updated_at = new Date();
         await application.save({ transaction });
       } else if (action === "Approve" || action === "Reject") {
+        const openLegalReview = await this.fetchOpenLegalReview(application.tracking_number);
+        if (openLegalReview) {
+          throw new Error("Mapitio ya kisheria bado yanaendelea. Tafadhali subiri mrejesho wa Mwanasheria.");
+        }
+
         if (!actorHasAssignStaffPermission) {
           throw new Error("Approve/Reject requires assign-staff permission.");
         }
@@ -2995,6 +3243,89 @@ class ApplicationAPIService {
         application.approved_at = new Date();
         application.updated_at = new Date();
         await application.save({ transaction });
+      } else if (action === "Send_to_legal") {
+        const optionalWorkflowStep = await this.fetchOptionalWorkflowStepByCategory(
+          application?.application_category_id,
+          "legal_review",
+        );
+        if (!optionalWorkflowStep) {
+          throw new Error("Hakuna hatua ya hiari ya mapitio ya kisheria iliyosanidiwa kwa aina hii ya ombi.");
+        }
+
+        const openLegalReview = await this.fetchOpenLegalReview(application.tracking_number);
+        if (openLegalReview) {
+          throw new Error("Mapitio ya kisheria tayari yanasubiriwa kwa ombi hili.");
+        }
+
+        const actorUnitId = Number.parseInt(workflow?.actor?.vyeo_id, 10);
+        const currentUnitId = Number.parseInt(currentWorkflowStep?.unit_id, 10);
+        if (Number.parseInt(currentWorkflowStep?.can_approve, 10) !== 1) {
+          throw new Error("Hatua yenye can_approve=true pekee ndiyo inaweza kutuma kwa Mwanasheria.");
+        }
+        if (!Number.isFinite(actorUnitId) || !Number.isFinite(currentUnitId) || actorUnitId !== currentUnitId) {
+          throw new Error("Ni mhusika wa hatua ya sasa pekee anayeruhusiwa kutuma kwa Mwanasheria.");
+        }
+
+        await this.createCommentWithLocationSnapshot({
+          trackingNumber: application.tracking_number,
+          staffId,
+          userTo: null,
+          content,
+          action,
+          applicationProcessId: currentProcessId,
+          currentUser: currentUser || {},
+          snapshotContext,
+          transaction,
+        });
+
+        await this.createLegalReviewTask({
+          application,
+          currentProcess,
+          actorId,
+          actorUnitId,
+          legalUnitId: Number.parseInt(optionalWorkflowStep?.unit_id, 10) || null,
+          optionalWorkflowId: Number.parseInt(optionalWorkflowStep?.workflow_id, 10) || null,
+          requestComment: content,
+          transaction,
+        });
+
+        await this.setCurrentProcessInProgress(currentProcessId, currentProcess?.assigned_to || actorId, actorId, transaction);
+      } else if (action === "Legal_opinion") {
+        const optionalWorkflowStep = await this.fetchOptionalWorkflowStepByCategory(
+          application?.application_category_id,
+          "legal_review",
+        );
+        const legalUnitId = Number.parseInt(optionalWorkflowStep?.unit_id, 10) || null;
+        const actorUnitId = Number.parseInt(workflow?.actor?.vyeo_id, 10);
+        if (!legalUnitId || actorUnitId !== legalUnitId) {
+          throw new Error("Hii hatua ni kwa unit ya kisheria pekee.");
+        }
+
+        const openLegalReview = await this.completeLegalReviewTask({
+          trackingNumber: application.tracking_number,
+          actorId,
+          responseComment: content,
+          transaction,
+        });
+
+        await this.createCommentWithLocationSnapshot({
+          trackingNumber: application.tracking_number,
+          staffId,
+          userTo: Number.parseInt(openLegalReview?.from_staff_id, 10) || null,
+          content,
+          action,
+          applicationProcessId: Number.parseInt(openLegalReview?.from_process_id, 10) || currentProcessId,
+          currentUser: currentUser || {},
+          snapshotContext,
+          transaction,
+        });
+
+        await this.setCurrentProcessInProgress(
+          Number.parseInt(openLegalReview?.from_process_id, 10) || currentProcessId,
+          Number.parseInt(openLegalReview?.from_staff_id, 10) || actorId,
+          actorId,
+          transaction,
+        );
       } else {
         const actor = workflow?.actor || await WorkflowHelper.getStaffProfile(staffId);
         const target = await WorkflowHelper.resolveActionTarget({

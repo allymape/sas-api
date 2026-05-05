@@ -15,11 +15,20 @@ module.exports = {
   },
 
   buildWorkflowPayload(data = {}) {
-    const selectedStartFrom = Number(data.from || data.start_from || 0);
     const selectedUnitId = Number(data.unit_id || 0);
-    const syncedHierarchyId = selectedStartFrom > 0
-      ? selectedStartFrom
-      : (selectedUnitId > 0 ? selectedUnitId : 0);
+    const syncedHierarchyId = selectedUnitId > 0 ? selectedUnitId : 0;
+
+    const optionalTypeRaw = String(data.optional_type || "").trim();
+    const optionalType = optionalTypeRaw ? optionalTypeRaw.toLowerCase() : null;
+    const returnsToStepOrderRaw = Number(data.returns_to_step_order || 0);
+    const returnsToStepOrder = Number.isFinite(returnsToStepOrderRaw) && returnsToStepOrderRaw > 0
+      ? returnsToStepOrderRaw
+      : null;
+    const isOptional = this.normalizeBoolean(data.is_optional);
+    const hasReturnsToApprover = Object.prototype.hasOwnProperty.call(data || {}, "returns_to_approver");
+    const returnsToApprover = hasReturnsToApprover
+      ? this.normalizeBoolean(data.returns_to_approver)
+      : (isOptional ? 1 : 0);
 
     return {
       application_category_id: Number(data.application_category_id || data.application_categories || 0),
@@ -31,7 +40,104 @@ module.exports = {
       can_assign: this.normalizeBoolean(data.can_assign),
       can_approve: this.normalizeBoolean(data.can_approve),
       can_return: this.normalizeBoolean(data.can_return),
+      is_optional: isOptional,
+      optional_type: optionalType,
+      returns_to_step_order: returnsToStepOrder,
+      returns_to_approver: returnsToApprover,
     };
+  },
+
+  validateOptionalWorkflowRules(payload, excludeId = null, callback) {
+    const isOptional = Number(payload.is_optional || 0) === 1;
+    if (!isOptional) {
+      payload.optional_type = null;
+      payload.returns_to_step_order = null;
+      payload.returns_to_approver = 0;
+      callback(true, null);
+      return;
+    }
+
+    if (!String(payload.optional_type || "").trim()) {
+      callback(false, "Optional Type ni lazima kwa hatua ya hiari.");
+      return;
+    }
+
+    const returnOrder = Number(payload.returns_to_step_order || 0);
+    if (!Number.isFinite(returnOrder) || returnOrder <= 0) {
+      callback(false, "Return to Step ni lazima kwa hatua ya hiari.");
+      return;
+    }
+
+    if (Number(payload.is_start) === 1) {
+      callback(false, "Optional step hairuhusiwi kuwa Start.");
+      return;
+    }
+
+    if (Number(payload.can_approve) === 1 || Number(payload.is_final) === 1) {
+      callback(false, "Optional step hairuhusiwi kuwa Approve/Final.");
+      return;
+    }
+
+    if (Number(payload.can_return) === 1) {
+      callback(false, "Optional step hairuhusiwi kuwa na Return.");
+      return;
+    }
+
+    const params = [Number(payload.application_category_id || 0), returnOrder];
+    let sql = `
+      SELECT id, _order, is_optional
+      FROM workflows
+      WHERE deleted_at IS NULL
+        AND application_category_id = ?
+        AND _order = ?
+    `;
+    if (excludeId) {
+      sql += " AND id <> ?";
+      params.push(Number(excludeId));
+    }
+    sql += " LIMIT 1";
+
+    db.query(sql, params, (error, rows) => {
+      if (error) {
+        if (error.code === "ER_BAD_FIELD_ERROR") {
+          db.query(
+            sql.replace("SELECT id, _order, is_optional", "SELECT id, _order, 0 AS is_optional"),
+            params,
+            (fallbackError, fallbackRows) => {
+              if (fallbackError) {
+                console.log(fallbackError);
+                callback(false, "Imeshindikana kuhakiki Return to Step.");
+                return;
+              }
+
+              const target = Array.isArray(fallbackRows) && fallbackRows.length ? fallbackRows[0] : null;
+              if (!target) {
+                callback(false, "Return to Step haipo kwenye Aina hii ya Ombi.");
+                return;
+              }
+              callback(true, null);
+            }
+          );
+          return;
+        }
+        console.log(error);
+        callback(false, "Imeshindikana kuhakiki Return to Step.");
+        return;
+      }
+
+      const target = Array.isArray(rows) && rows.length ? rows[0] : null;
+      if (!target) {
+        callback(false, "Return to Step haipo kwenye Aina hii ya Ombi.");
+        return;
+      }
+
+      if (Number(target.is_optional || 0) === 1) {
+        callback(false, "Return to Step haiwezi kuwa optional step nyingine.");
+        return;
+      }
+
+      callback(true, null);
+    });
   },
 
   validateOrderSequence(payload, excludeId = null, pendingOrders = [], pendingStartFrom = [], callback) {
@@ -297,10 +403,64 @@ module.exports = {
             ORDER BY w.application_category_id ASC, _order ASC`;
 
       db.query(
-        `SELECT w.id AS id, application_category_id, ac.app_name AS app_name, v.rank_name AS start_from, _order,
+        `SELECT w.id AS id, application_category_id, ac.app_name AS app_name, v.rank_name AS unit_name, _order,
                 w.unit_id, v.rank_name AS unit_name, w.role_id, rm.role_name,
                 w.is_start, w.is_final, w.can_assign, w.can_approve, w.can_return, w.deleted_at
+                ,COALESCE(w.is_optional,0) AS is_optional
+                ,w.optional_type
+                ,w.returns_to_step_order
+                ,COALESCE(w.returns_to_approver,0) AS returns_to_approver
          ${sqlFrom} 
+         ${is_paginated ? " LIMIT ?,?" : ""}`,
+        is_paginated ? [offset, per_page] : [],
+        (error, results) => {
+          if (error) {
+            if (error.code === "ER_BAD_FIELD_ERROR") {
+              runCompatibilitySchemaQuery();
+              return;
+            }
+            console.log(error);
+            callback(error, [], 0);
+            return;
+          }
+          db.query(
+            `SELECT COUNT(*) AS num_rows ${sqlFrom}`,
+            (error2, result) => {
+              if (error2) {
+                console.log(error2);
+                callback(error2, Array.isArray(results) ? results : [], 0);
+                return;
+              }
+              callback(null, Array.isArray(results) ? results : [], Number(result?.[0]?.num_rows || 0));
+            }
+          );
+        }
+      );
+    };
+
+    const runCompatibilitySchemaQuery = () => {
+      const filter = buildWhereSql(true);
+      const sqlFrom = `FROM workflows w
+            INNER JOIN application_categories ac ON ac.id = w.application_category_id
+            INNER JOIN vyeo v ON v.id = w.unit_id
+            LEFT JOIN role_management rm ON rm.id = w.role_id
+            ${filter}
+            ORDER BY w.application_category_id ASC, _order ASC`;
+
+      db.query(
+        `SELECT w.id AS id, application_category_id, ac.app_name AS app_name, v.rank_name AS unit_name, _order,
+                w.unit_id, v.rank_name AS unit_name, w.role_id, rm.role_name,
+                COALESCE(w.is_start,0) AS is_start,
+                COALESCE(w.is_final,0) AS is_final,
+                COALESCE(w.can_assign,0) AS can_assign,
+                COALESCE(w.can_approve,0) AS can_approve,
+                COALESCE(w.can_return,0) AS can_return,
+                w.deleted_at,
+                COALESCE(w.is_optional,0) AS is_optional,
+                w.optional_type,
+                NULL AS returns_to_step_order,
+                COALESCE(w.returns_to_approver,0) AS returns_to_approver
+         ${sqlFrom}
          ${is_paginated ? " LIMIT ?,?" : ""}`,
         is_paginated ? [offset, per_page] : [],
         (error, results) => {
@@ -332,14 +492,23 @@ module.exports = {
       const filter = buildWhereSql(false);
       const sqlFrom = `FROM workflows w
             INNER JOIN application_categories ac ON ac.id = w.application_category_id
-            INNER JOIN vyeo v ON v.id = w.start_from
+            INNER JOIN vyeo v ON v.id = w.unit_id
             ${filter}
             ORDER BY w.application_category_id ASC, _order ASC`;
 
       db.query(
-        `SELECT w.id AS id, w.application_category_id, ac.app_name AS app_name, v.rank_name AS start_from, w._order,
-                w.start_from AS unit_id, v.rank_name AS unit_name, NULL AS role_id, NULL AS role_name,
-                0 AS is_start, 0 AS is_final, 0 AS can_assign, 0 AS can_approve, 0 AS can_return, NULL AS deleted_at
+        `SELECT w.id AS id, w.application_category_id, ac.app_name AS app_name, v.rank_name AS unit_name, w._order,
+                w.unit_id AS unit_id, v.rank_name AS unit_name, NULL AS role_id, NULL AS role_name,
+                COALESCE(w.is_start,0) AS is_start,
+                COALESCE(w.is_final,0) AS is_final,
+                COALESCE(w.can_assign,0) AS can_assign,
+                COALESCE(w.can_approve,0) AS can_approve,
+                COALESCE(w.can_return,0) AS can_return,
+                NULL AS deleted_at
+                ,COALESCE(w.is_optional,0) AS is_optional,
+                w.optional_type,
+                NULL AS returns_to_step_order,
+                COALESCE(w.returns_to_approver,0) AS returns_to_approver
          ${sqlFrom}
          ${is_paginated ? " LIMIT ?,?" : ""}`,
         is_paginated ? [offset, per_page] : [],
@@ -366,6 +535,180 @@ module.exports = {
 
     runModernSchemaQuery();
   },
+  getWorkflowStepsByCategory: (applicationCategoryId, callback) => {
+    const categoryId = Number(applicationCategoryId || 0);
+    if (!Number.isFinite(categoryId) || categoryId <= 0) {
+      callback(new Error("application_category_id is required"), []);
+      return;
+    }
+
+    const queries = [
+      `
+      SELECT
+        w.id,
+        w._order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND w.deleted_at IS NULL
+        AND COALESCE(w.is_optional, 0) = 0
+      ORDER BY w._order ASC
+      `,
+      `
+      SELECT
+        w.id,
+        w.step_order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND w.deleted_at IS NULL
+        AND COALESCE(w.is_optional, 0) = 0
+      ORDER BY w.step_order ASC
+      `,
+      `
+      SELECT
+        w.id,
+        w._order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND COALESCE(w.is_optional, 0) = 0
+      ORDER BY w._order ASC
+      `,
+      `
+      SELECT
+        w.id,
+        w.step_order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND COALESCE(w.is_optional, 0) = 0
+      ORDER BY w.step_order ASC
+      `,
+      `
+      SELECT
+        w.id,
+        w._order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+      ORDER BY w._order ASC
+      `,
+      `
+      SELECT
+        w.id,
+        w.step_order AS step_order,
+        w.unit_id,
+        v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+      ORDER BY w.step_order ASC
+      `,
+    ];
+
+    const runAt = (idx) => {
+      if (idx >= queries.length) {
+        callback(new Error("Failed to load workflow steps for this category."), []);
+        return;
+      }
+
+      db.query(queries[idx], [categoryId], (error, results) => {
+        if (error) {
+          if (error.code === "ER_BAD_FIELD_ERROR" || error.code === "ER_BAD_TABLE_ERROR") {
+            runAt(idx + 1);
+            return;
+          }
+          callback(error, []);
+          return;
+        }
+        callback(null, Array.isArray(results) ? results : []);
+      });
+    };
+
+    runAt(0);
+  },
+  getApproverStepByCategory: (applicationCategoryId, callback) => {
+    const categoryId = Number(applicationCategoryId || 0);
+    if (!Number.isFinite(categoryId) || categoryId <= 0) {
+      callback(new Error("application_category_id is required"), null, 0);
+      return;
+    }
+
+    const queries = [
+      `
+      SELECT w.id, w._order AS step_order, w.unit_id, v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND w.deleted_at IS NULL
+        AND COALESCE(w.is_optional,0) = 0
+        AND COALESCE(w.can_approve,0) = 1
+      ORDER BY w._order ASC
+      `,
+      `
+      SELECT w.id, w.step_order AS step_order, w.unit_id, v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND w.deleted_at IS NULL
+        AND COALESCE(w.is_optional,0) = 0
+        AND COALESCE(w.can_approve,0) = 1
+      ORDER BY w.step_order ASC
+      `,
+      `
+      SELECT w.id, w._order AS step_order, w.unit_id, v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND COALESCE(w.is_optional,0) = 0
+        AND COALESCE(w.can_approve,0) = 1
+      ORDER BY w._order ASC
+      `,
+      `
+      SELECT w.id, w.step_order AS step_order, w.unit_id, v.rank_name AS unit_name
+      FROM workflows w
+      INNER JOIN vyeo v ON v.id = w.unit_id
+      WHERE w.application_category_id = ?
+        AND COALESCE(w.is_optional,0) = 0
+        AND COALESCE(w.can_approve,0) = 1
+      ORDER BY w.step_order ASC
+      `,
+    ];
+
+    const runAt = (idx) => {
+      if (idx >= queries.length) {
+        callback(new Error("Failed to resolve approver step."), null, 0);
+        return;
+      }
+
+      db.query(queries[idx], [categoryId], (error, rows) => {
+        if (error) {
+          if (error.code === "ER_BAD_FIELD_ERROR" || error.code === "ER_BAD_TABLE_ERROR") {
+            runAt(idx + 1);
+            return;
+          }
+          callback(error, null, 0);
+          return;
+        }
+
+        const resultRows = Array.isArray(rows) ? rows : [];
+        callback(null, resultRows[0] || null, resultRows.length);
+      });
+    };
+
+    runAt(0);
+  },
   //******** STORE WORKFLOW *******************************
   insertOrUpdateWorkflow: (req , data , callback) => {
     const {action} = req.body;
@@ -383,6 +726,10 @@ module.exports = {
         payload.can_assign,
         payload.can_approve,
         payload.can_return,
+        payload.is_optional,
+        payload.optional_type,
+        payload.returns_to_step_order,
+        payload.returns_to_approver,
         actorId,
         actorId,
         formatDate(new Date()),
@@ -392,25 +739,195 @@ module.exports = {
 
     const pendingOrdersByCategory = {};
     const pendingStartFromByCategory = {};
+    let crossCategoryWarningMessage = null;
 
     const validatePayloadAt = (index) => {
       if (index >= payloads.length) {
-        db.query(
-          `INSERT INTO workflows(
-            application_category_id, _order, unit_id, role_id,
-            is_start, is_final, can_assign, can_approve, can_return, created_by, updated_by, created_at, updated_at
-          ) VALUES ?`,
-          [values],
-          (error, results) => {
-            if (error) {
-              console.log(error);
-              callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + error.code);
-              return;
-            }
+        const insertWithOptionalSql = `INSERT INTO workflows(
+          application_category_id, _order, unit_id, role_id,
+          is_start, is_final, can_assign, can_approve, can_return,
+          is_optional, optional_type, returns_to_step_order, returns_to_approver,
+          created_by, updated_by, created_at, updated_at
+        ) VALUES ?`;
+        const insertWithOptionalAndEndToSql = `INSERT INTO workflows(
+          application_category_id, _order, unit_id, end_to, role_id,
+          is_start, is_final, can_assign, can_approve, can_return,
+          is_optional, optional_type, returns_to_step_order, returns_to_approver,
+          created_by, updated_by, created_at, updated_at
+        ) VALUES ?`;
+        const insertLegacySql = `INSERT INTO workflows(
+          application_category_id, _order, unit_id, role_id,
+          is_start, is_final, can_assign, can_approve, can_return,
+          created_by, updated_by, created_at, updated_at
+        ) VALUES ?`;
+        const insertLegacyWithEndToSql = `INSERT INTO workflows(
+          application_category_id, _order, unit_id, end_to, role_id,
+          is_start, is_final, can_assign, can_approve, can_return,
+          created_by, updated_by, created_at, updated_at
+        ) VALUES ?`;
+        const legacyValues = payloads.map((payload) => ([
+          payload.application_category_id,
+          payload._order,
+          payload.unit_id,
+          payload.role_id,
+          payload.is_start,
+          payload.is_final,
+          payload.can_assign,
+          payload.can_approve,
+          payload.can_return,
+          actorId,
+          actorId,
+          formatDate(new Date()),
+          formatDate(new Date()),
+        ]));
+        const legacyValuesWithEndTo = payloads.map((payload) => ([
+          payload.application_category_id,
+          payload._order,
+          payload.unit_id,
+          payload.unit_id,
+          payload.role_id,
+          payload.is_start,
+          payload.is_final,
+          payload.can_assign,
+          payload.can_approve,
+          payload.can_return,
+          actorId,
+          actorId,
+          formatDate(new Date()),
+          formatDate(new Date()),
+        ]));
+        const valuesWithOptionalAndEndTo = payloads.map((payload) => ([
+          payload.application_category_id,
+          payload._order,
+          payload.unit_id,
+          payload.unit_id,
+          payload.role_id,
+          payload.is_start,
+          payload.is_final,
+          payload.can_assign,
+          payload.can_approve,
+          payload.can_return,
+          payload.is_optional,
+          payload.optional_type,
+          payload.returns_to_step_order,
+          payload.returns_to_approver,
+          actorId,
+          actorId,
+          formatDate(new Date()),
+          formatDate(new Date()),
+        ]));
 
-            callback(results.affectedRows > 0, `Umefanikiwa ${action} Utendaji Kazi (Workflow)`);
-          },
-        );
+        db.query(insertWithOptionalSql, [values], (error, results) => {
+          if (
+            error &&
+            error.code === "ER_NO_DEFAULT_FOR_FIELD" &&
+            String(error.sqlMessage || "").toLowerCase().includes("end_to")
+          ) {
+            db.query(insertWithOptionalAndEndToSql, [valuesWithOptionalAndEndTo], (withEndToError, withEndToResults) => {
+              if (withEndToError && withEndToError.code === "ER_BAD_FIELD_ERROR") {
+                db.query(insertLegacyWithEndToSql, [legacyValuesWithEndTo], (endToLegacyError, endToLegacyResults) => {
+                  if (endToLegacyError) {
+                    console.log(endToLegacyError);
+                    callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + endToLegacyError.code);
+                    return;
+                  }
+                  const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+                  callback(
+                    endToLegacyResults.affectedRows > 0,
+                    crossCategoryWarningMessage
+                      ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+                      : baseMessage
+                  );
+                });
+                return;
+              }
+              if (withEndToError) {
+                console.log(withEndToError);
+                callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + withEndToError.code);
+                return;
+              }
+              const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+              callback(
+                withEndToResults.affectedRows > 0,
+                crossCategoryWarningMessage
+                  ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+                  : baseMessage
+              );
+            });
+            return;
+          }
+          if (error && error.code === "ER_BAD_FIELD_ERROR") {
+            db.query(insertLegacySql, [legacyValues], (legacyError, legacyResults) => {
+              if (
+                legacyError &&
+                legacyError.code === "ER_NO_DEFAULT_FOR_FIELD" &&
+                String(legacyError.sqlMessage || "").toLowerCase().includes("end_to")
+              ) {
+                db.query(insertLegacyWithEndToSql, [legacyValuesWithEndTo], (endToError, endToResults) => {
+                  if (endToError) {
+                    console.log(endToError);
+                    callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + endToError.code);
+                    return;
+                  }
+                  const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+                  callback(
+                    endToResults.affectedRows > 0,
+                    crossCategoryWarningMessage
+                      ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+                      : baseMessage
+                  );
+                });
+                return;
+              }
+              if (legacyError) {
+                console.log(legacyError);
+                callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + legacyError.code);
+                return;
+              }
+              const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+              callback(
+                legacyResults.affectedRows > 0,
+                crossCategoryWarningMessage
+                  ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+                  : baseMessage
+              );
+            });
+            return;
+          }
+          if (
+            error &&
+            error.code === "ER_NO_DEFAULT_FOR_FIELD" &&
+            String(error.sqlMessage || "").toLowerCase().includes("end_to")
+          ) {
+            db.query(insertLegacyWithEndToSql, [legacyValuesWithEndTo], (endToError, endToResults) => {
+              if (endToError) {
+                console.log(endToError);
+                callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + endToError.code);
+                return;
+              }
+              const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+              callback(
+                endToResults.affectedRows > 0,
+                crossCategoryWarningMessage
+                  ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+                  : baseMessage
+              );
+            });
+            return;
+          }
+          if (error) {
+            console.log(error);
+            callback(false, `Haujafanikiwa ${action} Utendaji Kazi (Workflow) ` + error.code);
+            return;
+          }
+          const baseMessage = `Umefanikiwa ${action} Utendaji Kazi (Workflow)`;
+          callback(
+            results.affectedRows > 0,
+            crossCategoryWarningMessage
+              ? `${baseMessage}. Tahadhari: ${crossCategoryWarningMessage}`
+              : baseMessage
+          );
+        });
         return;
       }
 
@@ -418,6 +935,12 @@ module.exports = {
       const categoryKey = String(payload.application_category_id || "");
       const pendingOrders = pendingOrdersByCategory[categoryKey] || [];
       const pendingStartFrom = pendingStartFromByCategory[categoryKey] || [];
+      module.exports.validateOptionalWorkflowRules(payload, null, (optionalValid, optionalMessage) => {
+        if (!optionalValid) {
+          callback(false, optionalMessage);
+          return;
+        }
+
       module.exports.validateUniqueWorkflowFlags(payload, null, pendingOrders, pendingStartFrom, (isValid, message) => {
         if (!isValid) {
           callback(false, message);
@@ -428,38 +951,72 @@ module.exports = {
         pendingStartFromByCategory[categoryKey] = pendingStartFrom.concat(Number(payload.unit_id || 0));
         validatePayloadAt(index + 1);
       });
+      });
     };
 
     module.exports.validateNoIncompleteOtherCategory(
       payloads.map((payload) => Number(payload.application_category_id || 0)),
       (isAllowed, validationMessage) => {
-        if (!isAllowed) {
-          callback(false, validationMessage);
-          return;
+        if (!isAllowed && validationMessage) {
+          crossCategoryWarningMessage = validationMessage;
         }
-
         validatePayloadAt(0);
       }
     );
   },
   //******** FIND WORKFLOW *******************************
   findWorkflow: (id, callback) => {
-    db.query(
-      `SELECT id, application_category_id, unit_id AS start_from, _order,
-              unit_id, role_id, is_start, is_final, can_assign, can_approve, can_return
-         FROM workflows WHERE id = ? AND deleted_at IS NULL`,
-      [Number(id)],
-      (error, workflow) => {
-        if (error) {
-          console.log("Error", error);
-          callback(error, false, null);
-          return;
-        }
-        const rows = Array.isArray(workflow) ? workflow : [];
-        const success = rows.length > 0;
-        callback(null, success, success ? rows[0] : null);
+    const modernSql = `SELECT id, application_category_id, unit_id, _order,
+            unit_id, role_id, is_start, is_final, can_assign, can_approve, can_return,
+            COALESCE(is_optional,0) AS is_optional, optional_type, returns_to_step_order,
+            COALESCE(returns_to_approver,0) AS returns_to_approver
+       FROM workflows WHERE id = ? AND deleted_at IS NULL`;
+    const compatibilitySql = `SELECT id, application_category_id, unit_id, _order,
+            unit_id, role_id, is_start, is_final, can_assign, can_approve, can_return,
+            COALESCE(is_optional,0) AS is_optional, optional_type, NULL AS returns_to_step_order,
+            COALESCE(returns_to_approver,0) AS returns_to_approver
+       FROM workflows WHERE id = ? AND deleted_at IS NULL`;
+    const legacySql = `SELECT id, application_category_id, unit_id, _order,
+            unit_id, role_id, is_start, is_final, can_assign, can_approve, can_return,
+            0 AS is_optional, NULL AS optional_type, NULL AS returns_to_step_order, 0 AS returns_to_approver
+       FROM workflows WHERE id = ? AND deleted_at IS NULL`;
+    const params = [Number(id)];
+    db.query(modernSql, params, (error, workflow) => {
+      if (error && error.code === "ER_BAD_FIELD_ERROR") {
+        db.query(compatibilitySql, params, (compatError, compatWorkflow) => {
+          if (compatError && compatError.code === "ER_BAD_FIELD_ERROR") {
+            db.query(legacySql, params, (fallbackError, fallbackWorkflow) => {
+              if (fallbackError) {
+                console.log("Error", fallbackError);
+                callback(fallbackError, false, null);
+                return;
+              }
+              const rows = Array.isArray(fallbackWorkflow) ? fallbackWorkflow : [];
+              const success = rows.length > 0;
+              callback(null, success, success ? rows[0] : null);
+            });
+            return;
+          }
+          if (compatError) {
+            console.log("Error", compatError);
+            callback(compatError, false, null);
+            return;
+          }
+          const rows = Array.isArray(compatWorkflow) ? compatWorkflow : [];
+          const success = rows.length > 0;
+          callback(null, success, success ? rows[0] : null);
+        });
+        return;
       }
-    );
+      if (error) {
+        console.log("Error", error);
+        callback(error, false, null);
+        return;
+      }
+      const rows = Array.isArray(workflow) ? workflow : [];
+      const success = rows.length > 0;
+      callback(null, success, success ? rows[0] : null);
+    });
   },
 
   //******** UPDATE WORKFLOW *******************************
@@ -511,33 +1068,135 @@ module.exports = {
           };
 
           const runValidationAndSave = () => {
+            module.exports.validateOptionalWorkflowRules(payload, workflowId, (optionalValid, optionalMessage) => {
+              if (!optionalValid) {
+                rollbackWithMessage(optionalMessage);
+                return;
+              }
             module.exports.validateUniqueWorkflowFlags(payload, workflowId, [], [], (isValid, message) => {
               if (!isValid) {
                 rollbackWithMessage(message);
                 return;
               }
 
-              db.query(
-                `UPDATE workflows 
+              const modernUpdateSql = `UPDATE workflows 
+                 SET application_category_id = ? , _order = ? ,
+                     unit_id = ?, role_id = ?, is_start = ?, is_final = ?, can_assign = ?, can_approve = ?, can_return = ?,
+                     is_optional = ?, optional_type = ?, returns_to_step_order = ?, returns_to_approver = ?,
+                     updated_by = ?, updated_at = ? 
+                 WHERE id = ? AND deleted_at IS NULL`;
+              const modernUpdateParams = [
+                payload.application_category_id,
+                payload._order,
+                payload.unit_id,
+                payload.role_id,
+                payload.is_start,
+                payload.is_final,
+                payload.can_assign,
+                payload.can_approve,
+                payload.can_return,
+                payload.is_optional,
+                payload.optional_type,
+                payload.returns_to_step_order,
+                payload.returns_to_approver,
+                actorId,
+                formatDate(new Date()),
+                workflowId
+              ];
+              const legacyUpdateSql = `UPDATE workflows 
                  SET application_category_id = ? , _order = ? ,
                      unit_id = ?, role_id = ?, is_start = ?, is_final = ?, can_assign = ?, can_approve = ?, can_return = ?,
                      updated_by = ?, updated_at = ? 
-                 WHERE id = ? AND deleted_at IS NULL`,
-                [
-                  payload.application_category_id,
-                  payload._order,
-                  payload.unit_id,
-                  payload.role_id,
-                  payload.is_start,
-                  payload.is_final,
-                  payload.can_assign,
-                  payload.can_approve,
-                  payload.can_return,
-                  actorId,
-                  formatDate(new Date()),
-                  workflowId
-                ],
-                (updateError, results) => {
+                 WHERE id = ? AND deleted_at IS NULL`;
+              const compatibilityUpdateSql = `UPDATE workflows 
+                 SET application_category_id = ? , _order = ? ,
+                     unit_id = ?, role_id = ?, is_start = ?, is_final = ?, can_assign = ?, can_approve = ?, can_return = ?,
+                     is_optional = ?, optional_type = ?, returns_to_approver = ?,
+                     updated_by = ?, updated_at = ? 
+                 WHERE id = ? AND deleted_at IS NULL`;
+              const legacyUpdateParams = [
+                payload.application_category_id,
+                payload._order,
+                payload.unit_id,
+                payload.role_id,
+                payload.is_start,
+                payload.is_final,
+                payload.can_assign,
+                payload.can_approve,
+                payload.can_return,
+                actorId,
+                formatDate(new Date()),
+                workflowId
+              ];
+              const compatibilityUpdateParams = [
+                payload.application_category_id,
+                payload._order,
+                payload.unit_id,
+                payload.role_id,
+                payload.is_start,
+                payload.is_final,
+                payload.can_assign,
+                payload.can_approve,
+                payload.can_return,
+                payload.is_optional,
+                payload.optional_type,
+                payload.returns_to_approver,
+                actorId,
+                formatDate(new Date()),
+                workflowId
+              ];
+
+              db.query(modernUpdateSql, modernUpdateParams, (updateError, results) => {
+                  if (updateError && updateError.code === "ER_BAD_FIELD_ERROR") {
+                    db.query(compatibilityUpdateSql, compatibilityUpdateParams, (compatibilityError, compatibilityResults) => {
+                      if (compatibilityError && compatibilityError.code === "ER_BAD_FIELD_ERROR") {
+                        db.query(legacyUpdateSql, legacyUpdateParams, (legacyUpdateError, legacyResults) => {
+                          if (legacyUpdateError) {
+                            console.log(legacyUpdateError);
+                            rollbackWithMessage(
+                              "Haujafanikiwa Kubadili Utendaji Kazi (Workflow) " + legacyUpdateError.code
+                            );
+                            return;
+                          }
+
+                          db.commit((commitError) => {
+                            if (commitError) {
+                              console.log(commitError);
+                              rollbackWithMessage("Imeshindikana kukamilisha mabadiliko ya workflow.");
+                              return;
+                            }
+
+                            callback(
+                              Number(legacyResults?.affectedRows || 0) > 0,
+                              "Umefanikiwa Kubadili Utendaji Kazi (Workflow)"
+                            );
+                          });
+                        });
+                        return;
+                      }
+                      if (compatibilityError) {
+                        console.log(compatibilityError);
+                        rollbackWithMessage(
+                          "Haujafanikiwa Kubadili Utendaji Kazi (Workflow) " + compatibilityError.code
+                        );
+                        return;
+                      }
+
+                      db.commit((commitError) => {
+                        if (commitError) {
+                          console.log(commitError);
+                          rollbackWithMessage("Imeshindikana kukamilisha mabadiliko ya workflow.");
+                          return;
+                        }
+
+                        callback(
+                          Number(compatibilityResults?.affectedRows || 0) > 0,
+                          "Umefanikiwa Kubadili Utendaji Kazi (Workflow)"
+                        );
+                      });
+                    });
+                    return;
+                  }
                   if (updateError) {
                     console.log(updateError);
                     rollbackWithMessage(
@@ -560,6 +1219,7 @@ module.exports = {
                   });
                 }
               );
+            });
             });
           };
 

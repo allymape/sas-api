@@ -337,28 +337,6 @@ module.exports = {
       }
     };
 
-    const runLegacyQuery = () => {
-      db.query(
-        `SELECT r.id AS id, v.rank_level
-         FROM workflows w
-         JOIN vyeo v ON v.id = w.start_from
-         JOIN roles r ON r.vyeoId = v.id
-         WHERE LOWER(r.name) = LOWER(v.rank_name)
-           AND w.end_to = ?
-           AND w.application_category_id = ?
-         LIMIT 1`,
-        [section_id, application_category_id],
-        (legacyErr, legacyResult) => {
-          if (legacyErr) {
-            console.log(legacyErr);
-            callback("");
-            return;
-          }
-          finalizePreviousStaff(legacyResult || []);
-        }
-      );
-    };
-
     db.query(
       `SELECT r.id AS id, v.rank_level
        FROM workflows w_current
@@ -373,10 +351,6 @@ module.exports = {
       [section_id, application_category_id],
       (err, result) => {
         if (err) {
-          if (err.code === "ER_BAD_FIELD_ERROR") {
-            runLegacyQuery();
-            return;
-          }
           console.log(err);
           callback("");
           return;
@@ -873,10 +847,13 @@ module.exports = {
       (staff_id == 0 || staff_id == "" || staff_id == null)
     ) {
       db.query(
-        `SELECT LOWER(rank_name) AS rank_name , rank_level
-          FROM workflows w
-          JOIN vyeo v ON v.id = w.end_to
-          WHERE w.application_category_id = ? AND w.start_from = ? 
+        `SELECT LOWER(v.rank_name) AS rank_name , v.rank_level
+          FROM workflows w_current
+          JOIN workflows w_next
+            ON w_next.application_category_id = w_current.application_category_id
+           AND w_next._order = (w_current._order + 1)
+          JOIN vyeo v ON v.id = w_next.unit_id
+          WHERE w_current.application_category_id = ? AND w_current.unit_id = ? 
           LIMIT 1`,
         [application_category, cheo_office],
         (error, result) => {

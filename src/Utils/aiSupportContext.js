@@ -142,34 +142,9 @@ const getWorkflowStepsForCategory = async (applicationCategoryId) => {
       { type: QueryTypes.SELECT, replacements: { applicationCategoryId: id } },
     );
 
-  const runLegacyQuery = async () =>
-    sequelize.query(
-      `
-        SELECT
-          wf.id,
-          wf.application_category_id,
-          wf._order,
-          wf.start_from AS unit_id,
-          NULL AS role_id,
-          0 AS is_start,
-          0 AS is_final,
-          0 AS can_assign,
-          0 AS can_approve,
-          0 AS can_return
-        FROM workflows wf
-        WHERE wf.application_category_id = :applicationCategoryId
-        ORDER BY wf._order ASC
-        LIMIT 60
-      `,
-      { type: QueryTypes.SELECT, replacements: { applicationCategoryId: id } },
-    );
-
   try {
     return await runModernQuery();
   } catch (error) {
-    if (error?.original?.code === "ER_BAD_FIELD_ERROR" || error?.parent?.code === "ER_BAD_FIELD_ERROR") {
-      return runLegacyQuery();
-    }
     throw error;
   }
 };

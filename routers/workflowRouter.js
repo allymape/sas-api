@@ -47,6 +47,85 @@ workflowRouter.get("/all-workflows", isAuth, permission('view-workflow'), (req, 
             });
   });
 });
+
+workflowRouter.get(
+  "/workflow-steps-by-category",
+  isAuth,
+  permission("view-workflow"),
+  (req, res) => {
+    const applicationCategoryId = Number(req.query.application_category_id || 0);
+    if (!Number.isFinite(applicationCategoryId) || applicationCategoryId <= 0) {
+      return res.send({
+        success: false,
+        statusCode: 306,
+        data: [],
+        message: "application_category_id is required.",
+      });
+    }
+
+    workflowModel.getWorkflowStepsByCategory(applicationCategoryId, (error, steps) => {
+      return res.send({
+        success: !error,
+        statusCode: error ? 306 : 300,
+        data: error ? [] : steps,
+        message: error ? "Something went wrong." : "Workflow steps by category.",
+      });
+    });
+  }
+);
+
+workflowRouter.get(
+  "/workflow-approver-step",
+  isAuth,
+  permission("view-workflow"),
+  (req, res) => {
+    const applicationCategoryId = Number(req.query.application_category_id || 0);
+    if (!Number.isFinite(applicationCategoryId) || applicationCategoryId <= 0) {
+      return res.send({
+        success: false,
+        statusCode: 306,
+        data: null,
+        message: "application_category_id is required.",
+      });
+    }
+
+    workflowModel.getApproverStepByCategory(applicationCategoryId, (error, approverStep, totalApprovers) => {
+      if (error) {
+        return res.send({
+          success: false,
+          statusCode: 306,
+          data: null,
+          message: "Something went wrong.",
+        });
+      }
+
+      if (!totalApprovers) {
+        return res.send({
+          success: false,
+          statusCode: 306,
+          data: null,
+          message: "Hakuna approver step iliyosanidiwa kwa aina hii ya ombi.",
+        });
+      }
+
+      if (Number(totalApprovers) > 1) {
+        return res.send({
+          success: false,
+          statusCode: 306,
+          data: null,
+          message: "Kuna approver zaidi ya mmoja. Tafadhali rekebisha workflow setup.",
+        });
+      }
+
+      return res.send({
+        success: true,
+        statusCode: 300,
+        data: approverStep,
+        message: "Approver step found.",
+      });
+    });
+  }
+);
 // Edit workflow
 workflowRouter.get(
   "/editworkflow/:id",
@@ -71,6 +150,7 @@ workflowRouter.post(
   isAuth,
   permission("create-workflow"),
   (req, res, next) => {
+    console.log("[API_WORKFLOW_CREATE] req.body =", req.body);
     workflowModel.insertOrUpdateWorkflow(req, req.body, (success, message) => {
       return res.send({
         success: success,
@@ -87,6 +167,7 @@ workflowRouter.put(
   isAuth,
   permission("update-workflow"),
   (req, res) => {
+    console.log("[API_WORKFLOW_UPDATE] req.params.id =", req.params.id, "req.body =", req.body);
     const id = req.params.id;
     workflowModel.updateWorkflow(req, id, req.body, (success, message) => {
       return res.send({
